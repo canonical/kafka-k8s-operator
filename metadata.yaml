@@ -27,6 +27,10 @@ requires:
     interface: zookeeper
     limit: 1
 
+provides:
+  kafka:
+    interface: kafka
+
 storage:
   data:
     type: filesystem

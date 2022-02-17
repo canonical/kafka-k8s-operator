@@ -1,3 +1,5 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 ops >= 1.2.0
+lightkube
+lightkube-models

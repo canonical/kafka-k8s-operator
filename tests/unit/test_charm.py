@@ -11,7 +11,8 @@ from charm import KafkaK8sCharm
 
 
 @pytest.fixture
-def harness():
+def harness(mocker: MockerFixture):
+    mocker.patch("charm.KubernetesServicePatch", lambda x, y: None)
     kafka_harness = Harness(KafkaK8sCharm)
     kafka_harness.begin()
     yield kafka_harness
@@ -87,3 +88,12 @@ def test_on_zookeeper_clients_broken(mocker: MockerFixture, harness: Harness):
     harness.charm.on.zookeeper_clients_broken.emit()
     assert harness.charm.unit.get_container("kafka").stop.call_count == 1
     assert harness.charm.unit.status == BlockedStatus("need zookeeper relation")
+
+
+def test_kafka_relation(mocker: MockerFixture, harness: Harness):
+    test_on_config_changed(mocker, harness)
+    harness.set_leader(True)
+    relation_id = harness.add_relation("kafka", "kafka-client")
+    harness.add_relation_unit(relation_id, "kafka-client/0")
+    relation_data = harness.get_relation_data(relation_id, harness.charm.app.name)
+    assert relation_data == {"host": "kafka-k8s", "port": "9092"}
