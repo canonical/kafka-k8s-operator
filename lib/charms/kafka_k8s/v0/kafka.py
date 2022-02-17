@@ -66,6 +66,11 @@ You can file bugs
 """
 
 # The unique Charmhub library identifier, never change it
+from ops.model import Relation
+from ops.framework import EventBase, EventSource, Object
+from ops.charm import CharmBase, CharmEvents
+from typing import Optional
+
 LIBID = "eacc8c85082347c9aae740e0220b8376"
 
 # Increment this major API version when introducing breaking changes
@@ -73,14 +78,8 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 1
+LIBPATCH = 2
 
-
-from typing import Optional
-
-from ops.charm import CharmBase, CharmEvents
-from ops.framework import EventBase, EventSource, Object
-from ops.model import Relation
 
 KAFKA_HOST_APP_KEY = "host"
 KAFKA_PORT_APP_KEY = "port"
@@ -124,7 +123,7 @@ class KafkaRequires(Object):
             self.framework.observe(event, observer)
 
     def _on_relation_changed(self, event) -> None:
-        if all(
+        if event.relation.app and all(
             key in event.relation.data[event.relation.app]
             for key in (KAFKA_HOST_APP_KEY, KAFKA_PORT_APP_KEY)
         ):
@@ -135,13 +134,21 @@ class KafkaRequires(Object):
 
     @property
     def host(self) -> str:
-        relation: Relation = self.model.get_relation(self._relation_name)
-        return relation.data[relation.app].get(KAFKA_HOST_APP_KEY) if relation else None
+        relation: Relation = self.model.get_relation(self._endpoint_name)
+        return (
+            relation.data[relation.app].get(KAFKA_HOST_APP_KEY)
+            if relation and relation.app
+            else None
+        )
 
     @property
     def port(self) -> int:
-        relation: Relation = self.model.get_relation(self._relation_name)
-        return int(relation.data[relation.app].get(KAFKA_PORT_APP_KEY)) if relation else None
+        relation: Relation = self.model.get_relation(self._endpoint_name)
+        return (
+            int(relation.data[relation.app].get(KAFKA_PORT_APP_KEY))
+            if relation and relation.app
+            else None
+        )
 
 
 class KafkaProvides(Object):
