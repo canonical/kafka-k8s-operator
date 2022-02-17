@@ -65,11 +65,13 @@ You can file bugs
 [here](https://github.com/charmed-osm/kafka-k8s-operator/issues)!
 """
 
+from typing import Optional
+
+from ops.charm import CharmBase, CharmEvents
+from ops.framework import EventBase, EventSource, Object
+
 # The unique Charmhub library identifier, never change it
 from ops.model import Relation
-from ops.framework import EventBase, EventSource, Object
-from ops.charm import CharmBase, CharmEvents
-from typing import Optional
 
 LIBID = "eacc8c85082347c9aae740e0220b8376"
 
