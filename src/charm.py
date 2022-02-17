@@ -7,8 +7,11 @@
 import logging
 from typing import Any, Dict
 
+from charms.kafka_k8s.v0.kafka import KafkaProvides
+from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServicePatch
 from charms.zookeeper_k8s.v0.zookeeper import ZooKeeperEvents, ZooKeeperRequires
-from ops.charm import CharmBase, ConfigChangedEvent
+from lightkube.models.core_v1 import ServicePort
+from ops.charm import CharmBase, ConfigChangedEvent, RelationJoinedEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import (
@@ -21,6 +24,8 @@ from ops.model import (
 from ops.pebble import ServiceStatus
 
 logger = logging.getLogger(__name__)
+
+KAFKA_PORT = 9092
 
 
 def _convert_key_to_confluent_syntax(key: str) -> str:
@@ -37,6 +42,7 @@ class KafkaK8sCharm(CharmBase):
 
     def __init__(self, *args):
         super().__init__(*args)
+        self.kafka = KafkaProvides(self)
         self.zookeeper = ZooKeeperRequires(self)
 
         # Observe charm events
@@ -46,12 +52,17 @@ class KafkaK8sCharm(CharmBase):
             self.on.update_status: self._on_update_status,
             self.on.zookeeper_clients_changed: self._on_config_changed,
             self.on.zookeeper_clients_broken: self._on_zookeeper_clients_broken,
+            self.on.kafka_relation_joined: self._on_kafka_relation_joined,
         }
         for event, observer in event_observe_mapping.items():
             self.framework.observe(event, observer)
 
         # Stored State
-        self._stored.set_default(entrypoint_patched=False)
+        self._stored.set_default(entrypoint_patched=False, kafka_started=False)
+
+        # Patch K8s service port
+        port = ServicePort(KAFKA_PORT, name=f"{self.app.name}")
+        self.service_patcher = KubernetesServicePatch(self, [port])
 
     # ---------------------------------------------------------------------------
     #   Properties
@@ -107,6 +118,11 @@ class KafkaK8sCharm(CharmBase):
         container.add_layer("kafka", self._get_kafka_layer(), combine=True)
         container.replan()
 
+        # Update kafka information
+        if not self._stored.kafka_started and self.unit.is_leader():
+            self.kafka.set_host_info(self.app.name, KAFKA_PORT)
+        self._stored.kafka_started = True
+
         # Update charm status
         self._on_update_status()
 
@@ -143,6 +159,11 @@ class KafkaK8sCharm(CharmBase):
 
         # Update charm status
         self.unit.status = BlockedStatus("need zookeeper relation")
+
+    def _on_kafka_relation_joined(self, event: RelationJoinedEvent) -> None:
+        """Handler for the kafka-relation-joined event."""
+        if self._stored.kafka_started and self.unit.is_leader():
+            self.kafka.set_host_info(self.app.name, KAFKA_PORT, event.relation)
 
     # ---------------------------------------------------------------------------
     #   Validation and configuration
