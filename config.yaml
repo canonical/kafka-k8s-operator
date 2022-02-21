@@ -11,11 +11,11 @@ options:
       listeners=PLAINTEXT://:9092
       advertised.listeners=PLAINTEXT://:9092
       log.dirs=/var/lib/kafka/data
-      auto.create.topics.enable=true
+      auto.create.topics.enable=false
       auto.leader.rebalance.enable=true
       background.threads=10
       compression.type=producer
-      delete.topic.enable=false
+      delete.topic.enable=true
       leader.imbalance.check.interval.seconds=300
       leader.imbalance.per.broker.percentage=10
       log.flush.interval.messages=9223372036854775807
@@ -56,7 +56,7 @@ options:
       socket.receive.buffer.bytes=102400
       socket.request.max.bytes=104857600
       socket.send.buffer.bytes=102400
-      unclean.leader.election.enable=true
+      unclean.leader.election.enable=false
       zookeeper.session.timeout.ms=6000
       zookeeper.set.acl=false
       broker.id.generation.enable=true
