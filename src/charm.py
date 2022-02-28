@@ -21,7 +21,7 @@ from ops.model import (
     MaintenanceStatus,
     WaitingStatus,
 )
-from ops.pebble import ServiceStatus
+from ops.pebble import PathError, ServiceStatus
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class KafkaK8sCharm(CharmBase):
             self.framework.observe(event, observer)
 
         # Stored State
-        self._stored.set_default(entrypoint_patched=False, kafka_started=False)
+        self._stored.set_default(kafka_started=False)
 
         # Patch K8s service port
         port = ServicePort(KAFKA_PORT, name=f"{self.app.name}")
@@ -188,7 +188,7 @@ class KafkaK8sCharm(CharmBase):
         Args:
             container (Container): Container where the entrypoint will be pushed.
         """
-        if self._stored.entrypoint_patched:
+        if self._file_exists(container, "/entrypoint"):
             return
         with open("templates/entrypoint", "r") as f:
             container.push(
@@ -196,7 +196,6 @@ class KafkaK8sCharm(CharmBase):
                 f.read(),
                 permissions=0o777,
             )
-        self._stored.entrypoint_patched = True
 
     def _get_kafka_layer(self) -> Dict[str, Any]:
         """Get Kafka layer for Pebble."""
@@ -222,6 +221,25 @@ class KafkaK8sCharm(CharmBase):
                 }
             },
         }
+
+    def _file_exists(self, container: Container, path: str) -> bool:
+        """Check if a file exists in the container.
+
+        Args:
+            path (str): Path of the file to be checked.
+
+        Returns:
+            bool: True if the file exists, else False.
+        """
+        file_exists = None
+        try:
+            _ = container.pull(path)
+            file_exists = True
+        except PathError:
+            file_exists = False
+        exist_str = "exists" if file_exists else 'doesn"t exist'
+        logger.debug(f"File {path} {exist_str}.")
+        return file_exists
 
 
 if __name__ == "__main__":  # pragma: no cover

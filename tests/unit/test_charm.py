@@ -15,6 +15,7 @@ def harness(mocker: MockerFixture):
     mocker.patch("charm.KubernetesServicePatch", lambda x, y: None)
     kafka_harness = Harness(KafkaK8sCharm)
     kafka_harness.begin()
+    kafka_harness.charm.unit.get_container("kafka").push("/entrypoint", "")
     yield kafka_harness
     kafka_harness.cleanup()
 
