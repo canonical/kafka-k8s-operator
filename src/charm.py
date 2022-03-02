@@ -22,8 +22,8 @@ from ops.model import (
     Container,
     MaintenanceStatus,
     ModelError,
-    WaitingStatus,
     StatusBase,
+    WaitingStatus,
 )
 from ops.pebble import PathError, ServiceStatus
 
@@ -136,22 +136,23 @@ class KafkaK8sCharm(CharmBase):
 
     def _on_update_status(self, _=None) -> None:
         """Handler for the update-status event."""
-        # Check zookeeper
-        if not self.zookeeper.hosts:
-            self.unit.status = BlockedStatus("need zookeeper relation")
-            return
+        try:
+            self._check_relations()
+            container: Container = self.unit.get_container("kafka")
 
-        # Check if the kafka service is configured
-        container: Container = self.unit.get_container("kafka")
-        if not container.can_connect() or "kafka" not in container.get_plan().services:
-            self.unit.status = WaitingStatus("kafka service not configured yet")
-            return
+            # Check if the kafka service is configured
+            if not container.can_connect() or "kafka" not in container.get_plan().services:
+                self.unit.status = WaitingStatus("kafka service not configured yet")
+                return
 
-        # Check if the kafka service is running
-        if container.get_service("kafka").current == ServiceStatus.ACTIVE:
-            self.unit.status = ActiveStatus()
-        else:
-            self.unit.status = BlockedStatus("kafka service is not running")
+            # Check if the kafka service is running
+            if container.get_service("kafka").current == ServiceStatus.ACTIVE:
+                self.unit.status = ActiveStatus()
+            else:
+                self.unit.status = BlockedStatus("kafka service is not running")
+        except CharmError as e:
+            logger.debug(e.message)
+            self.unit.status = e.status(e.message)
 
     def _on_zookeeper_clients_broken(self, _) -> None:
         """Handler for the zookeeper-clients-broken event."""
@@ -226,7 +227,7 @@ class KafkaK8sCharm(CharmBase):
                 with open(resource_path, "rb") as f:
                     container.push("/opt/prometheus/jmx_prometheus_javaagent.jar", f)
             except ModelError:
-                raise CharmError("Missing 'jmx-prometheys-jar' resource")
+                raise CharmError("Missing 'jmx-prometheus-jar' resource")
 
     def _get_kafka_layer(self) -> Dict[str, Any]:
         """Get Kafka layer for Pebble."""
