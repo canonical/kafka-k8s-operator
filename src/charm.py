@@ -7,8 +7,10 @@
 import logging
 from typing import Any, Dict
 
+from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.kafka_k8s.v0.kafka import KafkaProvides
 from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServicePatch
+from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.zookeeper_k8s.v0.zookeeper import ZooKeeperEvents, ZooKeeperRequires
 from lightkube.models.core_v1 import ServicePort
 from ops.charm import CharmBase, ConfigChangedEvent, RelationJoinedEvent
@@ -19,7 +21,9 @@ from ops.model import (
     BlockedStatus,
     Container,
     MaintenanceStatus,
+    ModelError,
     WaitingStatus,
+    StatusBase,
 )
 from ops.pebble import PathError, ServiceStatus
 
@@ -32,6 +36,14 @@ def _convert_key_to_confluent_syntax(key: str) -> str:
     new_key = key.replace("_", "___").replace("-", "__").replace(".", "_")
     new_key = "".join([f"_{char}" if char.isupper() else char for char in new_key])
     return f"KAFKA_{new_key.upper()}"
+
+
+class CharmError(Exception):
+    """Charm Error Exception."""
+
+    def __init__(self, message: str, status: StatusBase = BlockedStatus) -> None:
+        self.message = message
+        self.status = status
 
 
 class KafkaK8sCharm(CharmBase):
@@ -64,6 +76,12 @@ class KafkaK8sCharm(CharmBase):
         port = ServicePort(KAFKA_PORT, name=f"{self.app.name}")
         self.service_patcher = KubernetesServicePatch(self, [port])
 
+        # Prometheus and Grafana integration
+        self.metrics_endpoint = MetricsEndpointProvider(
+            self, jobs=[{"static_configs": [{"targets": ["*:1234"]}]}]
+        )
+        self.grafana_dashboard_provider = GrafanaDashboardProvider(self)
+
     # ---------------------------------------------------------------------------
     #   Properties
     # ---------------------------------------------------------------------------
@@ -94,37 +112,27 @@ class KafkaK8sCharm(CharmBase):
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handler for the config-changed event."""
-        # Validate charm configuration
         try:
             self._validate_config()
-        except Exception as e:
-            self.unit.status = BlockedStatus(f"{e}")
-            return
+            self._check_relations()
+            container: Container = self.unit.get_container("kafka")
+            self._check_container_ready(container)
+            # Add Pebble layer with the kafka service
+            self._patch_entrypoint(container)
+            self._setup_metrics(container)
+            container.add_layer("kafka", self._get_kafka_layer(), combine=True)
+            container.replan()
 
-        # Check Pebble has started in the container
-        container: Container = self.unit.get_container("kafka")
-        if not container.can_connect():
-            logger.debug("waiting for pebble to start")
-            self.unit.status = MaintenanceStatus("waiting for pebble to start")
-            return
+            # Update kafka information
+            if not self._stored.kafka_started and self.unit.is_leader():
+                self.kafka.set_host_info(self.app.name, KAFKA_PORT)
+            self._stored.kafka_started = True
 
-        # Check zookeeper
-        if not self.zookeeper.hosts:
-            self.unit.status = BlockedStatus("need zookeeper relation")
-            return
-
-        # Add Pebble layer with the kafka service
-        self._patch_entrypoint(container)
-        container.add_layer("kafka", self._get_kafka_layer(), combine=True)
-        container.replan()
-
-        # Update kafka information
-        if not self._stored.kafka_started and self.unit.is_leader():
-            self.kafka.set_host_info(self.app.name, KAFKA_PORT)
-        self._stored.kafka_started = True
-
-        # Update charm status
-        self._on_update_status()
+            # Update charm status
+            self._on_update_status()
+        except CharmError as e:
+            logger.debug(e.message)
+            self.unit.status = e.status(e.message)
 
     def _on_update_status(self, _=None) -> None:
         """Handler for the update-status event."""
@@ -173,9 +181,19 @@ class KafkaK8sCharm(CharmBase):
         """Validate charm configuration.
 
         Raises:
-            Exception: if charm configuration is invalid.
+            CharmError: if charm configuration is invalid.
         """
         pass
+
+    def _check_relations(self) -> None:
+        """Check required relations."""
+        if not self.zookeeper.hosts:
+            raise CharmError("need zookeeper relation")
+
+    def _check_container_ready(self, container: Container) -> None:
+        """Check Pebble has started in the container."""
+        if not container.can_connect():
+            raise CharmError("waiting for pebble to start", MaintenanceStatus)
 
     def _patch_entrypoint(self, container: Container) -> None:
         """Patch entrypoint.
@@ -197,8 +215,36 @@ class KafkaK8sCharm(CharmBase):
                 permissions=0o777,
             )
 
+    def _setup_metrics(self, container: Container) -> None:
+        """Setup metrics."""
+        if self.config.get("metrics"):
+            container.make_dir("/opt/prometheus", make_parents=True, permissions=0o555)
+            with open("templates/kafka_broker.yml", "r") as f:
+                container.push("/opt/prometheus/kafka_broker.yml", f)
+            try:
+                resource_path = self.model.resources.fetch("jmx-prometheus-jar")
+                with open(resource_path, "rb") as f:
+                    container.push("/opt/prometheus/jmx_prometheus_javaagent.jar", f)
+            except ModelError:
+                raise CharmError("Missing 'jmx-prometheys-jar' resource")
+
     def _get_kafka_layer(self) -> Dict[str, Any]:
         """Get Kafka layer for Pebble."""
+        env_variables = {
+            "CHARM_NAME": self.app.name.upper().replace("-", "_"),
+            "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "LANG": "C.UTF-8",
+            "CUB_CLASSPATH": '"/usr/share/java/cp-base-new/*"',
+            "container": "oci",
+            "COMPONENT": "kafka",
+            "KAFKA_ZOOKEEPER_CONNECT": self.zookeeper.hosts,
+            **self.kafka_properties,
+        }
+        if self.config.get("metrics"):
+            env_variables[
+                "KAFKA_OPTS"
+            ] = "-javaagent:/opt/prometheus/jmx_prometheus_javaagent.jar=1234:/opt/prometheus/kafka_broker.yml"
+
         return {
             "summary": "kafka layer",
             "description": "pebble config layer for kafka",
@@ -208,16 +254,7 @@ class KafkaK8sCharm(CharmBase):
                     "summary": "kafka service",
                     "command": "/entrypoint",
                     "startup": "enabled",
-                    "environment": {
-                        "CHARM_NAME": self.app.name.upper().replace("-", "_"),
-                        "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-                        "LANG": "C.UTF-8",
-                        "CUB_CLASSPATH": '"/usr/share/java/cp-base-new/*"',
-                        "container": "oci",
-                        "COMPONENT": "kafka",
-                        "KAFKA_ZOOKEEPER_CONNECT": self.zookeeper.hosts,
-                        **self.kafka_properties,
-                    },
+                    "environment": env_variables,
                 }
             },
         }

@@ -55,7 +55,8 @@ juju add-model test-kafka-k8s
 juju model-config logging-config="<root>=INFO;unit=DEBUG"
 # Deploy the charm
 juju deploy ./kafka-k8s_ubuntu-20.04-amd64.charm \
-  --resource kafka-k8s-image=confluentinc/cp-kafka:7.0.1
+  --resource kafka-image=confluentinc/cp-kafka:7.0.1 \
+  --resource jmx-prometheus-jar=./jmx_prometheus_javaagent-0.15.0.jar
 ```
 
 ## Canonical Contributor Agreement
