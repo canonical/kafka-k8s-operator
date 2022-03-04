@@ -21,6 +21,10 @@ resources:
     type: oci-image
     description: OCI image for Kafka K8s
     upstream-source: confluentinc/cp-kafka:7.0.1
+  jmx-prometheus-jar:
+    type: file
+    filename: jmx_prometheus_javaagent.jar
+    description: JMX Prometheus Java Agent (JAR)
 
 requires:
   zookeeper:
@@ -30,6 +34,10 @@ requires:
 provides:
   kafka:
     interface: kafka
+  metrics-endpoint:
+    interface: prometheus_scrape
+  grafana-dashboard:
+    interface: grafana_dashboard
 
 storage:
   data:
