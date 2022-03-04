@@ -13,7 +13,7 @@ from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServ
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.zookeeper_k8s.v0.zookeeper import ZooKeeperEvents, ZooKeeperRequires
 from lightkube.models.core_v1 import ServicePort
-from ops.charm import CharmBase, ConfigChangedEvent, RelationJoinedEvent
+from ops.charm import CharmBase, RelationJoinedEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import (
@@ -101,7 +101,7 @@ class KafkaK8sCharm(CharmBase):
         for kafka_property in self.config["kafka-properties"].splitlines():
             if "=" not in kafka_property:
                 continue
-            key, value = kafka_property.split("=")
+            key, value = kafka_property.strip().split("=")
             key = _convert_key_to_confluent_syntax(key)
             envs[key] = value
         return envs
@@ -110,7 +110,7 @@ class KafkaK8sCharm(CharmBase):
     #   Handlers for Charm Events
     # ---------------------------------------------------------------------------
 
-    def _on_config_changed(self, event: ConfigChangedEvent) -> None:
+    def _on_config_changed(self, _) -> None:
         """Handler for the config-changed event."""
         try:
             self._validate_config()
@@ -139,17 +139,10 @@ class KafkaK8sCharm(CharmBase):
         try:
             self._check_relations()
             container: Container = self.unit.get_container("kafka")
-
-            # Check if the kafka service is configured
-            if not container.can_connect() or "kafka" not in container.get_plan().services:
-                self.unit.status = WaitingStatus("kafka service not configured yet")
-                return
-
-            # Check if the kafka service is running
-            if container.get_service("kafka").current == ServiceStatus.ACTIVE:
-                self.unit.status = ActiveStatus()
-            else:
-                self.unit.status = BlockedStatus("kafka service is not running")
+            self._check_container_ready(container)
+            self._check_service_configured(container)
+            self._check_service_active(container)
+            self.unit.status = ActiveStatus()
         except CharmError as e:
             logger.debug(e.message)
             self.unit.status = e.status(e.message)
@@ -187,14 +180,46 @@ class KafkaK8sCharm(CharmBase):
         pass
 
     def _check_relations(self) -> None:
-        """Check required relations."""
+        """Check required relations.
+
+        Raises:
+            CharmError: if relations are missing.
+        """
         if not self.zookeeper.hosts:
             raise CharmError("need zookeeper relation")
 
     def _check_container_ready(self, container: Container) -> None:
-        """Check Pebble has started in the container."""
+        """Check Pebble has started in the container.
+
+        Args:
+            container (Container): Container to be checked.
+
+        Raises:
+            CharmError: if container is not ready.
+        """
         if not container.can_connect():
             raise CharmError("waiting for pebble to start", MaintenanceStatus)
+
+    def _check_service_configured(self, container: Container) -> None:
+        """Check if kafka service has been successfully configured.
+
+        Args:
+            container (Container): Container to be checked.
+
+        Raises:
+            CharmError: if kafka service has not been configured.
+        """
+        if "kafka" not in container.get_plan().services:
+            raise CharmError("kafka service not configured yet", WaitingStatus)
+
+    def _check_service_active(self, container: Container) -> None:
+        """Check if the kafka service is running.
+
+        Raises:
+            CharmError: if kafka service is not running.
+        """
+        if container.get_service("kafka").current != ServiceStatus.ACTIVE:
+            raise CharmError("kafka service is not running")
 
     def _patch_entrypoint(self, container: Container) -> None:
         """Patch entrypoint.
@@ -217,7 +242,11 @@ class KafkaK8sCharm(CharmBase):
             )
 
     def _setup_metrics(self, container: Container) -> None:
-        """Setup metrics."""
+        """Setup metrics.
+
+        Args:
+            container (Container): Container where the the metrics will be setup.
+        """
         if self.config.get("metrics"):
             container.make_dir("/opt/prometheus", make_parents=True, permissions=0o555)
             with open("templates/kafka_broker.yml", "r") as f:
@@ -230,7 +259,11 @@ class KafkaK8sCharm(CharmBase):
                 raise CharmError("Missing 'jmx-prometheus-jar' resource")
 
     def _get_kafka_layer(self) -> Dict[str, Any]:
-        """Get Kafka layer for Pebble."""
+        """Get Kafka layer for Pebble.
+
+        Returns:
+            Dict[str, Any]: Pebble layer.
+        """
         env_variables = {
             "CHARM_NAME": self.app.name.upper().replace("-", "_"),
             "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",

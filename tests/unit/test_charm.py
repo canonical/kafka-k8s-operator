@@ -45,8 +45,18 @@ def test_on_config_changed(mocker: MockerFixture, harness: Harness):
     assert harness.charm.unit.status == BlockedStatus("Missing 'jmx-prometheus-jar' resource")
     # jmx resource added
     mocker.patch("charm.KafkaK8sCharm._setup_metrics")
-    harness.charm.on.config_changed.emit()
+    kafka_properties = """clientPort=2181
+    broker.id.generation.enable=true
+
+    # comment
+    invalid-line
+    """
+    harness.update_config({"kafka-properties": kafka_properties})
     assert harness.charm.unit.status == ActiveStatus()
+    assert harness.charm.kafka_properties == {
+        "KAFKA_CLIENT_PORT": "2181",
+        "KAFKA_BROKER_ID_GENERATION_ENABLE": "true",
+    }
 
 
 def test_on_update_status(mocker: MockerFixture, harness: Harness):
@@ -72,7 +82,7 @@ def test_on_update_status(mocker: MockerFixture, harness: Harness):
     assert harness.charm.unit.status == BlockedStatus("kafka service is not running")
 
 
-def test_on_zookeeper_clients_broken(mocker: MockerFixture, harness: Harness):
+def test_on_zookeeper_clients_broken(harness: Harness):
     harness.charm.on.kafka_pebble_ready.emit("kafka")
     harness.charm.on.zookeeper_clients_broken.emit()
     assert harness.charm.unit.status == BlockedStatus("need zookeeper relation")
