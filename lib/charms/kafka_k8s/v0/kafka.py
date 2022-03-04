@@ -60,7 +60,7 @@ class MyCharm(CharmBase):
             self._on_kafka_available,
         )
         self.framework.observe(
-            self.on.kafka_broken,
+            self.on["kafka"].relation_broken,
             self._on_kafka_broken,
         )
 
@@ -96,7 +96,7 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 3
+LIBPATCH = 4
 
 
 KAFKA_HOST_APP_KEY = "host"
@@ -105,10 +105,6 @@ KAFKA_PORT_APP_KEY = "port"
 
 class _KafkaAvailableEvent(EventBase):
     """Event emitted when Kafka is available."""
-
-
-class _KafkaBrokenEvent(EventBase):
-    """Event emitted when Kafka relation is broken."""
 
 
 class KafkaEvents(CharmEvents):
@@ -121,7 +117,6 @@ class KafkaEvents(CharmEvents):
     """
 
     kafka_available = EventSource(_KafkaAvailableEvent)
-    kafka_broken = EventSource(_KafkaBrokenEvent)
 
 
 class KafkaRequires(Object):
@@ -135,7 +130,6 @@ class KafkaRequires(Object):
         # Observe relation events
         event_observe_mapping = {
             charm.on[self._endpoint_name].relation_changed: self._on_relation_changed,
-            charm.on[self._endpoint_name].relation_broken: self._on_relation_broken,
         }
         for event, observer in event_observe_mapping.items():
             self.framework.observe(event, observer)
@@ -147,11 +141,9 @@ class KafkaRequires(Object):
         ):
             self.charm.on.kafka_available.emit()
 
-    def _on_relation_broken(self, _) -> None:
-        self.charm.on.kafka_broken.emit()
-
     @property
     def host(self) -> str:
+        """Get kafka hostname."""
         relation: Relation = self.model.get_relation(self._endpoint_name)
         return (
             relation.data[relation.app].get(KAFKA_HOST_APP_KEY)
@@ -161,6 +153,7 @@ class KafkaRequires(Object):
 
     @property
     def port(self) -> int:
+        """Get kafka port number."""
         relation: Relation = self.model.get_relation(self._endpoint_name)
         return (
             int(relation.data[relation.app].get(KAFKA_PORT_APP_KEY))
