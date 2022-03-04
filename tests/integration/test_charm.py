@@ -25,10 +25,10 @@ async def test_build_and_deploy(ops_test: OpsTest):
     await ops_test.model.deploy("zookeeper-k8s", channel="edge", application_name="zookeeper-k8s")
 
     charm = await ops_test.build_charm(".")
-    resources = {
-        "kafka-image": METADATA["resources"]["kafka-image"]["upstream-source"],
-    }
-    await ops_test.model.deploy(charm, resources=resources, application_name="kafka-k8s")
+    resources = {"kafka-image": METADATA["resources"]["kafka-image"]["upstream-source"]}
+    await ops_test.model.deploy(
+        charm, resources=resources, application_name="kafka-k8s", config={"metrics": False}
+    )
     await ops_test.model.add_relation("kafka-k8s:zookeeper", "zookeeper-k8s:zookeeper")
     await ops_test.model.wait_for_idle(
         apps=["kafka-k8s", "zookeeper-k8s"], status="active", timeout=1000
