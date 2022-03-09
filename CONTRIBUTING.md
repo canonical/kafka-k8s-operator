@@ -6,7 +6,7 @@ This documents explains the processes and practices recommended for contributing
 the Kafka K8s charm.
 
 - Generally, before developing enhancements to this charm, you should consider [opening an issue
-  ](https://github.com/charmed-osm/kafka-k8s-operator/issues) explaining your use case.
+  ](https://github.com/canonical/kafka-k8s-operator/issues) explaining your use case.
 - If you would like to chat with us about your use-cases or proposed implementation, you can reach
   us at [Canonical Mattermost public channel](https://chat.charmhub.io/charmhub/channels/charm-dev)
   or [Discourse](https://discourse.charmhub.io/).

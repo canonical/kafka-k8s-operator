@@ -4,7 +4,7 @@ See LICENSE file for licensing details. -->
 # Kafka K8s Operator
 
 [![code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black/tree/main)
-[![Run-Tests](https://github.com/charmed-osm/kafka-k8s-operator/actions/workflows/ci.yaml/badge.svg)](https://github.com/charmed-osm/kafka-k8s-operator/actions/workflows/ci.yaml)
+[![Run-Tests](https://github.com/canonical/kafka-k8s-operator/actions/workflows/ci.yaml/badge.svg)](https://github.com/canonical/kafka-k8s-operator/actions/workflows/ci.yaml)
 
 [![Kafka K8s](https://charmhub.io/kafka-k8s/badge.svg)](https://charmhub.io/kafka-k8s)
 

@@ -63,7 +63,7 @@ class MyCharm(CharmBase):
 ```
 
 You can file bugs
-[here](https://github.com/charmed-osm/zookeeper-k8s-operator/issues)!
+[here](https://github.com/canonical/zookeeper-k8s-operator/issues)!
 """
 
 import logging

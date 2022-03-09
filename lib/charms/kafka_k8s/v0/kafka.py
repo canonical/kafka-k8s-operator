@@ -78,7 +78,7 @@ class MyCharm(CharmBase):
 ```
 
 You can file bugs
-[here](https://github.com/charmed-osm/kafka-k8s-operator/issues)!
+[here](https://github.com/canonical/kafka-k8s-operator/issues)!
 """
 
 from typing import Optional
