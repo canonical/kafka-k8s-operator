@@ -25,7 +25,7 @@ The Kafka K8s Operator may be deployed using the Juju command line as in
 
 ```shell
 $ juju add-model kafka-k8s
-$ juju deploy kafka-k8s
+$ juju deploy kafka-k8s --trust
 $ juju deploy zookeeper-k8s
 $ juju relate kafka-k8s zookeeper-k8s
 ```
