@@ -39,6 +39,10 @@ provides:
   grafana-dashboard:
     interface: grafana_dashboard
 
+peers:
+    replan:
+        interface: rolling_op
+
 storage:
   data:
     type: filesystem

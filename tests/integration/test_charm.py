@@ -41,3 +41,19 @@ async def test_build_and_deploy(ops_test: OpsTest):
     # Scale kafka
     await ops_test.model.applications["kafka-k8s"].scale(3)
     await ops_test.model.wait_for_idle(apps=["kafka-k8s"], status="active", timeout=1000)
+
+async def test_rolling_restart(ops_test: OpsTest):
+    """Verify that our rolling restart will work.
+
+    It should kick units into a maintenance state, run replan, then move them back to active.
+
+    """
+    app = ops_test.model.applications["kafka-k8s"]
+    for unit in app.units:
+        await unit.run("JUJU_DISPATCH_PATH=hooks/config-changed ./dispatch")
+
+    await ops_test.model.block_until(lambda: app.status in ("maintenance", "error"))
+    assert app.status != "error"
+
+    await ops_test.model.block_until(lambda: app.status in ("error", "blocked", "active"))
+    assert app.status == "active"
