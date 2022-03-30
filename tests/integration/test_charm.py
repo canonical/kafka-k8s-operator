@@ -42,6 +42,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
     await ops_test.model.applications["kafka-k8s"].scale(3)
     await ops_test.model.wait_for_idle(apps=["kafka-k8s"], status="active", timeout=1000)
 
+
 async def test_rolling_restart(ops_test: OpsTest):
     """Verify that our rolling restart will work.
 
