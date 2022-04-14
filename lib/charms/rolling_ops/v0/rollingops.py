@@ -12,32 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A library to enable charms to implement "rolling" or "serialized" operations.
+"""This library enables "rolling" operations across units of a charmed Application.
 
-E.g., a rolling restart.
+For example, a charm author might use this library to implement a "rolling restart", in
+which all units in an application restart their workload, but no two units execute the
+restart at the same time.
 
-You may use this library directly, or extend it to customize behavior.
+To implement the rolling restart, a charm author would do the following:
 
-For example, in order to implement a rolling restart, a charm author would need to add the
-following lines of code, to the following files (note the consistent use of the name "restart")
-to namespace this particular rolling op:
-
-Add a peer relation to `metadata.yaml`:
+1. Add a peer relation called 'restart' to a charm's `metadata.yaml`:
 ```yaml
 peers:
     restart:
         interface: rolling_op
 ```
 
-Import the library, and enable it by doing initializing a RollingOpsManager class, passing
-in the Charm, name of the peer relation, and restart handler.
+Import this library into src/charm.py, and initialize a RollingOpsManager in the Charm's
+`__init__`. The Charm should also define a callback routine, which will be executed when
+a unit holds the distributed lock:
 
 src/charm.py
 ```python
 # ...
-from charms.rolling_ops.v0.rollingops import RollingOpsManager, RollingEvents
+from charms.rolling_ops.v0.rollingops import RollingOpsManager
 # ...
-
 class SomeCharm(...):
     def __init__(...)
         # ...
@@ -49,13 +47,27 @@ class SomeCharm(...):
         systemd.service_restart('foo')
 ```
 
-To kick off the rolling restart, emit the AcquireLock event in your charm. For example,
-you might do so with an action:
+To kick off the rolling restart, emit this library's AcquireLock event. The simplest way
+to do so would be with an action, though it might make sense to acquire the lock in
+response to another event. 
 
 ```python
-    def _on_restart_action(self, event):
+    def _on_trigger_restart(self, event):
         self.charm.on[self.restart_manager.name].acquire_lock.emit()
 ```
+
+In order to trigger the restart, a human operator would execute the following command on
+the CLI:
+
+```
+juju run-action some-charm/0 some-charm/1 <... some-charm/n> restart
+```
+
+Note that all units that plan to restart must receive the action and emit the aquire
+event. Any units that do not run their acquire handler will be left out of the rolling
+restart. (An operator might take advantage of this fact to recover from a failed rolling
+operation without restarting workloads that were able to successfully restart -- simply
+omit the successful units from a subsequent run-action call.)
 
 """
 import logging
@@ -76,7 +88,7 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 1
+LIBPATCH = 2
 
 
 class LockNoRelationError(Exception):
@@ -360,6 +372,9 @@ class RollingOpsManager(Object):
         """Request a lock."""
         try:
             Lock(self).acquire()  # Updates relation data
+            # emit relation changed event in the edge case where aquire does not
+            relation = self.model.get_relation(self.name)
+            self.charm.on[self.name].relation_changed.emit(relation)
         except LockNoRelationError:
             logger.debug("No {} peer relation yet. Delaying rolling op.".format(self.name))
             event.defer()
