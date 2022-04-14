@@ -11,6 +11,7 @@ from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.kafka_k8s.v0.kafka import KafkaProvides
 from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServicePatch
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
+from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from charms.zookeeper_k8s.v0.zookeeper import ZooKeeperEvents, ZooKeeperRequires
 from lightkube.models.core_v1 import ServicePort
 from ops.charm import CharmBase, RelationJoinedEvent
@@ -69,6 +70,10 @@ class KafkaK8sCharm(CharmBase):
         for event, observer in event_observe_mapping.items():
             self.framework.observe(event, observer)
 
+        self.replan_manager = RollingOpsManager(
+            charm=self, relation="replan", callback=self._replan
+        )
+
         # Stored State
         self._stored.set_default(kafka_started=False)
 
@@ -110,8 +115,23 @@ class KafkaK8sCharm(CharmBase):
     #   Handlers for Charm Events
     # ---------------------------------------------------------------------------
 
-    def _on_config_changed(self, _) -> None:
-        """Handler for the config-changed event."""
+    def _on_config_changed(self, event) -> None:
+        """If _replan has not yet been run, run it.
+
+        If we are in the middle of a running environment, schedule a replan with the
+        rolling ops manager.
+
+        """
+        if not self._stored.kafka_started:
+            # On first start, let all the kafka instances come up together.
+            return self._replan(event)
+
+        # In a running cluster, coordinate replans so that only one unit does so at a
+        # time.
+        self.on[self.replan_manager.name].acquire_lock.emit()
+
+    def _replan(self, event) -> None:
+        """Process config and run replan."""
         try:
             self._validate_config()
             self._check_relations()
