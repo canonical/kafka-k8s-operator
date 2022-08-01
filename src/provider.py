@@ -13,8 +13,7 @@ from ops.charm import RelationBrokenEvent, RelationJoinedEvent
 from ops.framework import Object
 from ops.model import Relation
 
-REL_NAME = "kafka"
-PEER = "cluster"
+from literals import PEER, REL_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +81,9 @@ class KafkaProvider(Object):
             password: the user's password
 
         Raises:
-            subprocess.CalledProcessError: if the command failed
+            ops.pebble.ExecError: if the command failed
         """
-        self.charm.kafka_config.add_user_to_zookeeper(username=username, password=password)
+        self.charm.add_user_to_zookeeper(username=username, password=password)
         self.app_relation.data[self.charm.app].update({username: password})
 
     def delete_user(self, username: str) -> None:
@@ -94,9 +93,9 @@ class KafkaProvider(Object):
             username: the user's username
 
         Raises:
-            subprocess.CalledProcessError: if the command failed
+            ops.pebble.ExecError: if the command failed
         """
-        self.charm.kafka_config.delete_user_from_zookeeper(username=username)
+        self.charm.delete_user_from_zookeeper(username=username)
         self.app_relation.data[self.charm.app].update({username: ""})
 
     @staticmethod

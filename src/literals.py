@@ -6,4 +6,5 @@
 
 CHARM_KEY = "kafka"
 PEER = "cluster"
-REL_NAME = "zookeeper"
+ZOOKEEPER_REL_NAME = "zookeeper"
+REL_NAME = "kafka"

@@ -18,10 +18,6 @@ from tenacity.wait import wait_fixed
 
 logger = logging.getLogger(__name__)
 
-CHARM_KEY = "kafka"
-PEER = "cluster"
-REL_NAME = "zookeeper"
-
 
 def zookeeper_connected(charm: CharmBase) -> bool:
     """Flag for if required zookeeper config exists in the relation data.

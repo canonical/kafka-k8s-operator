@@ -7,8 +7,9 @@
 import logging
 from typing import Dict, List, Optional
 
-from charm import KafkaCharm
-from literals import PEER, REL_NAME
+from ops.charm import CharmBase
+
+from literals import CHARM_KEY, PEER, ZOOKEEPER_REL_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +29,9 @@ listener.name.sasl_plaintext.sasl.enabled.mechanisms=SCRAM-SHA-512
 class KafkaConfig:
     """Manager for handling Kafka configuration."""
 
-    def __init__(self, charm: KafkaCharm):
+    def __init__(self, charm: CharmBase):
         self.charm = charm
-        self.container = self.charm.unit.get_container("kafka")
+        self.container = self.charm.unit.get_container(CHARM_KEY)
         self.default_config_path = f"{self.charm.config['data-dir']}/config"
         self.properties_filepath = f"{self.default_config_path}/server.properties"
         self.jaas_filepath = f"{self.default_config_path}/kafka-jaas.cfg"
@@ -48,7 +49,7 @@ class KafkaConfig:
             Dict with zookeeper username, password, endpoints, chroot and uris
         """
         zookeeper_config = {}
-        for relation in self.charm.model.relations[REL_NAME]:
+        for relation in self.charm.model.relations[ZOOKEEPER_REL_NAME]:
             zk_keys = ["username", "password", "endpoints", "chroot", "uris"]
             missing_config = any(
                 relation.data[relation.app].get(key, None) is None for key in zk_keys
@@ -76,7 +77,7 @@ class KafkaConfig:
         """
         extra_args = f"-Djava.security.auth.login.config={self.jaas_filepath}"
 
-        return " ".join(extra_args)
+        return extra_args
 
     @property
     def kafka_command(self) -> str:
@@ -96,7 +97,7 @@ class KafkaConfig:
             List of properties to be set
         """
         replication_factor = min([3, self.charm.app.planned_units()])
-        min_isr = max([1, replication_factor])
+        min_isr = max([1, replication_factor - 1])
 
         return [
             f"default.replication.factor={replication_factor}",
@@ -156,40 +157,7 @@ class KafkaConfig:
             ]
             + self.default_replication_properties
             + self.auth_properties
+            + DEFAULT_CONFIG_OPTIONS.split("\n")
         )
 
         self.push(content="\n".join(server_properties), path=self.properties_filepath)
-
-    def add_user_to_zookeeper(self, username: str, password: str) -> None:
-        """Adds user credentials to ZooKeeper for authorising clients and brokers.
-
-        Raises:
-            ops.pebble.ExecError: If the command failed
-        """
-        command = [
-            f"--zookeeper={self.zookeeper_config['connect']}",
-            "--alter",
-            "--entity-type=users",
-            f"--entity-name={username}",
-            f"--add-config=SCRAM-SHA-512=[password={password}]",
-        ]
-        self.charm.run_bin_command(
-            bin_keyword="configs", bin_args=command, extra_args=self.extra_args
-        )
-
-    def delete_user_from_zookeeper(self, username: str) -> None:
-        """Deletes user credentials from ZooKeeper for authorising clients and brokers.
-
-        Raises:
-            ops.pebble.ExecError: If the command failed
-        """
-        command = [
-            f"--zookeeper={self.zookeeper_config['connect']}",
-            "--alter",
-            "--entity-type=users",
-            f"--entity-name={username}",
-            "--delete-config=SCRAM-SHA-512",
-        ]
-        self.charm.run_bin_command(
-            bin_keyword="configs", bin_args=command, extra_args=self.extra_args
-        )
