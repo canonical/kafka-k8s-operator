@@ -3,36 +3,55 @@
 
 options:
   data-dir:
-    description: filepath for setting the ZooKeeper dataDir option
+    description: filepath for setting the Kafka dataDir option
     type: string
-    default: "/data/zookeeper"
+    default: "/data/kafka"
   log-dir: 
-    description: filepath for setting the ZooKeeper dataLogDir option
+    description: filepath for setting the Kafka dataLogDir option
     type: string
-    default: "/logs/zookeeper"
-  offsets-retentions-minutes:
-    description: period of time offsets will be kept before getting discarded
+    default: "/logs/kafka"
+  offsets-retention-minutes:
+    description: the number of minutes offsets will be kept before getting discarded
     type: int
     default: 10080
+  log-retention-hours:
+    description: the number of hours to keep a log file before deleting it
+    type: int
+    default: 168
+  auto-create-topics:
+    description: enables auto creation of topic on the server
+    type: boolean
+    default: false
 
-      # topic
-      auto.leader.rebalance.enable=true
-      # to be changed when necessary
-      delete.topic.enable=true
-      unclean.leader.election.enable=false
-      auto.create.topics.enable=false
-      # helpful
-      group.initial.rebalance.delay.ms=3000
-
-      # auth
-      sasl.enabled.mechanisms=SCRAM-SHA-512
-      sasl.mechanism.inter.broker.protocol=SCRAM-SHA-512
-      security.inter.broker.protocol=SASL_PLAINTEXT
-      authorizer.class.name=kafka.security.authorizer.AclAuthorizer
-      allow.everyone.if.no.acl.found=false
-      super.users=User:sync
-      listener.name.sasl_plaintext.sasl.enabled.mechanisms=SCRAM-SHA-512
-      # zookeeper.set.acl=true
+      # log.dirs=/var/snap/kafka/common/log
+      #
+      # # networking
+      # clientPort=2181
+      # listeners=SASL_PLAINTEXT://:9092
+      #
+      # # offsets
+      # offsets.topic.num.partitions=50
+      # offsets.commit.required.acks=-1
+      # offsets.retention.minutes=10080
+      #
+      # # topic
+      # auto.leader.rebalance.enable=true
+      # # to be changed when necessary
+      # delete.topic.enable=true
+      # unclean.leader.election.enable=false
+      # auto.create.topics.enable=false
+      # # helpful
+      # group.initial.rebalance.delay.ms=3000
+      #
+      # # auth
+      # sasl.enabled.mechanisms=SCRAM-SHA-512
+      # sasl.mechanism.inter.broker.protocol=SCRAM-SHA-512
+      # security.inter.broker.protocol=SASL_PLAINTEXT
+      # authorizer.class.name=kafka.security.authorizer.AclAuthorizer
+      # allow.everyone.if.no.acl.found=false
+      # super.users=User:sync
+      # listener.name.sasl_plaintext.sasl.enabled.mechanisms=SCRAM-SHA-512
+      # # zookeeper.set.acl=true
 
 
 
@@ -42,7 +61,6 @@ options:
       # leader.imbalance.check.interval.seconds=300
       # leader.imbalance.per.broker.percentage=10
       # log.retention.bytes=-1
-      # log.retention.hours=168
       # log.roll.hours=168
       # log.roll.jitter.hours=0
       # log.segment.bytes=1073741824

@@ -4,14 +4,12 @@
 name: kafka-k8s
 display-name: Kafka K8s
 summary: |
-  Kafka is a distributed system consisting of servers and clients that
-  communicate via a high-performance TCP network protocol.
+  ""
 description: |
-  Apache Kafka is an open-source distributed event streaming platform used by
-  thousands of companies for high-performance data pipelines, streaming analytics,
-  data integration, and mission-critical applications.
+  ""
 maintainers:
-  - David Garcia <david.garcia@canonical.com> 
+  - Marc Oppenheimer <marc.oppenheimer@canonical.com>
+
 containers:
   kafka:
     resource: kafka-image
@@ -19,27 +17,17 @@ containers:
 resources:
   kafka-image:
     type: oci-image
-    description: OCI image for Kafka K8s
-    upstream-source: confluentinc/cp-kafka:7.0.1
-  jmx-prometheus-jar:
-    type: file
-    filename: jmx_prometheus_javaagent.jar
-    description: JMX Prometheus Java Agent (JAR)
+    description: OCI Image for Apache Kafka
+    upstream-source: ubuntu/kafka:latest
+
+peers:
+  cluster:
+    interface: cluster
 
 requires:
   zookeeper:
     interface: zookeeper
-    limit: 1
 
 provides:
   kafka:
     interface: kafka
-  metrics-endpoint:
-    interface: prometheus_scrape
-  grafana-dashboard:
-    interface: grafana_dashboard
-
-storage:
-  data:
-    type: filesystem
-    location: /var/lib/kafka

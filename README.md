@@ -1,108 +1,43 @@
-<!-- Copyright 2022 Canonical Ltd.
-See LICENSE file for licensing details. -->
+## Kafka K8s Operator - a Charmed Operator for running Apache Kafka on Kubernetes from Canonical
 
-# Kafka K8s Operator
+This repository hosts the Machine Python Operator for [Apache Kafka](https://kafka.apache.org).
+The Kafka K8s Operator is a Python script that uses the latest upstream Kafka binaries released by the The Apache Software Foundation that comes with Kafka, made available using the [`ubuntu/kafka` OCI image](https://registry.hub.docker.com/r/ubuntu/kafka) distributed by Canonical.
 
-[![code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black/tree/main)
-[![Run-Tests](https://github.com/canonical/kafka-k8s-operator/actions/workflows/ci.yaml/badge.svg)](https://github.com/canonical/kafka-k8s-operator/actions/workflows/ci.yaml)
+As currently Kafka requires a paired ZooKeeper deployment in production, this operator makes use of the [ZooKeeper K8s Operator](https://github.com/canonical/zookeeper-k8s-operator) for various essential functions. 
 
-[![Kafka K8s](https://charmhub.io/kafka-k8s/badge.svg)](https://charmhub.io/kafka-k8s)
+### Usage
 
-## Description
+The Kafka and ZooKeeper operators can both be deployed and connected to each other using the Juju command line as follows:
 
-Apache Kafka is an open-source distributed event streaming platform used by thousands of companies for high-performance data pipelines, streaming analytics, data integration, and mission-critical applications.
-
-This repository contains a Charm Operator for deploying the Kafka in a Kubernetes cluster.
-
-<!-- ## Tutorials
--  -->
-
-## How-to guides
-
-### Deploy Kafka
-
-The Kafka K8s Operator may be deployed using the Juju command line as in
-
-```shell
-$ juju add-model kafka-k8s
-$ juju deploy kafka-k8s --trust
-$ juju deploy zookeeper-k8s
+```bash
+$ juju deploy zookeeper-k8s -n 3
+$ juju deploy kafka-k8s -n 3
 $ juju relate kafka-k8s zookeeper-k8s
 ```
 
-### Scale Kafka
+## A fast and fault-tolerant, real-time event streaming platform!
 
-Scale Kafka by executing the following command
+Manual, Day 2 operations for deploying and operating Apache Kafka, topic creation, client authentication, ACL management and more are all handled automatically using the [Juju Operator Lifecycle Manager](https://juju.is/docs/olm).
 
-```shell
-$ juju scale-application kafka-k8s 3
-```
+### Key Features
+- SASL/SCRAM auth for Broker-Broker and Client-Broker authenticaion enabled by default.
+- Access control management supported with user-provided ACL lists.
+- Fault-tolerance, replication and high-availability out-of-the-box.
+- Streamlined topic-creation through [Juju Actions](https://juju.is/docs/olm/working-with-actions) and [application relations](https://juju.is/docs/olm/relations)
 
-## Integration with Canonical Observability Stack
 
-This exporter can very easily be integrated with Canonical Observability Stack (COS).
+### Checklist
 
-To do so, after following the steps from the previous section, execute the following commands:
+- [x] Super-user creation
+- [x] Inter-broker auth
+- [x] Horizontally scale brokers
+- [x] Username/Password creation for related applications
+- [ ] Automatic topic creation with associated user ACLs
+- [ ] Partition rebalancing during broker scaling
+- [ ] Rack awareness support
+- [ ] Persistent storage support with [Juju Storage](https://juju.is/docs/olm/defining-and-using-persistent-storage)
+- [ ] TLS/SSL support
 
-```shell
-$ juju deploy cos-lite --channel beta --trust
-$ juju upgrade-charm grafana --channel edge
-$ juju relate grafana kafka-k8s
-$ juju relate prometheus kafka-k8s
-```
+## Usage
 
-Wait until everything is deployed:
-```shell
-$ watch -c juju status --color
-Model      Controller          Cloud/Region        Version  SLA          Timestamp
-kafka-k8s  microk8s-localhost  microk8s/localhost  2.9.25   unsupported  15:33:09+01:00
-
-App            Version  Status   Scale  Charm             Store     Channel  Rev  OS          Address          Message
-alertmanager            waiting      1  alertmanager-k8s  charmhub  beta       9  kubernetes  10.152.183.185
-grafana                 active       1  grafana-k8s       charmhub  edge      28  kubernetes  10.152.183.247
-kafka-k8s               active       1  kafka-k8s         charmhub  edge       0  kubernetes  10.152.183.25
-loki                    active       1  loki-k8s          charmhub  beta      13  kubernetes  10.152.183.32
-prometheus              active       1  prometheus-k8s    charmhub  beta      19  kubernetes  10.152.183.211
-zookeeper-k8s           active       1  zookeeper-k8s     charmhub  edge      10  kubernetes  10.152.183.153
-
-Unit              Workload     Agent  Address       Ports  Message
-alertmanager/0*   active       idle   10.1.245.86
-grafana/0*        active       idle   10.1.245.101
-kafka-k8s/0*      active       idle   10.1.245.68
-loki/0*           active       idle   10.1.245.107
-prometheus/0*     active       idle   10.1.245.82
-zookeeper-k8s/0*  active       idle   10.1.245.81
-```
-
-To see the metrics, you can get the grafana admin password as follows:
-
-```shell
-$ juju run-action grafana/0 get-admin-password --wait
-unit-grafana-0:
-  UnitId: grafana/0
-  id: "2"
-  results:
-    admin-password: *************
-  status: completed
-  timing:
-    completed: 2022-03-02 14:31:49 +0000 UTC
-    enqueued: 2022-03-02 14:31:39 +0000 UTC
-    started: 2022-03-02 14:31:48 +0000 UTC
-```
-
-Open your browser and go to the Grafana dashboard at port 3000.
-
-## Reference
-
-- [Kafka documentation](https://kafka.apache.org/documentation/)
-- [OCI image](https://hub.docker.com/r/confluentinc/cp-kafka): currently using tag `7.0.1`.
-
-## Explanation
-
-- [What is Apache Kafka?](https://kafka.apache.org/intro)
-
-## Contributing
-
-Please see the [Juju SDK docs](https://juju.is/docs/sdk) for guidelines
-on enhancements to this charm following best practice guidelines, and
-`CONTRIBUTING.md` for developer guidance.
+This charm is still in active development. If you would like to contribute, please refer to [CONTRIBUTING.md](https://github.com/canonical/kafka-k8s-operator/blob/main/CONTRIBUTING.md)
