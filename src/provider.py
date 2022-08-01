@@ -50,7 +50,10 @@ class KafkaProvider(Object):
         username = f"relation-{relation.id}"
         password = self.app_relation.data[self.charm.app].get(username, self.generate_password())
         units = set([self.charm.unit] + list(self.app_relation.units))
-        endpoints = [self.app_relation.data[unit]["private-address"] for unit in units]
+        endpoints = [
+            f"{self.charm.app.name}-{unit.name.split('/')[1]}.{self.charm.app.name}-endpoints"
+            for unit in units
+        ]
 
         return {"username": username, "password": password, "endpoints": ",".join(endpoints)}
 
