@@ -165,11 +165,9 @@ class KafkaK8sCharm(CharmBase):
 
     def _on_zookeeper_broken(self, _: RelationEvent) -> None:
         """Handler for `zookeeper_relation_departed/broken` events."""
-        # if missing zookeeper_config, there is no required ZooKeeper relation, block
-        if not zookeeper_connected(charm=self):
-            logger.info("stopping kafka service")
-            self.container.stop(CHARM_KEY)
-            self.unit.status = BlockedStatus("missing required zookeeper relation")
+        logger.info("stopping kafka service")
+        self.container.stop(CHARM_KEY)
+        self.unit.status = BlockedStatus("missing required zookeeper relation")
 
     def add_user_to_zookeeper(self, username: str, password: str) -> None:
         """Adds user credentials to ZooKeeper for authorising clients and brokers.
