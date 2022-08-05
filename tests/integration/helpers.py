@@ -14,7 +14,7 @@ APP_NAME = METADATA["name"]
 
 def check_user(model_full_name: str, username: str, zookeeper_uri: str) -> None:
     result = check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh kafka/0 'kafka.configs --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}'",
+        f"JUJU_MODEL={model_full_name} juju ssh kafka-k8s/0 'kafka.configs --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
