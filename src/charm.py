@@ -2,316 +2,207 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Kafka K8s charm module."""
+"""Charmed Machine Operator for Apache Kafka."""
 
 import logging
-from typing import Any, Dict
+import secrets
+import string
+from typing import List
 
-from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
-from charms.kafka_k8s.v0.kafka import KafkaProvides
-from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServicePatch
-from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
-from charms.zookeeper_k8s.v0.zookeeper import ZooKeeperEvents, ZooKeeperRequires
-from lightkube.models.core_v1 import ServicePort
-from ops.charm import CharmBase, RelationJoinedEvent
-from ops.framework import StoredState
+from ops.charm import CharmBase, RelationEvent, RelationJoinedEvent
+from ops.framework import EventBase
 from ops.main import main
-from ops.model import (
-    ActiveStatus,
-    BlockedStatus,
-    Container,
-    MaintenanceStatus,
-    ModelError,
-    StatusBase,
-    WaitingStatus,
-)
-from ops.pebble import PathError, ServiceStatus
+from ops.model import ActiveStatus, BlockedStatus, Container, Relation, WaitingStatus
+from ops.pebble import ExecError, Layer
+
+from config import KafkaConfig
+from connection_check import broker_active, zookeeper_connected
+from literals import CHARM_KEY, PEER, ZOOKEEPER_REL_NAME
+from provider import KafkaProvider
 
 logger = logging.getLogger(__name__)
 
-KAFKA_PORT = 9092
-
-
-def _convert_key_to_confluent_syntax(key: str) -> str:
-    new_key = key.replace("_", "___").replace("-", "__").replace(".", "_")
-    new_key = "".join([f"_{char}" if char.isupper() else char for char in new_key])
-    return f"KAFKA_{new_key.upper()}"
-
-
-class CharmError(Exception):
-    """Charm Error Exception."""
-
-    def __init__(self, message: str, status: StatusBase = BlockedStatus) -> None:
-        self.message = message
-        self.status = status
-
 
 class KafkaK8sCharm(CharmBase):
-    """Kafka K8s Charm operator."""
-
-    on = ZooKeeperEvents()
-    _stored = StoredState()
+    """Charmed Operator for Kafka K8s."""
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.kafka = KafkaProvides(self)
-        self.zookeeper = ZooKeeperRequires(self)
+        self.name = CHARM_KEY
+        self.kafka_config = KafkaConfig(self)
+        self.client_relations = KafkaProvider(self)
 
-        # Observe charm events
-        event_observe_mapping = {
-            self.on.kafka_pebble_ready: self._on_config_changed,
-            self.on.config_changed: self._on_config_changed,
-            self.on.update_status: self._on_update_status,
-            self.on.zookeeper_clients_changed: self._on_config_changed,
-            self.on.zookeeper_clients_broken: self._on_zookeeper_clients_broken,
-            self.on.kafka_relation_joined: self._on_kafka_relation_joined,
-        }
-        for event, observer in event_observe_mapping.items():
-            self.framework.observe(event, observer)
-
-        # Stored State
-        self._stored.set_default(kafka_started=False)
-
-        # Patch K8s service port
-        port = ServicePort(KAFKA_PORT, name=f"{self.app.name}")
-        self.service_patcher = KubernetesServicePatch(self, [port])
-
-        # Prometheus and Grafana integration
-        self.metrics_endpoint = MetricsEndpointProvider(
-            self, jobs=[{"static_configs": [{"targets": ["*:1234"]}]}]
+        self.framework.observe(getattr(self.on, "kafka_pebble_ready"), self._on_kafka_pebble_ready)
+        self.framework.observe(getattr(self.on, "leader_elected"), self._on_leader_elected)
+        self.framework.observe(
+            self.on[ZOOKEEPER_REL_NAME].relation_joined, self._on_zookeeper_joined
         )
-        self.grafana_dashboard_provider = GrafanaDashboardProvider(self)
-
-    # ---------------------------------------------------------------------------
-    #   Properties
-    # ---------------------------------------------------------------------------
+        self.framework.observe(
+            self.on[ZOOKEEPER_REL_NAME].relation_changed, self._on_kafka_pebble_ready
+        )
+        self.framework.observe(
+            self.on[ZOOKEEPER_REL_NAME].relation_departed, self._on_zookeeper_broken
+        )
+        self.framework.observe(
+            self.on[ZOOKEEPER_REL_NAME].relation_broken, self._on_zookeeper_broken
+        )
 
     @property
-    def kafka_properties(self) -> Dict[str, Any]:
-        """Get Kafka environment variables.
+    def container(self) -> Container:
+        """Grabs the current Kafka container."""
+        return self.unit.get_container(CHARM_KEY)
 
-        This function uses the configuration kafka-properties to generate the
-        environment variables needed to configure Kafka and in the format expected
-        by the container.
-
-        Returns:
-            Dictionary with the environment variables needed for Kafka container.
-        """
-        envs = {}
-        for kafka_property in self.config["kafka-properties"].splitlines():
-            if "=" not in kafka_property:
-                continue
-            key, value = kafka_property.strip().split("=")
-            key = _convert_key_to_confluent_syntax(key)
-            envs[key] = value
-        return envs
-
-    # ---------------------------------------------------------------------------
-    #   Handlers for Charm Events
-    # ---------------------------------------------------------------------------
-
-    def _on_config_changed(self, _) -> None:
-        """Handler for the config-changed event."""
-        try:
-            self._validate_config()
-            self._check_relations()
-            container: Container = self.unit.get_container("kafka")
-            self._check_container_ready(container)
-            # Add Pebble layer with the kafka service
-            self._patch_entrypoint(container)
-            self._setup_metrics(container)
-            container.add_layer("kafka", self._get_kafka_layer(), combine=True)
-            container.replan()
-
-            # Update kafka information
-            if not self._stored.kafka_started and self.unit.is_leader():
-                self.kafka.set_host_info(self.app.name, KAFKA_PORT)
-            self._stored.kafka_started = True
-
-            # Update charm status
-            self._on_update_status()
-        except CharmError as e:
-            logger.debug(e.message)
-            self.unit.status = e.status(e.message)
-
-    def _on_update_status(self, _=None) -> None:
-        """Handler for the update-status event."""
-        try:
-            self._check_relations()
-            container: Container = self.unit.get_container("kafka")
-            self._check_container_ready(container)
-            self._check_service_configured(container)
-            self._check_service_active(container)
-            self.unit.status = ActiveStatus()
-        except CharmError as e:
-            logger.debug(e.message)
-            self.unit.status = e.status(e.message)
-
-    def _on_zookeeper_clients_broken(self, _) -> None:
-        """Handler for the zookeeper-clients-broken event."""
-        # Check Pebble has started in the container
-        container: Container = self.unit.get_container("kafka")
-        if (
-            container.can_connect()
-            and "kafka" in container.get_plan().services
-            and container.get_service("kafka").current == ServiceStatus.ACTIVE
-        ):
-            logger.debug("Stopping kafka service")
-            container.stop("kafka")
-
-        # Update charm status
-        self.unit.status = BlockedStatus("need zookeeper relation")
-
-    def _on_kafka_relation_joined(self, event: RelationJoinedEvent) -> None:
-        """Handler for the kafka-relation-joined event."""
-        if self._stored.kafka_started and self.unit.is_leader():
-            self.kafka.set_host_info(self.app.name, KAFKA_PORT, event.relation)
-
-    # ---------------------------------------------------------------------------
-    #   Validation and configuration
-    # ---------------------------------------------------------------------------
-
-    def _validate_config(self) -> None:
-        """Validate charm configuration.
-
-        Raises:
-            CharmError: if charm configuration is invalid.
-        """
-        pass
-
-    def _check_relations(self) -> None:
-        """Check required relations.
-
-        Raises:
-            CharmError: if relations are missing.
-        """
-        if not self.zookeeper.hosts:
-            raise CharmError("need zookeeper relation")
-
-    def _check_container_ready(self, container: Container) -> None:
-        """Check Pebble has started in the container.
-
-        Args:
-            container (Container): Container to be checked.
-
-        Raises:
-            CharmError: if container is not ready.
-        """
-        if not container.can_connect():
-            raise CharmError("waiting for pebble to start", MaintenanceStatus)
-
-    def _check_service_configured(self, container: Container) -> None:
-        """Check if kafka service has been successfully configured.
-
-        Args:
-            container (Container): Container to be checked.
-
-        Raises:
-            CharmError: if kafka service has not been configured.
-        """
-        if "kafka" not in container.get_plan().services:
-            raise CharmError("kafka service not configured yet", WaitingStatus)
-
-    def _check_service_active(self, container: Container) -> None:
-        """Check if the kafka service is running.
-
-        Raises:
-            CharmError: if kafka service is not running.
-        """
-        if container.get_service("kafka").current != ServiceStatus.ACTIVE:
-            raise CharmError("kafka service is not running")
-
-    def _patch_entrypoint(self, container: Container) -> None:
-        """Patch entrypoint.
-
-        This function pushes what will be the main entrypoint for the kafka service.
-        The pushed entrypoint is a wrapper to the default one, that unsets the environment
-        variables that Kubernetes autommatically creates that conflict with the expected
-        environment variables by the container.
-
-        Args:
-            container (Container): Container where the entrypoint will be pushed.
-        """
-        if self._file_exists(container, "/entrypoint"):
-            return
-        with open("templates/entrypoint", "r") as f:
-            container.push(
-                "/entrypoint",
-                f.read(),
-                permissions=0o777,
-            )
-
-    def _setup_metrics(self, container: Container) -> None:
-        """Setup metrics.
-
-        Args:
-            container (Container): Container where the the metrics will be setup.
-        """
-        if self.config.get("metrics"):
-            container.make_dir("/opt/prometheus", make_parents=True, permissions=0o555)
-            with open("templates/kafka_broker.yml", "r") as f:
-                container.push("/opt/prometheus/kafka_broker.yml", f)
-            try:
-                resource_path = self.model.resources.fetch("jmx-prometheus-jar")
-                with open(resource_path, "rb") as f:
-                    container.push("/opt/prometheus/jmx_prometheus_javaagent.jar", f)
-            except ModelError:
-                raise CharmError("Missing 'jmx-prometheus-jar' resource")
-
-    def _get_kafka_layer(self) -> Dict[str, Any]:
-        """Get Kafka layer for Pebble.
-
-        Returns:
-            Dict[str, Any]: Pebble layer.
-        """
-        env_variables = {
-            "CHARM_NAME": self.app.name.upper().replace("-", "_"),
-            "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-            "LANG": "C.UTF-8",
-            "CUB_CLASSPATH": '"/usr/share/java/cp-base-new/*"',
-            "container": "oci",
-            "COMPONENT": "kafka",
-            "KAFKA_ZOOKEEPER_CONNECT": self.zookeeper.hosts,
-            **self.kafka_properties,
-        }
-        if self.config.get("metrics"):
-            env_variables[
-                "KAFKA_OPTS"
-            ] = "-javaagent:/opt/prometheus/jmx_prometheus_javaagent.jar=1234:/opt/prometheus/kafka_broker.yml"
-
-        return {
+    @property
+    def _kafka_layer(self) -> Layer:
+        """Returns a Pebble configuration layer for Kafka."""
+        layer_config = {
             "summary": "kafka layer",
-            "description": "pebble config layer for kafka",
+            "description": "Pebble config layer for kafka",
             "services": {
-                "kafka": {
+                CHARM_KEY: {
                     "override": "replace",
-                    "summary": "kafka service",
-                    "command": "/entrypoint",
+                    "summary": "kafka",
+                    "command": self.kafka_config.kafka_command,
                     "startup": "enabled",
-                    "environment": env_variables,
+                    "environment": {"KAFKA_OPTS": self.kafka_config.extra_args},
                 }
             },
         }
+        return Layer(layer_config)
 
-    def _file_exists(self, container: Container, path: str) -> bool:
-        """Check if a file exists in the container.
+    @property
+    def peer_relation(self) -> Relation:
+        """The Kafka peer relation."""
+        return self.model.get_relation(PEER)
+
+    def run_bin_command(self, bin_keyword: str, bin_args: List[str], extra_args: str) -> str:
+        """Runs kafka bin command with desired args.
 
         Args:
-            path (str): Path of the file to be checked.
+            bin_keyword: the kafka shell script to run
+                e.g `configs`, `topics` etc
+            bin_args: the shell command args
+            extra_args (optional): the desired `KAFKA_OPTS` env var values for the command
 
         Returns:
-            bool: True if the file exists, else False.
+            String of kafka bin command output
         """
-        file_exists = None
+        environment = {"KAFKA_OPTS": extra_args}
+        command = [f"/opt/kafka/bin/kafka-{bin_keyword}.sh"] + bin_args
+
         try:
-            _ = container.pull(path)
-            file_exists = True
-        except PathError:
-            file_exists = False
-        exist_str = "exists" if file_exists else 'doesn"t exist'
-        logger.debug(f"File {path} {exist_str}.")
-        return file_exists
+            process = self.container.exec(command=command, environment=environment)
+            output, _ = process.wait_output()
+            logger.debug(f"{output=}")
+            return output
+        except (ExecError) as e:
+            logger.debug(f"cmd failed:\ncommand={e.command}\nstdout={e.stdout}\nstderr={e.stderr}")
+            raise e
+
+    def _on_kafka_pebble_ready(self, event: EventBase) -> None:
+        """Handler for `kafka_pebble_ready` event."""
+        if not self.container.can_connect():
+            event.defer()
+            return
+
+        if not zookeeper_connected(charm=self):
+            self.unit.status = WaitingStatus("waiting for zookeeper relation")
+            return
+
+        # required settings given zookeeper connection config has been created
+        self.kafka_config.set_server_properties()
+        self.kafka_config.set_jaas_config()
+
+        # do not start units until SCRAM users have been added to ZooKeeper for server-server auth
+        if self.unit.is_leader() and self.kafka_config.sync_password:
+            try:
+                self.add_user_to_zookeeper(
+                    username="sync", password=self.kafka_config.sync_password
+                )
+                self.peer_relation.data[self.app].update({"broker-creds": "added"})
+            except ExecError:
+                # command to add users fails sometimes for unknown reasons. Retry seems to fix it.
+                event.defer()
+                return
+
+        # for non-leader units
+        if not self.peer_relation.data[self.app].get("broker-creds", None):
+            logger.debug("broker-creds not yet added to zookeeper")
+            event.defer()
+            return
+
+        # start kafka service
+        self.container.add_layer(CHARM_KEY, self._kafka_layer, combine=True)
+        self.container.replan()
+
+        # start_snap_service can fail silently, confirm with ZK if kafka is actually connected
+        if broker_active(
+            unit=self.unit,
+            zookeeper_config=self.kafka_config.zookeeper_config,
+        ):
+            logger.info(f'Broker {self.unit.name.split("/")[1]} connected')
+            self.unit.status = ActiveStatus()
+        else:
+            self.unit.status = BlockedStatus("kafka unit not connected to ZooKeeper")
+            return
+
+    def _on_leader_elected(self, _) -> None:
+        """Handler for `leader_elected` event, ensuring sync_passwords gets set."""
+        sync_password = self.kafka_config.sync_password
+        if not sync_password:
+            self.peer_relation.data[self.app].update(
+                {
+                    "sync_password": "".join(
+                        [secrets.choice(string.ascii_letters + string.digits) for _ in range(32)]
+                    )
+                }
+            )
+
+    def _on_zookeeper_joined(self, event: RelationJoinedEvent) -> None:
+        """Handler for `zookeeper_relation_joined` event, ensuring chroot gets set."""
+        if self.unit.is_leader():
+            event.relation.data[self.app].update({"chroot": "/" + self.app.name})
+
+    def _on_zookeeper_broken(self, _: RelationEvent) -> None:
+        """Handler for `zookeeper_relation_departed/broken` events."""
+        logger.info("stopping kafka service")
+        self.container.stop(CHARM_KEY)
+        self.unit.status = BlockedStatus("missing required zookeeper relation")
+
+    def add_user_to_zookeeper(self, username: str, password: str) -> None:
+        """Adds user credentials to ZooKeeper for authorising clients and brokers.
+
+        Raises:
+            ops.pebble.ExecError: If the command failed
+        """
+        command = [
+            f"--zookeeper={self.kafka_config.zookeeper_config['connect']}",
+            "--alter",
+            "--entity-type=users",
+            f"--entity-name={username}",
+            f"--add-config=SCRAM-SHA-512=[password={password}]",
+        ]
+        self.run_bin_command(
+            bin_keyword="configs", bin_args=command, extra_args=self.kafka_config.extra_args
+        )
+
+    def delete_user_from_zookeeper(self, username: str) -> None:
+        """Deletes user credentials from ZooKeeper for authorising clients and brokers.
+
+        Raises:
+            ops.pebble.ExecError: If the command failed
+        """
+        command = [
+            f"--zookeeper={self.kafka_config.zookeeper_config['connect']}",
+            "--alter",
+            "--entity-type=users",
+            f"--entity-name={username}",
+            "--delete-config=SCRAM-SHA-512",
+        ]
+        self.run_bin_command(
+            bin_keyword="configs", bin_args=command, extra_args=self.kafka_config.extra_args
+        )
 
 
-if __name__ == "__main__":  # pragma: no cover
+if __name__ == "__main__":
     main(KafkaK8sCharm)

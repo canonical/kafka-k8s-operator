@@ -2,22 +2,53 @@
 
 ## Overview
 
-This documents explains the processes and practices recommended for contributing enhancements to
-the Kafka K8s charm.
+This documents explains the processes and practices recommended for contributing enhancements to this operator.
 
-- Generally, before developing enhancements to this charm, you should consider [opening an issue
-  ](https://github.com/canonical/kafka-k8s-operator/issues) explaining your use case.
-- If you would like to chat with us about your use-cases or proposed implementation, you can reach
-  us at [Canonical Mattermost public channel](https://chat.charmhub.io/charmhub/channels/charm-dev)
-  or [Discourse](https://discourse.charmhub.io/).
-- Familiarising yourself with the [Charmed Operator Framework](https://juju.is/docs/sdk) library
-  will help you a lot when working on new features or bug fixes.
+- Generally, before developing enhancements to this charm, you should consider [opening an issue](https://github.com/canonical/kafka-operator/issues) explaining your problem with examples, and your desired use case.
+- If you would like to chat with us about your use-cases or proposed implementation, you can reach us at [Canonical Mattermost public channel](https://chat.charmhub.io/charmhub/channels/charm-dev) or [Discourse](https://discourse.charmhub.io/).
+- Familiarising yourself with the [Charmed Operator Framework](https://juju.is/docs/sdk) library will help you a lot when working on new features or bug fixes.
 - All enhancements require review before being merged. Code review typically examines
   - code quality
   - test coverage
   - user experience for Juju administrators this charm.
-- Please help us out in ensuring easy to review branches by rebasing your pull request branch onto
-  the `main` branch. This also avoids merge commits and creates a linear Git commit history.
+- Please help us out in ensuring easy to review branches by rebasing your pull request branch onto the `main` branch. This also avoids merge commits and creates a linear Git commit history.
+
+## Requirements
+
+To build the charm locally, you will need to install [Charmcraft](https://juju.is/docs/sdk/install-charmcraft).
+
+To run the charm locally with Juju, it is recommended to use [LXD](https://linuxcontainers.org/lxd/introduction/) as your virtual machine manager. Instructions for running Juju on LXD can be found [here](https://juju.is/docs/olm/lxd).
+
+## Build and Deploy
+
+To build the charm in this repository, from the root of the dir you can run:
+Once you have Juju set up locally, to download, build and deploy the charm you can run:
+
+### Deploy
+
+```bash
+# Clone and enter the repository
+git clone https://github.com/canonical/kafka-k8s-operator.git
+cd kafka-k8s-operator/
+
+# Create a working model
+juju add-model kafka-k8s
+
+# Enable DEBUG logging for the model
+juju model-config logging-config="<root>=INFO;unit=DEBUG"
+
+# Build the charm locally
+charmcraft pack
+
+# Deploy the latest ZooKeeper release
+juju deploy zookeeper-k8s --channel edge -n 3
+
+# Deploy the charm
+juju deploy ./*.charm -n 3
+
+# After ZooKeeper has initialised, relate the applications
+juju relate kafka-k8s zookeeper-k8s
+```
 
 ## Developing
 
@@ -38,27 +69,6 @@ tox -e integration   # integration tests
 tox                  # runs 'lint' and 'unit' environments
 ```
 
-## Build charm
-
-Build the charm in this git repository using:
-
-```shell
-charmcraft pack
-```
-
-### Deploy
-
-```bash
-# Create a model
-juju add-model test-kafka-k8s
-# Enable DEBUG logging
-juju model-config logging-config="<root>=INFO;unit=DEBUG"
-# Deploy the charm
-juju deploy ./kafka-k8s_ubuntu-20.04-amd64.charm \
-  --resource kafka-image=confluentinc/cp-kafka:7.0.1 \
-  --resource jmx-prometheus-jar=./jmx_prometheus_javaagent-0.15.0.jar
-```
-
 ## Canonical Contributor Agreement
 
-Canonical welcomes contributions to the Charmed Kafka K8s Operator. Please check out our [contributor agreement](https://ubuntu.com/legal/contributors) if you're interested in contributing to the solution.
+Canonical welcomes contributions to the Charmed Kafka Kubernetes Operator. Please check out our [contributor agreement](https://ubuntu.com/legal/contributors) if you're interested in contributing to the solution.

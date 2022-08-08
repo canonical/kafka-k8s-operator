@@ -1,5 +1,4 @@
-# Copyright 2022 Canonical Ltd.
-# See LICENSE file for licensing details.
-ops >= 1.2.0
-lightkube
-lightkube-models
+ops >= 1.5.0
+kazoo >= 2.8.0
+tenacity >= 8.0.1
+pure-sasl >= 0.6.2
