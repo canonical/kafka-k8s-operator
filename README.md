@@ -1,6 +1,6 @@
 ## Kafka K8s Operator - a Charmed Operator for running Apache Kafka on Kubernetes from Canonical
 
-This repository hosts the Machine Python Operator for [Apache Kafka](https://kafka.apache.org).
+This repository hosts the Kubernetes Python Operator for [Apache Kafka](https://kafka.apache.org).
 The Kafka K8s Operator is a Python script that uses the latest upstream Kafka binaries released by the The Apache Software Foundation that comes with Kafka, made available using the [`ubuntu/kafka` OCI image](https://registry.hub.docker.com/r/ubuntu/kafka) distributed by Canonical.
 
 As currently Kafka requires a paired ZooKeeper deployment in production, this operator makes use of the [ZooKeeper K8s Operator](https://github.com/canonical/zookeeper-k8s-operator) for various essential functions. 
