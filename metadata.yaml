@@ -29,5 +29,5 @@ requires:
     interface: zookeeper
 
 provides:
-  kafka:
-    interface: kafka
+  kafka-client:
+    interface: kafka_client
