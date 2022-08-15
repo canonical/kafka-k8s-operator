@@ -5,19 +5,25 @@
 """Charmed Machine Operator for Apache Kafka."""
 
 import logging
-from typing import List
 
-from ops.charm import ActionEvent, CharmBase, RelationEvent, RelationJoinedEvent
+from charms.rolling_ops.v0.rollingops import RollingOpsManager
+from ops.charm import (
+    ActionEvent,
+    CharmBase,
+    ConfigChangedEvent,
+    RelationEvent,
+    RelationJoinedEvent,
+)
 from ops.framework import EventBase
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, Container, Relation, WaitingStatus
-from ops.pebble import ExecError, Layer
+from ops.pebble import ExecError, Layer, PathError, ProtocolError
 
+from auth import KafkaAuth
 from config import KafkaConfig
-from connection_check import broker_active, zookeeper_connected
 from literals import CHARM_KEY, CHARM_USERS, PEER, ZOOKEEPER_REL_NAME
 from provider import KafkaProvider
-from utils import generate_password
+from utils import broker_active, generate_password
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +36,13 @@ class KafkaK8sCharm(CharmBase):
         self.name = CHARM_KEY
         self.kafka_config = KafkaConfig(self)
         self.client_relations = KafkaProvider(self)
+        self.restart = RollingOpsManager(self, relation="restart", callback=self._restart)
 
         self.framework.observe(getattr(self.on, "kafka_pebble_ready"), self._on_kafka_pebble_ready)
         self.framework.observe(getattr(self.on, "leader_elected"), self._on_leader_elected)
+        self.framework.observe(getattr(self.on, "config_changed"), self._on_config_changed)
+        self.framework.observe(self.on[PEER].relation_changed, self._on_config_changed)
+
         self.framework.observe(
             self.on[ZOOKEEPER_REL_NAME].relation_joined, self._on_zookeeper_joined
         )
@@ -43,7 +53,7 @@ class KafkaK8sCharm(CharmBase):
             self.on[ZOOKEEPER_REL_NAME].relation_broken, self._on_zookeeper_broken
         )
 
-        self.framework.observe(self.on.set_password_action, self._set_password_action)
+        self.framework.observe(getattr(self.on, "set_password_action"), self._set_password_action)
 
     @property
     def container(self) -> Container:
@@ -70,32 +80,8 @@ class KafkaK8sCharm(CharmBase):
 
     @property
     def peer_relation(self) -> Relation:
-        """The Kafka peer relation."""
+        """The Kafka cluster relation."""
         return self.model.get_relation(PEER)
-
-    def run_bin_command(self, bin_keyword: str, bin_args: List[str], extra_args: str) -> str:
-        """Runs kafka bin command with desired args.
-
-        Args:
-            bin_keyword: the kafka shell script to run
-                e.g `configs`, `topics` etc
-            bin_args: the shell command args
-            extra_args (optional): the desired `KAFKA_OPTS` env var values for the command
-
-        Returns:
-            String of kafka bin command output
-        """
-        environment = {"KAFKA_OPTS": extra_args}
-        command = [f"/opt/kafka/bin/kafka-{bin_keyword}.sh"] + bin_args
-
-        try:
-            process = self.container.exec(command=command, environment=environment)
-            output, _ = process.wait_output()
-            logger.debug(f"{output=}")
-            return output
-        except (ExecError) as e:
-            logger.debug(f"cmd failed:\ncommand={e.command}\nstdout={e.stdout}\nstderr={e.stderr}")
-            raise e
 
     def _on_kafka_pebble_ready(self, event: EventBase) -> None:
         """Handler for `kafka_pebble_ready` event."""
@@ -103,7 +89,7 @@ class KafkaK8sCharm(CharmBase):
             event.defer()
             return
 
-        if not zookeeper_connected(charm=self):
+        if not self.kafka_config.zookeeper_connected:
             self.unit.status = WaitingStatus("waiting for zookeeper relation")
             return
 
@@ -113,19 +99,21 @@ class KafkaK8sCharm(CharmBase):
 
         # do not start units until SCRAM users have been added to ZooKeeper for server-server auth
         if self.unit.is_leader() and self.kafka_config.sync_password:
+            kafka_auth = KafkaAuth(
+                opts=[self.kafka_config.extra_args],
+                zookeeper=self.kafka_config.zookeeper_config.get("connect", ""),
+                container=self.container,
+            )
             try:
-                self.add_user_to_zookeeper(
-                    username="sync", password=self.kafka_config.sync_password
-                )
+                kafka_auth.add_user(username="sync", password=self.kafka_config.sync_password)
                 self.peer_relation.data[self.app].update({"broker-creds": "added"})
-            except ExecError:
-                # command to add users fails sometimes for unknown reasons. Retry seems to fix it.
+            except ExecError as e:
+                logger.debug(str(e))
                 event.defer()
                 return
 
         # for non-leader units
-        if not self.peer_relation.data[self.app].get("broker-creds", None):
-            logger.debug("broker-creds not yet added to zookeeper")
+        if not self.ready_to_start:
             event.defer()
             return
 
@@ -143,6 +131,35 @@ class KafkaK8sCharm(CharmBase):
         else:
             self.unit.status = BlockedStatus("kafka unit not connected to ZooKeeper")
             return
+
+    def _on_config_changed(self, event: ConfigChangedEvent) -> None:
+        """Generic handler for most `config_changed` events across relations."""
+        if not self.ready_to_start:
+            event.defer()
+            return
+
+        # Load current properties set in the charm workload
+        raw_properties = None
+        try:
+            raw_properties = self.container.pull(self.kafka_config.properties_filepath)
+        except (ProtocolError, PathError) as e:
+            logger.debug(str(e))
+        if not raw_properties:
+            # Event fired before charm has properly started
+            event.defer()
+            return
+
+        if set(list(raw_properties)) ^ set(self.kafka_config.server_properties):
+            logger.info(
+                (
+                    'Broker {self.unit.name.split("/")[1]} updating config - '
+                    "OLD PROPERTIES = {set(properties) - set(self.kafka_config.server_properties)=}, "
+                    "NEW PROPERTIES = {set(self.kafka_config.server_properties) - set(properties)=}"
+                )
+            )
+            self.kafka_config.set_server_properties()
+
+            self.on[self.restart.name].acquire_lock.emit()
 
     def _on_leader_elected(self, _) -> None:
         """Handler for `leader_elected` event, ensuring sync_passwords gets set."""
@@ -192,8 +209,13 @@ class KafkaK8sCharm(CharmBase):
             return
 
         # Update the user
+        kafka_auth = KafkaAuth(
+            opts=[self.kafka_config.extra_args],
+            zookeeper=self.kafka_config.zookeeper_config.get("connect", ""),
+            container=self.container,
+        )
         try:
-            self.add_user_to_zookeeper(username=username, password=new_password)
+            kafka_auth.add_user(username="sync", password=new_password)
         except ExecError as e:
             logger.error(str(e))
             event.fail(str(e))
@@ -203,39 +225,27 @@ class KafkaK8sCharm(CharmBase):
         self.peer_relation.data[self.app].update({f"{username}_password": new_password})
         event.set_results({f"{username}-password": new_password})
 
-    def add_user_to_zookeeper(self, username: str, password: str) -> None:
-        """Adds user credentials to ZooKeeper for authorising clients and brokers.
+    def _restart(self, event: EventBase) -> None:
+        """Handler for `rolling_ops` restart events."""
+        if not self.ready_to_start:
+            event.defer()
+            return
 
-        Raises:
-            ops.pebble.ExecError: If the command failed
+        self.container.restart()
+
+    @property
+    def ready_to_start(self) -> bool:
+        """Check for active ZooKeeper relation and adding of inter-broker auth username.
+
+        Returns:
+            True if ZK is related and `sync` user has been added. False otherwise.
         """
-        command = [
-            f"--zookeeper={self.kafka_config.zookeeper_config['connect']}",
-            "--alter",
-            "--entity-type=users",
-            f"--entity-name={username}",
-            f"--add-config=SCRAM-SHA-512=[password={password}]",
-        ]
-        self.run_bin_command(
-            bin_keyword="configs", bin_args=command, extra_args=self.kafka_config.extra_args
-        )
+        if not self.kafka_config.zookeeper_connected or not self.peer_relation.data[self.app].get(
+            "broker-creds", None
+        ):
+            return False
 
-    def delete_user_from_zookeeper(self, username: str) -> None:
-        """Deletes user credentials from ZooKeeper for authorising clients and brokers.
-
-        Raises:
-            ops.pebble.ExecError: If the command failed
-        """
-        command = [
-            f"--zookeeper={self.kafka_config.zookeeper_config['connect']}",
-            "--alter",
-            "--entity-type=users",
-            f"--entity-name={username}",
-            "--delete-config=SCRAM-SHA-512",
-        ]
-        self.run_bin_command(
-            bin_keyword="configs", bin_args=command, extra_args=self.kafka_config.extra_args
-        )
+        return True
 
 
 if __name__ == "__main__":
