@@ -32,7 +32,7 @@ class KafkaProvider(Object):
         self.charm = charm
         self.kafka_config = KafkaConfig(self.charm)
         self.kafka_auth = KafkaAuth(
-            container=self.charm.get_container(CHARM_KEY),
+            container=self.charm.unit.get_container(CHARM_KEY),
             opts=[self.kafka_config.extra_args],
             zookeeper=self.kafka_config.zookeeper_config.get("connect", ""),
         )
