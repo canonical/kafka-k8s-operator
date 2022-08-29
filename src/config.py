@@ -8,7 +8,7 @@ import logging
 from typing import Dict, List, Optional
 
 from ops.charm import CharmBase
-from ops.model import Unit
+from ops.model import Container, Unit
 
 from literals import CHARM_KEY, PEER, REL_NAME, ZOOKEEPER_REL_NAME
 
@@ -31,10 +31,14 @@ class KafkaConfig:
 
     def __init__(self, charm: CharmBase):
         self.charm = charm
-        self.container = self.charm.unit.get_container(CHARM_KEY)
         self.default_config_path = f"{self.charm.config['data-dir']}/config"
         self.properties_filepath = f"{self.default_config_path}/server.properties"
         self.jaas_filepath = f"{self.default_config_path}/kafka-jaas.cfg"
+
+    @property
+    def container(self) -> Container:
+        """Grabs the current Kafka container."""
+        return getattr(self.charm, "unit").get_container(CHARM_KEY)
 
     @property
     def sync_password(self) -> Optional[str]:

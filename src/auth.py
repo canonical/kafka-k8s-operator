@@ -39,7 +39,8 @@ class KafkaAuth:
     def _get_acls_from_cluster(self) -> str:
         """Loads the currently active ACLs from the Kafka cluster."""
         command = [
-            f"--authorizer-properties zookeeper.connect={self.zookeeper}",
+            "--authorizer-properties",
+            f"zookeeper.connect={self.zookeeper}",
             "--list",
         ]
         acls = run_bin_command(
@@ -205,7 +206,8 @@ class KafkaAuth:
         """
         if resource_type == "TOPIC":
             command = [
-                f"--authorizer-properties zookeeper.connect={self.zookeeper}",
+                "--authorizer-properties",
+                f"zookeeper.connect={self.zookeeper}",
                 "--add",
                 f"--allow-principal=User:{username}",
                 f"--operation={operation}",
@@ -213,14 +215,15 @@ class KafkaAuth:
             ]
             run_bin_command(
                 container=self.container,
-                bin_keyword="configs",
+                bin_keyword="acls",
                 bin_args=command,
                 extra_args=self.opts,
             )
 
         if resource_type == "GROUP":
             command = [
-                f"--authorizer-properties zookeeper.connect={self.zookeeper}",
+                "--authorizer-properties",
+                f"zookeeper.connect={self.zookeeper}",
                 "--add",
                 f"--allow-principal=User:{username}",
                 f"--operation={operation}",
@@ -229,7 +232,7 @@ class KafkaAuth:
             ]
             run_bin_command(
                 container=self.container,
-                bin_keyword="configs",
+                bin_keyword="acls",
                 bin_args=command,
                 extra_args=self.opts,
             )
@@ -252,7 +255,8 @@ class KafkaAuth:
         """
         if resource_type == "TOPIC":
             command = [
-                f"--authorizer-properties zookeeper.connect={self.zookeeper}",
+                "--authorizer-properties",
+                f"zookeeper.connect={self.zookeeper}",
                 "--remove",
                 f"--allow-principal=User:{username}",
                 f"--operation={operation}",
@@ -261,14 +265,15 @@ class KafkaAuth:
             ]
             run_bin_command(
                 container=self.container,
-                bin_keyword="configs",
+                bin_keyword="acls",
                 bin_args=command,
                 extra_args=self.opts,
             )
 
         if resource_type == "GROUP":
             command = [
-                f"--authorizer-properties zookeeper.connect={self.zookeeper}",
+                "--authorizer-properties",
+                f"zookeeper.connect={self.zookeeper}",
                 "--remove",
                 f"--allow-principal=User:{username}",
                 f"--operation={operation}",
@@ -278,7 +283,7 @@ class KafkaAuth:
             ]
             run_bin_command(
                 container=self.container,
-                bin_keyword="configs",
+                bin_keyword="acls",
                 bin_args=command,
                 extra_args=self.opts,
             )

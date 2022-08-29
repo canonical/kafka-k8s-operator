@@ -141,20 +141,24 @@ class KafkaK8sCharm(CharmBase):
         # Load current properties set in the charm workload
         raw_properties = None
         try:
-            raw_properties = self.container.pull(self.kafka_config.properties_filepath)
+            raw_properties = str(self.container.pull(self.kafka_config.properties_filepath).read())
+            properties = raw_properties.splitlines()
         except (ProtocolError, PathError) as e:
             logger.debug(str(e))
+            event.defer()
+            return
         if not raw_properties:
             # Event fired before charm has properly started
             event.defer()
             return
 
-        if set(list(raw_properties)) ^ set(self.kafka_config.server_properties):
+
+        if set(properties) ^ set(self.kafka_config.server_properties):
             logger.info(
                 (
-                    'Broker {self.unit.name.split("/")[1]} updating config - '
-                    "OLD PROPERTIES = {set(properties) - set(self.kafka_config.server_properties)=}, "
-                    "NEW PROPERTIES = {set(self.kafka_config.server_properties) - set(properties)=}"
+                    f'Broker {self.unit.name.split("/")[1]} updating config - '
+                    f"OLD PROPERTIES = {set(properties) - set(self.kafka_config.server_properties)}, "
+                    f"NEW PROPERTIES = {set(self.kafka_config.server_properties) - set(properties)}"
                 )
             )
             self.kafka_config.set_server_properties()
@@ -231,7 +235,7 @@ class KafkaK8sCharm(CharmBase):
             event.defer()
             return
 
-        self.container.restart()
+        self.container.restart(CHARM_KEY)
 
     @property
     def ready_to_start(self) -> bool:
