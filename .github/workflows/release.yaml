@@ -74,6 +74,7 @@ jobs:
       - lib-check
       - lint
       - unit-test
+      - security-test
       - integration-test
     runs-on: ubuntu-latest
     steps:
