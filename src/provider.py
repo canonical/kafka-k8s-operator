@@ -67,7 +67,7 @@ class KafkaProvider(Object):
             event: the event needing config
 
         Returns:
-            Dict of `username`, `password` and `endpoints` data for the related app
+            Dict of `username`, `password`, `endpoints`, `uris` and `consumer-group-prefix`
         """
         relation = event.relation
 

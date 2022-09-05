@@ -5,7 +5,7 @@ make-admin:
   description: Adds admin to relation data
 
 remove-admin:
-  description: Adds admin to relation data
+  description: Removes admin from relation data
 
 change-topic:
   description: Changes topic
