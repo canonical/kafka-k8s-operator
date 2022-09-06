@@ -36,7 +36,11 @@ async def test_deploy_charms_relate_active(ops_test: OpsTest, usernames):
             "zookeeper-k8s", channel="edge", application_name=ZK_NAME, num_units=3
         ),
         ops_test.model.deploy(
+<<<<<<< HEAD
             kafka_charm,
+=======
+            zk_charm,
+>>>>>>> 9026d42 (fix integration tests)
             application_name=APP_NAME,
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
