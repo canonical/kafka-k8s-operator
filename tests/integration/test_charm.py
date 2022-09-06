@@ -4,6 +4,7 @@
 
 import asyncio
 import logging
+import time
 
 import pytest
 from helpers import APP_NAME, KAFKA_CONTAINER, ZK_NAME, check_application_status
@@ -46,8 +47,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
 @pytest.mark.abort_on_fail
 async def test_blocks_without_zookeeper(ops_test: OpsTest):
+    await ops_test.model.set_config({"update-status-hook-interval": "10s"})
     await asyncio.gather(ops_test.model.applications[ZK_NAME].remove())
-    await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 0)
-    await ops_test.model.wait_for_idle(apps=[APP_NAME])
-
+    time.sleep(15)
     assert ops_test.model.applications[APP_NAME].status == "blocked"
