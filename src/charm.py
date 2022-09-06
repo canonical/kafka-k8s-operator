@@ -152,7 +152,6 @@ class KafkaK8sCharm(CharmBase):
             event.defer()
             return
 
-
         if set(properties) ^ set(self.kafka_config.server_properties):
             logger.info(
                 (
