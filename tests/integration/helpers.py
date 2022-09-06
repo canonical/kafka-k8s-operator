@@ -10,6 +10,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
+KAFKA_CONTAINER = METADATA["resources"]["kafka-image"]["upstream-source"]
 APP_NAME = METADATA["name"]
 ZK_NAME = "zookeeper-k8s"
 
