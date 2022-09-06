@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
+
 import re
 from pathlib import Path
 from subprocess import PIPE, check_output
@@ -19,8 +20,9 @@ ZK_NAME = "zookeeper-k8s"
 
 
 def load_acls(model_full_name: str, zookeeper_uri: str) -> Set[Acl]:
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config=/data/kafka/config/kafka-jaas.cfg ./opt/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect={zookeeper_uri} --list"
     result = check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh {CHARM_KEY}/0 'kafka.acls --authorizer-properties zookeeper.connect={zookeeper_uri} --list'",
+        f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,

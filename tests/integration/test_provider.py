@@ -34,7 +34,7 @@ async def test_deploy_charms_relate_active(ops_test: OpsTest, usernames):
     app_charm = await ops_test.build_charm("tests/integration/app-charm")
 
     await asyncio.gather(
-        ops_test.model.deploy("zookeeper-k8s", channel="edge", application_name=ZK, num_units=1),
+        ops_test.model.deploy("zookeeper-k8s", channel="edge", application_name=ZK, num_units=3),
         ops_test.model.deploy(
             kafka_charm,
             application_name=CHARM_KEY,
