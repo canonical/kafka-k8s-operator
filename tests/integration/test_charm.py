@@ -4,6 +4,7 @@
 
 import asyncio
 import logging
+import time
 
 import pytest
 from helpers import APP_NAME, KAFKA_CONTAINER, ZK_NAME, check_application_status
