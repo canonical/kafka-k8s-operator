@@ -9,7 +9,7 @@ import time
 import pytest
 from pytest_operator.plugin import OpsTest
 
-from literals import CHARM_KEY, ZK
+from literals import CHARM_KEY, ZOOKEEPER_REL_NAME
 from tests.integration.helpers import get_kafka_zk_relation_data
 from utils import get_active_brokers
 
@@ -21,7 +21,7 @@ async def test_kafka_simple_scale_up(ops_test: OpsTest):
     kafka_charm = await ops_test.build_charm(".")
 
     await asyncio.gather(
-        ops_test.model.deploy("zookeeper-k8s", application_name=ZK, num_units=3),
+        ops_test.model.deploy("zookeeper-k8s", application_name=ZOOKEEPER_REL_NAME, num_units=1),
         ops_test.model.deploy(
             kafka_charm,
             application_name=CHARM_KEY,
@@ -29,10 +29,10 @@ async def test_kafka_simple_scale_up(ops_test: OpsTest):
             resources={"kafka-image": "ubuntu/kafka:latest"},
         ),
     )
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, ZK])
-    await ops_test.model.add_relation(CHARM_KEY, ZK)
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, ZK])
-    assert ops_test.model.applications[ZK].status == "active"
+    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, ZOOKEEPER_REL_NAME])
+    await ops_test.model.add_relation(CHARM_KEY, ZOOKEEPER_REL_NAME)
+    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, ZOOKEEPER_REL_NAME])
+    assert ops_test.model.applications[ZOOKEEPER_REL_NAME].status == "active"
     assert ops_test.model.applications[CHARM_KEY].status == "active"
 
     await ops_test.model.applications[CHARM_KEY].add_units(count=2)

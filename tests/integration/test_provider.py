@@ -9,7 +9,7 @@ import time
 import pytest
 from pytest_operator.plugin import OpsTest
 
-from literals import CHARM_KEY, ZK
+from literals import CHARM_KEY, ZOOKEEPER_REL_NAME
 from tests.integration.helpers import (
     check_user,
     get_zookeeper_connection,
@@ -34,7 +34,7 @@ async def test_deploy_charms_relate_active(ops_test: OpsTest, usernames):
     app_charm = await ops_test.build_charm("tests/integration/app-charm")
 
     await asyncio.gather(
-        ops_test.model.deploy("zookeeper-k8s", channel="edge", application_name=ZK, num_units=3),
+        ops_test.model.deploy("zookeeper-k8s", channel="edge", application_name=ZOOKEEPER_REL_NAME, num_units=3),
         ops_test.model.deploy(
             kafka_charm,
             application_name=CHARM_KEY,
@@ -43,9 +43,9 @@ async def test_deploy_charms_relate_active(ops_test: OpsTest, usernames):
         ),
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_1, num_units=1),
     )
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, DUMMY_NAME_1, ZK])
-    await ops_test.model.add_relation(CHARM_KEY, ZK)
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, ZK])
+    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, DUMMY_NAME_1, ZOOKEEPER_REL_NAME])
+    await ops_test.model.add_relation(CHARM_KEY, ZOOKEEPER_REL_NAME)
+    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, ZOOKEEPER_REL_NAME])
     await ops_test.model.add_relation(CHARM_KEY, DUMMY_NAME_1)
     await ops_test.model.wait_for_idle(apps=[CHARM_KEY, DUMMY_NAME_1])
     assert ops_test.model.applications[CHARM_KEY].status == "active"
