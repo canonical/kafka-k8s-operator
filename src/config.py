@@ -8,8 +8,9 @@ import logging
 from typing import Dict, List, Optional
 
 from ops.charm import CharmBase
+from ops.model import Container, Unit
 
-from literals import CHARM_KEY, PEER, ZOOKEEPER_REL_NAME
+from literals import CHARM_KEY, PEER, REL_NAME, ZOOKEEPER_REL_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,6 @@ sasl.mechanism.inter.broker.protocol=SCRAM-SHA-512
 security.inter.broker.protocol=SASL_PLAINTEXT
 authorizer.class.name=kafka.security.authorizer.AclAuthorizer
 allow.everyone.if.no.acl.found=false
-super.users=User:sync
 listener.name.sasl_plaintext.sasl.enabled.mechanisms=SCRAM-SHA-512
 """
 
@@ -31,10 +31,14 @@ class KafkaConfig:
 
     def __init__(self, charm: CharmBase):
         self.charm = charm
-        self.container = self.charm.unit.get_container(CHARM_KEY)
         self.default_config_path = f"{self.charm.config['data-dir']}/config"
         self.properties_filepath = f"{self.default_config_path}/server.properties"
         self.jaas_filepath = f"{self.default_config_path}/kafka-jaas.cfg"
+
+    @property
+    def container(self) -> Container:
+        """Grabs the current Kafka container."""
+        return getattr(self.charm, "unit").get_container(CHARM_KEY)
 
     @property
     def sync_password(self) -> Optional[str]:
@@ -62,11 +66,26 @@ class KafkaConfig:
             break
 
         if zookeeper_config:
-            zookeeper_config["connect"] = (
-                zookeeper_config["uris"].replace(zookeeper_config["chroot"], "")
-                + zookeeper_config["chroot"]
+            sorted_uris = sorted(
+                zookeeper_config["uris"].replace(zookeeper_config["chroot"], "").split(",")
             )
+            sorted_uris[-1] = sorted_uris[-1] + zookeeper_config["chroot"]
+            zookeeper_config["connect"] = ",".join(sorted_uris)
+
         return zookeeper_config
+
+    @property
+    def zookeeper_connected(self) -> bool:
+        """Checks if there is an active ZooKeeper relation.
+
+        Returns:
+            True if ZooKeeper is currently related with sufficient relation data
+                for a broker to connect with. False otherwise.
+        """
+        if self.zookeeper_config.get("connect", None):
+            return True
+
+        return False
 
     @property
     def extra_args(self) -> str:
@@ -78,6 +97,19 @@ class KafkaConfig:
         extra_args = f"-Djava.security.auth.login.config={self.jaas_filepath}"
 
         return extra_args
+
+    @property
+    def bootstrap_server(self) -> List[str]:
+        """The current Kafka uris formatted for the `bootstrap-server` command flag.
+
+        Returns:
+            List of `bootstrap-server` servers
+        """
+        units: List[Unit] = list(
+            set([self.charm.unit] + list(self.charm.model.get_relation(PEER).units))
+        )
+        hosts = [self.get_host_from_unit(unit=unit) for unit in units]
+        return [f"{host}:9092" for host in hosts]
 
     @property
     def kafka_command(self) -> str:
@@ -116,7 +148,7 @@ class KafkaConfig:
             List of properties to be set
         """
         broker_id = self.charm.unit.name.split("/")[1]
-        host = f"{self.charm.app.name}-{broker_id}.{self.charm.app.name}-endpoints"
+        host = self.get_host_from_unit(unit=self.charm.unit)
 
         return [
             f"broker.id={broker_id}",
@@ -125,14 +157,66 @@ class KafkaConfig:
             f'listener.name.sasl_plaintext.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="sync" password="{self.sync_password}";',
         ]
 
+    @property
+    def super_users(self) -> str:
+        """Generates all users with super/admin permissions for the cluster from relations.
+
+        Formatting allows passing to the `super.users` property.
+
+        Returns:
+            Semi-colon delimited string of current super users
+        """
+        super_users = ["sync"]
+        for relation in self.charm.model.relations[REL_NAME]:
+            extra_user_roles = relation.data[relation.app].get("extra-user-roles", "")
+            password = (
+                self.charm.model.get_relation(PEER)
+                .data[self.charm.app]
+                .get(f"relation-{relation.id}", None)
+            )
+            # if passwords are set for client admins, they're good to load
+            if "admin" in extra_user_roles and password is not None:
+                super_users.append(f"relation-{relation.id}")
+
+        super_users_arg = [f"User:{user}" for user in super_users]
+
+        return ";".join(super_users_arg)
+
+    @property
+    def server_properties(self) -> List[str]:
+        """Builds all properties necessary for starting Kafka service.
+
+        This includes charm config, replication, SASL/SCRAM auth and default properties.
+
+        Returns:
+            List of properties to be set
+        """
+        return (
+            [
+                f"data.dir={self.charm.config['data-dir']}",
+                f"log.dir={self.charm.config['log-dir']}",
+                f"offsets.retention.minutes={self.charm.config['offsets-retention-minutes']}",
+                f"log.retention.hours={self.charm.config['log-retention-hours']}",
+                f"auto.create.topics={self.charm.config['auto-create-topics']}",
+                f"super.users={self.super_users}",
+            ]
+            + self.default_replication_properties
+            + self.auth_properties
+            + DEFAULT_CONFIG_OPTIONS.split("\n")
+        )
+
     def push(self, content: str, path: str) -> None:
-        """Simple wrapper for writing a file and contents to a container.
+        """Wrapper for writing a file and contents to a container.
 
         Args:
             content: the text content to write to a file path
             path: the full path of the desired file
         """
         self.container.push(path, content, make_dirs=True)
+
+    def set_server_properties(self) -> None:
+        """Sets all kafka config properties to the `server.properties` path."""
+        self.push(content="\n".join(self.server_properties), path=self.properties_filepath)
 
     def set_jaas_config(self) -> None:
         """Sets the Kafka JAAS config using zookeeper relation data."""
@@ -145,19 +229,15 @@ class KafkaConfig:
         """
         self.push(content=jaas_config, path=self.jaas_filepath)
 
-    def set_server_properties(self) -> None:
-        """Sets all kafka config properties to the server.properties path."""
-        server_properties = (
-            [
-                f"data.dir={self.charm.config['data-dir']}",
-                f"log.dir={self.charm.config['log-dir']}",
-                f"offsets.retention.minutes={self.charm.config['offsets-retention-minutes']}",
-                f"log.retention.hours={self.charm.config['log-retention-hours']}",
-                f"auto.create.topics={self.charm.config['auto-create-topics']}",
-            ]
-            + self.default_replication_properties
-            + self.auth_properties
-            + DEFAULT_CONFIG_OPTIONS.split("\n")
-        )
+    def get_host_from_unit(self, unit: Unit) -> str:
+        """Builds K8s host address for a given `Unit`.
 
-        self.push(content="\n".join(server_properties), path=self.properties_filepath)
+        Args:
+            unit: the desired unit
+
+        Returns:
+            String of host address
+        """
+        broker_id = unit.name.split("/")[1]
+
+        return f"{self.charm.app.name}-{broker_id}.{self.charm.app.name}-endpoints"
