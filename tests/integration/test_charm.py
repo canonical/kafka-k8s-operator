@@ -47,7 +47,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
 @pytest.mark.abort_on_fail
 async def test_blocks_without_zookeeper(ops_test: OpsTest):
     async with ops_test.fast_forward():
-        await asyncio.gather(ops_test.model.applications[ZK_NAME].remove())
+        await ops_test.model.applications[ZK_NAME].remove()
         await ops_test.model.wait_for_idle(apps=[APP_NAME], raise_on_error=False, timeout=1000)
 
     assert check_application_status(ops_test, APP_NAME) == "blocked"
