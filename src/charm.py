@@ -5,11 +5,9 @@
 """Charmed Machine Operator for Apache Kafka."""
 
 import logging
-import secrets
-import string
 from typing import List
 
-from ops.charm import CharmBase, RelationEvent, RelationJoinedEvent
+from ops.charm import ActionEvent, CharmBase, RelationEvent, RelationJoinedEvent
 from ops.framework import EventBase
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, Container, Relation, WaitingStatus
@@ -17,8 +15,9 @@ from ops.pebble import ExecError, Layer
 
 from config import KafkaConfig
 from connection_check import broker_active, zookeeper_connected
-from literals import CHARM_KEY, PEER, ZOOKEEPER_REL_NAME
+from literals import CHARM_KEY, CHARM_USERS, PEER, ZOOKEEPER_REL_NAME
 from provider import KafkaProvider
+from utils import generate_password
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +42,8 @@ class KafkaK8sCharm(CharmBase):
         self.framework.observe(
             self.on[ZOOKEEPER_REL_NAME].relation_broken, self._on_zookeeper_broken
         )
+
+        self.framework.observe(self.on.set_password_action, self._set_password_action)
 
     @property
     def container(self) -> Container:
@@ -146,14 +147,9 @@ class KafkaK8sCharm(CharmBase):
     def _on_leader_elected(self, _) -> None:
         """Handler for `leader_elected` event, ensuring sync_passwords gets set."""
         sync_password = self.kafka_config.sync_password
-        if not sync_password:
-            self.peer_relation.data[self.app].update(
-                {
-                    "sync_password": "".join(
-                        [secrets.choice(string.ascii_letters + string.digits) for _ in range(32)]
-                    )
-                }
-            )
+        self.peer_relation.data[self.app].update(
+            {"sync_password": sync_password or generate_password()}
+        )
 
     def _on_zookeeper_joined(self, event: RelationJoinedEvent) -> None:
         """Handler for `zookeeper_relation_joined` event, ensuring chroot gets set."""
@@ -169,6 +165,43 @@ class KafkaK8sCharm(CharmBase):
         logger.info("stopping kafka service")
         self.container.stop(CHARM_KEY)
         self.unit.status = BlockedStatus("missing required zookeeper relation")
+
+    def _set_password_action(self, event: ActionEvent):
+        """Handler for set-password action.
+
+        Set the password for a specific user, if no passwords are passed, generate them.
+        """
+        if not self.unit.is_leader():
+            msg = "Password rotation must be called on leader unit"
+            logger.error(msg)
+            event.fail(msg)
+            return
+
+        username = event.params.get("username", "sync")
+        if username not in CHARM_USERS:
+            msg = f"The action can be run only for users used by the charm: {CHARM_USERS} not {username}."
+            logger.error(msg)
+            event.fail(msg)
+            return
+
+        new_password = event.params.get("password", generate_password())
+
+        if new_password == self.kafka_config.sync_password:
+            event.log("The old and new passwords are equal.")
+            event.set_results({f"{username}-password": new_password})
+            return
+
+        # Update the user
+        try:
+            self.add_user_to_zookeeper(username=username, password=new_password)
+        except ExecError as e:
+            logger.error(str(e))
+            event.fail(str(e))
+            return
+
+        # Store the password on application databag
+        self.peer_relation.data[self.app].update({f"{username}_password": new_password})
+        event.set_results({f"{username}-password": new_password})
 
     def add_user_to_zookeeper(self, username: str, password: str) -> None:
         """Adds user credentials to ZooKeeper for authorising clients and brokers.

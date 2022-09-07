@@ -8,3 +8,4 @@ CHARM_KEY = "kafka"
 PEER = "cluster"
 ZOOKEEPER_REL_NAME = "zookeeper"
 REL_NAME = "kafka"
+CHARM_USERS = ["sync"]
