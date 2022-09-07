@@ -11,7 +11,6 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from auth import Acl, KafkaAuth
-from literals import CHARM_KEY
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 KAFKA_CONTAINER = METADATA["resources"]["kafka-image"]["upstream-source"]
@@ -33,7 +32,7 @@ def load_acls(model_full_name: str, zookeeper_uri: str) -> Set[Acl]:
 
 def load_super_users(model_full_name: str) -> List[str]:
     result = check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh {CHARM_KEY}/0 'cat /data/kafka/server.properties'",
+        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {APP_NAME}/0 'cat /data/kafka/config/server.properties'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,

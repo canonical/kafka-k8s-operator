@@ -16,6 +16,7 @@ from utils import get_active_brokers
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.skip  # skip until scaling operations work in MicroK8s
 @pytest.mark.abort_on_fail
 async def test_kafka_simple_scale_up(ops_test: OpsTest):
     kafka_charm = await ops_test.build_charm(".")
@@ -51,6 +52,7 @@ async def test_kafka_simple_scale_up(ops_test: OpsTest):
     assert f"{chroot}/brokers/ids/2" in active_brokers
 
 
+@pytest.mark.skip  # skip until scaling operations work in MicroK8s
 @pytest.mark.abort_on_fail
 async def test_kafka_simple_scale_down(ops_test: OpsTest):
 

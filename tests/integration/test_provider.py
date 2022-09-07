@@ -9,8 +9,10 @@ import time
 import pytest
 from pytest_operator.plugin import OpsTest
 
-from literals import CHARM_KEY, ZOOKEEPER_REL_NAME
 from tests.integration.helpers import (
+    APP_NAME,
+    KAFKA_CONTAINER,
+    ZK_NAME,
     check_user,
     get_zookeeper_connection,
     load_acls,
@@ -34,26 +36,29 @@ async def test_deploy_charms_relate_active(ops_test: OpsTest, usernames):
     app_charm = await ops_test.build_charm("tests/integration/app-charm")
 
     await asyncio.gather(
-        ops_test.model.deploy("zookeeper-k8s", channel="edge", application_name=ZOOKEEPER_REL_NAME, num_units=3),
+        ops_test.model.deploy(
+            "zookeeper-k8s", channel="edge", application_name=ZK_NAME, num_units=3
+        ),
         ops_test.model.deploy(
             kafka_charm,
-            application_name=CHARM_KEY,
+            application_name=APP_NAME,
             num_units=1,
-            resources={"kafka-image": "ubuntu/kafka:latest"},
+            resources={"kafka-image": KAFKA_CONTAINER},
         ),
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_1, num_units=1),
     )
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, DUMMY_NAME_1, ZOOKEEPER_REL_NAME])
-    await ops_test.model.add_relation(CHARM_KEY, ZOOKEEPER_REL_NAME)
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, ZOOKEEPER_REL_NAME])
-    await ops_test.model.add_relation(CHARM_KEY, DUMMY_NAME_1)
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, DUMMY_NAME_1])
-    assert ops_test.model.applications[CHARM_KEY].status == "active"
+    await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME])
+    await ops_test.model.add_relation(APP_NAME, ZK_NAME)
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME])
+    await ops_test.model.add_relation(APP_NAME, DUMMY_NAME_1)
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1])
+    assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME_1].status == "active"
 
     # implicitly tests setting of kafka app data
     returned_usernames, zookeeper_uri = get_zookeeper_connection(
-        unit_name=f"{CHARM_KEY}/0", model_full_name=ops_test.model_full_name
+        unit_name=f"{APP_NAME}/0", model_full_name=ops_test.model_full_name
     )
     usernames.update(returned_usernames)
 
@@ -70,21 +75,70 @@ async def test_deploy_charms_relate_active(ops_test: OpsTest, usernames):
         assert acl.resource_type in ["GROUP", "TOPIC"]
         if acl.resource_type == "TOPIC":
             assert acl.resource_name == "test-topic"
+
+
+@pytest.mark.abort_on_fail
+async def test_change_client_topic(ops_test: OpsTest):
+    action = await ops_test.model.units.get(f"{DUMMY_NAME_1}/0").run_action("change-topic")
+    await action.wait()
+
+    assert ops_test.model.applications[APP_NAME].status == "active"
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1])
+
+    _, zookeeper_uri = get_zookeeper_connection(
+        unit_name=f"{APP_NAME}/0", model_full_name=ops_test.model_full_name
+    )
+
+    for acl in load_acls(model_full_name=ops_test.model_full_name, zookeeper_uri=zookeeper_uri):
+        if acl.resource_type == "TOPIC":
+            assert acl.resource_name == "test-topic-changed"
+
+
+@pytest.mark.abort_on_fail
+async def test_admin_added_to_super_users(ops_test: OpsTest):
+    # ensures only broker user for now
+    super_users = load_super_users(model_full_name=ops_test.model_full_name)
+    assert len(super_users) == 1
+
+    action = await ops_test.model.units.get(f"{DUMMY_NAME_1}/0").run_action("make-admin")
+    await action.wait()
+
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1])
+    assert ops_test.model.applications[APP_NAME].status == "active"
+
+    super_users = load_super_users(model_full_name=ops_test.model_full_name)
+    assert len(super_users) == 2
+
+
+@pytest.mark.abort_on_fail
+async def test_admin_removed_from_super_users(ops_test: OpsTest):
+    action = await ops_test.model.units.get(f"{DUMMY_NAME_1}/0").run_action("remove-admin")
+    await action.wait()
+
+    time.sleep(20)
+
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1])
+    assert ops_test.model.applications[APP_NAME].status == "active"
+
+    super_users = load_super_users(model_full_name=ops_test.model_full_name)
+    assert len(super_users) == 1
 
 
 @pytest.mark.abort_on_fail
 async def test_deploy_multiple_charms_same_topic_relate_active(ops_test: OpsTest, usernames):
     appii_charm = await ops_test.build_charm("tests/integration/app-charm")
     await ops_test.model.deploy(appii_charm, application_name=DUMMY_NAME_2, num_units=1),
-    await ops_test.model.wait_for_idle(apps=[DUMMY_NAME_2])
-    await ops_test.model.add_relation(CHARM_KEY, DUMMY_NAME_2)
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, DUMMY_NAME_2])
-    assert ops_test.model.applications[CHARM_KEY].status == "active"
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(apps=[DUMMY_NAME_2], timeout=1000)
+        await ops_test.model.add_relation(APP_NAME, DUMMY_NAME_2)
+        await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_2], timeout=1000)
+
+    assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME_1].status == "active"
     assert ops_test.model.applications[DUMMY_NAME_2].status == "active"
 
     returned_usernames, zookeeper_uri = get_zookeeper_connection(
-        unit_name=f"{CHARM_KEY}/0", model_full_name=ops_test.model_full_name
+        unit_name=f"{APP_NAME}/0", model_full_name=ops_test.model_full_name
     )
     usernames.update(returned_usernames)
 
@@ -97,20 +151,19 @@ async def test_deploy_multiple_charms_same_topic_relate_active(ops_test: OpsTest
 
     for acl in load_acls(model_full_name=ops_test.model_full_name, zookeeper_uri=zookeeper_uri):
         assert acl.username in usernames
-        assert acl.operation in ["READ", "DESCRIBE"]
-        assert acl.resource_type in ["GROUP", "TOPIC"]
         if acl.resource_type == "TOPIC":
-            assert acl.resource_name == "test-topic"
+            assert acl.resource_name in ["test-topic", "test-topic-changed"]
 
 
+@pytest.mark.skip  # skip until scaling operations work in MicroK8s
 @pytest.mark.abort_on_fail
 async def test_remove_application_removes_user_and_acls(ops_test: OpsTest, usernames):
     await ops_test.model.remove_application(DUMMY_NAME_1, block_until_done=True)
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY])
-    assert ops_test.model.applications[CHARM_KEY].status == "active"
+    await ops_test.model.wait_for_idle(apps=[APP_NAME])
+    assert ops_test.model.applications[APP_NAME].status == "active"
 
     _, zookeeper_uri = get_zookeeper_connection(
-        unit_name=f"{CHARM_KEY}/0", model_full_name=ops_test.model_full_name
+        unit_name=f"{APP_NAME}/0", model_full_name=ops_test.model_full_name
     )
 
     # checks that old users are removed from active cluster ACLs
@@ -129,50 +182,3 @@ async def test_remove_application_removes_user_and_acls(ops_test: OpsTest, usern
                 zookeeper_uri=zookeeper_uri,
                 model_full_name=ops_test.model_full_name,
             )
-
-
-@pytest.mark.abort_on_fail
-async def test_change_client_topic(ops_test: OpsTest):
-    action = await ops_test.model.units.get(f"{DUMMY_NAME_2}/0").run_action("change-topic")
-    await action.wait()
-
-    assert ops_test.model.applications[CHARM_KEY].status == "active"
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, DUMMY_NAME_2])
-
-    _, zookeeper_uri = get_zookeeper_connection(
-        unit_name=f"{CHARM_KEY}/0", model_full_name=ops_test.model_full_name
-    )
-
-    for acl in load_acls(model_full_name=ops_test.model_full_name, zookeeper_uri=zookeeper_uri):
-        if acl.resource_type == "TOPIC":
-            assert acl.resource_name == "test-topic-changed"
-
-
-@pytest.mark.abort_on_fail
-async def test_admin_added_to_super_users(ops_test: OpsTest):
-    # ensures only broker user for now
-    super_users = load_super_users(model_full_name=ops_test.model_full_name)
-    assert len(super_users) == 1
-
-    action = await ops_test.model.units.get(f"{DUMMY_NAME_2}/0").run_action("make-admin")
-    await action.wait()
-
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, DUMMY_NAME_2])
-    assert ops_test.model.applications[CHARM_KEY].status == "active"
-
-    super_users = load_super_users(model_full_name=ops_test.model_full_name)
-    assert len(super_users) == 2
-
-
-@pytest.mark.abort_on_fail
-async def test_admin_removed_from_super_users(ops_test: OpsTest):
-    action = await ops_test.model.units.get(f"{DUMMY_NAME_2}/0").run_action("remove-admin")
-    await action.wait()
-
-    time.sleep(20)
-
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY, DUMMY_NAME_2])
-    assert ops_test.model.applications[CHARM_KEY].status == "active"
-
-    super_users = load_super_users(model_full_name=ops_test.model_full_name)
-    assert len(super_users) == 1
