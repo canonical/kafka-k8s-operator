@@ -50,4 +50,4 @@ async def test_blocks_without_zookeeper(ops_test: OpsTest):
         await asyncio.gather(ops_test.model.applications[ZK_NAME].remove())
         await ops_test.model.wait_for_idle(apps=[APP_NAME], raise_on_error=False, timeout=1000)
 
-    assert ops_test.model.applications[APP_NAME].status == "blocked"
+    assert check_application_status(ops_test, APP_NAME) == "blocked"
