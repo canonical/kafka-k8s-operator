@@ -40,9 +40,6 @@ class KafkaK8sCharm(CharmBase):
             self.on[ZOOKEEPER_REL_NAME].relation_changed, self._on_kafka_pebble_ready
         )
         self.framework.observe(
-            self.on[ZOOKEEPER_REL_NAME].relation_departed, self._on_zookeeper_broken
-        )
-        self.framework.observe(
             self.on[ZOOKEEPER_REL_NAME].relation_broken, self._on_zookeeper_broken
         )
 
@@ -159,8 +156,12 @@ class KafkaK8sCharm(CharmBase):
         if self.unit.is_leader():
             event.relation.data[self.app].update({"chroot": "/" + self.app.name})
 
-    def _on_zookeeper_broken(self, _: RelationEvent) -> None:
+    def _on_zookeeper_broken(self, event: RelationEvent) -> None:
         """Handler for `zookeeper_relation_departed/broken` events."""
+        if not self.container.can_connect():
+            event.defer()
+            return
+
         logger.info("stopping kafka service")
         self.container.stop(CHARM_KEY)
         self.unit.status = BlockedStatus("missing required zookeeper relation")
