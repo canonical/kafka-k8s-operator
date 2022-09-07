@@ -51,4 +51,4 @@ async def test_blocks_without_zookeeper(ops_test: OpsTest):
         await ops_test.model.wait_for_idle(apps=[APP_NAME], raise_on_error=False, timeout=1000)
 
     # Unit is on 'blocked' but whole app is on 'waiting'
-    assert ops_test.model.applications[APP_NAME].status == "waiting"
+    assert check_application_status(ops_test, APP_NAME) == "waiting"
