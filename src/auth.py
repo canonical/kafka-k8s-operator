@@ -10,6 +10,7 @@ from dataclasses import asdict, dataclass
 from typing import List, Optional, Set
 
 from ops.model import Container
+from ops.charm import CharmBase
 
 from utils import run_bin_command
 
@@ -29,7 +30,8 @@ class Acl:
 class KafkaAuth:
     """Object for updating Kafka users and ACLs."""
 
-    def __init__(self, opts: List[str], zookeeper: str, container: Container):
+    def __init__(self, charm: CharmBase, opts: List[str], zookeeper: str, container: Container):
+        self.charm = charm
         self.opts = " ".join(opts)
         self.zookeeper = zookeeper
         self.container = container
@@ -43,6 +45,8 @@ class KafkaAuth:
             f"zookeeper.connect={self.zookeeper}",
             "--list",
         ]
+        if self.charm.tls.enabled:
+            command += [f"--zk-tls-config-file={self.charm.kafka_config.properties_filepath}"]
         acls = run_bin_command(
             container=self.container,
             bin_keyword="acls",
@@ -161,6 +165,9 @@ class KafkaAuth:
             f"--entity-name={username}",
             f"--add-config=SCRAM-SHA-512=[password={password}]",
         ]
+        if self.charm.tls.enabled:
+            command += [f"--zk-tls-config-file={self.charm.kafka_config.properties_filepath}"]
+
         run_bin_command(
             container=self.container, bin_keyword="configs", bin_args=command, extra_args=self.opts
         )
@@ -181,6 +188,9 @@ class KafkaAuth:
             f"--entity-name={username}",
             "--delete-config=SCRAM-SHA-512",
         ]
+        if self.charm.tls.enabled:
+            command += [f"--zk-tls-config-file={self.charm.kafka_config.properties_filepath}"]
+
         run_bin_command(
             container=self.container, bin_keyword="configs", bin_args=command, extra_args=self.opts
         )
@@ -204,38 +214,30 @@ class KafkaAuth:
         Raises:
             `subprocess.CalledProcessError`: if the error returned a non-zero exit code
         """
+        command = [
+            "--authorizer-properties",
+            f"zookeeper.connect={self.zookeeper}",
+            "--add",
+            f"--allow-principal=User:{username}",
+            f"--operation={operation}",
+        ]
+        if self.charm.tls.enabled:
+            command += [f"--zk-tls-config-file={self.charm.kafka_config.properties_filepath}"]
+        
         if resource_type == "TOPIC":
-            command = [
-                "--authorizer-properties",
-                f"zookeeper.connect={self.zookeeper}",
-                "--add",
-                f"--allow-principal=User:{username}",
-                f"--operation={operation}",
-                f"--topic={resource_name}",
-            ]
-            run_bin_command(
-                container=self.container,
-                bin_keyword="acls",
-                bin_args=command,
-                extra_args=self.opts,
-            )
-
+            command += [f"--topic={resource_name}"]
         if resource_type == "GROUP":
-            command = [
-                "--authorizer-properties",
-                f"zookeeper.connect={self.zookeeper}",
-                "--add",
-                f"--allow-principal=User:{username}",
-                f"--operation={operation}",
+            command += [
                 f"--group={resource_name}",
                 "--resource-pattern-type=PREFIXED",
             ]
-            run_bin_command(
-                container=self.container,
-                bin_keyword="acls",
-                bin_args=command,
-                extra_args=self.opts,
-            )
+        
+        run_bin_command(
+            container=self.container,
+            bin_keyword="acls",
+            bin_args=command,
+            extra_args=self.opts,
+        )
 
     def remove_acl(
         self, username: str, operation: str, resource_type: str, resource_name: str
@@ -253,40 +255,34 @@ class KafkaAuth:
         Raises:
             `subprocess.CalledProcessError`: if the error returned a non-zero exit code
         """
+        command = [
+            "--authorizer-properties",
+            f"zookeeper.connect={self.zookeeper}",
+            "--remove",
+            f"--allow-principal=User:{username}",
+            f"--operation={operation}",
+        ]
+        if self.charm.tls.enabled:
+            command += [f"--zk-tls-config-file={self.charm.kafka_config.properties_filepath}"]
+
         if resource_type == "TOPIC":
-            command = [
-                "--authorizer-properties",
-                f"zookeeper.connect={self.zookeeper}",
-                "--remove",
-                f"--allow-principal=User:{username}",
-                f"--operation={operation}",
+            command += [
                 f"--topic={resource_name}",
                 "--force",
             ]
-            run_bin_command(
-                container=self.container,
-                bin_keyword="acls",
-                bin_args=command,
-                extra_args=self.opts,
-            )
-
         if resource_type == "GROUP":
-            command = [
-                "--authorizer-properties",
-                f"zookeeper.connect={self.zookeeper}",
-                "--remove",
-                f"--allow-principal=User:{username}",
-                f"--operation={operation}",
+            command += [
                 f"--group={resource_name}",
                 "--resource-pattern-type=PREFIXED",
                 "--force",
             ]
-            run_bin_command(
-                container=self.container,
-                bin_keyword="acls",
-                bin_args=command,
-                extra_args=self.opts,
-            )
+
+        run_bin_command(
+            container=self.container,
+            bin_keyword="acls",
+            bin_args=command,
+            extra_args=self.opts,
+        )
 
     def remove_all_user_acls(self, username: str) -> None:
         """Removes all active ACLs for a given user.

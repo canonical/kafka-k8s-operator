@@ -5,6 +5,7 @@
 """Charmed Machine Operator for Apache Kafka."""
 
 import logging
+from typing import Dict, Optional
 
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from ops.charm import (
@@ -23,6 +24,7 @@ from auth import KafkaAuth
 from config import KafkaConfig
 from literals import CHARM_KEY, CHARM_USERS, PEER, ZOOKEEPER_REL_NAME
 from provider import KafkaProvider
+from tls import KafkaTLS
 from utils import broker_active, generate_password
 
 logger = logging.getLogger(__name__)
@@ -36,6 +38,7 @@ class KafkaK8sCharm(CharmBase):
         self.name = CHARM_KEY
         self.kafka_config = KafkaConfig(self)
         self.client_relations = KafkaProvider(self)
+        self.tls = KafkaTLS(self)
         self.restart = RollingOpsManager(self, relation="restart", callback=self._restart)
 
         self.framework.observe(getattr(self.on, "kafka_pebble_ready"), self._on_kafka_pebble_ready)
@@ -83,6 +86,20 @@ class KafkaK8sCharm(CharmBase):
         """The Kafka cluster relation."""
         return self.model.get_relation(PEER)
 
+    @property
+    def app_peer_data(self) -> Dict:
+        """Application peer relation data object."""
+        if self.peer_relation is None:
+            return {}
+        return self.peer_relation.data[self.app]
+
+    @property
+    def unit_peer_data(self) -> Dict:
+        """Unit peer relation data object."""
+        if self.peer_relation is None:
+            return {}
+        return self.peer_relation.data[self.unit]
+
     def _on_kafka_pebble_ready(self, event: EventBase) -> None:
         """Handler for `kafka_pebble_ready` event."""
         if not self.container.can_connect():
@@ -100,6 +117,7 @@ class KafkaK8sCharm(CharmBase):
         # do not start units until SCRAM users have been added to ZooKeeper for server-server auth
         if self.unit.is_leader() and self.kafka_config.sync_password:
             kafka_auth = KafkaAuth(
+                charm=self,
                 opts=[self.kafka_config.extra_args],
                 zookeeper=self.kafka_config.zookeeper_config.get("connect", ""),
                 container=self.container,
@@ -213,6 +231,7 @@ class KafkaK8sCharm(CharmBase):
 
         # Update the user
         kafka_auth = KafkaAuth(
+            charm=self,
             opts=[self.kafka_config.extra_args],
             zookeeper=self.kafka_config.zookeeper_config.get("connect", ""),
             container=self.container,
@@ -243,12 +262,43 @@ class KafkaK8sCharm(CharmBase):
         Returns:
             True if ZK is related and `sync` user has been added. False otherwise.
         """
+        # SSL must be enabled for Kafka and ZK or disabled for both
+        if self.tls.enabled ^ (
+            self.kafka_config.zookeeper_config.get("ssl", "disabled") == "enabled"
+        ):
+            logger.error("SSL must be enabled for Zookeeper and Kafka, or disabled for both")
+            return False
+
         if not self.kafka_config.zookeeper_connected or not self.peer_relation.data[self.app].get(
             "broker-creds", None
         ):
             return False
 
         return True
+    
+    def get_secret(self, scope: str, key: str) -> Optional[str]:
+        """Get TLS secret from the secret storage."""
+        if scope == "unit":
+            return self.unit_peer_data.get(key, None)
+        elif scope == "app":
+            return self.app_peer_data.get(key, None)
+        else:
+            raise RuntimeError("Unknown secret scope.")
+
+    def set_secret(self, scope: str, key: str, value: Optional[str]) -> None:
+        """Get TLS secret from the secret storage."""
+        if scope == "unit":
+            if not value:
+                del self.unit_peer_data[key]
+                return
+            self.unit_peer_data.update({key: value})
+        elif scope == "app":
+            if not value:
+                del self.app_peer_data[key]
+                return
+            self.app_peer_data.update({key: value})
+        else:
+            raise RuntimeError("Unknown secret scope.")
 
 
 if __name__ == "__main__":
