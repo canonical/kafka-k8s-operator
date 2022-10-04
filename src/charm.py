@@ -267,7 +267,7 @@ class KafkaK8sCharm(CharmBase):
         if self.tls.enabled ^ (
             self.kafka_config.zookeeper_config.get("tls", "disabled") == "enabled"
         ):
-            msg = f"TLS needs to be active for Zookeeper[{self.kafka_config.zookeeper_config.get('tls', 'disabled') == 'enabled'}] and Kafka[{self.tls.enabled}]"
+            msg = "TLS needs to be active for Zookeeper and Kafka"
             logger.error(msg)
             self.unit.status = BlockedStatus(msg)
             return False
