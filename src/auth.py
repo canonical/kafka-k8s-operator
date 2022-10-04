@@ -9,8 +9,8 @@ import re
 from dataclasses import asdict, dataclass
 from typing import List, Optional, Set
 
-from ops.model import Container
 from ops.charm import CharmBase
+from ops.model import Container
 
 from utils import run_bin_command
 
@@ -223,7 +223,7 @@ class KafkaAuth:
         ]
         if self.charm.tls.enabled:
             command += [f"--zk-tls-config-file={self.charm.kafka_config.properties_filepath}"]
-        
+
         if resource_type == "TOPIC":
             command += [f"--topic={resource_name}"]
         if resource_type == "GROUP":
@@ -231,7 +231,7 @@ class KafkaAuth:
                 f"--group={resource_name}",
                 "--resource-pattern-type=PREFIXED",
             ]
-        
+
         run_bin_command(
             container=self.container,
             bin_keyword="acls",

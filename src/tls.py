@@ -14,13 +14,13 @@ from charms.tls_certificates_interface.v1.tls_certificates import (
     generate_csr,
     generate_private_key,
 )
-from ops.charm import ActionEvent, RelationJoinedEvent
+from ops.charm import ActionEvent
 from ops.framework import Object
 from ops.model import Container, Relation
 from ops.pebble import ExecError
 
 from literals import TLS_RELATION
-from utils import generate_password, push
+from utils import generate_password, parse_tls_file, push
 
 logger = logging.getLogger(__name__)
 
@@ -34,24 +34,30 @@ class KafkaTLS(Object):
         self.certificates = TLSCertificatesRequiresV1(self.charm, TLS_RELATION)
 
         self.framework.observe(
-            self.charm.on[TLS_RELATION].relation_created, self._on_certificates_created
+            self.charm.on[TLS_RELATION].relation_created, self._tls_relation_created
         )
         self.framework.observe(
-            self.charm.on[TLS_RELATION].relation_joined, self._on_certificates_joined
+            self.charm.on[TLS_RELATION].relation_joined, self._tls_relation_joined
+        )
+        self.framework.observe(
+            self.charm.on[TLS_RELATION].relation_broken, self._tls_relation_broken
         )
         self.framework.observe(
             self.certificates.on.certificate_available, self._on_certificate_available
         )
+        self.framework.observe(
+            self.certificates.on.certificate_expiring, self._on_certificate_expiring
+        )
         self.framework.observe(self.charm.on.set_tls_private_key_action, self._set_tls_private_key)
 
-    def _on_certificates_created(self, _):
+    def _tls_relation_created(self, _) -> None:
         """Handler for `certificates_relation_created` event."""
         if not self.charm.unit.is_leader():
             return
 
         self.peer_relation.data[self.charm.app].update({"tls": "enabled"})
 
-    def _on_certificates_joined(self, event: RelationJoinedEvent) -> None:
+    def _tls_relation_joined(self, _) -> None:
         """Handler for `certificates_relation_joined` event."""
         # generate unit private key if not already created by action
         if not self.private_key:
@@ -65,7 +71,21 @@ class KafkaTLS(Object):
 
         self._request_certificate()
 
-    def _on_certificate_available(self, event):
+    def _tls_relation_broken(self, _) -> None:
+        """Handler for `certificates_relation_broken` event."""
+        self.charm.set_secret(scope="unit", key="csr", value="")
+        self.charm.set_secret(scope="unit", key="certificate", value="")
+        self.charm.set_secret(scope="unit", key="ca", value="")
+
+        # remove all existing keystores from the unit so we don't preserve certs
+        self.remove_stores()
+
+        if not self.charm.unit.is_leader():
+            return
+
+        self.peer_relation.data[self.charm.app].update({"tls": ""})
+
+    def _on_certificate_available(self, event) -> None:
         """Handler for `certificates_available` event after provider updates signed certs."""
         if not self.peer_relation:
             event.defer()
@@ -85,9 +105,27 @@ class KafkaTLS(Object):
         self.set_truststore()
         self.set_keystore()
 
+    def _on_certificate_expiring(self, _) -> None:
+        """Handler for `certificate_expiring` event."""
+        if not self.private_key or not self.csr:
+            logger.error("Missing unit private key and/or old csr")
+            return
+        new_csr = generate_csr(
+            private_key=self.private_key.encode("utf-8"),
+            subject=os.uname()[1],
+            sans=self._get_sans(),
+        )
+
+        self.certificates.request_certificate_renewal(
+            old_certificate_signing_request=self.csr.encode("utf-8"),
+            new_certificate_signing_request=new_csr,
+        )
+
+        self.charm.set_secret(scope="unit", key="csr", value=new_csr.decode("utf-8").strip())
+
     def _set_tls_private_key(self, event: ActionEvent) -> None:
         """Handler for `set_tls_private_key` action."""
-        private_key = self._parse_tls_file(event.params.get("internal-key", None))
+        private_key = parse_tls_file(event.params.get("internal-key", None))
         self.charm.set_secret("unit", "private-key", private_key)
 
         self._on_certificate_expiring(event)
@@ -96,10 +134,10 @@ class KafkaTLS(Object):
     def peer_relation(self) -> Relation:
         """Get the peer relation of the charm."""
         return self.charm.peer_relation
-    
+
     @property
     def container(self) -> Container:
-        """Return Kafka container"""
+        """Return Kafka container."""
         return self.charm.container
 
     @property
@@ -109,7 +147,7 @@ class KafkaTLS(Object):
         Returns:
             True if TLS encryption should be active. Otherwise False
         """
-        return self.peer_relation.data[self.charm.app].get("tls", None) == "enabled"
+        return self.peer_relation.data[self.charm.app].get("tls", False) == "enabled"
 
     @property
     def private_key(self) -> Optional[str]:
@@ -204,7 +242,7 @@ class KafkaTLS(Object):
         push(
             container=self.charm.container,
             content=self.private_key,
-            path=f"{self.charm.kafka_config.default_config_path}/server.key"
+            path=f"{self.charm.kafka_config.default_config_path}/server.key",
         )
 
     def set_ca(self) -> None:
@@ -216,7 +254,7 @@ class KafkaTLS(Object):
         push(
             container=self.charm.container,
             content=self.ca,
-            path=f"{self.charm.kafka_config.default_config_path}/ca.pem"
+            path=f"{self.charm.kafka_config.default_config_path}/ca.pem",
         )
 
     def set_certificate(self) -> None:
@@ -228,13 +266,13 @@ class KafkaTLS(Object):
         push(
             container=self.charm.container,
             content=self.certificate,
-            path=f"{self.charm.kafka_config.default_config_path}/server.pem"
+            path=f"{self.charm.kafka_config.default_config_path}/server.pem",
         )
 
     def set_truststore(self) -> None:
         """Adds CA to JKS truststore."""
         try:
-            self.container.exec(
+            proc = self.container.exec(
                 [
                     "keytool",
                     "-import",
@@ -243,24 +281,29 @@ class KafkaTLS(Object):
                     "ca",
                     "-file",
                     "ca.pem",
-                    "-keystore truststore.jks",
+                    "-keystore",
+                    "truststore.jks",
                     "-storepass",
                     f"{self.truststore_password}",
                     "-noprompt",
                 ],
                 working_dir=self.charm.kafka_config.default_config_path,
             )
+            logger.debug(str(proc.wait_output()[1]))
         except ExecError as e:
             # in case this reruns and fails
-            if "already exists" in (str(e.stderr) or str(e.stdout)):
+            expected_error_string = "alias <ca> already exists"
+            if expected_error_string in str(e.stdout):
+                logger.debug(expected_error_string)
                 return
+
             logger.error(e.stdout)
-            raise e
+            raise
 
     def set_keystore(self) -> None:
         """Creates and adds unit cert and private-key to a PCKS12 keystore."""
         try:
-            self.container.exec(
+            proc = self.container.exec(
                 [
                     "openssl",
                     "pkcs12",
@@ -280,6 +323,26 @@ class KafkaTLS(Object):
                 ],
                 working_dir=self.charm.kafka_config.default_config_path,
             )
+            logger.debug(str(proc.wait_output()[1]))
+        except ExecError as e:
+            logger.error(str(e.stdout))
+            raise
+
+    def remove_stores(self) -> None:
+        """Cleans up all keys/certs/stores on a unit."""
+        try:
+            proc = self.container.exec(
+                [
+                    "rm",
+                    "-r",
+                    "*.pem",
+                    "*.key",
+                    "*.p12",
+                    "*.jks",
+                ],
+                working_dir=self.charm.zookeeper_config.default_config_path,
+            )
+            logger.debug(str(proc.wait_output()[1]))
         except ExecError as e:
             logger.error(e.stdout)
-            raise 
+            raise

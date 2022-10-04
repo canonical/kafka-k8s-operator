@@ -53,7 +53,7 @@ class KafkaConfig:
         """
         zookeeper_config = {}
         for relation in self.charm.model.relations[ZOOKEEPER_REL_NAME]:
-            zk_keys = ["username", "password", "endpoints", "chroot", "uris", "ssl"]
+            zk_keys = ["username", "password", "endpoints", "chroot", "uris", "tls"]
             missing_config = any(
                 relation.data[relation.app].get(key, None) is None for key in zk_keys
             )
@@ -240,7 +240,7 @@ class KafkaConfig:
                 "security.protocol=SASL_SSL",
             ]
             properties += self.tls_properties
-        
+
         return properties
 
     def set_server_properties(self) -> None:
@@ -248,7 +248,7 @@ class KafkaConfig:
         push(
             container=self.container,
             content="\n".join(self.server_properties),
-            path=self.properties_filepath
+            path=self.properties_filepath,
         )
 
     def set_jaas_config(self) -> None:
@@ -263,7 +263,7 @@ class KafkaConfig:
         push(
             container=self.container,
             content=jaas_config,
-            path=self.jaas_filepath
+            path=self.jaas_filepath,
         )
 
     def get_host_from_unit(self, unit: Unit) -> str:

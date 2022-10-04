@@ -108,6 +108,7 @@ class KafkaK8sCharm(CharmBase):
 
         if not self.kafka_config.zookeeper_connected:
             self.unit.status = WaitingStatus("waiting for zookeeper relation")
+            event.defer()
             return
 
         # required settings given zookeeper connection config has been created
@@ -264,9 +265,11 @@ class KafkaK8sCharm(CharmBase):
         """
         # SSL must be enabled for Kafka and ZK or disabled for both
         if self.tls.enabled ^ (
-            self.kafka_config.zookeeper_config.get("ssl", "disabled") == "enabled"
+            self.kafka_config.zookeeper_config.get("tls", "disabled") == "enabled"
         ):
-            logger.error("SSL must be enabled for Zookeeper and Kafka, or disabled for both")
+            msg = f"TLS needs to be active for Zookeeper[{self.kafka_config.zookeeper_config.get('tls', 'disabled') == 'enabled'}] and Kafka[{self.tls.enabled}]"
+            logger.error(msg)
+            self.unit.status = BlockedStatus(msg)
             return False
 
         if not self.kafka_config.zookeeper_connected or not self.peer_relation.data[self.app].get(
@@ -275,7 +278,7 @@ class KafkaK8sCharm(CharmBase):
             return False
 
         return True
-    
+
     def get_secret(self, scope: str, key: str) -> Optional[str]:
         """Get TLS secret from the secret storage."""
         if scope == "unit":
