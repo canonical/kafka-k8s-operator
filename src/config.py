@@ -210,7 +210,7 @@ class KafkaConfig:
         host = self.get_host_from_unit(unit=self.charm.unit)
         port = 9093 if self.charm.tls.enabled else 9092
         protocol = "SASL_SSL" if self.charm.tls.enabled else "SASL_PLAINTEXT"
-        
+
         properties = (
             [
                 f"data.dir={self.charm.config['data-dir']}",
