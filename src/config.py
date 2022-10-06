@@ -210,7 +210,7 @@ class KafkaConfig:
         host = self.get_host_from_unit(unit=self.charm.unit)
         port = 9093 if self.charm.tls.enabled else 9092
         protocol = "SASL_SSL" if self.charm.tls.enabled else "SASL_PLAINTEXT"
-
+        
         properties = (
             [
                 f"data.dir={self.charm.config['data-dir']}",
@@ -220,7 +220,7 @@ class KafkaConfig:
                 f"auto.create.topics={self.charm.config['auto-create-topics']}",
                 f"super.users={self.super_users}",
                 f"listeners={protocol}://:{port}",
-                f"advertised.listeners=protocol://{host}:{port}",
+                f"advertised.listeners={protocol}://{host}:{port}",
                 f'listener.name.{(protocol).lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="sync" password="{self.sync_password}";',
                 f"security.inter.broker.protocol={protocol}",
                 f"security.protocol={protocol}",
