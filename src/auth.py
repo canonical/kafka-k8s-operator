@@ -9,7 +9,6 @@ import re
 from dataclasses import asdict, dataclass
 from typing import List, Optional, Set
 
-from ops.charm import CharmBase
 from ops.model import Container
 
 from utils import run_bin_command
@@ -30,7 +29,7 @@ class Acl:
 class KafkaAuth:
     """Object for updating Kafka users and ACLs."""
 
-    def __init__(self, charm: CharmBase, opts: List[str], zookeeper: str, container: Container):
+    def __init__(self, charm, opts: List[str], zookeeper: str, container: Container):
         self.charm = charm
         self.opts = " ".join(opts)
         self.zookeeper = zookeeper
