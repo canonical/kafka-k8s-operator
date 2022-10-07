@@ -31,7 +31,11 @@ async def test_deploy_tls(ops_test: OpsTest):
     await asyncio.gather(
         ops_test.model.deploy(TLS_NAME, channel="edge", config=tls_config),
         ops_test.model.deploy(ZK_NAME, channel="edge", num_units=3),
-        ops_test.model.deploy(kafka_charm, application_name=APP_NAME),
+        ops_test.model.deploy(
+            kafka_charm,
+            application_name=APP_NAME,
+            resources={"kafka-image": "ubuntu/kafka:latest"}
+        ),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
     await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME, TLS_NAME], timeout=1000)
