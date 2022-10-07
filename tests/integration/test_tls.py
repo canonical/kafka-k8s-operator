@@ -9,10 +9,10 @@ import pytest
 from helpers import (
     APP_NAME,
     ZK_NAME,
+    check_application_status,
     check_tls,
     get_address,
     get_kafka_zk_relation_data,
-    check_application_status,
 )
 from pytest_operator.plugin import OpsTest
 
@@ -35,7 +35,7 @@ async def test_deploy_tls(ops_test: OpsTest):
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
-            resources={"kafka-image": "ubuntu/kafka:latest"}
+            resources={"kafka-image": "ubuntu/kafka:latest"},
         ),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)

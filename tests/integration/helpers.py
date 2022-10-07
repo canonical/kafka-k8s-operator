@@ -125,7 +125,7 @@ async def set_password(ops_test: OpsTest, username="sync", password=None, num_un
 
 def check_application_status(ops_test: OpsTest, app_name: str) -> str:
     """Return the application status for an app name."""
-    # FIXME: This is needed beacuse: https://github.com/juju/python-libjuju/issues/740
+    # FIXME: This is needed because: https://github.com/juju/python-libjuju/issues/740
     model_name = ops_test.model.info.name
     proc = check_output(f"juju status --model={model_name}".split())
     proc = proc.decode("utf-8")
