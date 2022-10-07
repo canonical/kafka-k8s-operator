@@ -50,7 +50,7 @@ class KafkaK8sCharm(CharmBase):
             self.on[ZOOKEEPER_REL_NAME].relation_joined, self._on_zookeeper_joined
         )
         self.framework.observe(
-            self.on[ZOOKEEPER_REL_NAME].relation_changed, self._on_kafka_pebble_ready
+            self.on[ZOOKEEPER_REL_NAME].relation_changed, self._on_config_changed
         )
         self.framework.observe(
             self.on[ZOOKEEPER_REL_NAME].relation_broken, self._on_zookeeper_broken
