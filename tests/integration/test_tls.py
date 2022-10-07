@@ -12,6 +12,7 @@ from helpers import (
     check_tls,
     get_address,
     get_kafka_zk_relation_data,
+    check_application_status,
 )
 from pytest_operator.plugin import OpsTest
 
@@ -40,7 +41,7 @@ async def test_deploy_tls(ops_test: OpsTest):
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
     await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME, TLS_NAME], timeout=1000)
 
-    assert ops_test.model.applications[APP_NAME].status == "waiting"
+    assert check_application_status(ops_test=ops_test, app_name=APP_NAME) == "waiting"
     assert ops_test.model.applications[ZK_NAME].status == "active"
     assert ops_test.model.applications[TLS_NAME].status == "active"
 
@@ -64,7 +65,8 @@ async def test_kafka_tls(ops_test: OpsTest):
     await ops_test.model.add_relation(ZK_NAME, APP_NAME)
     await ops_test.model.wait_for_idle(apps=[ZK_NAME], idle_period=60, timeout=1000)
 
-    assert ops_test.model.applications[APP_NAME].status == "blocked"
+    # Unit is on 'blocked' but whole app is on 'waiting'
+    assert check_application_status(ops_test=ops_test, app_name=APP_NAME) == "waiting"
 
     await ops_test.model.add_relation(APP_NAME, TLS_NAME)
     logger.info("Relate Kafka to TLS")
@@ -96,7 +98,7 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
     )
 
     kafka_zk_relation_data = get_kafka_zk_relation_data(
-        unit_name="kafka/2", model_full_name=ops_test.model_full_name
+        unit_name="kafka-k8s/2", model_full_name=ops_test.model_full_name
     )
     active_brokers = get_active_brokers(zookeeper_config=kafka_zk_relation_data)
     chroot = kafka_zk_relation_data.get("chroot", "")
