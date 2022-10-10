@@ -4,7 +4,9 @@
 
 """Collection of helper methods for checking active connections between ZK and Kafka."""
 
+import base64
 import logging
+import re
 import secrets
 import string
 from typing import Dict, List, Set
@@ -80,6 +82,13 @@ def generate_password() -> str:
     return "".join([secrets.choice(string.ascii_letters + string.digits) for _ in range(32)])
 
 
+def parse_tls_file(raw_content: str) -> str:
+    """Parse TLS files from both plain text or base64 format."""
+    if re.match(r"(-+(BEGIN|END) [A-Z ]+-+)", raw_content):
+        return raw_content
+    return base64.b64decode(raw_content).decode("utf-8")
+
+
 def run_bin_command(
     container: Container, bin_keyword: str, bin_args: List[str], extra_args: str
 ) -> str:
@@ -106,3 +115,14 @@ def run_bin_command(
     except (ExecError) as e:
         logger.debug(f"cmd failed:\ncommand={e.command}\nstdout={e.stdout}\nstderr={e.stderr}")
         raise e
+
+
+def push(container: Container, content: str, path: str) -> None:
+    """Wrapper for writing a file and contents to a container.
+
+    Args:
+        container: container to push the files into
+        content: the text content to write to a file path
+        path: the full path of the desired file
+    """
+    container.push(path, content, make_dirs=True)
