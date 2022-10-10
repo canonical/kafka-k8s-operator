@@ -55,6 +55,11 @@ jobs:
 
   integration-test:
     name: Integration tests
+    needs:
+      - lib-check
+      - lint
+      - unit-test
+      - security-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
