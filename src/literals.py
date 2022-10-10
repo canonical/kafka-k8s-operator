@@ -9,3 +9,4 @@ PEER = "cluster"
 ZOOKEEPER_REL_NAME = "zookeeper"
 CHARM_USERS = ["sync"]
 REL_NAME = "kafka-client"
+TLS_RELATION = "certificates"

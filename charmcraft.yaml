@@ -9,8 +9,6 @@ parts:
       - libssl-dev
       - rustc
       - cargo
-    charm-binary-python-packages:
-      - jsonschema
 bases:
   - build-on:
       - name: "ubuntu"
