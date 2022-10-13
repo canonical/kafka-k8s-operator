@@ -14,6 +14,7 @@ from tests.integration.helpers import (
     KAFKA_CONTAINER,
     ZK_NAME,
     check_user,
+    get_provider_data,
     get_zookeeper_connection,
     load_acls,
     load_super_users,
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 DUMMY_NAME_1 = "app"
 DUMMY_NAME_2 = "appii"
+TLS_NAME = "tls-certificates-operator"
 
 
 @pytest.fixture(scope="module")
@@ -182,3 +184,28 @@ async def test_remove_application_removes_user_and_acls(ops_test: OpsTest, usern
                 zookeeper_uri=zookeeper_uri,
                 model_full_name=ops_test.model_full_name,
             )
+
+
+@pytest.mark.abort_on_fail
+async def test_connection_updated_on_tls_enabled(ops_test: OpsTest):
+    tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "kafka"}
+    await ops_test.model.deploy(TLS_NAME, channel="edge", config=tls_config)
+    await ops_test.model.add_relation(TLS_NAME, ZK_NAME)
+    await ops_test.model.add_relation(TLS_NAME, APP_NAME)
+
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME, TLS_NAME], timeout=1000, idle_period=40
+    )
+
+    assert ops_test.model.applications[APP_NAME].status == "active"
+    assert ops_test.model.applications[ZK_NAME].status == "active"
+    assert ops_test.model.applications[TLS_NAME].status == "active"
+
+    # Check that related application has updated information
+    provider_data = get_provider_data(
+        unit_name="appii/0", model_full_name=ops_test.model_full_name
+    )
+
+    assert provider_data["tls"] == "enabled"
+    assert "9093" in provider_data["uris"]
+    assert "2182" in provider_data["zookeeper-uris"]

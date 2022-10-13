@@ -108,7 +108,8 @@ class KafkaConfig:
             set([self.charm.unit] + list(self.charm.model.get_relation(PEER).units))
         )
         hosts = [self.get_host_from_unit(unit=unit) for unit in units]
-        return [f"{host}:9092" for host in hosts]
+        port = 9093 if self.charm.tls.enabled else 9092
+        return [f"{host}:{port}" for host in hosts]
 
     @property
     def kafka_command(self) -> str:
