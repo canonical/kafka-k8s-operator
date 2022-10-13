@@ -77,6 +77,7 @@ class KafkaProvider(Object):
         bootstrap_server = self.charm.kafka_config.bootstrap_server
         endpoints = [server.split(":")[0] for server in bootstrap_server]
         zookeeper_uris = self.charm.kafka_config.zookeeper_config.get("connect", "")
+        tls = "enabled" if self.charm.tls.enabled else "disabled"
 
         relation_config = {
             "username": username,
@@ -85,6 +86,7 @@ class KafkaProvider(Object):
             "uris": ",".join(bootstrap_server),
             "zookeeper-uris": zookeeper_uris,
             "consumer-group-prefix": "",
+            "tls": tls,
         }
 
         # only set this if `consumer` is set to avoid missing information
@@ -185,3 +187,25 @@ class KafkaProvider(Object):
             self.charm.model.get_relation(PEER).data[self.charm.app].update(
                 {provider_relation_config["username"]: ""}
             )
+
+    def update_connection_info(self):
+        """Updates all relations with current uri, endpoints and tls data.
+
+        If information didn't change, no events will trigger.
+        """
+        bootstrap_server = self.charm.kafka_config.bootstrap_server
+        endpoints = [server.split(":")[0] for server in bootstrap_server]
+        zookeeper_uris = self.charm.kafka_config.zookeeper_config.get("connect", "")
+        tls = "enabled" if self.charm.tls.enabled else "disabled"
+
+        relation_config = {
+            "endpoints": ",".join(endpoints),
+            "uris": ",".join(bootstrap_server),
+            "zookeeper-uris": zookeeper_uris,
+            "tls": tls,
+        }
+
+        for relation in self.charm.model.relations[REL_NAME]:
+            # Once a relation is set-up a key is added to the databag with the username
+            if self.charm.app_peer_data.get(f"relation-{relation.id}", None):
+                relation.data[self.charm.app].update(relation_config)

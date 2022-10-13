@@ -22,7 +22,7 @@ from ops.pebble import ExecError, Layer, PathError, ProtocolError
 
 from auth import KafkaAuth
 from config import KafkaConfig
-from literals import CHARM_KEY, CHARM_USERS, PEER, ZOOKEEPER_REL_NAME
+from literals import CHARM_KEY, CHARM_USERS, PEER, REL_NAME, ZOOKEEPER_REL_NAME
 from provider import KafkaProvider
 from tls import KafkaTLS
 from utils import broker_active, generate_password
@@ -183,6 +183,10 @@ class KafkaK8sCharm(CharmBase):
 
             self.on[self.restart.name].acquire_lock.emit()
 
+        # If Kafka is related to client charms, update their information.
+        if self.model.relations.get(REL_NAME, None) and self.unit.is_leader():
+            self.client_relations.update_connection_info()
+
     def _on_leader_elected(self, _) -> None:
         """Handler for `leader_elected` event, ensuring sync_passwords gets set."""
         sync_password = self.kafka_config.sync_password
@@ -268,7 +272,7 @@ class KafkaK8sCharm(CharmBase):
             self.kafka_config.zookeeper_config.get("tls", "disabled") == "enabled"
         ):
             msg = "TLS needs to be active for Zookeeper and Kafka"
-            logger.error(msg)
+            logger.debug(msg)
             self.unit.status = BlockedStatus(msg)
             return False
 
