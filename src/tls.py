@@ -91,6 +91,10 @@ class KafkaTLS(Object):
             event.defer()
             return
 
+        if not self.charm.container.can_connect():
+            event.defer()
+            return
+
         # avoid setting tls files and restarting
         if event.certificate_signing_request != self.csr:
             logger.error("Can't use certificate, found unknown CSR")
