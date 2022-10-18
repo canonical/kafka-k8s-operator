@@ -40,7 +40,9 @@ async def test_kafka_simple_scale_up(ops_test: OpsTest):
     await ops_test.model.block_until(
         lambda: len(ops_test.model.applications[CHARM_KEY].units) == 3
     )
-    await ops_test.model.wait_for_idle(apps=[CHARM_KEY], status="active", timeout=1000)
+    await ops_test.model.wait_for_idle(
+        apps=[CHARM_KEY], status="active", timeout=1000, idle_period=40
+    )
 
     kafka_zk_relation_data = get_kafka_zk_relation_data(
         unit_name=f"{CHARM_KEY}/2", model_full_name=ops_test.model_full_name

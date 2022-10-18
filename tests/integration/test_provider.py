@@ -50,11 +50,13 @@ async def test_deploy_charms_relate_active(ops_test: OpsTest, usernames):
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_1, num_units=1),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME])
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME], timeout=1000, idle_period=30
+    )
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=30)
     await ops_test.model.add_relation(APP_NAME, DUMMY_NAME_1)
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1], timeout=1000, idle_period=30)
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME_1].status == "active"
 
