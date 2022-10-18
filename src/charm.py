@@ -19,7 +19,8 @@ from ops.charm import (
 from ops.framework import EventBase
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, Container, Relation, WaitingStatus
-from ops.pebble import ExecError, Layer, LayerDict, PathError, ProtocolError
+from ops.pebble import ExecError, Layer, PathError, ProtocolError
+from ops import pebble
 
 from auth import KafkaAuth
 from config import KafkaConfig
@@ -67,7 +68,7 @@ class KafkaK8sCharm(CharmBase):
     @property
     def _kafka_layer(self) -> Layer:
         """Returns a Pebble configuration layer for Kafka."""
-        layer_config: LayerDict = {
+        layer_config: pebble.LayerDict = {
             "summary": "kafka layer",
             "description": "Pebble config layer for kafka",
             "services": {

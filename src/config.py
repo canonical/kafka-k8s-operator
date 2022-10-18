@@ -7,7 +7,6 @@
 import logging
 from typing import Dict, List, Optional
 
-from ops.charm import CharmBase
 from ops.model import Container, Unit
 
 from literals import CHARM_KEY, PEER, REL_NAME, ZOOKEEPER_REL_NAME
@@ -26,7 +25,7 @@ allow.everyone.if.no.acl.found=false
 class KafkaConfig:
     """Manager for handling Kafka configuration."""
 
-    def __init__(self, charm: CharmBase):
+    def __init__(self, charm):
         self.charm = charm
         self.default_config_path = f"{self.charm.config['data-dir']}/config"
         self.properties_filepath = f"{self.default_config_path}/server.properties"

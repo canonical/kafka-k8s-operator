@@ -56,9 +56,12 @@ class KafkaProvider(Object):
         Returns:
             Dict with keys `topic` and `extra_user_roles`
         """
+        if not event.app:
+            return {}
+
         return {
             "extra_user_roles": event.relation.data[event.app].get("extra-user-roles", ""),
-            "topic": event.relation.data[event.app].get("topic"),
+            "topic": event.relation.data[event.app].get("topic", ""),
         }
 
     def provider_relation_config(self, event: RelationEvent) -> Dict[str, str]:
@@ -70,6 +73,9 @@ class KafkaProvider(Object):
         Returns:
             Dict of `username`, `password`, `endpoints`, `uris` and `consumer-group-prefix`
         """
+        if not event.app:
+            return {}
+
         relation = event.relation
 
         username = f"relation-{relation.id}"
