@@ -5,20 +5,21 @@
 """Charmed Machine Operator for Apache Kafka."""
 
 import logging
-from typing import Dict, Optional
+from typing import MutableMapping, Optional
 
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from ops.charm import (
     ActionEvent,
     CharmBase,
     ConfigChangedEvent,
+    PebbleReadyEvent,
     RelationEvent,
     RelationJoinedEvent,
 )
 from ops.framework import EventBase
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, Container, Relation, WaitingStatus
-from ops.pebble import ExecError, Layer, PathError, ProtocolError
+from ops.pebble import ExecError, Layer, LayerDict, PathError, ProtocolError
 
 from auth import KafkaAuth
 from config import KafkaConfig
@@ -66,7 +67,7 @@ class KafkaK8sCharm(CharmBase):
     @property
     def _kafka_layer(self) -> Layer:
         """Returns a Pebble configuration layer for Kafka."""
-        layer_config = {
+        layer_config: LayerDict = {
             "summary": "kafka layer",
             "description": "Pebble config layer for kafka",
             "services": {
@@ -82,25 +83,27 @@ class KafkaK8sCharm(CharmBase):
         return Layer(layer_config)
 
     @property
-    def peer_relation(self) -> Relation:
-        """The Kafka cluster relation."""
+    def peer_relation(self) -> Optional[Relation]:
+        """The cluster peer relation."""
         return self.model.get_relation(PEER)
 
     @property
-    def app_peer_data(self) -> Dict:
+    def app_peer_data(self) -> MutableMapping[str, str]:
         """Application peer relation data object."""
         if not self.peer_relation:
             return {}
+
         return self.peer_relation.data[self.app]
 
     @property
-    def unit_peer_data(self) -> Dict:
+    def unit_peer_data(self) -> MutableMapping[str, str]:
         """Unit peer relation data object."""
         if not self.peer_relation:
             return {}
+
         return self.peer_relation.data[self.unit]
 
-    def _on_kafka_pebble_ready(self, event: EventBase) -> None:
+    def _on_kafka_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Handler for `kafka_pebble_ready` event."""
         if not self.container.can_connect():
             event.defer()
@@ -125,7 +128,7 @@ class KafkaK8sCharm(CharmBase):
             )
             try:
                 kafka_auth.add_user(username="sync", password=self.kafka_config.sync_password)
-                self.peer_relation.data[self.app].update({"broker-creds": "added"})
+                self.app_peer_data.update({"broker-creds": "added"})
             except ExecError as e:
                 logger.debug(str(e))
                 event.defer()
@@ -181,7 +184,7 @@ class KafkaK8sCharm(CharmBase):
             )
             self.kafka_config.set_server_properties()
 
-            self.on[self.restart.name].acquire_lock.emit()
+            self.on[f"{self.restart.name}"].acquire_lock.emit()
 
         # If Kafka is related to client charms, update their information.
         if self.model.relations.get(REL_NAME, None) and self.unit.is_leader():
@@ -209,7 +212,7 @@ class KafkaK8sCharm(CharmBase):
         self.container.stop(CHARM_KEY)
         self.unit.status = BlockedStatus("missing required zookeeper relation")
 
-    def _set_password_action(self, event: ActionEvent):
+    def _set_password_action(self, event: ActionEvent) -> None:
         """Handler for set-password action.
 
         Set the password for a specific user, if no passwords are passed, generate them.
@@ -276,7 +279,7 @@ class KafkaK8sCharm(CharmBase):
             self.unit.status = BlockedStatus(msg)
             return False
 
-        if not self.kafka_config.zookeeper_connected or not self.peer_relation.data[self.app].get(
+        if not self.kafka_config.zookeeper_connected or not self.app_peer_data.get(
             "broker-creds", None
         ):
             return False
@@ -284,7 +287,19 @@ class KafkaK8sCharm(CharmBase):
         return True
 
     def get_secret(self, scope: str, key: str) -> Optional[str]:
-        """Get TLS secret from the secret storage."""
+        """Get TLS secret from the secret storage.
+
+        Args:
+            scope: whether this secret is for a `unit` or `app`
+            key: the secret key name
+
+        Returns:
+            String of key value.
+            None if non-existent key
+        """
+        if not self.app_peer_data or not self.unit_peer_data:
+            return None
+
         if scope == "unit":
             return self.unit_peer_data.get(key, None)
         elif scope == "app":
@@ -293,15 +308,21 @@ class KafkaK8sCharm(CharmBase):
             raise RuntimeError("Unknown secret scope.")
 
     def set_secret(self, scope: str, key: str, value: Optional[str]) -> None:
-        """Get TLS secret from the secret storage."""
+        """Get TLS secret from the secret storage.
+
+        Args:
+            scope: whether this secret is for a `unit` or `app`
+            key: the secret key name
+            value: the value for the secret key
+        """
         if scope == "unit":
             if not value:
-                del self.unit_peer_data[key]
+                self.unit_peer_data.update({key: ""})
                 return
             self.unit_peer_data.update({key: value})
         elif scope == "app":
             if not value:
-                del self.app_peer_data[key]
+                self.unit_peer_data.update({key: ""})
                 return
             self.app_peer_data.update({key: value})
         else:
