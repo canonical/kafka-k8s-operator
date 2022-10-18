@@ -44,13 +44,12 @@ class KafkaAuth:
             f"zookeeper.connect={self.zookeeper}",
             "--list",
         ]
-        if self.charm.tls.enabled:
-            command += [f"--zk-tls-config-file={self.charm.kafka_config.properties_filepath}"]
         acls = run_bin_command(
             container=self.container,
             bin_keyword="acls",
             bin_args=command,
             extra_args=self.opts,
+            zk_tls_config_filepath=self.charm.kafka_config.properties_filepath,
         )
 
         return acls
@@ -164,11 +163,12 @@ class KafkaAuth:
             f"--entity-name={username}",
             f"--add-config=SCRAM-SHA-512=[password={password}]",
         ]
-        if self.charm.tls.enabled:
-            command += [f"--zk-tls-config-file={self.charm.kafka_config.properties_filepath}"]
-
         run_bin_command(
-            container=self.container, bin_keyword="configs", bin_args=command, extra_args=self.opts
+            container=self.container,
+            bin_keyword="configs",
+            bin_args=command,
+            extra_args=self.opts,
+            zk_tls_config_filepath=self.charm.kafka_config.properties_filepath,
         )
 
     def delete_user(self, username: str) -> None:
@@ -187,11 +187,12 @@ class KafkaAuth:
             f"--entity-name={username}",
             "--delete-config=SCRAM-SHA-512",
         ]
-        if self.charm.tls.enabled:
-            command += [f"--zk-tls-config-file={self.charm.kafka_config.properties_filepath}"]
-
         run_bin_command(
-            container=self.container, bin_keyword="configs", bin_args=command, extra_args=self.opts
+            container=self.container,
+            bin_keyword="configs",
+            bin_args=command,
+            extra_args=self.opts,
+            zk_tls_config_filepath=self.charm.kafka_config.properties_filepath,
         )
 
     def add_acl(
@@ -220,9 +221,6 @@ class KafkaAuth:
             f"--allow-principal=User:{username}",
             f"--operation={operation}",
         ]
-        if self.charm.tls.enabled:
-            command += [f"--zk-tls-config-file={self.charm.kafka_config.properties_filepath}"]
-
         if resource_type == "TOPIC":
             command += [f"--topic={resource_name}"]
         if resource_type == "GROUP":
@@ -236,6 +234,7 @@ class KafkaAuth:
             bin_keyword="acls",
             bin_args=command,
             extra_args=self.opts,
+            zk_tls_config_filepath=self.charm.kafka_config.properties_filepath,
         )
 
     def remove_acl(
@@ -261,9 +260,6 @@ class KafkaAuth:
             f"--allow-principal=User:{username}",
             f"--operation={operation}",
         ]
-        if self.charm.tls.enabled:
-            command += [f"--zk-tls-config-file={self.charm.kafka_config.properties_filepath}"]
-
         if resource_type == "TOPIC":
             command += [
                 f"--topic={resource_name}",
@@ -281,6 +277,7 @@ class KafkaAuth:
             bin_keyword="acls",
             bin_args=command,
             extra_args=self.opts,
+            zk_tls_config_filepath=self.charm.kafka_config.properties_filepath,
         )
 
     def remove_all_user_acls(self, username: str) -> None:

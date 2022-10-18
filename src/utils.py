@@ -9,7 +9,7 @@ import logging
 import re
 import secrets
 import string
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 from charms.zookeeper.v0.client import ZooKeeperManager
 from kazoo.exceptions import AuthFailedError, NoNodeError
@@ -90,7 +90,11 @@ def parse_tls_file(raw_content: str) -> str:
 
 
 def run_bin_command(
-    container: Container, bin_keyword: str, bin_args: List[str], extra_args: str
+    container: Container,
+    bin_keyword: str,
+    bin_args: List[str],
+    extra_args: str,
+    zk_tls_config_filepath: Optional[str] = None,
 ) -> str:
     """Runs kafka bin command with desired args.
 
@@ -100,12 +104,18 @@ def run_bin_command(
             e.g `configs`, `topics` etc
         bin_args: the shell command args
         extra_args (optional): the desired `KAFKA_OPTS` env var values for the command
+        zk_tls_config_filepath (optional): the path to properties file for ZK TLS
 
     Returns:
         String of kafka bin command output
     """
+    zk_tls_config_file = zk_tls_config_filepath or "/data/kafka/config/server.properties"
     environment = {"KAFKA_OPTS": extra_args}
-    command = [f"/opt/kafka/bin/kafka-{bin_keyword}.sh"] + bin_args
+    command = (
+        [f"/opt/kafka/bin/kafka-{bin_keyword}.sh"]
+        + bin_args
+        + [f"--zk-tls-config-file={zk_tls_config_file}"]
+    )
 
     try:
         process = container.exec(command=command, environment=environment)
