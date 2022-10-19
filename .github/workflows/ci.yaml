@@ -36,7 +36,7 @@ jobs:
       - name: Run tests
         run: tox -e security
 
-  integration-test:
+  integration-test-charm:
     name: Integration tests (microk8s)
     needs:
       - lint
@@ -53,4 +53,80 @@ jobs:
           # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed
           bootstrap-options: "--agent-version 2.9.29"
       - name: Run integration tests
-        run: tox -e integration
+        run: tox -e integration-charm
+
+  integration-test-scaling:
+    name: Integration tests for scaling (microk8s)
+    needs:
+      - lint
+      - unit-test
+      - security-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup operator environment
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: microk8s
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed
+          bootstrap-options: "--agent-version 2.9.29"
+      - name: Run integration tests
+        run: tox -e integration-scaling
+
+  integration-test-provider:
+    name: Integration tests for provider (microk8s)
+    needs:
+      - lint
+      - unit-test
+      - security-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup operator environment
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: microk8s
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed
+          bootstrap-options: "--agent-version 2.9.29"
+      - name: Run integration tests
+        run: tox -e integration-provider
+
+  integration-test-password-rotation:
+    name: Integration tests for password rotation (microk8s)
+    needs:
+      - lint
+      - unit-test
+      - security-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup operator environment
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: microk8s
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed
+          bootstrap-options: "--agent-version 2.9.29"
+      - name: Run integration tests
+        run: tox -e integration-password-rotation
+
+  integration-test-tls:
+    name: Integration tests for TLS (microk8s)
+    needs:
+      - lint
+      - unit-test
+      - security-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup operator environment
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: microk8s
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed
+          bootstrap-options: "--agent-version 2.9.29"
+      - name: Run integration tests
+        run: tox -e integration-tls
