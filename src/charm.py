@@ -190,8 +190,8 @@ class KafkaK8sCharm(CharmBase):
     def _on_leader_elected(self, _) -> None:
         """Handler for `leader_elected` event, ensuring sync_passwords gets set."""
         sync_password = self.kafka_config.sync_password
-        self.peer_relation.data[self.app].update(
-            {"sync_password": sync_password or generate_password()}
+        self.set_secret(
+            scope="app", key="sync_password", value=(sync_password or generate_password())
         )
 
     def _on_zookeeper_joined(self, event: RelationJoinedEvent) -> None:
@@ -249,7 +249,7 @@ class KafkaK8sCharm(CharmBase):
             return
 
         # Store the password on application databag
-        self.peer_relation.data[self.app].update({f"{username}_password": new_password})
+        self.set_secret(scope="app", key=f"{username}_password", value=new_password)
         event.set_results({f"{username}-password": new_password})
 
     def _restart(self, event: EventBase) -> None:
