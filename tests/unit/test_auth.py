@@ -13,6 +13,7 @@ from ops.testing import Harness
 from auth import Acl, KafkaAuth
 from charm import KafkaK8sCharm
 from literals import CHARM_KEY, CONTAINER, PEER, ZOOKEEPER_REL_NAME
+from tests.unit.helpers import DummyExec
 
 logger = logging.getLogger(__name__)
 
@@ -117,15 +118,16 @@ def test_get_acls_tls_adds_zk_tls_flag(harness):
         container=harness.charm.container,
     )
 
-    with patch("snap.KafkaSnap.run_bin_command") as patched_bin:
+    with patch("ops.model.Container.exec", return_value=DummyExec()) as patched_exec:
         auth._get_acls_from_cluster()
 
         found = False
-        for arg in patched_bin.call_args.kwargs.get("bin_args", []):
+        logger.info(patched_exec.call_args.kwargs)
+        for arg in patched_exec.call_args.kwargs.get("command", []):
             if "--zk-tls-config-file" in arg:
                 found = True
 
-        assert not found, "--zk-tls-config-file flag not found"
+        assert found, "--zk-tls-config-file flag not found"
 
 
 def test_add_user_adds_zk_tls_flag(harness):
@@ -152,11 +154,11 @@ def test_add_user_adds_zk_tls_flag(harness):
         container=harness.charm.container,
     )
 
-    with patch("subprocess.check_output") as patched:
+    with patch("ops.model.Container.exec", return_value=DummyExec()) as patched_exec:
         auth.add_user("samwise", "gamgee")
 
         found = False
-        for arg in patched.call_args.args:
+        for arg in patched_exec.call_args.kwargs.get("command", []):
             if "--zk-tls-config-file" in arg:
                 found = True
 
@@ -187,11 +189,11 @@ def test_delete_user_adds_zk_tls_flag(harness):
         container=harness.charm.container,
     )
 
-    with patch("subprocess.check_output") as patched:
+    with patch("ops.model.Container.exec", return_value=DummyExec()) as patched_exec:
         auth.delete_user("samwise")
 
         found = False
-        for arg in patched.call_args.args:
+        for arg in patched_exec.call_args.kwargs.get("command", []):
             if "--zk-tls-config-file" in arg:
                 found = True
 
