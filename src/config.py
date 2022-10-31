@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 
 from ops.model import Container, Unit
 
-from literals import CHARM_KEY, PEER, REL_NAME, ZOOKEEPER_REL_NAME
+from literals import CONTAINER, PEER, REL_NAME, ZOOKEEPER_REL_NAME
 from utils import push
 
 logger = logging.getLogger(__name__)
@@ -36,12 +36,12 @@ class KafkaConfig:
     @property
     def container(self) -> Container:
         """Grabs the current Kafka container."""
-        return getattr(self.charm, "unit").get_container(CHARM_KEY)
+        return getattr(self.charm, "unit").get_container(CONTAINER)
 
     @property
     def sync_password(self) -> Optional[str]:
         """Returns charm-set sync_password for server-server auth between brokers."""
-        return self.charm.get_secret(scope="app", key="sync_password")
+        return self.charm.get_secret(scope="app", key="sync-password")
 
     @property
     def zookeeper_config(self) -> Dict[str, str]:

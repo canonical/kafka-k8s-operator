@@ -8,6 +8,7 @@ import logging
 from typing import MutableMapping, Optional
 
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
+from ops import pebble
 from ops.charm import (
     ActionEvent,
     CharmBase,
@@ -20,11 +21,17 @@ from ops.framework import EventBase
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, Container, Relation, WaitingStatus
 from ops.pebble import ExecError, Layer, PathError, ProtocolError
-from ops import pebble
 
 from auth import KafkaAuth
 from config import KafkaConfig
-from literals import CHARM_KEY, CHARM_USERS, PEER, REL_NAME, ZOOKEEPER_REL_NAME
+from literals import (
+    CHARM_KEY,
+    CHARM_USERS,
+    CONTAINER,
+    PEER,
+    REL_NAME,
+    ZOOKEEPER_REL_NAME,
+)
 from provider import KafkaProvider
 from tls import KafkaTLS
 from utils import broker_active, generate_password
@@ -63,7 +70,7 @@ class KafkaK8sCharm(CharmBase):
     @property
     def container(self) -> Container:
         """Grabs the current Kafka container."""
-        return self.unit.get_container(CHARM_KEY)
+        return self.unit.get_container(CONTAINER)
 
     @property
     def _kafka_layer(self) -> Layer:
@@ -141,10 +148,10 @@ class KafkaK8sCharm(CharmBase):
             return
 
         # start kafka service
-        self.container.add_layer(CHARM_KEY, self._kafka_layer, combine=True)
+        self.container.add_layer(CONTAINER, self._kafka_layer, combine=True)
         self.container.replan()
 
-        # start_snap_service can fail silently, confirm with ZK if kafka is actually connected
+        # service_start might fail silently, confirm with ZK if kafka is actually connected
         if broker_active(
             unit=self.unit,
             zookeeper_config=self.kafka_config.zookeeper_config,
@@ -192,11 +199,13 @@ class KafkaK8sCharm(CharmBase):
             self.client_relations.update_connection_info()
 
     def _on_leader_elected(self, _) -> None:
-        """Handler for `leader_elected` event, ensuring sync_passwords gets set."""
+        """Handler for `leader_elected` event, ensuring sync-passwords gets set."""
         sync_password = self.kafka_config.sync_password
+        logger.info(sync_password)
         self.set_secret(
-            scope="app", key="sync_password", value=(sync_password or generate_password())
+            scope="app", key="sync-password", value=(sync_password or generate_password())
         )
+        logger.info(self.get_secret(scope="app", key="sync-password"))
 
     def _on_zookeeper_joined(self, event: RelationJoinedEvent) -> None:
         """Handler for `zookeeper_relation_joined` event, ensuring chroot gets set."""
@@ -210,7 +219,7 @@ class KafkaK8sCharm(CharmBase):
             return
 
         logger.info("stopping kafka service")
-        self.container.stop(CHARM_KEY)
+        self.container.stop(CONTAINER)
         self.unit.status = BlockedStatus("missing required zookeeper relation")
 
     def _set_password_action(self, event: ActionEvent) -> None:
@@ -262,7 +271,7 @@ class KafkaK8sCharm(CharmBase):
             event.defer()
             return
 
-        self.container.restart(CHARM_KEY)
+        self.container.restart(CONTAINER)
 
     @property
     def ready_to_start(self) -> bool:
@@ -298,9 +307,6 @@ class KafkaK8sCharm(CharmBase):
             String of key value.
             None if non-existent key
         """
-        if not self.app_peer_data or not self.unit_peer_data:
-            return None
-
         if scope == "unit":
             return self.unit_peer_data.get(key, None)
         elif scope == "app":

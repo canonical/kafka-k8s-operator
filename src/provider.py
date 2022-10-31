@@ -18,7 +18,7 @@ from ops.model import Relation
 
 from auth import KafkaAuth
 from config import KafkaConfig
-from literals import CHARM_KEY, PEER, REL_NAME
+from literals import CONTAINER, PEER, REL_NAME
 from utils import generate_password
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class KafkaProvider(Object):
         self.kafka_config = KafkaConfig(self.charm)
         self.kafka_auth = KafkaAuth(
             charm=charm,
-            container=self.charm.unit.get_container(CHARM_KEY),
+            container=self.charm.unit.get_container(CONTAINER),
             opts=[self.kafka_config.extra_args],
             zookeeper=self.kafka_config.zookeeper_config.get("connect", ""),
         )
