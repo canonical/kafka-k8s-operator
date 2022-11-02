@@ -74,7 +74,7 @@ def test_zookeeper_joined_sets_chroot(harness):
 
 
 def test_zookeeper_broken_stops_service(harness):
-    """Checks chroot is added to ZK relation data on ZKrelationjoined hook."""
+    """Checks service stops and unit blocks on ZKrelationbroken hook."""
     harness.add_relation(PEER, CHARM_KEY)
     zk_rel_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
 
