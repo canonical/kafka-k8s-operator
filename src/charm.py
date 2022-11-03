@@ -157,6 +157,7 @@ class KafkaK8sCharm(CharmBase):
             zookeeper_config=self.kafka_config.zookeeper_config,
         ):
             logger.info(f'Broker {self.unit.name.split("/")[1]} connected')
+            self.unit_peer_data.update({"state": "started"})
             self.unit.status = ActiveStatus()
         else:
             self.unit.status = BlockedStatus("kafka unit not connected to ZooKeeper")
@@ -177,6 +178,7 @@ class KafkaK8sCharm(CharmBase):
             logger.debug(str(e))
             event.defer()
             return
+
         if not raw_properties:
             # Event fired before charm has properly started
             event.defer()
@@ -201,7 +203,6 @@ class KafkaK8sCharm(CharmBase):
     def _on_leader_elected(self, _) -> None:
         """Handler for `leader_elected` event, ensuring sync-passwords gets set."""
         sync_password = self.kafka_config.sync_password
-        logger.info(sync_password)
         self.set_secret(
             scope="app", key="sync-password", value=(sync_password or generate_password())
         )
@@ -267,7 +268,8 @@ class KafkaK8sCharm(CharmBase):
 
     def _restart(self, event: EventBase) -> None:
         """Handler for `rolling_ops` restart events."""
-        if not self.ready_to_start:
+        # ensures service isn't referenced before pebble ready
+        if not self.unit_peer_data.get("state", None) == "started":
             event.defer()
             return
 

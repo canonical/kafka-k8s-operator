@@ -294,6 +294,7 @@ def test_config_changed_restarts(harness):
     """Checks units rolling-restat on config changed hook."""
     peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
     harness.add_relation_unit(peer_rel_id, f"{CHARM_KEY}/0")
+    harness.update_relation_data(peer_rel_id, harness.charm.unit.name, {"state": "started"})
 
     with patch(
         "config.KafkaConfig.server_properties",
@@ -309,6 +310,8 @@ def test_config_changed_restarts(harness):
         "ops.model.Container.restart"
     ) as patched_restart:
         harness.set_leader(True)
+        with harness.hooks_disabled():
+            harness.container_pebble_ready(CONTAINER)
         harness.charm.on.config_changed.emit()
 
         patched_restart.assert_called_once()
