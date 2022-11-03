@@ -43,7 +43,7 @@ def test_opts_in_pebble_layer(harness):
     """Checks KAFKA_OPTS is present as an env-var in pebble layer."""
     layer = harness.charm._kafka_layer.to_dict()
 
-    assert layer["services"][CHARM_KEY].get("environment", {}).get("KAFKA_OPTS")
+    assert layer["services"][CONTAINER].get("environment", {}).get("KAFKA_OPTS")
 
 
 def test_pebble_ready_waits_until_zookeeper_relation(harness):

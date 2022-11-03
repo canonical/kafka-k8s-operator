@@ -79,7 +79,7 @@ class KafkaK8sCharm(CharmBase):
             "summary": "kafka layer",
             "description": "Pebble config layer for kafka",
             "services": {
-                CHARM_KEY: {
+                CONTAINER: {
                     "override": "replace",
                     "summary": "kafka",
                     "command": self.kafka_config.kafka_command,
