@@ -5,13 +5,15 @@
 """Charmed Machine Operator for Apache Kafka."""
 
 import logging
-from typing import Dict, Optional
+from typing import MutableMapping, Optional
 
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
+from ops import pebble
 from ops.charm import (
     ActionEvent,
     CharmBase,
     ConfigChangedEvent,
+    PebbleReadyEvent,
     RelationEvent,
     RelationJoinedEvent,
 )
@@ -22,7 +24,14 @@ from ops.pebble import ExecError, Layer, PathError, ProtocolError
 
 from auth import KafkaAuth
 from config import KafkaConfig
-from literals import CHARM_KEY, CHARM_USERS, PEER, REL_NAME, ZOOKEEPER_REL_NAME
+from literals import (
+    CHARM_KEY,
+    CHARM_USERS,
+    CONTAINER,
+    PEER,
+    REL_NAME,
+    ZOOKEEPER_REL_NAME,
+)
 from provider import KafkaProvider
 from tls import KafkaTLS
 from utils import broker_active, generate_password
@@ -61,16 +70,16 @@ class KafkaK8sCharm(CharmBase):
     @property
     def container(self) -> Container:
         """Grabs the current Kafka container."""
-        return self.unit.get_container(CHARM_KEY)
+        return self.unit.get_container(CONTAINER)
 
     @property
     def _kafka_layer(self) -> Layer:
         """Returns a Pebble configuration layer for Kafka."""
-        layer_config = {
+        layer_config: pebble.LayerDict = {
             "summary": "kafka layer",
             "description": "Pebble config layer for kafka",
             "services": {
-                CHARM_KEY: {
+                CONTAINER: {
                     "override": "replace",
                     "summary": "kafka",
                     "command": self.kafka_config.kafka_command,
@@ -82,25 +91,27 @@ class KafkaK8sCharm(CharmBase):
         return Layer(layer_config)
 
     @property
-    def peer_relation(self) -> Relation:
-        """The Kafka cluster relation."""
+    def peer_relation(self) -> Optional[Relation]:
+        """The cluster peer relation."""
         return self.model.get_relation(PEER)
 
     @property
-    def app_peer_data(self) -> Dict:
+    def app_peer_data(self) -> MutableMapping[str, str]:
         """Application peer relation data object."""
         if not self.peer_relation:
             return {}
+
         return self.peer_relation.data[self.app]
 
     @property
-    def unit_peer_data(self) -> Dict:
+    def unit_peer_data(self) -> MutableMapping[str, str]:
         """Unit peer relation data object."""
         if not self.peer_relation:
             return {}
+
         return self.peer_relation.data[self.unit]
 
-    def _on_kafka_pebble_ready(self, event: EventBase) -> None:
+    def _on_kafka_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Handler for `kafka_pebble_ready` event."""
         if not self.container.can_connect():
             event.defer()
@@ -125,7 +136,7 @@ class KafkaK8sCharm(CharmBase):
             )
             try:
                 kafka_auth.add_user(username="sync", password=self.kafka_config.sync_password)
-                self.peer_relation.data[self.app].update({"broker-creds": "added"})
+                self.app_peer_data.update({"broker-creds": "added"})
             except ExecError as e:
                 logger.debug(str(e))
                 event.defer()
@@ -137,15 +148,16 @@ class KafkaK8sCharm(CharmBase):
             return
 
         # start kafka service
-        self.container.add_layer(CHARM_KEY, self._kafka_layer, combine=True)
+        self.container.add_layer(CONTAINER, self._kafka_layer, combine=True)
         self.container.replan()
 
-        # start_snap_service can fail silently, confirm with ZK if kafka is actually connected
+        # service_start might fail silently, confirm with ZK if kafka is actually connected
         if broker_active(
             unit=self.unit,
             zookeeper_config=self.kafka_config.zookeeper_config,
         ):
             logger.info(f'Broker {self.unit.name.split("/")[1]} connected')
+            self.unit_peer_data.update({"state": "started"})
             self.unit.status = ActiveStatus()
         else:
             self.unit.status = BlockedStatus("kafka unit not connected to ZooKeeper")
@@ -166,6 +178,7 @@ class KafkaK8sCharm(CharmBase):
             logger.debug(str(e))
             event.defer()
             return
+
         if not raw_properties:
             # Event fired before charm has properly started
             event.defer()
@@ -181,18 +194,19 @@ class KafkaK8sCharm(CharmBase):
             )
             self.kafka_config.set_server_properties()
 
-            self.on[self.restart.name].acquire_lock.emit()
+            self.on[f"{self.restart.name}"].acquire_lock.emit()
 
         # If Kafka is related to client charms, update their information.
         if self.model.relations.get(REL_NAME, None) and self.unit.is_leader():
             self.client_relations.update_connection_info()
 
     def _on_leader_elected(self, _) -> None:
-        """Handler for `leader_elected` event, ensuring sync_passwords gets set."""
+        """Handler for `leader_elected` event, ensuring sync-passwords gets set."""
         sync_password = self.kafka_config.sync_password
         self.set_secret(
-            scope="app", key="sync_password", value=(sync_password or generate_password())
+            scope="app", key="sync-password", value=(sync_password or generate_password())
         )
+        logger.info(self.get_secret(scope="app", key="sync-password"))
 
     def _on_zookeeper_joined(self, event: RelationJoinedEvent) -> None:
         """Handler for `zookeeper_relation_joined` event, ensuring chroot gets set."""
@@ -206,10 +220,10 @@ class KafkaK8sCharm(CharmBase):
             return
 
         logger.info("stopping kafka service")
-        self.container.stop(CHARM_KEY)
+        self.container.stop(CONTAINER)
         self.unit.status = BlockedStatus("missing required zookeeper relation")
 
-    def _set_password_action(self, event: ActionEvent):
+    def _set_password_action(self, event: ActionEvent) -> None:
         """Handler for set-password action.
 
         Set the password for a specific user, if no passwords are passed, generate them.
@@ -254,11 +268,12 @@ class KafkaK8sCharm(CharmBase):
 
     def _restart(self, event: EventBase) -> None:
         """Handler for `rolling_ops` restart events."""
-        if not self.ready_to_start:
+        # ensures service isn't referenced before pebble ready
+        if not self.unit_peer_data.get("state", None) == "started":
             event.defer()
             return
 
-        self.container.restart(CHARM_KEY)
+        self.container.restart(CONTAINER)
 
     @property
     def ready_to_start(self) -> bool:
@@ -276,7 +291,7 @@ class KafkaK8sCharm(CharmBase):
             self.unit.status = BlockedStatus(msg)
             return False
 
-        if not self.kafka_config.zookeeper_connected or not self.peer_relation.data[self.app].get(
+        if not self.kafka_config.zookeeper_connected or not self.app_peer_data.get(
             "broker-creds", None
         ):
             return False
@@ -284,7 +299,16 @@ class KafkaK8sCharm(CharmBase):
         return True
 
     def get_secret(self, scope: str, key: str) -> Optional[str]:
-        """Get TLS secret from the secret storage."""
+        """Get TLS secret from the secret storage.
+
+        Args:
+            scope: whether this secret is for a `unit` or `app`
+            key: the secret key name
+
+        Returns:
+            String of key value.
+            None if non-existent key
+        """
         if scope == "unit":
             return self.unit_peer_data.get(key, None)
         elif scope == "app":
@@ -293,15 +317,21 @@ class KafkaK8sCharm(CharmBase):
             raise RuntimeError("Unknown secret scope.")
 
     def set_secret(self, scope: str, key: str, value: Optional[str]) -> None:
-        """Get TLS secret from the secret storage."""
+        """Get TLS secret from the secret storage.
+
+        Args:
+            scope: whether this secret is for a `unit` or `app`
+            key: the secret key name
+            value: the value for the secret key
+        """
         if scope == "unit":
             if not value:
-                del self.unit_peer_data[key]
+                self.unit_peer_data.update({key: ""})
                 return
             self.unit_peer_data.update({key: value})
         elif scope == "app":
             if not value:
-                del self.app_peer_data[key]
+                self.unit_peer_data.update({key: ""})
                 return
             self.app_peer_data.update({key: value})
         else:

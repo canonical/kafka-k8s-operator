@@ -99,7 +99,7 @@ def test_default_replication_properties_more_than_three(harness):
 def test_auth_properties(zk_relation_id, harness):
     peer_relation_id = harness.charm.model.get_relation("cluster").id
     harness.update_relation_data(
-        peer_relation_id, harness.charm.app.name, {"sync_password": "mellon"}
+        peer_relation_id, harness.charm.app.name, {"sync-password": "mellon"}
     )
     harness.update_relation_data(
         zk_relation_id,
