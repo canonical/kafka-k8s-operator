@@ -11,3 +11,4 @@ CHARM_USERS = ["sync"]
 REL_NAME = "kafka-client"
 TLS_RELATION = "certificates"
 CONTAINER = "kafka"
+STORAGE = "log-data"

@@ -9,10 +9,15 @@ description: |
   ""
 maintainers:
   - Marc Oppenheimer <marc.oppenheimer@canonical.com>
+series:
+  - jammy
 
 containers:
   kafka:
     resource: kafka-image
+    mounts:
+      - storage: log-data
+        location: /logs/kafka
 
 resources:
   kafka-image:
@@ -36,3 +41,9 @@ requires:
 provides:
   kafka-client:
     interface: kafka_client
+
+storage:
+  log-data:
+    type: filesystem
+    description: Directories where the log data is stored
+    minimum-size: 50M

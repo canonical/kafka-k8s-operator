@@ -22,12 +22,15 @@ async def test_kafka_simple_scale_up(ops_test: OpsTest):
     kafka_charm = await ops_test.build_charm(".")
 
     await asyncio.gather(
-        ops_test.model.deploy("zookeeper-k8s", application_name=ZOOKEEPER_REL_NAME, num_units=1),
+        ops_test.model.deploy(
+            ZK_NAME, application_name=ZOOKEEPER_REL_NAME, num_units=1, series="focal"
+        ),
         ops_test.model.deploy(
             kafka_charm,
             application_name=CHARM_KEY,
             num_units=1,
             resources={"kafka-image": "ubuntu/kafka:latest"},
+            series="jammy",
         ),
     )
     await ops_test.model.wait_for_idle(apps=[CHARM_KEY, ZOOKEEPER_REL_NAME])

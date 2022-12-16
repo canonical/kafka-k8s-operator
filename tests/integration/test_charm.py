@@ -17,16 +17,18 @@ async def test_build_and_deploy(ops_test: OpsTest):
     kafka_charm = await ops_test.build_charm(".")
     await asyncio.gather(
         ops_test.model.deploy(
-            "zookeeper-k8s",
+            ZK_NAME,
             channel="edge",
             application_name=ZK_NAME,
             num_units=3,
+            series="focal",
         ),
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
+            series="jammy",
         ),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)

@@ -16,6 +16,8 @@ from ops.charm import (
     PebbleReadyEvent,
     RelationEvent,
     RelationJoinedEvent,
+    StorageAttachedEvent,
+    StorageDetachingEvent,
 )
 from ops.framework import EventBase
 from ops.main import main
@@ -67,6 +69,10 @@ class KafkaK8sCharm(CharmBase):
 
         self.framework.observe(getattr(self.on, "set_password_action"), self._set_password_action)
 
+        self.framework.observe(
+            getattr(self.on, "log_data_storage_attached"), self._on_storage_attached
+        )
+
     @property
     def container(self) -> Container:
         """Grabs the current Kafka container."""
@@ -110,6 +116,18 @@ class KafkaK8sCharm(CharmBase):
             return {}
 
         return self.peer_relation.data[self.unit]
+
+    def _on_storage_attached(self, event: StorageAttachedEvent) -> None:
+        path = event.storage.location if event.storage else None
+        if not path:
+            logger.error("Unable to find storage in StorageAttachedEvent")
+            event.defer()
+            return
+
+        self.unit_peer_data.update({"logs": "attached"})
+
+    def _on_storage_detached(self, _: StorageDetachingEvent) -> None:
+        self.unit_peer_data.update({"logs": ""})
 
     def _on_kafka_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Handler for `kafka_pebble_ready` event."""
@@ -287,7 +305,7 @@ class KafkaK8sCharm(CharmBase):
             self.kafka_config.zookeeper_config.get("tls", "disabled") == "enabled"
         ):
             msg = "TLS needs to be active for Zookeeper and Kafka"
-            logger.debug(msg)
+            logger.error(msg)
             self.unit.status = BlockedStatus(msg)
             return False
 

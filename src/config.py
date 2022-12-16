@@ -3,13 +3,13 @@
 # See LICENSE file for licensing details.
 
 """Manager for handling Kafka configuration."""
-
 import logging
+import os
 from typing import Dict, List, Optional
 
 from ops.model import Container, Unit
 
-from literals import CONTAINER, PEER, REL_NAME, ZOOKEEPER_REL_NAME
+from literals import CONTAINER, PEER, REL_NAME, STORAGE, ZOOKEEPER_REL_NAME
 from utils import push
 
 logger = logging.getLogger(__name__)
@@ -199,6 +199,17 @@ class KafkaConfig:
         return ";".join(super_users_arg)
 
     @property
+    def log_dirs(self) -> str:
+        """Builds the necessary log.dirs based on mounted storage volumes.
+
+        Returns:
+            String of log.dirs property value to be set
+        """
+        return ",".join(
+            [os.fspath(storage.location) for storage in self.charm.model.storages[STORAGE]]
+        )
+
+    @property
     def server_properties(self) -> List[str]:
         """Builds all properties necessary for starting Kafka service.
 
@@ -219,6 +230,7 @@ class KafkaConfig:
                 f"log.retention.hours={self.charm.config['log-retention-hours']}",
                 f"auto.create.topics={self.charm.config['auto-create-topics']}",
                 f"super.users={self.super_users}",
+                f"log.dirs={self.log_dirs}",
                 f"listeners={protocol}://:{port}",
                 f"advertised.listeners={protocol}://{host}:{port}",
                 f'listener.name.{(protocol).lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="sync" password="{self.sync_password}";',
