@@ -12,7 +12,6 @@ from ops import pebble
 from ops.charm import (
     ActionEvent,
     CharmBase,
-    ConfigChangedEvent,
     PebbleReadyEvent,
     RelationEvent,
     RelationJoinedEvent,
@@ -72,6 +71,9 @@ class KafkaK8sCharm(CharmBase):
         self.framework.observe(
             getattr(self.on, "log_data_storage_attached"), self._on_storage_attached
         )
+        self.framework.observe(
+            getattr(self.on, "log_data_storage_detaching"), self._on_storage_detaching
+        )
 
     @property
     def container(self) -> Container:
@@ -118,16 +120,38 @@ class KafkaK8sCharm(CharmBase):
         return self.peer_relation.data[self.unit]
 
     def _on_storage_attached(self, event: StorageAttachedEvent) -> None:
-        path = event.storage.location if event.storage else None
-        if not path:
-            logger.error("Unable to find storage in StorageAttachedEvent")
-            event.defer()
+        """Handler for `storage_attached` events."""
+        # checks first whether the broker is active before warning
+        if not self.kafka_config.zookeeper_connected or not broker_active(unit=self.unit, zookeeper_config=self.kafka_config.zookeeper_config):
             return
 
-        self.unit_peer_data.update({"logs": "attached"})
+        # new dirs won't be used until topic partitions are assigned to it
+        # either automatically for new topics, or manually for existing
+        message = "manual partition reassignment needed to use new storage"
+        logger.warning(f"Attaching storage - {message}")
+        self.unit.status = ActiveStatus(message)
 
-    def _on_storage_detached(self, _: StorageDetachingEvent) -> None:
-        self.unit_peer_data.update({"logs": ""})
+        self._on_config_changed(event)
+
+    def _on_storage_detaching(self, event: StorageDetachingEvent) -> None:
+        """Handler for `storage_detaching` events."""
+        # checks first whether the broker is active before warning
+        if not self.kafka_config.zookeeper_connected or not broker_active(
+            unit=self.unit, zookeeper_config=self.kafka_config.zookeeper_config
+        ):
+            return
+
+        # in the case where there may be replication recovery may be possible
+        if self.peer_relation and len(self.peer_relation.units):
+            message = "manual partition reassignment suggested due to potential log data loss"
+            logger.warning(f"Removing storage - {message}")
+            self.unit.status = BlockedStatus(message)
+        else:
+            message = "potential log-data loss"
+            logger.error(f"Removing storage - {message}")
+            self.unit.status = BlockedStatus(message)
+
+        self._on_config_changed(event)
 
     def _on_kafka_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Handler for `kafka_pebble_ready` event."""
@@ -181,7 +205,7 @@ class KafkaK8sCharm(CharmBase):
             self.unit.status = BlockedStatus("kafka unit not connected to ZooKeeper")
             return
 
-    def _on_config_changed(self, event: ConfigChangedEvent) -> None:
+    def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
         if not self.ready_to_start:
             event.defer()
