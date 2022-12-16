@@ -2,6 +2,7 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import logging
 import re
 from pathlib import Path
 from subprocess import PIPE, check_output
@@ -10,6 +11,10 @@ from typing import Any, Dict, List, Set, Tuple
 import yaml
 from auth import Acl, KafkaAuth
 from pytest_operator.plugin import OpsTest
+
+from tests.integration.client import KafkaClient
+
+logger = logging.getLogger(__name__)
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 KAFKA_CONTAINER = METADATA["resources"]["kafka-image"]["upstream-source"]
@@ -157,7 +162,7 @@ def get_kafka_zk_relation_data(unit_name: str, model_full_name: str) -> Dict[str
     return zk_relation_data
 
 
-def check_tls(ip: str, port: int) -> bool:
+def check_tls(ip: str, port: int) -> None:
     result = check_output(
         f"echo | openssl s_client -connect {ip}:{port}",
         stderr=PIPE,
@@ -185,3 +190,61 @@ def get_provider_data(unit_name: str, model_full_name: str) -> Dict[str, str]:
             provider_relation_data["zookeeper-uris"] = info["application-data"]["zookeeper-uris"]
             provider_relation_data["tls"] = info["application-data"]["tls"]
     return provider_relation_data
+
+
+def produce_and_check_logs(
+    model_full_name: str, kafka_unit_name: str, provider_unit_name: str, topic: str
+) -> None:
+    """Produces messages from HN to chosen Kafka topic.
+
+    Args:
+        model_full_name: the full name of the model
+        kafka_unit_name: the kafka unit to checks logs on
+        proider_unit_name: the app to grab credentials from
+        topic: the desired topic to produce to
+
+    Raises:
+        KeyError: if missing relation data
+        AssertionError: if logs aren't found for desired topic
+    """
+    relation_data = get_provider_data(
+        unit_name=provider_unit_name, model_full_name=model_full_name
+    )
+
+    topic = topic
+    username = relation_data.get("username", None)
+    password = relation_data.get("password", None)
+    servers = relation_data.get("uris", "").split(",")
+    security_protocol = "SASL_PLAINTEXT"
+
+    if not (username and password and servers):
+        raise KeyError("missing relation data from app charm")
+
+    client = KafkaClient(
+        servers=servers,
+        username=username,
+        password=password,
+        topic=topic,
+        consumer_group_prefix=None,
+        security_protocol=security_protocol,
+    )
+
+    client.create_topic()
+    client.run_producer()
+
+    logs = check_output(
+        f"JUJU_MODEL={model_full_name} juju ssh {kafka_unit_name} 'find /var/snap/kafka/common/log-data'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    ).splitlines()
+
+    logger.debug(f"{logs=}")
+
+    passed = False
+    for log in logs:
+        if topic and "index" in log:
+            passed = True
+            break
+
+    assert passed, "logs not found"
