@@ -313,6 +313,18 @@ class KafkaK8sCharm(CharmBase):
 
         self.container.restart(CONTAINER)
 
+        if broker_active(
+            unit=self.unit,
+            zookeeper_config=self.kafka_config.zookeeper_config,
+        ):
+            logger.info(f'Broker {self.unit.name.split("/")[1]} restarted')
+            self.unit.status = ActiveStatus()
+        else:
+            self.unit.status = BlockedStatus(
+                f"Broker {self.unit.name.split('/')[1]} failed to restart"
+            )
+            return
+
     @property
     def ready_to_start(self) -> bool:
         """Check for active ZooKeeper relation and adding of inter-broker auth username.
