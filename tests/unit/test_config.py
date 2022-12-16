@@ -5,7 +5,7 @@
 import ops.testing
 import pytest
 from charm import KafkaK8sCharm
-from literals import CHARM_KEY, PEER, STORAGE, ZK_NAME
+from literals import STORAGE
 from ops.testing import Harness
 
 ops.testing.SIMULATE_CAN_CONNECT = True
@@ -49,9 +49,8 @@ def test_all_storages_in_log_dirs(harness):
     )
 
 
-def test_log_dirs_in_server_properties(harness):
+def test_log_dirs_in_server_properties(zk_relation_id, harness):
     """Checks that log.dirs are added to server_properties."""
-    zk_relation_id = harness.add_relation(ZK_NAME, CHARM_KEY)
     harness.update_relation_data(
         zk_relation_id,
         harness.charm.app.name,
@@ -64,9 +63,6 @@ def test_log_dirs_in_server_properties(harness):
             "tls": "disabled",
         },
     )
-    peer_relation_id = harness.add_relation(PEER, CHARM_KEY)
-    harness.add_relation_unit(peer_relation_id, f"{CHARM_KEY}/1")
-    harness.update_relation_data(peer_relation_id, f"{CHARM_KEY}/0")
 
     found_log_dirs = False
     for prop in harness.charm.kafka_config.server_properties:
