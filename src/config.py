@@ -7,9 +7,8 @@ import logging
 import os
 from typing import Dict, List, Optional
 
-from ops.model import Container, Unit
-
 from literals import CONTAINER, PEER, REL_NAME, STORAGE, ZOOKEEPER_REL_NAME
+from ops.model import Container, Unit
 from utils import push
 
 logger = logging.getLogger(__name__)

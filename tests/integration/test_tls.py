@@ -7,9 +7,8 @@ import logging
 
 import pytest
 from helpers import ZK_NAME, check_application_status, check_tls, get_address
-from pytest_operator.plugin import OpsTest
-
 from literals import CHARM_KEY
+from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)
 

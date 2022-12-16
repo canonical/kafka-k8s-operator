@@ -7,11 +7,11 @@ import logging
 import time
 
 import pytest
+from literals import CHARM_KEY, ZK_NAME, ZOOKEEPER_REL_NAME
 from pytest_operator.plugin import OpsTest
-
-from literals import CHARM_KEY, ZOOKEEPER_REL_NAME
-from tests.integration.helpers import get_kafka_zk_relation_data
 from utils import get_active_brokers
+
+from tests.integration.helpers import get_kafka_zk_relation_data
 
 logger = logging.getLogger(__name__)
 

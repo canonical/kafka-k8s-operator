@@ -7,7 +7,10 @@
 import logging
 from typing import MutableMapping, Optional
 
+from auth import KafkaAuth
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
+from config import KafkaConfig
+from literals import CHARM_KEY, CHARM_USERS, CONTAINER, PEER, REL_NAME, ZOOKEEPER_REL_NAME
 from ops import pebble
 from ops.charm import (
     ActionEvent,
@@ -22,17 +25,6 @@ from ops.framework import EventBase
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, Container, Relation, WaitingStatus
 from ops.pebble import ExecError, Layer, PathError, ProtocolError
-
-from auth import KafkaAuth
-from config import KafkaConfig
-from literals import (
-    CHARM_KEY,
-    CHARM_USERS,
-    CONTAINER,
-    PEER,
-    REL_NAME,
-    ZOOKEEPER_REL_NAME,
-)
 from provider import KafkaProvider
 from tls import KafkaTLS
 from utils import broker_active, generate_password
@@ -122,7 +114,9 @@ class KafkaK8sCharm(CharmBase):
     def _on_storage_attached(self, event: StorageAttachedEvent) -> None:
         """Handler for `storage_attached` events."""
         # checks first whether the broker is active before warning
-        if not self.kafka_config.zookeeper_connected or not broker_active(unit=self.unit, zookeeper_config=self.kafka_config.zookeeper_config):
+        if not self.kafka_config.zookeeper_connected or not broker_active(
+            unit=self.unit, zookeeper_config=self.kafka_config.zookeeper_config
+        ):
             return
 
         # new dirs won't be used until topic partitions are assigned to it

@@ -9,13 +9,11 @@ from unittest.mock import PropertyMock, patch
 
 import pytest
 import yaml
+from charm import KafkaK8sCharm
+from literals import CHARM_KEY, CONTAINER, PEER, REL_NAME, STORAGE, ZK_NAME, ZOOKEEPER_REL_NAME
 from ops.model import BlockedStatus, WaitingStatus
 from ops.testing import Harness
 from tenacity.wait import wait_none
-
-from charm import KafkaK8sCharm
-from literals import CHARM_KEY, CONTAINER, PEER, REL_NAME, STORAGE, ZOOKEEPER_REL_NAME
-from tests.integration.helpers import ZK_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -114,9 +112,10 @@ def test_pebble_ready_sets_necessary_config(harness):
         },
     )
 
-    with patch("config.KafkaConfig.set_jaas_config") as patched_jaas, patch(
-        "config.KafkaConfig.set_server_properties"
-    ) as patched_properties:
+    with (
+        patch("config.KafkaConfig.set_jaas_config") as patched_jaas,
+        patch("config.KafkaConfig.set_server_properties") as patched_properties,
+    ):
         harness.container_pebble_ready(CONTAINER)
         patched_jaas.assert_called_once()
         patched_properties.assert_called_once()
@@ -141,11 +140,12 @@ def test_pebble_ready_sets_auth_and_broker_creds_on_leader(harness):
     )
     harness.update_relation_data(peer_rel_id, CHARM_KEY, {"sync-password": "mellon"})
 
-    with patch("auth.KafkaAuth.add_user") as patched_add_user, patch(
-        "config.KafkaConfig.set_jaas_config"
-    ), patch("config.KafkaConfig.set_server_properties"), patch(
-        "charm.broker_active"
-    ) as patched_broker_active:
+    with (
+        patch("auth.KafkaAuth.add_user") as patched_add_user,
+        patch("config.KafkaConfig.set_jaas_config"),
+        patch("config.KafkaConfig.set_server_properties"),
+        patch("charm.broker_active") as patched_broker_active,
+    ):
         # verify non-leader does not set creds
         patched_broker_active.retry.wait = wait_none
         harness.container_pebble_ready(CONTAINER)
@@ -178,15 +178,14 @@ def test_pebble_ready_does_not_start_if_not_ready(harness):
     )
     harness.update_relation_data(peer_rel_id, CHARM_KEY, {"sync-password": "mellon"})
 
-    with patch("auth.KafkaAuth.add_user"), patch("config.KafkaConfig.set_jaas_config"), patch(
-        "config.KafkaConfig.set_server_properties"
-    ), patch(
-        "charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=False
-    ), patch(
-        "ops.framework.EventBase.defer"
-    ) as patched_defer, patch(
-        "ops.model.Container.start"
-    ) as patched_start:
+    with (
+        patch("auth.KafkaAuth.add_user"),
+        patch("config.KafkaConfig.set_jaas_config"),
+        patch("config.KafkaConfig.set_server_properties"),
+        patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=False),
+        patch("ops.framework.EventBase.defer") as patched_defer,
+        patch("ops.model.Container.start") as patched_start,
+    ):
         harness.container_pebble_ready(CONTAINER)
 
         patched_start.assert_not_called()
@@ -212,9 +211,12 @@ def test_pebble_ready_does_not_start_if_not_same_tls_as_zk(harness):
     )
     harness.update_relation_data(peer_rel_id, CHARM_KEY, {"sync-password": "mellon"})
 
-    with patch("auth.KafkaAuth.add_user"), patch("config.KafkaConfig.set_jaas_config"), patch(
-        "config.KafkaConfig.set_server_properties"
-    ), patch("ops.model.Container.start") as patched_start:
+    with (
+        patch("auth.KafkaAuth.add_user"),
+        patch("config.KafkaConfig.set_jaas_config"),
+        patch("config.KafkaConfig.set_server_properties"),
+        patch("ops.model.Container.start") as patched_start,
+    ):
         harness.container_pebble_ready(CONTAINER)
 
         patched_start.assert_not_called()
@@ -240,9 +242,11 @@ def test_pebble_ready_does_not_start_if_leader_has_not_set_creds(harness):
     )
     harness.update_relation_data(peer_rel_id, CHARM_KEY, {"sync-password": "mellon"})
 
-    with patch("config.KafkaConfig.set_jaas_config"), patch(
-        "config.KafkaConfig.set_server_properties"
-    ), patch("ops.model.Container.start") as patched_start:
+    with (
+        patch("config.KafkaConfig.set_jaas_config"),
+        patch("config.KafkaConfig.set_server_properties"),
+        patch("ops.model.Container.start") as patched_start,
+    ):
         harness.container_pebble_ready(CONTAINER)
 
         patched_start.assert_not_called()
@@ -254,17 +258,16 @@ def test_config_changed_updates_properties(harness):
     peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
     harness.add_relation_unit(peer_rel_id, f"{CHARM_KEY}/0")
 
-    with patch(
-        "config.KafkaConfig.server_properties",
-        new_callable=PropertyMock,
-        return_value=["gandalf=white"],
-    ), patch(
-        "charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True
-    ), patch(
-        "ops.model.Container.pull", return_value=io.StringIO("gandalf=grey")
-    ), patch(
-        "config.KafkaConfig.set_server_properties"
-    ) as set_props:
+    with (
+        patch(
+            "config.KafkaConfig.server_properties",
+            new_callable=PropertyMock,
+            return_value=["gandalf=white"],
+        ),
+        patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
+        patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=grey")),
+        patch("config.KafkaConfig.set_server_properties") as set_props,
+    ):
         harness.charm.on.config_changed.emit()
 
         set_props.assert_called_once()
@@ -276,17 +279,16 @@ def test_config_changed_updates_client_data(harness):
     harness.add_relation_unit(peer_rel_id, f"{CHARM_KEY}/0")
     harness.add_relation(REL_NAME, "app")
 
-    with patch(
-        "config.KafkaConfig.server_properties",
-        new_callable=PropertyMock,
-        return_value=["gandalf=white"],
-    ), patch(
-        "charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True
-    ), patch(
-        "ops.model.Container.pull", return_value=io.StringIO("gandalf=white")
-    ), patch(
-        "provider.KafkaProvider.update_connection_info"
-    ) as patched_update_connection_info:
+    with (
+        patch(
+            "config.KafkaConfig.server_properties",
+            new_callable=PropertyMock,
+            return_value=["gandalf=white"],
+        ),
+        patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
+        patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=white")),
+        patch("provider.KafkaProvider.update_connection_info") as patched_update_connection_info,
+    ):
         harness.set_leader(True)
         harness.charm.on.config_changed.emit()
 
@@ -299,19 +301,17 @@ def test_config_changed_restarts(harness):
     harness.add_relation_unit(peer_rel_id, f"{CHARM_KEY}/0")
     harness.update_relation_data(peer_rel_id, harness.charm.unit.name, {"state": "started"})
 
-    with patch(
-        "config.KafkaConfig.server_properties",
-        new_callable=PropertyMock,
-        return_value=["gandalf=grey"],
-    ), patch(
-        "charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True
-    ), patch(
-        "ops.model.Container.pull", return_value=io.StringIO("gandalf=white")
-    ), patch(
-        "utils.push", return_value=None
-    ), patch(
-        "ops.model.Container.restart"
-    ) as patched_restart:
+    with (
+        patch(
+            "config.KafkaConfig.server_properties",
+            new_callable=PropertyMock,
+            return_value=["gandalf=grey"],
+        ),
+        patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
+        patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=white")),
+        patch("utils.push", return_value=None),
+        patch("ops.model.Container.restart") as patched_restart,
+    ):
         harness.set_leader(True)
         with harness.hooks_disabled():
             harness.container_pebble_ready(CONTAINER)
@@ -344,11 +344,13 @@ def test_start_blocks_if_missing_storage(harness):
     harness.update_relation_data(peer_rel_id, CHARM_KEY, {"sync-password": "mellon"})
     harness.set_leader(True)
 
-    with patch("auth.KafkaAuth.add_user"), patch("config.KafkaConfig.set_jaas_config"), patch(
-        "config.KafkaConfig.set_server_properties"
-    ), patch("snap.KafkaSnap.start_snap_service") as patched_start_snap_service, patch(
-        "charm.broker_active", return_value=False
-    ) as patched_broker_active:
+    with (
+        patch("auth.KafkaAuth.add_user"),
+        patch("config.KafkaConfig.set_jaas_config"),
+        patch("config.KafkaConfig.set_server_properties"),
+        patch("snap.KafkaSnap.start_snap_service") as patched_start_snap_service,
+        patch("charm.broker_active", return_value=False) as patched_broker_active,
+    ):
         patched_broker_active.retry.wait = wait_none
         harness.charm.on.start.emit()
 

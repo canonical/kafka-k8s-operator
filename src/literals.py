@@ -5,6 +5,7 @@
 """Literals used by the Kafka K8s charm."""
 
 CHARM_KEY = "kafka-k8s"
+ZK_NAME = "zookeeper-k8s"
 PEER = "cluster"
 ZOOKEEPER_REL_NAME = "zookeeper"
 CHARM_USERS = ["sync"]
