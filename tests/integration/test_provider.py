@@ -7,9 +7,7 @@ import logging
 import time
 
 import pytest
-from pytest_operator.plugin import OpsTest
-
-from tests.integration.helpers import (
+from helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
     ZK_NAME,
@@ -19,6 +17,7 @@ from tests.integration.helpers import (
     load_acls,
     load_super_users,
 )
+from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)
 
