@@ -71,7 +71,7 @@ async def test_logs_write_to_storage(ops_test: OpsTest):
     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("make-admin")
     await action.wait()
     time.sleep(10)
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30)
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME].status == "active"
 

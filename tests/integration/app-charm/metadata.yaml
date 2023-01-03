@@ -7,8 +7,6 @@ description: |
 summary: |
   Dummy charm application meant to be used
   only for testing of the libs in this repository.
-series:
-  - jammy
 
 peers:
   cluster:
@@ -17,3 +15,6 @@ peers:
 requires:
   kafka-client:
     interface: kafka_client
+
+assumes:
+  - k8s-api

@@ -9,8 +9,6 @@ description: |
   ""
 maintainers:
   - Marc Oppenheimer <marc.oppenheimer@canonical.com>
-series:
-  - jammy
 
 containers:
   kafka:
@@ -48,3 +46,6 @@ storage:
     type: filesystem
     description: Directories where the log data is stored
     minimum-size: 10G
+
+assumes:
+  - k8s-api
