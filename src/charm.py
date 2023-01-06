@@ -244,7 +244,6 @@ class KafkaK8sCharm(CharmBase):
         self.set_secret(
             scope="app", key="sync-password", value=(sync_password or generate_password())
         )
-        logger.info(self.get_secret(scope="app", key="sync-password"))
 
     def _on_zookeeper_joined(self, event: RelationJoinedEvent) -> None:
         """Handler for `zookeeper_relation_joined` event, ensuring chroot gets set."""
