@@ -10,6 +10,7 @@ of the libraries in this repository.
 
 import logging
 
+from client import KafkaClient
 from ops.charm import CharmBase, RelationEvent
 from ops.main import main
 from ops.model import ActiveStatus
@@ -36,6 +37,7 @@ class ApplicationCharm(CharmBase):
         self.framework.observe(self.on[REL_NAME].relation_broken, self._log)
 
         self.framework.observe(getattr(self.on, "make_admin_action"), self._make_admin)
+        self.framework.observe(getattr(self.on, "produce_action"), self._produce)
         self.framework.observe(getattr(self.on, "remove_admin_action"), self._remove_admin)
         self.framework.observe(getattr(self.on, "change_topic_action"), self._change_topic)
 
@@ -58,11 +60,6 @@ class ApplicationCharm(CharmBase):
 
     def _make_admin(self, _):
         self.model.get_relation(REL_NAME).data[self.app].update(
-            {"extra-user-roles": "admin,consumer"}
-        )
-
-    def _make_producer(self, _):
-        self.model.get_relation(REL_NAME).data[self.app].update(
             {"extra-user-roles": "admin,consumer,producer"}
         )
 
@@ -74,6 +71,34 @@ class ApplicationCharm(CharmBase):
 
     def _log(self, event: RelationEvent):
         return
+
+    def _produce(self, _):
+        username = None
+        password = None
+        uris = None
+        security_protocol = "SASL_PLAINTEXT"
+        for relation in self.model.relations[REL_NAME]:
+            if not relation.app:
+                continue
+
+            username = relation.data[relation.app].get("username", "")
+            password = relation.data[relation.app].get("password", "")
+            uris = relation.data[relation.app].get("uris", "").split(",")
+
+        if not (username and password and uris):
+            raise KeyError("missing relation data from app charm")
+
+        client = KafkaClient(
+            servers=uris,
+            username=username,
+            password=password,
+            topic="test-topic",
+            consumer_group_prefix=None,
+            security_protocol=security_protocol,
+        )
+
+        client.create_topic()
+        client.run_producer()
 
 
 if __name__ == "__main__":

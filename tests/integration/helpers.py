@@ -12,8 +12,6 @@ import yaml
 from auth import Acl, KafkaAuth
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.client import KafkaClient
-
 logger = logging.getLogger(__name__)
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
@@ -193,48 +191,20 @@ def get_provider_data(unit_name: str, model_full_name: str) -> Dict[str, str]:
     return provider_relation_data
 
 
-def produce_and_check_logs(
-    model_full_name: str, kafka_unit_name: str, provider_unit_name: str, topic: str
-) -> None:
+def check_logs(model_full_name: str, kafka_unit_name: str, topic: str) -> None:
     """Produces messages from HN to chosen Kafka topic.
 
     Args:
         model_full_name: the full name of the model
         kafka_unit_name: the kafka unit to checks logs on
-        proider_unit_name: the app to grab credentials from
         topic: the desired topic to produce to
 
     Raises:
         KeyError: if missing relation data
         AssertionError: if logs aren't found for desired topic
     """
-    relation_data = get_provider_data(
-        unit_name=provider_unit_name, model_full_name=model_full_name
-    )
-
-    topic = topic
-    username = relation_data.get("username", None)
-    password = relation_data.get("password", None)
-    servers = relation_data.get("uris", "").split(",")
-    security_protocol = "SASL_PLAINTEXT"
-
-    if not (username and password and servers):
-        raise KeyError("missing relation data from app charm")
-
-    client = KafkaClient(
-        servers=servers,
-        username=username,
-        password=password,
-        topic=topic,
-        consumer_group_prefix=None,
-        security_protocol=security_protocol,
-    )
-
-    client.create_topic()
-    client.run_producer()
-
     logs = check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh {kafka_unit_name} 'find /var/snap/kafka/common/log-data'",
+        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {kafka_unit_name} 'find /var/lib/juju/storage/log-data'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,

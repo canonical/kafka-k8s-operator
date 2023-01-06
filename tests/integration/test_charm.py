@@ -7,13 +7,7 @@ import logging
 import time
 
 import pytest
-from helpers import (
-    APP_NAME,
-    KAFKA_CONTAINER,
-    ZK_NAME,
-    check_application_status,
-    produce_and_check_logs,
-)
+from helpers import APP_NAME, KAFKA_CONTAINER, ZK_NAME, check_application_status, check_logs
 from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)
@@ -67,7 +61,8 @@ async def test_logs_write_to_storage(ops_test: OpsTest):
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME].status == "active"
 
-    # run action to enable producer
+    # run action to enable producer permissions and action to run producer
+    logger.info("making admin...")
     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("make-admin")
     await action.wait()
     time.sleep(10)
@@ -75,12 +70,18 @@ async def test_logs_write_to_storage(ops_test: OpsTest):
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME].status == "active"
 
-    logger.info("producing logs")
-    produce_and_check_logs(
+    logger.info("producing...")
+    action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("produce")
+    await action.wait()
+    time.sleep(10)
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30)
+    assert ops_test.model.applications[APP_NAME].status == "active"
+    assert ops_test.model.applications[DUMMY_NAME].status == "active"
+
+    check_logs(
         model_full_name=ops_test.model_full_name,
         kafka_unit_name=f"{APP_NAME}/0",
-        provider_unit_name=f"{DUMMY_NAME}/0",
-        topic="hot-topic",
+        topic="test-topic",
     )
 
 
