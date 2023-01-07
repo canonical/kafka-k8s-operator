@@ -8,11 +8,11 @@ from unittest.mock import patch
 
 import pytest
 import yaml
-from ops.testing import Harness
-
 from auth import Acl, KafkaAuth
 from charm import KafkaK8sCharm
 from literals import CHARM_KEY, CONTAINER, PEER, ZOOKEEPER_REL_NAME
+from ops.testing import Harness
+
 from tests.unit.helpers import DummyExec
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ def harness():
 
 
 def test_acl():
-    assert sorted(list(Acl.__annotations__.keys())) == sorted(
+    assert sorted(Acl.__annotations__.keys()) == sorted(
         ["operation", "resource_name", "resource_type", "username"]
     )
     assert Acl.__hash__
@@ -73,7 +73,7 @@ def test_generate_producer_acls():
         operations.add(acl.operation)
         resource_types.add(acl.resource_type)
 
-    assert sorted(operations) == sorted(set(["CREATE", "WRITE", "DESCRIBE"]))
+    assert sorted(operations) == sorted({"CREATE", "WRITE", "DESCRIBE"})
     assert resource_types == {"TOPIC"}
 
 
@@ -90,8 +90,8 @@ def test_generate_consumer_acls():
         if acl.resource_type == "GROUP":
             assert acl.operation == "READ"
 
-    assert sorted(operations) == sorted(set(["READ", "DESCRIBE"]))
-    assert sorted(resource_types) == sorted(set(["TOPIC", "GROUP"]))
+    assert sorted(operations) == sorted({"READ", "DESCRIBE"})
+    assert sorted(resource_types) == sorted({"TOPIC", "GROUP"})
 
 
 def test_get_acls_tls_adds_zk_tls_flag(harness):

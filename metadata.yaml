@@ -13,6 +13,9 @@ maintainers:
 containers:
   kafka:
     resource: kafka-image
+    mounts:
+      - storage: log-data
+        location: /logs/kafka
 
 resources:
   kafka-image:
@@ -32,7 +35,17 @@ requires:
   certificates:
     interface: tls-certificates
     limit: 1
+    optional: true
 
 provides:
   kafka-client:
     interface: kafka_client
+
+storage:
+  log-data:
+    type: filesystem
+    description: Directories where the log data is stored
+    minimum-size: 10G
+
+assumes:
+  - k8s-api

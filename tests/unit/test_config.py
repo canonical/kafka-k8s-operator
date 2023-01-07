@@ -4,9 +4,9 @@
 
 import ops.testing
 import pytest
-from ops.testing import Harness
-
 from charm import KafkaK8sCharm
+from literals import STORAGE
+from ops.testing import Harness
 
 ops.testing.SIMULATE_CAN_CONNECT = True
 
@@ -37,6 +37,39 @@ def test_zookeeper_config_succeeds_fails_config(zk_relation_id, harness):
     )
     assert harness.charm.kafka_config.zookeeper_config == {}
     assert not harness.charm.kafka_config.zookeeper_connected
+
+
+def test_all_storages_in_log_dirs(harness):
+    """Checks that the log.dirs property updates with all available storages."""
+    with harness.hooks_disabled():
+        harness.add_storage(storage_name=STORAGE, attach=True)
+
+    assert len(harness.charm.kafka_config.log_dirs.split(",")) == len(
+        harness.charm.model.storages[STORAGE]
+    )
+
+
+def test_log_dirs_in_server_properties(zk_relation_id, harness):
+    """Checks that log.dirs are added to server_properties."""
+    harness.update_relation_data(
+        zk_relation_id,
+        harness.charm.app.name,
+        {
+            "chroot": "/kafka",
+            "username": "moria",
+            "password": "mellon",
+            "endpoints": "1.1.1.1,2.2.2.2",
+            "uris": "1.1.1.1:2181/kafka,2.2.2.2:2181/kafka",
+            "tls": "disabled",
+        },
+    )
+
+    found_log_dirs = False
+    for prop in harness.charm.kafka_config.server_properties:
+        if "log.dirs" in prop:
+            found_log_dirs = True
+
+    assert found_log_dirs
 
 
 def test_zookeeper_config_succeeds_valid_config(zk_relation_id, harness):

@@ -15,3 +15,6 @@ peers:
 requires:
   kafka-client:
     interface: kafka_client
+
+assumes:
+  - k8s-api

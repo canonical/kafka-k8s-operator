@@ -2,15 +2,17 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import logging
 import re
 from pathlib import Path
 from subprocess import PIPE, check_output
 from typing import Any, Dict, List, Set, Tuple
 
 import yaml
+from auth import Acl, KafkaAuth
 from pytest_operator.plugin import OpsTest
 
-from auth import Acl, KafkaAuth
+logger = logging.getLogger(__name__)
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 KAFKA_CONTAINER = METADATA["resources"]["kafka-image"]["upstream-source"]
@@ -159,7 +161,7 @@ def get_kafka_zk_relation_data(unit_name: str, model_full_name: str) -> Dict[str
     return zk_relation_data
 
 
-def check_tls(ip: str, port: int) -> bool:
+def check_tls(ip: str, port: int) -> None:
     result = check_output(
         f"echo | openssl s_client -connect {ip}:{port}",
         stderr=PIPE,
@@ -187,3 +189,33 @@ def get_provider_data(unit_name: str, model_full_name: str) -> Dict[str, str]:
             provider_relation_data["zookeeper-uris"] = info["application-data"]["zookeeper-uris"]
             provider_relation_data["tls"] = info["application-data"]["tls"]
     return provider_relation_data
+
+
+def check_logs(model_full_name: str, kafka_unit_name: str, topic: str) -> None:
+    """Produces messages from HN to chosen Kafka topic.
+
+    Args:
+        model_full_name: the full name of the model
+        kafka_unit_name: the kafka unit to checks logs on
+        topic: the desired topic to produce to
+
+    Raises:
+        KeyError: if missing relation data
+        AssertionError: if logs aren't found for desired topic
+    """
+    logs = check_output(
+        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {kafka_unit_name} 'find /var/lib/juju/storage/log-data'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    ).splitlines()
+
+    logger.debug(f"{logs=}")
+
+    passed = False
+    for log in logs:
+        if topic and "index" in log:
+            passed = True
+            break
+
+    assert passed, "logs not found"

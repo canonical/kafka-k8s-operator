@@ -7,31 +7,24 @@
 import logging
 from typing import MutableMapping, Optional
 
+from auth import KafkaAuth
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
+from config import KafkaConfig
+from literals import CHARM_KEY, CHARM_USERS, CONTAINER, PEER, REL_NAME, ZOOKEEPER_REL_NAME
 from ops import pebble
 from ops.charm import (
     ActionEvent,
     CharmBase,
-    ConfigChangedEvent,
     PebbleReadyEvent,
     RelationEvent,
     RelationJoinedEvent,
+    StorageAttachedEvent,
+    StorageDetachingEvent,
 )
 from ops.framework import EventBase
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, Container, Relation, WaitingStatus
 from ops.pebble import ExecError, Layer, PathError, ProtocolError
-
-from auth import KafkaAuth
-from config import KafkaConfig
-from literals import (
-    CHARM_KEY,
-    CHARM_USERS,
-    CONTAINER,
-    PEER,
-    REL_NAME,
-    ZOOKEEPER_REL_NAME,
-)
 from provider import KafkaProvider
 from tls import KafkaTLS
 from utils import broker_active, generate_password
@@ -66,6 +59,13 @@ class KafkaK8sCharm(CharmBase):
         )
 
         self.framework.observe(getattr(self.on, "set_password_action"), self._set_password_action)
+
+        self.framework.observe(
+            getattr(self.on, "log_data_storage_attached"), self._on_storage_attached
+        )
+        self.framework.observe(
+            getattr(self.on, "log_data_storage_detaching"), self._on_storage_detaching
+        )
 
     @property
     def container(self) -> Container:
@@ -110,6 +110,44 @@ class KafkaK8sCharm(CharmBase):
             return {}
 
         return self.peer_relation.data[self.unit]
+
+    def _on_storage_attached(self, event: StorageAttachedEvent) -> None:
+        """Handler for `storage_attached` events."""
+        # checks first whether the broker is active before warning
+        if not self.kafka_config.zookeeper_connected or not broker_active(
+            unit=self.unit, zookeeper_config=self.kafka_config.zookeeper_config
+        ):
+            return
+
+        # new dirs won't be used until topic partitions are assigned to it
+        # either automatically for new topics, or manually for existing
+        message = (
+            "manual partition reassignment may be needed for Kafka to utilize new storage volumes"
+        )
+        logger.warning(f"attaching storage - {message}")
+        self.unit.status = ActiveStatus(message)
+
+        self._on_config_changed(event)
+
+    def _on_storage_detaching(self, event: StorageDetachingEvent) -> None:
+        """Handler for `storage_detaching` events."""
+        # checks first whether the broker is active before warning
+        if not self.kafka_config.zookeeper_connected or not broker_active(
+            unit=self.unit, zookeeper_config=self.kafka_config.zookeeper_config
+        ):
+            return
+
+        # in the case where there may be replication recovery may be possible
+        if self.peer_relation and len(self.peer_relation.units):
+            message = "manual partition reassignment from replicated brokers recommended due to lost partitions on removed storage volumes"
+            logger.warning(f"removing storage - {message}")
+            self.unit.status = BlockedStatus(message)
+        else:
+            message = "potential log-data loss due to storage removal without replication"
+            logger.error(f"removing storage - {message}")
+            self.unit.status = BlockedStatus(message)
+
+        self._on_config_changed(event)
 
     def _on_kafka_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Handler for `kafka_pebble_ready` event."""
@@ -163,7 +201,7 @@ class KafkaK8sCharm(CharmBase):
             self.unit.status = BlockedStatus("kafka unit not connected to ZooKeeper")
             return
 
-    def _on_config_changed(self, event: ConfigChangedEvent) -> None:
+    def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
         if not self.ready_to_start:
             event.defer()
@@ -206,7 +244,6 @@ class KafkaK8sCharm(CharmBase):
         self.set_secret(
             scope="app", key="sync-password", value=(sync_password or generate_password())
         )
-        logger.info(self.get_secret(scope="app", key="sync-password"))
 
     def _on_zookeeper_joined(self, event: RelationJoinedEvent) -> None:
         """Handler for `zookeeper_relation_joined` event, ensuring chroot gets set."""
@@ -275,6 +312,18 @@ class KafkaK8sCharm(CharmBase):
 
         self.container.restart(CONTAINER)
 
+        if broker_active(
+            unit=self.unit,
+            zookeeper_config=self.kafka_config.zookeeper_config,
+        ):
+            logger.info(f'Broker {self.unit.name.split("/")[1]} restarted')
+            self.unit.status = ActiveStatus()
+        else:
+            self.unit.status = BlockedStatus(
+                f"Broker {self.unit.name.split('/')[1]} failed to restart"
+            )
+            return
+
     @property
     def ready_to_start(self) -> bool:
         """Check for active ZooKeeper relation and adding of inter-broker auth username.
@@ -287,7 +336,7 @@ class KafkaK8sCharm(CharmBase):
             self.kafka_config.zookeeper_config.get("tls", "disabled") == "enabled"
         ):
             msg = "TLS needs to be active for Zookeeper and Kafka"
-            logger.debug(msg)
+            logger.error(msg)
             self.unit.status = BlockedStatus(msg)
             return False
 

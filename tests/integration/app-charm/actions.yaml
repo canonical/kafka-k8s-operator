@@ -9,3 +9,6 @@ remove-admin:
 
 change-topic:
   description: Changes topic
+
+produce:
+  description: Produces messages to kafka topic
