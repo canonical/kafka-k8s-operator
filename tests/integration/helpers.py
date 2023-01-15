@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 import logging
@@ -176,17 +176,18 @@ def check_tls(ip: str, port: int) -> None:
     assert "CN = kafka" in result
 
 
-def get_provider_data(unit_name: str, model_full_name: str) -> Dict[str, str]:
+def get_provider_data(
+    unit_name: str, model_full_name: str, endpoint: str = "kafka-client"
+) -> Dict[str, str]:
     result = show_unit(unit_name=unit_name, model_full_name=model_full_name)
     relations_info = result[unit_name]["relation-info"]
 
     provider_relation_data = {}
     for info in relations_info:
-        if info["endpoint"] == "kafka-client":
+        if info["endpoint"] == endpoint:
             provider_relation_data["username"] = info["application-data"]["username"]
             provider_relation_data["password"] = info["application-data"]["password"]
             provider_relation_data["endpoints"] = info["application-data"]["endpoints"]
-            provider_relation_data["uris"] = info["application-data"]["uris"]
             provider_relation_data["zookeeper-uris"] = info["application-data"]["zookeeper-uris"]
             provider_relation_data["tls"] = info["application-data"]["tls"]
     return provider_relation_data
