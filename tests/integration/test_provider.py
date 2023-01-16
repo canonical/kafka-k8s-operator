@@ -13,6 +13,7 @@ from pytest_operator.plugin import OpsTest
 from tests.integration.helpers import (
     APP_NAME,
     ZK_NAME,
+    KAFKA_CONTAINER,
     check_user,
     get_provider_data,
     get_zookeeper_connection,
@@ -41,7 +42,7 @@ async def test_deploy_charms_relate_active(
         ops_test.model.deploy(
             ZK_NAME, channel="edge", application_name=ZK_NAME, num_units=3, series="focal"
         ),
-        ops_test.model.deploy(charm, application_name=APP_NAME, num_units=1, series="jammy"),
+        ops_test.model.deploy(charm, application_name=APP_NAME, num_units=1, series="jammy",  resources={"kafka-image": KAFKA_CONTAINER},),
         ops_test.model.deploy(
             app_charm, application_name=DUMMY_NAME_1, num_units=1, series="focal"
         ),
