@@ -57,7 +57,7 @@ async def test_deploy_charms_relate_active(
 
     # implicitly tests setting of kafka app data
     returned_usernames, zookeeper_uri = get_zookeeper_connection(
-        unit_name="kafka/0", model_full_name=ops_test.model_full_name
+        unit_name=f"{APP_NAME}/0", model_full_name=ops_test.model_full_name
     )
     usernames.update(returned_usernames)
 
@@ -117,7 +117,7 @@ async def test_remove_application_removes_user_and_acls(ops_test: OpsTest, usern
     assert ops_test.model.applications[APP_NAME].status == "active"
 
     _, zookeeper_uri = get_zookeeper_connection(
-        unit_name="kafka/0", model_full_name=ops_test.model_full_name
+        unit_name=f"{APP_NAME}/0", model_full_name=ops_test.model_full_name
     )
 
     # checks that old users are removed from active cluster ACLs
@@ -156,7 +156,7 @@ async def test_deploy_producer_same_topic(
     assert ops_test.model.applications[DUMMY_NAME_1].status == "active"
 
     returned_usernames, zookeeper_uri = get_zookeeper_connection(
-        unit_name="kafka/0", model_full_name=ops_test.model_full_name
+        unit_name=f"{APP_NAME}/0", model_full_name=ops_test.model_full_name
     )
 
     acls = load_acls(model_full_name=ops_test.model_full_name, zookeeper_uri=zookeeper_uri)
