@@ -7,10 +7,7 @@
 import logging
 from typing import MutableMapping, Optional
 
-from auth import KafkaAuth
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
-from config import KafkaConfig
-from literals import CHARM_KEY, CHARM_USERS, CONTAINER, PEER, REL_NAME, ZOOKEEPER_REL_NAME
 from ops import pebble
 from ops.charm import (
     ActionEvent,
@@ -25,6 +22,10 @@ from ops.framework import EventBase
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, Container, Relation, WaitingStatus
 from ops.pebble import ExecError, Layer, PathError, ProtocolError
+
+from auth import KafkaAuth
+from config import KafkaConfig
+from literals import CHARM_KEY, CHARM_USERS, CONTAINER, PEER, REL_NAME, ZOOKEEPER_REL_NAME
 from provider import KafkaProvider
 from tls import KafkaTLS
 from utils import broker_active, generate_password

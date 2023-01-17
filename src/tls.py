@@ -14,11 +14,12 @@ from charms.tls_certificates_interface.v1.tls_certificates import (
     generate_csr,
     generate_private_key,
 )
-from literals import TLS_RELATION
 from ops.charm import ActionEvent
 from ops.framework import Object
 from ops.model import Container, Relation
 from ops.pebble import ExecError
+
+from literals import TLS_RELATION
 from utils import generate_password, parse_tls_file, push
 
 logger = logging.getLogger(__name__)

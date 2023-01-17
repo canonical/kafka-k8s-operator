@@ -9,8 +9,9 @@ from subprocess import PIPE, check_output
 from typing import Any, Dict, List, Set, Tuple
 
 import yaml
-from auth import Acl, KafkaAuth
 from pytest_operator.plugin import OpsTest
+
+from auth import Acl, KafkaAuth
 
 logger = logging.getLogger(__name__)
 
