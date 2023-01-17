@@ -4,9 +4,10 @@
 
 import ops.testing
 import pytest
+from ops.testing import Harness
+
 from charm import KafkaK8sCharm
 from literals import STORAGE
-from ops.testing import Harness
 
 ops.testing.SIMULATE_CAN_CONNECT = True
 

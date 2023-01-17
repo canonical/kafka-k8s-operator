@@ -8,12 +8,12 @@ from unittest.mock import patch
 
 import pytest
 import yaml
+from ops.testing import Harness
+from tests.unit.helpers import DummyExec
+
 from auth import Acl, KafkaAuth
 from charm import KafkaK8sCharm
 from literals import CHARM_KEY, CONTAINER, PEER, ZOOKEEPER_REL_NAME
-from ops.testing import Harness
-
-from tests.unit.helpers import DummyExec
 
 logger = logging.getLogger(__name__)
 

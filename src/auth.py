@@ -10,6 +10,7 @@ from dataclasses import asdict, dataclass
 from typing import List, Optional, Set
 
 from ops.model import Container
+
 from utils import run_bin_command
 
 logger = logging.getLogger(__name__)
