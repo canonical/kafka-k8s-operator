@@ -1,14 +1,5 @@
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
-
-make-admin:
-  description: Adds admin to relation data
-
-remove-admin:
-  description: Removes admin from relation data
-
-change-topic:
-  description: Changes topic
 
 produce:
   description: Produces messages to kafka topic

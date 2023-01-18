@@ -12,8 +12,8 @@ from pytest_operator.plugin import OpsTest
 
 from tests.integration.helpers import (
     APP_NAME,
-    ZK_NAME,
     KAFKA_CONTAINER,
+    ZK_NAME,
     check_user,
     get_provider_data,
     get_zookeeper_connection,
@@ -42,7 +42,13 @@ async def test_deploy_charms_relate_active(
         ops_test.model.deploy(
             ZK_NAME, channel="edge", application_name=ZK_NAME, num_units=3, series="focal"
         ),
-        ops_test.model.deploy(charm, application_name=APP_NAME, num_units=1, series="jammy",  resources={"kafka-image": KAFKA_CONTAINER},),
+        ops_test.model.deploy(
+            charm,
+            application_name=APP_NAME,
+            num_units=1,
+            series="jammy",
+            resources={"kafka-image": KAFKA_CONTAINER},
+        ),
         ops_test.model.deploy(
             app_charm, application_name=DUMMY_NAME_1, num_units=1, series="focal"
         ),
@@ -81,7 +87,9 @@ async def test_deploy_multiple_charms_same_topic_relate_active(
     ops_test: OpsTest, app_charm: PosixPath, usernames: Set[str]
 ):
     """Test relation with multiple applications."""
-    await ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_2, num_units=1, series="focal"),
+    await ops_test.model.deploy(
+        app_charm, application_name=DUMMY_NAME_2, num_units=1, series="focal"
+    ),
     await ops_test.model.wait_for_idle(apps=[DUMMY_NAME_2])
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_2}:{REL_NAME_CONSUMER}")
     await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_2])
@@ -187,7 +195,7 @@ async def test_admin_added_to_super_users(ops_test: OpsTest):
     super_users = load_super_users(model_full_name=ops_test.model_full_name)
     assert len(super_users) == 1
 
-    app_charm = await ops_test.build_charm("tests/integration/app-charm")
+    await ops_test.build_charm("tests/integration/app-charm")
 
     # await asyncio.gather(
     #     ops_test.model.deploy(
@@ -208,7 +216,7 @@ async def test_admin_added_to_super_users(ops_test: OpsTest):
 @pytest.mark.abort_on_fail
 async def test_admin_removed_from_super_users(ops_test: OpsTest):
     """Test that removal of the relation with admin privileges."""
-    # here 
+    # here
     # await ops_test.model.remove_application(DUMMY_NAME_1, block_until_done=True)
     await ops_test.model.applications[APP_NAME].remove_relation(
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME_1}:{REL_NAME_ADMIN}"
