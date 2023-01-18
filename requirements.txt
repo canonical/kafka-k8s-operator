@@ -1,4 +1,4 @@
-ops >= 1.5.3
+ops == 2.0.0rc2
 kazoo >= 2.8.0
 tenacity >= 8.0.1
 pure-sasl >= 0.6.2
