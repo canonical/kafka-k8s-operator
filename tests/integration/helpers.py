@@ -6,7 +6,7 @@ import logging
 import re
 from pathlib import Path
 from subprocess import PIPE, check_output
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import yaml
 from pytest_operator.plugin import OpsTest
@@ -125,6 +125,16 @@ async def set_password(ops_test: OpsTest, username="sync", password=None, num_un
     )
     password = await action.wait()
     return password.results
+
+
+async def set_tls_private_key(ops_test: OpsTest, key: Optional[str] = None, num_unit=0):
+    """Use the charm action to start a password rotation."""
+    params = {"internal_key": key} if key else {}
+
+    action = await ops_test.model.units.get(f"{APP_NAME}/{num_unit}").run_action(
+        "set-tls-private-key", **params
+    )
+    return (await action.wait()).results
 
 
 def check_application_status(ops_test: OpsTest, app_name: str) -> str:

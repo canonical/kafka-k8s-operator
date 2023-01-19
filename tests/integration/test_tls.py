@@ -13,6 +13,7 @@ from helpers import (
     check_application_status,
     check_tls,
     get_address,
+    set_tls_private_key,
 )
 from pytest_operator.plugin import OpsTest
 
@@ -66,6 +67,8 @@ async def test_kafka_tls(ops_test: OpsTest):
 
     # Unit is on 'blocked' but whole app is on 'waiting'
     assert check_application_status(ops_test=ops_test, app_name=APP_NAME) == "waiting"
+
+    await set_tls_private_key(ops_test)
 
     await ops_test.model.add_relation(APP_NAME, TLS_NAME)
     logger.info("Relate Kafka to TLS")
