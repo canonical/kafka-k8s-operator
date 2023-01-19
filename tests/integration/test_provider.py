@@ -121,7 +121,10 @@ async def test_deploy_multiple_charms_same_topic_relate_active(
 @pytest.mark.abort_on_fail
 async def test_remove_application_removes_user_and_acls(ops_test: OpsTest, usernames: Set[str]):
     """Test the correct removal of user and permission after relation removal."""
-    await ops_test.model.remove_application(DUMMY_NAME_1, block_until_done=True)
+    await ops_test.model.applications[APP_NAME].remove_relation(
+        f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME_1}:{REL_NAME_CONSUMER}"
+    )
+
     await ops_test.model.wait_for_idle(apps=[APP_NAME], timeout=1000, idle_period=30)
     assert ops_test.model.applications[APP_NAME].status == "active"
 
@@ -152,11 +155,6 @@ async def test_deploy_producer_same_topic(
     ops_test: OpsTest, app_charm: PosixPath, usernames: Set[str]
 ):
     """Test the correct deployment and relation with role producer."""
-    await asyncio.gather(
-        ops_test.model.deploy(
-            app_charm, application_name=DUMMY_NAME_1, num_units=1, series="focal"
-        )
-    )
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME], timeout=1000, idle_period=30
     )
