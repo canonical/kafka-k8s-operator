@@ -52,11 +52,13 @@ async def test_deploy_charms_relate_active(
             app_charm, application_name=DUMMY_NAME_1, num_units=1, series="focal"
         ),
     )
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME])
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME], timeout=1000, idle_period=30
+    )
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=30)
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_1}:{REL_NAME_CONSUMER}")
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1], timeout=1000, idle_period=30)
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME_1].status == "active"
 
@@ -89,9 +91,9 @@ async def test_deploy_multiple_charms_same_topic_relate_active(
     await ops_test.model.deploy(
         app_charm, application_name=DUMMY_NAME_2, num_units=1, series="focal"
     ),
-    await ops_test.model.wait_for_idle(apps=[DUMMY_NAME_2])
+    await ops_test.model.wait_for_idle(apps=[DUMMY_NAME_2], timeout=1000, idle_period=30)
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_2}:{REL_NAME_CONSUMER}")
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_2])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_2], timeout=1000, idle_period=30)
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME_1].status == "active"
     assert ops_test.model.applications[DUMMY_NAME_2].status == "active"
@@ -120,7 +122,7 @@ async def test_deploy_multiple_charms_same_topic_relate_active(
 async def test_remove_application_removes_user_and_acls(ops_test: OpsTest, usernames: Set[str]):
     """Test the correct removal of user and permission after relation removal."""
     await ops_test.model.remove_application(DUMMY_NAME_1, block_until_done=True)
-    await ops_test.model.wait_for_idle(apps=[APP_NAME])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME], timeout=1000, idle_period=30)
     assert ops_test.model.applications[APP_NAME].status == "active"
 
     _, zookeeper_uri = get_zookeeper_connection(
@@ -155,9 +157,11 @@ async def test_deploy_producer_same_topic(
             app_charm, application_name=DUMMY_NAME_1, num_units=1, series="focal"
         )
     )
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME])
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME], timeout=1000, idle_period=30
+    )
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_1}:{REL_NAME_PRODUCER}")
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1], timeout=1000, idle_period=30)
 
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME_1].status == "active"
@@ -178,13 +182,10 @@ async def test_deploy_producer_same_topic(
         if acl.resource_type == "TOPIC":
             assert acl.resource_name == "test-topic"
 
-    # remove application
-    # await ops_test.model.remove_application(DUMMY_NAME_1, block_until_done=True)
-    # HERE
     await ops_test.model.applications[APP_NAME].remove_relation(
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME_1}:{REL_NAME_PRODUCER}"
     )
-    await ops_test.model.wait_for_idle(apps=[APP_NAME])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME], timeout=1000, idle_period=30)
     assert ops_test.model.applications[APP_NAME].status == "active"
 
 
@@ -196,14 +197,11 @@ async def test_admin_added_to_super_users(ops_test: OpsTest):
 
     await ops_test.build_charm("tests/integration/app-charm")
 
-    # await asyncio.gather(
-    #     ops_test.model.deploy(
-    #         app_charm, application_name=DUMMY_NAME_1, num_units=1, series="focal"
-    #     )
-    # )
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME])
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME], timeout=1000, idle_period=30
+    )
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_1}:{REL_NAME_ADMIN}")
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1], timeout=1000, idle_period=30)
 
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME_1].status == "active"
@@ -215,15 +213,13 @@ async def test_admin_added_to_super_users(ops_test: OpsTest):
 @pytest.mark.abort_on_fail
 async def test_admin_removed_from_super_users(ops_test: OpsTest):
     """Test that removal of the relation with admin privileges."""
-    # here
-    # await ops_test.model.remove_application(DUMMY_NAME_1, block_until_done=True)
     await ops_test.model.applications[APP_NAME].remove_relation(
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME_1}:{REL_NAME_ADMIN}"
     )
-    await ops_test.model.wait_for_idle(apps=[APP_NAME])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME], timeout=1000, idle_period=30)
     assert ops_test.model.applications[APP_NAME].status == "active"
 
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_2])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_2], timeout=1000, idle_period=30)
     assert ops_test.model.applications[APP_NAME].status == "active"
 
     super_users = load_super_users(model_full_name=ops_test.model_full_name)
@@ -233,10 +229,9 @@ async def test_admin_removed_from_super_users(ops_test: OpsTest):
 @pytest.mark.abort_on_fail
 async def test_connection_updated_on_tls_enabled(ops_test: OpsTest, app_charm: PosixPath):
     """Test relation when TLS is enabled."""
-    # await ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_1, num_units=1),
-    await ops_test.model.wait_for_idle(apps=[DUMMY_NAME_1])
+    await ops_test.model.wait_for_idle(apps=[DUMMY_NAME_1], timeout=1000, idle_period=30)
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_1}:{REL_NAME_CONSUMER}")
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1], timeout=1000, idle_period=30)
     tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "kafka"}
 
     await ops_test.model.deploy(TLS_NAME, channel="beta", config=tls_config, series="focal")

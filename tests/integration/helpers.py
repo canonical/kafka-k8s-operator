@@ -12,6 +12,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from auth import Acl, KafkaAuth
+from literals import REL_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +178,7 @@ def check_tls(ip: str, port: int) -> None:
 
 
 def get_provider_data(
-    unit_name: str, model_full_name: str, endpoint: str = "kafka-client"
+    unit_name: str, model_full_name: str, endpoint: str = REL_NAME
 ) -> Dict[str, str]:
     result = show_unit(unit_name=unit_name, model_full_name=model_full_name)
     relations_info = result[unit_name]["relation-info"]
