@@ -9,11 +9,12 @@ from unittest.mock import PropertyMock, patch
 
 import pytest
 import yaml
-from charm import KafkaK8sCharm
-from literals import CHARM_KEY, CONTAINER, PEER, REL_NAME, STORAGE, ZOOKEEPER_REL_NAME
 from ops.model import BlockedStatus, WaitingStatus
 from ops.testing import Harness
 from tenacity.wait import wait_none
+
+from charm import KafkaK8sCharm
+from literals import CHARM_KEY, CONTAINER, PEER, REL_NAME, STORAGE, ZOOKEEPER_REL_NAME
 
 logger = logging.getLogger(__name__)
 
