@@ -136,6 +136,7 @@ async def set_tls_private_key(ops_test: OpsTest, key: Optional[str] = None, num_
     )
     return (await action.wait()).results
 
+
 def extract_private_key(data: dict, unit: int = 0) -> Optional[str]:
     list_keys = [
         element["local-unit"]["data"]["private-key"]

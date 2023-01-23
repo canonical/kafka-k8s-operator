@@ -12,14 +12,13 @@ from helpers import (
     ZK_NAME,
     check_application_status,
     check_tls,
+    extract_private_key,
     get_address,
     set_tls_private_key,
-    extract_private_key,
-    show_unit
+    show_unit,
 )
 from lib.charms.tls_certificates_interface.v1.tls_certificates import generate_private_key
 from pytest_operator.plugin import OpsTest
-
 
 logger = logging.getLogger(__name__)
 
