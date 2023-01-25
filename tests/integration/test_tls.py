@@ -12,8 +12,12 @@ from helpers import (
     ZK_NAME,
     check_application_status,
     check_tls,
+    extract_private_key,
     get_address,
+    set_tls_private_key,
+    show_unit,
 )
+from lib.charms.tls_certificates_interface.v1.tls_certificates import generate_private_key
 from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)
@@ -67,6 +71,16 @@ async def test_kafka_tls(ops_test: OpsTest):
     # Unit is on 'blocked' but whole app is on 'waiting'
     assert check_application_status(ops_test=ops_test, app_name=APP_NAME) == "waiting"
 
+    # Set a custom private key, by running set-tls-private-key action with no parameters,
+    # as this will generate a random one
+    num_unit = 0
+    await set_tls_private_key(ops_test)
+
+    # Extract the key
+    private_key = extract_private_key(
+        show_unit(f"{APP_NAME}/{num_unit}", model_full_name=ops_test.model_full_name), unit=0
+    )
+
     await ops_test.model.add_relation(APP_NAME, TLS_NAME)
     logger.info("Relate Kafka to TLS")
     await ops_test.model.wait_for_idle(
@@ -79,6 +93,19 @@ async def test_kafka_tls(ops_test: OpsTest):
     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME)
     logger.info("Check for Kafka TLS")
     check_tls(ip=kafka_address, port=9093)
+
+    # Rotate credentials
+    new_private_key = generate_private_key().decode("utf-8")
+
+    await set_tls_private_key(ops_test, key=new_private_key)
+
+    # Extract the key
+    private_key_2 = extract_private_key(
+        show_unit(f"{APP_NAME}/{num_unit}", model_full_name=ops_test.model_full_name), unit=0
+    )
+
+    assert private_key != private_key_2
+    assert private_key_2 == new_private_key
 
 
 async def test_kafka_tls_scaling(ops_test: OpsTest):
