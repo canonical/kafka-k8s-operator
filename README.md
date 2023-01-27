@@ -2,14 +2,14 @@
 
 ## Overview
 
-The Charmed Kafka K8s Operator delivers automated operations management from day 0 to day 2 on the [Apache Kafka](https://kafka.apache.org) event streaming platform.
-
-The Kafka K8s Operator uses the latest upstream Kafka binaries released by the The Apache Software Foundation that comes with Kafka, made available using the [`ubuntu/kafka` OCI image](https://registry.hub.docker.com/r/ubuntu/kafka) distributed by Canonical.
+The Charmed Kafka K8s Operator delivers automated operations management from day 0 to day 2 on the [Apache Kafka](https://kafka.apache.org) event streaming platform deployed on top of a [Kubernetes cluster](https://kubernetes.io/). It is an open source, end-to-end, production ready data platform on top of cloud native technologies.
 
 This operator charm comes with features such as:
 - Fault-tolerance, replication, scalability and high-availability out-of-the-box.
 - SASL/SCRAM auth for Broker-Broker and Client-Broker authenticaion enabled by default.
 - Access control management supported with user-provided ACL lists.
+
+The Kafka K8s Operator uses the latest upstream Kafka binaries released by the The Apache Software Foundation that comes with Kafka, made available using the [`ubuntu/kafka` OCI image](https://registry.hub.docker.com/r/ubuntu/kafka) distributed by Canonical.
 
 As currently Kafka requires a paired ZooKeeper deployment in production, this operator makes use of the [ZooKeeper K8s Operator](https://github.com/canonical/zookeeper-k8s-operator) for various essential functions.
 
@@ -57,7 +57,7 @@ juju scale-application kafka-k8s 5
 
 ### Password rotation
 #### Internal operator user
-The operator user is used internally by the Charmed MongoDB Operator, the `set-password` action can be used to rotate its password.
+The operator user is used internally by the Charmed Kafka K8s Operator, the `set-password` action can be used to rotate its password.
 ```shell
 # to set a specific password for the operator user
 juju run-action kafka-k8s/leader set-password password=<password> --wait
@@ -69,6 +69,45 @@ juju run-action kafka-k8s/leader set-password --wait
 ## Relations
 
 Supported [relations](https://juju.is/docs/olm/relations):
+
+#### `data-integrator` interface:
+
+Deploy the data-integrator charm with the desired `topic-name` and user roles: 
+```shell
+juju deploy data-integrator --channel edge
+juju config data-integrator topic-name=test-topic extra-user-roles=producer,consumer
+```
+
+Relate the two applications with:
+```shell
+juju relate data-integrator kafka-k8s
+```
+
+To retrieve information, enter:
+```shell
+juju run-action data-integrator/leader get-credentials --wait
+```
+
+This should output something like:
+```yaml
+unit-data-integrator-0:                                                         
+  UnitId: data-integrator/0                                                     
+  id: "4"                                                                       
+  results:                                                                      
+    kafka:                                                                      
+      consumer-group-prefix: relation-27-                                       
+      endpoints: 10.123.8.133:19092                                             
+      password: ejMp4SblzxkMCF0yUXjaspneflXqcyXK                                
+      tls: disabled                                                             
+      username: relation-27                                                     
+      zookeeper-uris: 10.123.8.154:2181,10.123.8.181:2181,10.123.8.61:2181/kafka
+    ok: "True"                                                                  
+  status: completed                                                             
+  timing:                                                                       
+    completed: 2023-01-27 14:22:51 +0000 UTC                                    
+    enqueued: 2023-01-27 14:22:50 +0000 UTC                                     
+    started: 2023-01-27 14:22:51 +0000 UTC                                      
+```
 
 #### `tls` interface:
 
@@ -96,14 +135,10 @@ Passing keys to external/internal keys should *only be done with* `base64 -w0` *
 ```shell
 # generate shared internal key
 openssl genrsa -out internal-key.pem 3072
-# generate external keys for each unit
-openssl genrsa -out external-key-0.pem 3072
-openssl genrsa -out external-key-1.pem 3072
-openssl genrsa -out external-key-2.pem 3072
-# apply both private keys on each unit, shared internal key will be allied only on juju leader
-juju run-action kafka-k8s/0 set-tls-private-key "external-key=$(base64 -w0 external-key-0.pem)"  "internal-key=$(base64 -w0 internal-key.pem)"  --wait
-juju run-action kafka-k8s/1 set-tls-private-key "external-key=$(base64 -w0 external-key-1.pem)"  "internal-key=$(base64 -w0 internal-key.pem)"  --wait
-juju run-action kafka-k8s/2 set-tls-private-key "external-key=$(base64 -w0 external-key-2.pem)"  "internal-key=$(base64 -w0 internal-key.pem)"  --wait
+# apply keys on each unit
+juju run-action kafka-k8s/0 set-tls-private-key "internal-key=$(base64 -w0 internal-key.pem)"  --wait
+juju run-action kafka-k8s/1 set-tls-private-key "internal-key=$(base64 -w0 internal-key.pem)"  --wait
+juju run-action kafka-k8s/2 set-tls-private-key "internal-key=$(base64 -w0 internal-key.pem)"  --wait
 ```
 
 To disable TLS remove the relation
