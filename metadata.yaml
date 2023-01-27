@@ -1,12 +1,11 @@
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 name: kafka-k8s
 display-name: Kafka K8s
-summary: |
-  ""
 description: |
-  ""
+  Kafka is an event streaming platform. This charm deploys and operates Kafka.
+summary: The Charmed Kafka K8s Operator
 maintainers:
   - Marc Oppenheimer <marc.oppenheimer@canonical.com>
 

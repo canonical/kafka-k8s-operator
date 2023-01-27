@@ -66,6 +66,12 @@ juju run-action kafka-k8s/leader set-password password=<password> --wait
 juju run-action kafka-k8s/leader set-password --wait
 ```
 
+### Storage support
+
+Currently, the Charmed Kafka K8s Operator makes use of a 10GB storage mount, tied to a [Kubernetes PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/).
+
+This is used for logs storage, mounted on `/logs/kafka`
+
 ## Relations
 
 Supported [relations](https://juju.is/docs/olm/relations):
