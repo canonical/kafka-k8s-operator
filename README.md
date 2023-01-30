@@ -76,7 +76,9 @@ This is used for logs storage, mounted on `/logs/kafka`
 
 Supported [relations](https://juju.is/docs/olm/relations):
 
-#### `data-integrator` interface:
+#### `kafka_client` interface:
+
+The `kafka_client` interface is used with the `data-integrator` charm. This charm allows to automatically create and manage product credentials needed to authenticate with different kinds of data platform charmed products:
 
 Deploy the data-integrator charm with the desired `topic-name` and user roles: 
 ```shell
@@ -115,7 +117,9 @@ unit-data-integrator-0:
     started: 2023-01-27 14:22:51 +0000 UTC                                      
 ```
 
-#### `tls` interface:
+#### `tls-certificates` interface:
+
+The `tls-certificates` interface is used with the `tls-certificates-operator` charm.
 
 To enable TLS:
 
