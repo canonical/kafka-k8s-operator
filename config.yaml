@@ -6,7 +6,7 @@ options:
     description: filepath for setting the Kafka dataDir option
     type: string
     default: "/data/kafka"
-  log-dir: 
+  log-dir:
     description: filepath for setting the Kafka dataLogDir option
     type: string
     default: "/logs/kafka"
