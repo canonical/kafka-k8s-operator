@@ -16,7 +16,6 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 class KafkaClient:
-
     API_VERSION = (2, 5, 0)
 
     def __init__(
@@ -96,7 +95,6 @@ class KafkaClient:
         for _ in range(3):
             logger.info("Generating messages to send... ")
             for i in range(5):
-
                 item_content = f"Message #{i}"
 
                 future = producer.send(self.topic, str.encode(item_content))
