@@ -89,6 +89,7 @@ class KafkaK8sCharm(CharmBase):
                 }
             },
         }
+        logger.info(f"layer_config: {layer_config}")
         return Layer(layer_config)
 
     @property
@@ -152,21 +153,25 @@ class KafkaK8sCharm(CharmBase):
 
     def _on_kafka_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Handler for `kafka_pebble_ready` event."""
+        logger.info("On kafka pebble ready")
         if not self.container.can_connect():
+            logger.info("Cannot connect!!!")
             event.defer()
             return
-
+        logger.info("A1")
         if not self.kafka_config.zookeeper_connected:
             self.unit.status = WaitingStatus("waiting for zookeeper relation")
+            logger.info("B1")
             event.defer()
             return
-
+        logger.info("A2")
         # required settings given zookeeper connection config has been created
         self.kafka_config.set_server_properties()
         self.kafka_config.set_jaas_config()
-
+        logger.info("A3")
         # do not start units until SCRAM users have been added to ZooKeeper for server-server auth
         if self.unit.is_leader() and self.kafka_config.sync_password:
+            logger.info("A4")
             kafka_auth = KafkaAuth(
                 charm=self,
                 opts=[self.kafka_config.extra_args],
@@ -180,16 +185,17 @@ class KafkaK8sCharm(CharmBase):
                 logger.debug(str(e))
                 event.defer()
                 return
-
+        logger.info("A5")
         # for non-leader units
         if not self.ready_to_start:
+            logger.info("B2")
             event.defer()
             return
-
+        logger.info("A6")
         # start kafka service
         self.container.add_layer(CONTAINER, self._kafka_layer, combine=True)
         self.container.replan()
-
+        logger.info("A7")
         # service_start might fail silently, confirm with ZK if kafka is actually connected
         if broker_active(
             unit=self.unit,
