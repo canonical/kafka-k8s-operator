@@ -122,7 +122,7 @@ def run_bin_command(
         output, _ = process.wait_output()
         logger.debug(f"{output=}")
         return output
-    except (ExecError) as e:
+    except ExecError as e:
         logger.debug(f"cmd failed:\ncommand={e.command}\nstdout={e.stdout}\nstderr={e.stderr}")
         raise e
 

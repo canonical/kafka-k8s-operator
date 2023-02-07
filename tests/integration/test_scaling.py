@@ -55,7 +55,6 @@ async def test_kafka_simple_scale_up(ops_test: OpsTest):
 @pytest.mark.skip  # skip until scaling operations work in MicroK8s
 @pytest.mark.abort_on_fail
 async def test_kafka_simple_scale_down(ops_test: OpsTest):
-
     await ops_test.model.applications[APP_NAME].destroy_units(f"{APP_NAME}/1")
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[APP_NAME].units) == 2)
     await ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000)

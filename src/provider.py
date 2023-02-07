@@ -113,7 +113,6 @@ class KafkaProvider(Object):
             return
 
         if event.relation.app != self.charm.app or not self.charm.app.planned_units() == 0:
-
             self.kafka_auth.load_current_acls()
             username = f"relation-{event.relation.id}"
             self.kafka_auth.remove_all_user_acls(
