@@ -184,7 +184,9 @@ class KafkaK8sCharm(CharmBase):
                 self.app_peer_data.update({"broker-creds": "added"})
             except ExecError as e:
                 logger.info("PEBBLE READY - FAILED TO CREATE USER - DEFERRING")
-                logger.error(f"cmd failed:\ncommand={e.command}\nstdout={e.stdout}\nstderr={e.stderr}")
+                logger.error(
+                    f"cmd failed:\ncommand={e.command}\nstdout={e.stdout}\nstderr={e.stderr}"
+                )
                 logger.debug(str(e))
                 event.defer()
                 return
@@ -199,7 +201,6 @@ class KafkaK8sCharm(CharmBase):
         logger.info("PEBBLE READY - REPLANNING")
         self.container.add_layer(CONTAINER, self._kafka_layer, combine=True)
         self.container.replan()
-
 
         # service_start might fail silently, confirm with ZK if kafka is actually connected
         if broker_active(
