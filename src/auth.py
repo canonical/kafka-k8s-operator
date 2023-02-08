@@ -163,6 +163,7 @@ class KafkaAuth:
             f"--entity-name={username}",
             f"--add-config=SCRAM-SHA-512=[password={password}]",
         ]
+        logger.info(f"ADDING USER - {command=}")
         run_bin_command(
             container=self.container,
             bin_keyword="configs",

@@ -117,13 +117,15 @@ def run_bin_command(
         + [f"--zk-tls-config-file={zk_tls_config_file}"]
     )
 
+    logger.info(f"RUN BIN COMMAND - {command=}")
+
     try:
         process = container.exec(command=command, environment=environment)
         output, _ = process.wait_output()
-        logger.debug(f"{output=}")
+        logger.info(f"{output=}")
         return output
-    except ExecError as e:
-        logger.debug(f"cmd failed:\ncommand={e.command}\nstdout={e.stdout}\nstderr={e.stderr}")
+    except (ExecError) as e:
+        logger.error(f"cmd failed:\ncommand={e.command}\nstdout={e.stdout}\nstderr={e.stderr}")
         raise e
 
 

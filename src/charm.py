@@ -155,23 +155,24 @@ class KafkaK8sCharm(CharmBase):
         """Handler for `kafka_pebble_ready` event."""
         logger.info("On kafka pebble ready")
         if not self.container.can_connect():
-            logger.info("Cannot connect!!!")
+            logger.info("PEBBLE READY - CAN'T CONNECT - DEFERRING")
             event.defer()
             return
-        logger.info("A1")
+
         if not self.kafka_config.zookeeper_connected:
             self.unit.status = WaitingStatus("waiting for zookeeper relation")
-            logger.info("B1")
+            logger.info("PEBBLE READY - ZOOKEEPER NOT CONNECTED - DEFERRING")
             event.defer()
             return
-        logger.info("A2")
+
         # required settings given zookeeper connection config has been created
+        logger.info("PEBBLE READY - SETTING PROPERTIES")
         self.kafka_config.set_server_properties()
         self.kafka_config.set_jaas_config()
-        logger.info("A3")
+
         # do not start units until SCRAM users have been added to ZooKeeper for server-server auth
         if self.unit.is_leader() and self.kafka_config.sync_password:
-            logger.info("A4")
+            logger.info("PEBBLE READY - AM LEADER AND SYNC PASSWORD - CREATING USER")
             kafka_auth = KafkaAuth(
                 charm=self,
                 opts=[self.kafka_config.extra_args],
@@ -182,20 +183,24 @@ class KafkaK8sCharm(CharmBase):
                 kafka_auth.add_user(username="sync", password=self.kafka_config.sync_password)
                 self.app_peer_data.update({"broker-creds": "added"})
             except ExecError as e:
+                logger.info("PEBBLE READY - FAILED TO CREATE USER - DEFERRING")
+                logger.error(f"cmd failed:\ncommand={e.command}\nstdout={e.stdout}\nstderr={e.stderr}")
                 logger.debug(str(e))
                 event.defer()
                 return
-        logger.info("A5")
+
         # for non-leader units
         if not self.ready_to_start:
-            logger.info("B2")
+            logger.info("PEBBLE READY - NOT READY TO START - DEFERRING")
             event.defer()
             return
-        logger.info("A6")
+
         # start kafka service
+        logger.info("PEBBLE READY - REPLANNING")
         self.container.add_layer(CONTAINER, self._kafka_layer, combine=True)
         self.container.replan()
-        logger.info("A7")
+
+
         # service_start might fail silently, confirm with ZK if kafka is actually connected
         if broker_active(
             unit=self.unit,
@@ -211,6 +216,7 @@ class KafkaK8sCharm(CharmBase):
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
         if not self.ready_to_start:
+            logger.info("CONFIG CHANGED - NOT READY - DEFERRING")
             event.defer()
             return
 
@@ -219,12 +225,15 @@ class KafkaK8sCharm(CharmBase):
         try:
             raw_properties = str(self.container.pull(self.kafka_config.properties_filepath).read())
             properties = raw_properties.splitlines()
+            logger.info(f"{properties=}")
         except (ProtocolError, PathError) as e:
+            logger.error(str(e))
             logger.debug(str(e))
             event.defer()
             return
 
         if not raw_properties:
+            logger.info("CONFIG CHANGED - NOT PROPERTIES - DEFERRING")
             # Event fired before charm has properly started
             event.defer()
             return
