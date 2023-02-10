@@ -22,7 +22,7 @@ resources:
     description: OCI Image for Apache Kafka
     # upstream-source: ubuntu/kafka:latest
     # upstream-source: paolosottoviacanonical/charmed-kafka:3.3.2
-    upstream-source: dataplatformoci/charmed-kafka
+    upstream-source: dataplatformoci/charmed-kafka:3.3.2
 peers:
   cluster:
     interface: cluster
