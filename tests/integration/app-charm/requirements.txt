@@ -1,2 +1,2 @@
-ops == 2.0.0rc2
-kafka-python
+ops >= 2.0.0
+kafka-python >= 2.0
