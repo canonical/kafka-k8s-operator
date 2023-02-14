@@ -41,7 +41,7 @@ class CompressionType(str, Enum):
 class CharmConfig(BaseConfigModel):
     """Manager for the structured configuration."""
 
-    compression_type: str
+    compression_type: CompressionType
     log_flush_interval_messages: int  # int  # long
     log_flush_interval_ms: Optional[int]  # long
     log_flush_offset_checkpoint_interval_ms: int
@@ -54,8 +54,8 @@ class CharmConfig(BaseConfigModel):
     unclean_leader_election_enable: bool
     log_cleaner_delete_retention_ms: int  # long
     log_cleaner_min_compaction_lag_ms: int  # long
-    log_cleanup_policy: str
-    log_message_timestamp_type: str
+    log_cleanup_policy: LogCleanupPolicy
+    log_message_timestamp_type: LogMessageTimestampType
     ssl_cipher_suites: Optional[str]
     replication_quota_window_num: int
     zookeeper_ssl_cipher_suites: Optional[str]
@@ -124,7 +124,7 @@ class CharmConfig(BaseConfigModel):
         """Check value greater than -1."""
         int_value = int(value)
         if int_value < -1:
-            raise ValueError("Value below -1. Accepted value are greater or equal than -1.")
+            raise ValueError("Value below -1. Accepted values are greater or equal than -1.")
         return int_value
 
     @validator("log_flush_interval_messages", "log_flush_interval_ms")
@@ -133,7 +133,7 @@ class CharmConfig(BaseConfigModel):
         """Check value greater than one."""
         int_value = int(value)
         if int_value < 1:
-            raise ValueError("Value below 1. Accepted value are greater or equal than 1.")
+            raise ValueError("Value below 1. Accepted values are greater or equal than 1.")
         return int_value
 
     @validator("replication_quota_window_num", "log_segment_bytes", "message_max_bytes")
@@ -141,7 +141,7 @@ class CharmConfig(BaseConfigModel):
     def greater_than_zero(cls, value: int) -> Optional[int]:
         """Check value greater than zero."""
         if value < 0:
-            raise ValueError("Value below -1. Accepted value are greater or equal than -1.")
+            raise ValueError("Value below 0. Accepted values are greater or equal than 0.")
         return value
 
     @validator("compression_type")
