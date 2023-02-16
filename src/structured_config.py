@@ -16,6 +16,10 @@ logger = logging.getLogger(__name__)
 class LogMessageTimestampType(str, Enum):
     """Enum for the `log_message_timestamp_type` field."""
 
+    def __str__(self) -> str:
+        """Return the value as a string."""
+        return str(self.value)
+
     CREATE_TIME = "CreateTime"
     LOG_APPEND_TIME = "LogAppendTime"
 
@@ -23,12 +27,20 @@ class LogMessageTimestampType(str, Enum):
 class LogCleanupPolicy(str, Enum):
     """Enum for the `log_cleanup_policy` field."""
 
+    def __str__(self) -> str:
+        """Return the value as a string."""
+        return str(self.value)
+
     COMPACT = "compact"
     DELETE = "delete"
 
 
 class CompressionType(str, Enum):
     """Enum for the `compression_type` field."""
+
+    def __str__(self) -> str:
+        """Return the value as a string."""
+        return str(self.value)
 
     GZIP = "gzip"
     SNAPPY = "snappy"
