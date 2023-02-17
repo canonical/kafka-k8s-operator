@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Manager for handling Kafka configuration."""
@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 
 from ops.model import Container, Unit
 
-from literals import CONTAINER, PEER, REL_NAME, STORAGE, ZOOKEEPER_REL_NAME
+from literals import CONTAINER, DATA_DIR, LOG_DIR, PEER, REL_NAME, STORAGE, ZOOKEEPER_REL_NAME
 from utils import push
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class KafkaConfig:
 
     def __init__(self, charm):
         self.charm = charm
-        self.default_config_path = f"{self.charm.config['data-dir']}/config"
+        self.default_config_path = f"{DATA_DIR}/config"
         self.properties_filepath = f"{self.default_config_path}/server.properties"
         self.jaas_filepath = f"{self.default_config_path}/kafka-jaas.cfg"
         self.keystore_filepath = f"{self.default_config_path}/keystore.p12"
@@ -224,12 +224,8 @@ class KafkaConfig:
 
         properties = (
             [
-                f"data.dir={self.charm.config['data-dir']}",
-                f"log.dir={self.charm.config['log-dir']}",
-                f"offsets.retention.minutes={self.charm.config['offsets-retention-minutes']}",
-                f"log.retention.hours={self.charm.config['log-retention-hours']}",
-                f"auto.create.topics={self.charm.config['auto-create-topics']}",
                 f"super.users={self.super_users}",
+                f"log.dir={LOG_DIR}",
                 f"log.dirs={self.log_dirs}",
                 f"listeners={protocol}://:{port}",
                 f"advertised.listeners={protocol}://{host}:{port}",
@@ -237,6 +233,7 @@ class KafkaConfig:
                 f"security.inter.broker.protocol={protocol}",
                 f"security.protocol={protocol}",
             ]
+            + self.config_properties
             + self.default_replication_properties
             + self.auth_properties
             + DEFAULT_CONFIG_OPTIONS.split("\n")
@@ -246,6 +243,15 @@ class KafkaConfig:
             properties += self.tls_properties
 
         return properties
+
+    @property
+    def config_properties(self) -> List[str]:
+        """Configure server properties from config."""
+        return [
+            f"{conf_key.replace('_', '.')}={str(value)}"
+            for conf_key, value in self.charm.config.dict().items()
+            if value is not None
+        ]
 
     def set_server_properties(self) -> None:
         """Sets all kafka config properties to the `server.properties` path."""

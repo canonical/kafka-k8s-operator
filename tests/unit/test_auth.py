@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 import logging
@@ -29,9 +29,8 @@ def harness():
     harness.add_relation("restart", CHARM_KEY)
     harness._update_config(
         {
-            "offsets-retention-minutes": 10080,
-            "log-retention-hours": 168,
-            "auto-create-topics": False,
+            "log_retention_ms": "-1",
+            "compression_type": "producer",
         }
     )
 

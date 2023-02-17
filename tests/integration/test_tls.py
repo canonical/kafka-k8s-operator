@@ -32,7 +32,7 @@ async def test_deploy_tls(ops_test: OpsTest):
     tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "kafka"}
 
     await asyncio.gather(
-        ops_test.model.deploy(TLS_NAME, channel="beta", config=tls_config, series="focal"),
+        ops_test.model.deploy(TLS_NAME, channel="beta", config=tls_config, series="jammy"),
         ops_test.model.deploy(ZK_NAME, channel="edge", num_units=3, series="focal"),
         ops_test.model.deploy(
             kafka_charm,
@@ -84,7 +84,7 @@ async def test_kafka_tls(ops_test: OpsTest):
     await ops_test.model.add_relation(APP_NAME, TLS_NAME)
     logger.info("Relate Kafka to TLS")
     await ops_test.model.wait_for_idle(
-        apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=60, timeout=1000
+        apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=60, timeout=1000, status="active"
     )
 
     assert ops_test.model.applications[APP_NAME].status == "active"

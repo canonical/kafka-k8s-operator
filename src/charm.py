@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Charmed Machine Operator for Apache Kafka."""
@@ -7,11 +7,11 @@
 import logging
 from typing import MutableMapping, Optional
 
+from charms.data_platform_libs.v0.data_models import TypedCharmBase
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from ops import pebble
 from ops.charm import (
     ActionEvent,
-    CharmBase,
     PebbleReadyEvent,
     RelationEvent,
     RelationJoinedEvent,
@@ -27,14 +27,17 @@ from auth import KafkaAuth
 from config import KafkaConfig
 from literals import CHARM_KEY, CHARM_USERS, CONTAINER, PEER, REL_NAME, ZOOKEEPER_REL_NAME
 from provider import KafkaProvider
+from structured_config import CharmConfig
 from tls import KafkaTLS
 from utils import broker_active, generate_password
 
 logger = logging.getLogger(__name__)
 
 
-class KafkaK8sCharm(CharmBase):
+class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
     """Charmed Operator for Kafka K8s."""
+
+    config_type = CharmConfig
 
     def __init__(self, *args):
         super().__init__(*args)
