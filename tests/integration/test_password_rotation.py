@@ -6,7 +6,9 @@ import asyncio
 import logging
 
 import pytest
-from helpers import (
+from pytest_operator.plugin import OpsTest
+
+from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
     KAFKA_SERIES,
@@ -17,7 +19,6 @@ from helpers import (
     get_user,
     set_password,
 )
-from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)
 
