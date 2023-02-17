@@ -13,34 +13,30 @@ from pydantic import validator
 logger = logging.getLogger(__name__)
 
 
-class LogMessageTimestampType(str, Enum):
-    """Enum for the `log_message_timestamp_type` field."""
+class BaseEnumStr(str, Enum):
+    """Base class for string enum."""
 
     def __str__(self) -> str:
         """Return the value as a string."""
         return str(self.value)
+
+
+class LogMessageTimestampType(BaseEnumStr):
+    """Enum for the `log_message_timestamp_type` field."""
 
     CREATE_TIME = "CreateTime"
     LOG_APPEND_TIME = "LogAppendTime"
 
 
-class LogCleanupPolicy(str, Enum):
+class LogCleanupPolicy(BaseEnumStr):
     """Enum for the `log_cleanup_policy` field."""
-
-    def __str__(self) -> str:
-        """Return the value as a string."""
-        return str(self.value)
 
     COMPACT = "compact"
     DELETE = "delete"
 
 
-class CompressionType(str, Enum):
+class CompressionType(BaseEnumStr):
     """Enum for the `compression_type` field."""
-
-    def __str__(self) -> str:
-        """Return the value as a string."""
-        return str(self.value)
 
     GZIP = "gzip"
     SNAPPY = "snappy"
@@ -78,30 +74,6 @@ class CharmConfig(BaseConfigModel):
         """Check for empty strings."""
         if value == "":
             return None
-        return value
-
-    @validator("log_message_timestamp_type")
-    @classmethod
-    def log_message_timestamp_type_validator(cls, value: str) -> Optional[str]:
-        """Check validity of `log_message_timestamp_type` field."""
-        try:
-            _log_message_timestap_type = LogMessageTimestampType(value)
-        except Exception as e:
-            raise ValueError(
-                f"Value out of the accepted values. Could not properly parsed the roles configuration: {e}"
-            )
-        return value
-
-    @validator("log_cleanup_policy")
-    @classmethod
-    def log_cleanup_policy_validator(cls, value: str) -> Optional[str]:
-        """Check validity of `log_cleanup_policy` field."""
-        try:
-            _log_cleanup_policy = LogCleanupPolicy(value)
-        except Exception as e:
-            raise ValueError(
-                f"Value out of the accepted values. Could not properly parsed the roles configuration: {e}"
-            )
         return value
 
     @validator("log_cleaner_min_compaction_lag_ms")
@@ -154,18 +126,6 @@ class CharmConfig(BaseConfigModel):
         """Check value greater than zero."""
         if value < 0:
             raise ValueError("Value below 0. Accepted values are greater or equal than 0.")
-        return value
-
-    @validator("compression_type")
-    @classmethod
-    def value_compression_type(cls, value: str) -> Optional[str]:
-        """Check validity of `compression_type` field."""
-        try:
-            _compression_type = CompressionType(value)
-        except Exception as e:
-            raise ValueError(
-                f"Value out of the accepted values. Could not properly parsed the roles configuration: {e}"
-            )
         return value
 
     @validator(
