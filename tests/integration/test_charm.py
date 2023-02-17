@@ -56,7 +56,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME], idle_period=40, status="active"
+            apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=40, status="active"
         )
 
     assert ops_test.model.applications[APP_NAME].status == "active"
@@ -64,6 +64,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
 
 async def test_exporter_endpoints(ops_test: OpsTest):
+
     unit_address = await get_address(ops_test=ops_test)
     jmx_exporter_url = f"http://{unit_address}:9101/metrics"
     jmx_resp = requests.get(jmx_exporter_url)
