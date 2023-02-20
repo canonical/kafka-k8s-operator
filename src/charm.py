@@ -8,6 +8,9 @@ import logging
 from typing import MutableMapping, Optional
 
 from charms.data_platform_libs.v0.data_models import TypedCharmBase
+from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
+from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
+from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from ops import pebble
 from ops.charm import (
@@ -25,7 +28,15 @@ from ops.pebble import ExecError, Layer, PathError, ProtocolError
 
 from auth import KafkaAuth
 from config import KafkaConfig
-from literals import CHARM_KEY, CHARM_USERS, CONTAINER, PEER, REL_NAME, ZOOKEEPER_REL_NAME
+from literals import (
+    CHARM_KEY,
+    CHARM_USERS,
+    CONTAINER,
+    JMX_EXPORTER_PORT,
+    PEER,
+    REL_NAME,
+    ZOOKEEPER_REL_NAME,
+)
 from provider import KafkaProvider
 from structured_config import CharmConfig
 from tls import KafkaTLS
@@ -46,6 +57,17 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         self.client_relations = KafkaProvider(self)
         self.tls = KafkaTLS(self)
         self.restart = RollingOpsManager(self, relation="restart", callback=self._restart)
+        self.metrics_endpoint = MetricsEndpointProvider(
+            self,
+            jobs=[{"static_configs": [{"targets": [f"*:{JMX_EXPORTER_PORT}"]}]}],
+        )
+        self.grafana_dashboards = GrafanaDashboardProvider(self)
+        self.loki_push = LogProxyConsumer(
+            self,
+            log_files=["/opt/kafka/logs/server.log"],
+            relation_name="logging",
+            container_name="kafka",
+        )
 
         self.framework.observe(getattr(self.on, "kafka_pebble_ready"), self._on_kafka_pebble_ready)
         self.framework.observe(getattr(self.on, "leader_elected"), self._on_leader_elected)

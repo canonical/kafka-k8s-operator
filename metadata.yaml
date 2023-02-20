@@ -35,10 +35,17 @@ requires:
     interface: tls-certificates
     limit: 1
     optional: true
+  logging:
+    interface: loki_push_api
+    optional: true
 
 provides:
   kafka-client:
     interface: kafka_client
+  metrics-endpoint:
+    interface: prometheus_scrape
+  grafana-dashboard:
+    interface: grafana_dashboard
 
 storage:
   log-data:

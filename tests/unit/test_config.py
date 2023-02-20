@@ -100,7 +100,10 @@ def test_auth_args(harness):
 
 def test_extra_args(harness):
     args = harness.charm.kafka_config.extra_args
-    assert "-javaagent:/opt/kafka/extra/jmx_prometheus_javaagent.jar=9101:/opt/kafka/default-config/jmx_prometheus.yaml" in args
+    assert (
+        "-javaagent:/opt/kafka/extra/jmx_prometheus_javaagent.jar=9101:/opt/kafka/default-config/jmx_prometheus.yaml"
+        in args
+    )
 
 
 def test_bootstrap_server(harness):
