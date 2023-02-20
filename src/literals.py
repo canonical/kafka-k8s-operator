@@ -15,3 +15,4 @@ CONTAINER = "kafka"
 STORAGE = "log-data"
 DATA_DIR = "/data/kafka"
 LOG_DIR = "/logs/kafka"
+JMX_EXPORTER_PORT = 9101

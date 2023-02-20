@@ -28,7 +28,7 @@ class KafkaProvider(Object):
         self.kafka_auth = KafkaAuth(
             charm,
             container=self.charm.unit.get_container(CONTAINER),
-            opts=[self.kafka_config.extra_args],
+            opts=self.kafka_config.auth_args,
             zookeeper=self.kafka_config.zookeeper_config.get("connect", ""),
         )
 

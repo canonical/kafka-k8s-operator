@@ -88,7 +88,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
                     "summary": "kafka",
                     "command": self.kafka_config.kafka_command,
                     "startup": "enabled",
-                    "environment": {"KAFKA_OPTS": self.kafka_config.extra_args},
+                    "environment": {"KAFKA_OPTS": " ".join(self.kafka_config.extra_args)},
                 }
             },
         }
@@ -172,7 +172,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         if self.unit.is_leader() and self.kafka_config.sync_password:
             kafka_auth = KafkaAuth(
                 charm=self,
-                opts=[self.kafka_config.extra_args],
+                opts=self.kafka_config.auth_args,
                 zookeeper=self.kafka_config.zookeeper_config.get("connect", ""),
                 container=self.container,
             )
@@ -292,7 +292,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         # Update the user
         kafka_auth = KafkaAuth(
             charm=self,
-            opts=[self.kafka_config.extra_args],
+            opts=self.kafka_config.auth_args,
             zookeeper=self.kafka_config.zookeeper_config.get("connect", ""),
             container=self.container,
         )

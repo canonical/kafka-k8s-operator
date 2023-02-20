@@ -9,7 +9,16 @@ from typing import Dict, List, Optional
 
 from ops.model import Container, Unit
 
-from literals import CONTAINER, DATA_DIR, LOG_DIR, PEER, REL_NAME, STORAGE, ZOOKEEPER_REL_NAME
+from literals import (
+    CONTAINER,
+    DATA_DIR,
+    JMX_EXPORTER_PORT,
+    LOG_DIR,
+    PEER,
+    REL_NAME,
+    STORAGE,
+    ZOOKEEPER_REL_NAME,
+)
 from utils import push
 
 logger = logging.getLogger(__name__)
@@ -32,6 +41,8 @@ class KafkaConfig:
         self.jaas_filepath = f"{self.default_config_path}/kafka-jaas.cfg"
         self.keystore_filepath = f"{self.default_config_path}/keystore.p12"
         self.truststore_filepath = f"{self.default_config_path}/truststore.jks"
+        self.jmx_exporter_filepath = "/opt/kafka/extra/jmx_prometheus_javaagent.jar"
+        self.jmx_config_filepath = "/opt/kafka/default-config/jmx_prometheus.yaml"
 
     @property
     def container(self) -> Container:
@@ -86,13 +97,24 @@ class KafkaConfig:
         return False
 
     @property
-    def extra_args(self) -> str:
-        """Collection of Java config arguments for SASL auth.
+    def auth_args(self) -> List[str]:
+        """The necessary Java config options for SASL/SCRAM auth.
+
+        Returns:
+            List of Java config auth options
+        """
+        return [f"-Djava.security.auth.login.config={self.jaas_filepath}"]
+
+    @property
+    def extra_args(self) -> List[str]:
+        """Collection of extra Java config arguments.
 
         Returns:
             String of command argument to be prepended to start-up command
         """
-        extra_args = f"-Djava.security.auth.login.config={self.jaas_filepath}"
+        extra_args = [
+            f"-javaagent:{self.jmx_exporter_filepath}={JMX_EXPORTER_PORT}:{self.jmx_config_filepath}"
+        ] + self.auth_args
 
         return extra_args
 
