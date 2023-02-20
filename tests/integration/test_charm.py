@@ -7,7 +7,15 @@ import logging
 import time
 
 import pytest
-from helpers import APP_NAME, KAFKA_CONTAINER, ZK_NAME, check_application_status, check_logs
+import requests
+from helpers import (
+    APP_NAME,
+    KAFKA_CONTAINER,
+    ZK_NAME,
+    check_application_status,
+    check_logs,
+    get_address,
+)
 from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)
@@ -48,6 +56,14 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[ZK_NAME].status == "active"
+
+
+async def test_exporter_endpoints(ops_test: OpsTest):
+    unit_address = await get_address(ops_test=ops_test)
+    jmx_exporter_url = f"http://{unit_address}:9101/metrics"
+    jmx_resp = requests.get(jmx_exporter_url)
+
+    assert jmx_resp.ok
 
 
 @pytest.mark.abort_on_fail
