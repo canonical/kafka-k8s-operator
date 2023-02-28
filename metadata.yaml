@@ -20,7 +20,7 @@ resources:
   kafka-image:
     type: oci-image
     description: OCI Image for Apache Kafka
-    upstream-source: ubuntu/kafka:latest
+    upstream-source: charmed/kafka:3.3.2
 
 peers:
   cluster:
@@ -35,10 +35,17 @@ requires:
     interface: tls-certificates
     limit: 1
     optional: true
+  logging:
+    interface: loki_push_api
+    optional: true
 
 provides:
   kafka-client:
     interface: kafka_client
+  metrics-endpoint:
+    interface: prometheus_scrape
+  grafana-dashboard:
+    interface: grafana_dashboard
 
 storage:
   log-data:
