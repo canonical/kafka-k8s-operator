@@ -13,7 +13,7 @@ from helpers import (
     KAFKA_SERIES,
     ZK_NAME,
     ZK_SERIES,
-    get_kafka_zk_relation_data
+    get_kafka_zk_relation_data,
 )
 from pytest_operator.plugin import OpsTest
 
