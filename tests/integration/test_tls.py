@@ -9,7 +9,10 @@ import pytest
 from helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
+    KAFKA_SERIES,
     ZK_NAME,
+    ZK_SERIES,
+    TLS_SERIES,
     check_application_status,
     check_tls,
     extract_private_key,
@@ -32,13 +35,13 @@ async def test_deploy_tls(ops_test: OpsTest):
     tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "kafka"}
 
     await asyncio.gather(
-        ops_test.model.deploy(TLS_NAME, channel="beta", config=tls_config, series="jammy"),
-        ops_test.model.deploy(ZK_NAME, channel="edge", num_units=3, series="focal"),
+        ops_test.model.deploy(TLS_NAME, channel="beta", config=tls_config, series=TLS_SERIES),
+        ops_test.model.deploy(ZK_NAME, channel="edge", num_units=3, series=ZK_SERIES),
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
             resources={"kafka-image": KAFKA_CONTAINER},
-            series="jammy",
+            series=KAFKA_SERIES,
         ),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)

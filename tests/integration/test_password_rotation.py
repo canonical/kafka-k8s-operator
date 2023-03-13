@@ -9,7 +9,9 @@ import pytest
 from helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
+    KAFKA_SERIES,
     ZK_NAME,
+    ZK_SERIES,
     check_application_status,
     get_kafka_zk_relation_data,
     get_user,
@@ -26,14 +28,14 @@ async def test_build_and_deploy(ops_test: OpsTest):
     kafka_charm = await ops_test.build_charm(".")
     await asyncio.gather(
         ops_test.model.deploy(
-            ZK_NAME, channel="edge", application_name=ZK_NAME, num_units=3, series="focal"
+            ZK_NAME, channel="edge", application_name=ZK_NAME, num_units=3, series=ZK_SERIES
         ),
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
             resources={"kafka-image": KAFKA_CONTAINER},
             num_units=1,
-            series="jammy",
+            series=KAFKA_SERIES,
         ),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)

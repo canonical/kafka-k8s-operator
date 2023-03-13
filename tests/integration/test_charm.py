@@ -11,7 +11,9 @@ import requests
 from helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
+    KAFKA_SERIES,
     ZK_NAME,
+    ZK_SERIES,
     check_application_status,
     check_logs,
     get_address,
@@ -33,14 +35,14 @@ async def test_build_and_deploy(ops_test: OpsTest):
             channel="edge",
             application_name=ZK_NAME,
             num_units=3,
-            series="focal",
+            series=ZK_SERIES,
         ),
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
-            series="jammy",
+            series=KAFKA_SERIES,
         ),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
