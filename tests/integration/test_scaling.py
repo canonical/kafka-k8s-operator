@@ -7,6 +7,10 @@ import logging
 import time
 
 import pytest
+from pytest_operator.plugin import OpsTest
+
+from utils import get_active_brokers
+
 from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
@@ -15,9 +19,6 @@ from .helpers import (
     ZK_SERIES,
     get_kafka_zk_relation_data,
 )
-from pytest_operator.plugin import OpsTest
-
-from utils import get_active_brokers
 
 logger = logging.getLogger(__name__)
 

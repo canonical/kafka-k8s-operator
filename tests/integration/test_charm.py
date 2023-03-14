@@ -8,6 +8,8 @@ import time
 
 import pytest
 import requests
+from pytest_operator.plugin import OpsTest
+
 from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
@@ -18,7 +20,6 @@ from .helpers import (
     check_logs,
     get_address,
 )
-from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)
 
