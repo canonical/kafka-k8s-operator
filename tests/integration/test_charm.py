@@ -8,7 +8,7 @@ import time
 
 import pytest
 import requests
-from helpers import (
+from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
     KAFKA_SERIES,

@@ -7,7 +7,7 @@ import logging
 import time
 
 import pytest
-from helpers import (
+from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
     KAFKA_SERIES,
