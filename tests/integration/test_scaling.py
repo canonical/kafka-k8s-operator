@@ -7,7 +7,14 @@ import logging
 import time
 
 import pytest
-from helpers import APP_NAME, KAFKA_CONTAINER, ZK_NAME, get_kafka_zk_relation_data
+from helpers import (
+    APP_NAME,
+    KAFKA_CONTAINER,
+    KAFKA_SERIES,
+    ZK_NAME,
+    ZK_SERIES,
+    get_kafka_zk_relation_data,
+)
 from pytest_operator.plugin import OpsTest
 
 from utils import get_active_brokers
@@ -21,13 +28,13 @@ async def test_kafka_simple_scale_up(ops_test: OpsTest):
     kafka_charm = await ops_test.build_charm(".")
 
     await asyncio.gather(
-        ops_test.model.deploy(ZK_NAME, application_name=ZK_NAME, num_units=1, series="focal"),
+        ops_test.model.deploy(ZK_NAME, application_name=ZK_NAME, num_units=1, series=ZK_SERIES),
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
-            series="jammy",
+            series=KAFKA_SERIES,
         ),
     )
     await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME])

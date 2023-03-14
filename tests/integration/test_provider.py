@@ -12,7 +12,10 @@ from pytest_operator.plugin import OpsTest
 from tests.integration.helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
+    KAFKA_SERIES,
+    TLS_SERIES,
     ZK_NAME,
+    ZK_SERIES,
     check_user,
     get_provider_data,
     get_zookeeper_connection,
@@ -39,17 +42,17 @@ async def test_deploy_charms_relate_active(
     charm = await ops_test.build_charm(".")
     await asyncio.gather(
         ops_test.model.deploy(
-            ZK_NAME, channel="edge", application_name=ZK_NAME, num_units=3, series="focal"
+            ZK_NAME, channel="edge", application_name=ZK_NAME, num_units=3, series=ZK_SERIES
         ),
         ops_test.model.deploy(
             charm,
             application_name=APP_NAME,
             num_units=1,
-            series="jammy",
+            series=KAFKA_SERIES,
             resources={"kafka-image": KAFKA_CONTAINER},
         ),
         ops_test.model.deploy(
-            app_charm, application_name=DUMMY_NAME_1, num_units=1, series="focal"
+            app_charm, application_name=DUMMY_NAME_1, num_units=1, series="jammy"
         ),
     )
     await ops_test.model.wait_for_idle(
@@ -89,7 +92,7 @@ async def test_deploy_multiple_charms_same_topic_relate_active(
 ):
     """Test relation with multiple applications."""
     await ops_test.model.deploy(
-        app_charm, application_name=DUMMY_NAME_2, num_units=1, series="focal"
+        app_charm, application_name=DUMMY_NAME_2, num_units=1, series="jammy"
     ),
     await ops_test.model.wait_for_idle(apps=[DUMMY_NAME_2], timeout=1000, idle_period=30)
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_2}:{REL_NAME_CONSUMER}")
@@ -232,7 +235,7 @@ async def test_connection_updated_on_tls_enabled(ops_test: OpsTest, app_charm: P
     await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1], timeout=1000, idle_period=30)
     tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "kafka"}
 
-    await ops_test.model.deploy(TLS_NAME, channel="beta", config=tls_config, series="jammy")
+    await ops_test.model.deploy(TLS_NAME, channel="beta", config=tls_config, series=TLS_SERIES)
     await ops_test.model.add_relation(TLS_NAME, ZK_NAME)
 
     await ops_test.model.wait_for_idle(
