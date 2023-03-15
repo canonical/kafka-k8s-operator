@@ -55,7 +55,11 @@ async def test_deploy_tls(ops_test: OpsTest):
     # Relate Zookeeper to TLS
     await ops_test.model.add_relation(TLS_NAME, ZK_NAME)
     logger.info("Relate Zookeeper to TLS")
-    await ops_test.model.wait_for_idle(apps=[TLS_NAME, ZK_NAME], idle_period=40)
+
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=40, status="active"
+        )
 
     assert ops_test.model.applications[TLS_NAME].status == "active"
     assert ops_test.model.applications[ZK_NAME].status == "active"
