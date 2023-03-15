@@ -58,7 +58,7 @@ async def test_deploy_tls(ops_test: OpsTest):
 
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=40, status="active"
+            apps=[TLS_NAME, ZK_NAME], timeout=1000, idle_period=40, status="active"
         )
 
     assert ops_test.model.applications[TLS_NAME].status == "active"
@@ -91,9 +91,10 @@ async def test_kafka_tls(ops_test: OpsTest):
 
     await ops_test.model.add_relation(APP_NAME, TLS_NAME)
     logger.info("Relate Kafka to TLS")
-    await ops_test.model.wait_for_idle(
-        apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=60, timeout=1000, status="active"
-    )
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=60, timeout=1000, status="active"
+        )
 
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[ZK_NAME].status == "active"
