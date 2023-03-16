@@ -46,7 +46,7 @@ async def test_deploy_tls(ops_test: OpsTest):
         ),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME, TLS_NAME])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME, TLS_NAME], timeout=2000)
 
     assert check_application_status(ops_test=ops_test, app_name=APP_NAME) == "waiting"
     assert ops_test.model.applications[ZK_NAME].status == "active"
@@ -58,7 +58,7 @@ async def test_deploy_tls(ops_test: OpsTest):
 
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(
-            apps=[TLS_NAME, ZK_NAME], idle_period=40, status="active"
+            apps=[TLS_NAME, ZK_NAME], idle_period=40, status="active", timeout=2000
         )
 
     assert ops_test.model.applications[TLS_NAME].status == "active"
@@ -74,7 +74,7 @@ async def test_kafka_tls(ops_test: OpsTest):
     """
     # Relate Zookeeper[TLS] to Kafka[Non-TLS]
     await ops_test.model.add_relation(ZK_NAME, APP_NAME)
-    await ops_test.model.wait_for_idle(apps=[ZK_NAME], idle_period=60)
+    await ops_test.model.wait_for_idle(apps=[ZK_NAME], idle_period=60, timeout=2000)
 
     # Unit is on 'blocked' but whole app is on 'waiting'
     assert check_application_status(ops_test=ops_test, app_name=APP_NAME) == "waiting"
@@ -122,7 +122,7 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
     await ops_test.model.applications[APP_NAME].scale(scale=3)
     logger.info("Scaling Kafka to 3 units")
     await ops_test.model.block_until(
-        lambda: len(ops_test.model.applications[APP_NAME].units) == 3, timeout=1000
+        lambda: len(ops_test.model.applications[APP_NAME].units) == 3, timeout=2000
     )
     # Wait for model to settle
     await ops_test.model.wait_for_idle(

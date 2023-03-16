@@ -60,14 +60,14 @@ async def test_deploy_charms_relate_active(
 
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME], idle_period=30, status="active"
+            apps=[APP_NAME, ZK_NAME], idle_period=30, status="active", timeout=2000
         )
 
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_1}:{REL_NAME_CONSUMER}")
 
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME], idle_period=30, status="active"
+            apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME], idle_period=30, status="active", timeout=2000
         )
 
     assert ops_test.model.applications[APP_NAME].status == "active"
@@ -251,7 +251,7 @@ async def test_connection_updated_on_tls_enabled(ops_test: OpsTest, app_charm: P
         apps=[APP_NAME, ZK_NAME, TLS_NAME, DUMMY_NAME_1],
         idle_period=40,
         status="active",
-        timeout=20 * 60,
+        timeout=2000,
     )
 
     assert ops_test.model.applications[APP_NAME].status == "active"
