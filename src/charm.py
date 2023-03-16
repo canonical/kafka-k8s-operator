@@ -229,13 +229,9 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
-        logger.info(f"Config changed: {str(event)}")
-
         if not self.ready_to_start:
             event.defer()
             return
-
-        logger.info("Ready to start")
 
         # Load current properties set in the charm workload
         raw_properties = None
@@ -246,8 +242,6 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             logger.debug(str(e))
             event.defer()
             return
-
-        logger.info(f"Properties: {raw_properties}")
 
         if not raw_properties:
             # Event fired before charm has properly started
