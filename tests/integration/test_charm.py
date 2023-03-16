@@ -8,7 +8,9 @@ import time
 
 import pytest
 import requests
-from helpers import (
+from pytest_operator.plugin import OpsTest
+
+from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
     KAFKA_SERIES,
@@ -18,7 +20,6 @@ from helpers import (
     check_logs,
     get_address,
 )
-from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,9 @@ async def test_build_and_deploy(ops_test: OpsTest):
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
 
     async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], idle_period=40)
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME, ZK_NAME], idle_period=40, status="active"
+        )
 
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[ZK_NAME].status == "active"

@@ -9,7 +9,8 @@ from typing import Set
 
 import pytest
 from pytest_operator.plugin import OpsTest
-from tests.integration.helpers import (
+
+from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
     KAFKA_SERIES,

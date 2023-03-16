@@ -6,7 +6,10 @@ import asyncio
 import logging
 
 import pytest
-from helpers import (
+from charms.tls_certificates_interface.v1.tls_certificates import generate_private_key
+from pytest_operator.plugin import OpsTest
+
+from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
     KAFKA_SERIES,
@@ -20,8 +23,6 @@ from helpers import (
     set_tls_private_key,
     show_unit,
 )
-from lib.charms.tls_certificates_interface.v1.tls_certificates import generate_private_key
-from pytest_operator.plugin import OpsTest
 
 logger = logging.getLogger(__name__)
 
