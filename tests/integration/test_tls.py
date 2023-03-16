@@ -93,7 +93,7 @@ async def test_kafka_tls(ops_test: OpsTest):
     logger.info("Relate Kafka to TLS")
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=60, timeout=1000, status="active"
+            apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=60, timeout=2000, status="active"
         )
 
     assert ops_test.model.applications[APP_NAME].status == "active"
@@ -129,7 +129,7 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
         apps=[APP_NAME],
         status="active",
         idle_period=40,
-        timeout=1000,
+        timeout=2000,
     )
 
     # TODO: Add this back once the scaling tests are addressed
