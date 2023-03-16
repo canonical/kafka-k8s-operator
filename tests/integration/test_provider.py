@@ -57,6 +57,12 @@ async def test_deploy_charms_relate_active(
         ),
     )
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
+
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME, ZK_NAME], idle_period=30, status="active"
+        )
+
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_1}:{REL_NAME_CONSUMER}")
 
     async with ops_test.fast_forward():
