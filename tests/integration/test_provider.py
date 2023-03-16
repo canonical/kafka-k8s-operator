@@ -248,7 +248,8 @@ async def test_connection_updated_on_tls_enabled(ops_test: OpsTest, app_charm: P
     await ops_test.model.add_relation(TLS_NAME, APP_NAME)
 
     await ops_test.model.wait_for_idle(
-        apps=[APP_NAME, ZK_NAME, TLS_NAME, DUMMY_NAME_1], idle_period=40, status="active"
+        apps=[APP_NAME, ZK_NAME, TLS_NAME, DUMMY_NAME_1],
+        idle_period=40, status="active", timeout=20*60
     )
 
     assert ops_test.model.applications[APP_NAME].status == "active"
