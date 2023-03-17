@@ -54,9 +54,9 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
 
-    async with ops_test.fast_forward():
+    async with ops_test.fast_forward(fast_interval="30s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME], idle_period=40, status="active"
+            apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=20, status="active"
         )
 
     assert ops_test.model.applications[APP_NAME].status == "active"
@@ -64,6 +64,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
 
 async def test_exporter_endpoints(ops_test: OpsTest):
+
     unit_address = await get_address(ops_test=ops_test)
     jmx_exporter_url = f"http://{unit_address}:9101/metrics"
     jmx_resp = requests.get(jmx_exporter_url)
@@ -102,9 +103,11 @@ async def test_logs_write_to_storage(ops_test: OpsTest):
 
 @pytest.mark.abort_on_fail
 async def test_blocks_without_zookeeper(ops_test: OpsTest):
-    async with ops_test.fast_forward():
+    async with ops_test.fast_forward(fast_interval="30s"):
         await ops_test.model.applications[ZK_NAME].remove()
-        await ops_test.model.wait_for_idle(apps=[APP_NAME], raise_on_error=False, timeout=1000)
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME], idle_period=20, raise_on_error=False, timeout=1000
+        )
 
     # Unit is on 'blocked' but whole app is on 'waiting'
     assert check_application_status(ops_test, APP_NAME) == "waiting"

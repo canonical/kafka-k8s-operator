@@ -40,7 +40,12 @@ async def test_kafka_simple_scale_up(ops_test: OpsTest):
     )
     await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME])
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME])
+
+    async with ops_test.fast_forward(fast_interval="30s"):
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME, ZK_NAME], timeout=1000, status="active", idle_period=20
+        )
+
     assert ops_test.model.applications[ZK_NAME].status == "active"
     assert ops_test.model.applications[APP_NAME].status == "active"
 
