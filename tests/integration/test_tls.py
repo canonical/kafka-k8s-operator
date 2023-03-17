@@ -96,9 +96,6 @@ async def test_kafka_tls(ops_test: OpsTest):
             apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=60, timeout=3000, status="active"
         )
 
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[ZK_NAME].status == "active"
-
     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME)
     logger.info("Check for Kafka TLS")
     check_tls(ip=kafka_address, port=9093)
