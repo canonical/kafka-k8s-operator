@@ -47,9 +47,9 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
 
-    async with ops_test.fast_forward():
+    async with ops_test.fast_forward(fast_interval="30s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME], idle_period=40, status="active", timeout=2000
+            apps=[APP_NAME, ZK_NAME], idle_period=20, status="active", timeout=2000
         )
 
     assert ops_test.model.applications[APP_NAME].status == "active"
