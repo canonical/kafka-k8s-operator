@@ -92,6 +92,8 @@ async def test_deploy_charms_relate_active(
         assert acl.resource_type in ["GROUP", "TOPIC"]
         if acl.resource_type == "TOPIC":
             assert acl.resource_name == "test-topic"
+        if acl.resource_type == "GROUP":
+            assert acl.resource_name == "test-prefix"
 
 
 @pytest.mark.abort_on_fail
@@ -267,3 +269,5 @@ async def test_connection_updated_on_tls_enabled(ops_test: OpsTest, app_charm: P
     assert provider_data["tls"] == "enabled"
     assert "9093" in provider_data["endpoints"]
     assert "2182" in provider_data["zookeeper-uris"]
+    assert "test-prefix" in provider_data["consumer-group-prefix"]
+    assert "test-topic" in provider_data["topic"]
