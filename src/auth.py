@@ -49,7 +49,7 @@ class KafkaAuth:
             bin_keyword="acls",
             bin_args=command,
             extra_args=self.opts,
-            zk_tls_config_filepath=self.charm.kafka_config.properties_filepath,
+            zk_tls_config_filepath=self.charm.kafka_config.server_properties_filepath,
         )
 
         return acls
@@ -168,7 +168,7 @@ class KafkaAuth:
             bin_keyword="configs",
             bin_args=command,
             extra_args=self.opts,
-            zk_tls_config_filepath=self.charm.kafka_config.properties_filepath,
+            zk_tls_config_filepath=self.charm.kafka_config.server_properties_filepath,
         )
 
     def delete_user(self, username: str) -> None:
@@ -192,7 +192,7 @@ class KafkaAuth:
             bin_keyword="configs",
             bin_args=command,
             extra_args=self.opts,
-            zk_tls_config_filepath=self.charm.kafka_config.properties_filepath,
+            zk_tls_config_filepath=self.charm.kafka_config.server_properties_filepath,
         )
 
     def add_acl(
@@ -234,7 +234,7 @@ class KafkaAuth:
             bin_keyword="acls",
             bin_args=command,
             extra_args=self.opts,
-            zk_tls_config_filepath=self.charm.kafka_config.properties_filepath,
+            zk_tls_config_filepath=self.charm.kafka_config.server_properties_filepath,
         )
 
     def remove_acl(
@@ -277,7 +277,7 @@ class KafkaAuth:
             bin_keyword="acls",
             bin_args=command,
             extra_args=self.opts,
-            zk_tls_config_filepath=self.charm.kafka_config.properties_filepath,
+            zk_tls_config_filepath=self.charm.kafka_config.server_properties_filepath,
         )
 
     def remove_all_user_acls(self, username: str) -> None:

@@ -2,12 +2,14 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+from unittest.mock import PropertyMock, patch
+
 import ops.testing
 import pytest
 from ops.testing import Harness
 
 from charm import KafkaK8sCharm
-from literals import STORAGE
+from literals import ADMIN_USER, INTER_BROKER_USER, STORAGE
 
 ops.testing.SIMULATE_CAN_CONNECT = True
 
@@ -23,21 +25,6 @@ def harness():
 def zk_relation_id(harness):
     relation_id = harness.add_relation("zookeeper", "kafka-k8s")
     return relation_id
-
-
-def test_zookeeper_config_succeeds_fails_config(zk_relation_id, harness):
-    harness.update_relation_data(
-        zk_relation_id,
-        harness.charm.app.name,
-        {
-            "chroot": "/kafka",
-            "username": "moria",
-            "endpoints": "1.1.1.1,2.2.2.2",
-            "uris": "1.1.1.1:2181,2.2.2.2:2181/kafka",
-        },
-    )
-    assert harness.charm.kafka_config.zookeeper_config == {}
-    assert not harness.charm.kafka_config.zookeeper_connected
 
 
 def test_all_storages_in_log_dirs(harness):
@@ -64,13 +51,72 @@ def test_log_dirs_in_server_properties(zk_relation_id, harness):
             "tls": "disabled",
         },
     )
+    peer_relation_id = harness.charm.model.get_relation("cluster").id
+    harness.add_relation_unit(peer_relation_id, "kafka-k8s/1")
+    harness.update_relation_data(peer_relation_id, "kafka-k8s/1", {"private-address": "treebeard"})
 
     found_log_dirs = False
-    for prop in harness.charm.kafka_config.server_properties:
-        if "log.dirs" in prop:
-            found_log_dirs = True
+    with (
+        patch(
+            "config.KafkaConfig.internal_user_credentials",
+            new_callable=PropertyMock,
+            return_value={INTER_BROKER_USER: "fangorn", ADMIN_USER: "forest"},
+        )
+    ):
+        for prop in harness.charm.kafka_config.server_properties:
+            if "log.dirs" in prop:
+                found_log_dirs = True
 
-    assert found_log_dirs
+        assert found_log_dirs
+
+
+def test_listeners_in_server_properties(zk_relation_id, harness):
+    """Checks that listeners are split into INTERNAL and EXTERNAL."""
+    harness.update_relation_data(
+        zk_relation_id,
+        harness.charm.app.name,
+        {
+            "chroot": "/kafka",
+            "username": "moria",
+            "password": "mellon",
+            "endpoints": "1.1.1.1,2.2.2.2",
+            "uris": "1.1.1.1:2181/kafka,2.2.2.2:2181/kafka",
+            "tls": "disabled",
+        },
+    )
+    peer_relation_id = harness.charm.model.get_relation("cluster").id
+    harness.add_relation_unit(peer_relation_id, "kafka-k8s/1")
+    harness.update_relation_data(peer_relation_id, "kafka-k8s/0", {"private-address": "treebeard"})
+
+    expected_listeners = "listeners=INTERNAL_SASL_PLAINTEXT://:19092"
+    expected_advertised_listeners = (
+        "advertised.listeners=INTERNAL_SASL_PLAINTEXT://treebeard:19092"
+    )
+
+    with (
+        patch(
+            "config.KafkaConfig.internal_user_credentials",
+            new_callable=PropertyMock,
+            return_value={INTER_BROKER_USER: "fangorn", ADMIN_USER: "forest"},
+        )
+    ):
+        assert expected_listeners in harness.charm.kafka_config.server_properties
+        assert expected_advertised_listeners in harness.charm.kafka_config.server_properties
+
+
+def test_zookeeper_config_succeeds_fails_config(zk_relation_id, harness):
+    harness.update_relation_data(
+        zk_relation_id,
+        harness.charm.app.name,
+        {
+            "chroot": "/kafka",
+            "username": "moria",
+            "endpoints": "1.1.1.1,2.2.2.2",
+            "uris": "1.1.1.1:2181,2.2.2.2:2181/kafka",
+        },
+    )
+    assert harness.charm.kafka_config.zookeeper_config == {}
+    assert not harness.charm.kafka_config.zookeeper_connected
 
 
 def test_zookeeper_config_succeeds_valid_config(zk_relation_id, harness):
@@ -164,7 +210,8 @@ def test_auth_properties(zk_relation_id, harness):
 
 
 def test_super_users(harness):
-    assert len(harness.charm.kafka_config.super_users.split(";")) == 1
+    """Checks super-users property is updated for new admin clients."""
+    assert len(harness.charm.kafka_config.super_users.split(";")) == 2
 
     client_relation_id = harness.add_relation("kafka-client", "app")
     harness.update_relation_data(client_relation_id, "app", {"extra-user-roles": "admin,producer"})
@@ -176,11 +223,13 @@ def test_super_users(harness):
     peer_relation_id = harness.charm.model.get_relation("cluster").id
 
     harness.update_relation_data(
-        peer_relation_id, harness.charm.app.name, {"relation-2": "mellon"}
+        peer_relation_id, harness.charm.app.name, {"relation-1": "mellon"}
     )
-    assert len(harness.charm.kafka_config.super_users.split(";")) == 2
+    assert len(harness.charm.kafka_config.super_users.split(";")) == 3
 
     harness.update_relation_data(
-        peer_relation_id, harness.charm.app.name, {"relation-3": "mellon"}
+        peer_relation_id, harness.charm.app.name, {"relation-2": "mellon"}
     )
+
+    harness.update_relation_data(client_relation_id, "appii", {"extra-user-roles": "consumer"})
     assert len(harness.charm.kafka_config.super_users.split(";")) == 3

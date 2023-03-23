@@ -7,7 +7,6 @@
 from dataclasses import dataclass
 from typing import Dict, Literal
 
-
 CHARM_KEY = "kafka-k8s"
 ZK_NAME = "zookeeper-k8s"
 PEER = "cluster"

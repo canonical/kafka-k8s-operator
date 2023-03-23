@@ -4,6 +4,8 @@
 
 import logging
 import re
+import socket
+from contextlib import closing
 from pathlib import Path
 from subprocess import PIPE, check_output
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -12,7 +14,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from auth import Acl, KafkaAuth
-from literals import REL_NAME
+from literals import REL_NAME, SECURITY_PROTOCOL_PORTS
 
 logger = logging.getLogger(__name__)
 
@@ -68,14 +70,16 @@ def check_user(model_full_name: str, username: str, zookeeper_uri: str) -> None:
 def get_user(model_full_name: str, username: str, zookeeper_uri: str) -> str:
     """Get information related to a user stored on zookeeper."""
     container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config=/data/kafka/config/kafka-jaas.cfg ./opt/kafka/bin/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
+    logger.info(f"Container command: {container_command}")
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
-    )
-
-    return result
+    ).splitlines()
+    logger.info(f"result: {result}")
+    logger.info(f"result[-1]: {result[-1]}")
+    return result[-1]
 
 
 def show_unit(unit_name: str, model_full_name: str) -> Any:
@@ -127,6 +131,7 @@ async def set_password(ops_test: OpsTest, username="sync", password=None, num_un
         "set-password", **params
     )
     password = await action.wait()
+    logger.info(f"password: {password}")
     return password.results
 
 
@@ -249,3 +254,27 @@ def check_logs(model_full_name: str, kafka_unit_name: str, topic: str) -> None:
             break
 
     assert passed, "logs not found"
+
+
+def check_socket(host: str, port: int) -> bool:
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+        return sock.connect_ex((host, port)) == 0
+
+
+async def run_client_properties(ops_test: OpsTest) -> str:
+    """Runs command requiring admin permissions, authenticated with bootstrap-server."""
+    bootstrap_server = (
+        await get_address(ops_test=ops_test)
+        + f":{SECURITY_PROTOCOL_PORTS['SASL_PLAINTEXT'].client}"
+    )
+
+    container_command = f"./opt/kafka/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config /data/kafka/config/client.properties --entity-type users"
+
+    result = check_output(
+        f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+
+    return result
