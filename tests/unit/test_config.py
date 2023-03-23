@@ -9,7 +9,7 @@ import pytest
 from ops.testing import Harness
 
 from charm import KafkaK8sCharm
-from literals import ADMIN_USER, INTER_BROKER_USER, STORAGE
+from literals import ADMIN_USER, INTER_BROKER_USER, INTERNAL_USERS, STORAGE
 
 ops.testing.SIMULATE_CAN_CONNECT = True
 
@@ -27,15 +27,28 @@ def zk_relation_id(harness):
     return relation_id
 
 
+# def test_all_storages_in_log_dirs(harness):
+#     """Checks that the log.dirs property updates with all available storages."""
+#     with harness.hooks_disabled():
+#         harness.add_storage(storage_name=STORAGE, attach=True)
+
+#     assert len(harness.charm.kafka_config.log_dirs.split(",")) == len(
+#         harness.charm.model.storages[STORAGE]
+#     )
+
 def test_all_storages_in_log_dirs(harness):
     """Checks that the log.dirs property updates with all available storages."""
+    storage_metadata = harness.charm.meta.storages["log-data"]
+    print("Storage meta: ", storage_metadata)
+    min_storages = storage_metadata.multiple_range[0] if storage_metadata.multiple_range else 0
+    print(min_storages)
     with harness.hooks_disabled():
-        harness.add_storage(storage_name=STORAGE, attach=True)
-
+        harness.add_storage(storage_name="log-data", attach=True)
+    print("HERE: ", harness.charm.model.storages["log-data"])
+    print("HERE1: ",harness.charm.kafka_config.log_dirs.split(","))
     assert len(harness.charm.kafka_config.log_dirs.split(",")) == len(
-        harness.charm.model.storages[STORAGE]
+        harness.charm.model.storages["log-data"]
     )
-
 
 def test_log_dirs_in_server_properties(zk_relation_id, harness):
     """Checks that log.dirs are added to server_properties."""
@@ -84,13 +97,10 @@ def test_listeners_in_server_properties(zk_relation_id, harness):
             "tls": "disabled",
         },
     )
-    peer_relation_id = harness.charm.model.get_relation("cluster").id
-    harness.add_relation_unit(peer_relation_id, "kafka-k8s/1")
-    harness.update_relation_data(peer_relation_id, "kafka-k8s/0", {"private-address": "treebeard"})
 
     expected_listeners = "listeners=INTERNAL_SASL_PLAINTEXT://:19092"
     expected_advertised_listeners = (
-        "advertised.listeners=INTERNAL_SASL_PLAINTEXT://treebeard:19092"
+        "advertised.listeners=INTERNAL_SASL_PLAINTEXT://kafka-k8s-0.kafka-k8s-endpoints:19092"
     )
 
     with (
@@ -211,25 +221,28 @@ def test_auth_properties(zk_relation_id, harness):
 
 def test_super_users(harness):
     """Checks super-users property is updated for new admin clients."""
-    assert len(harness.charm.kafka_config.super_users.split(";")) == 2
-
-    client_relation_id = harness.add_relation("kafka-client", "app")
-    harness.update_relation_data(client_relation_id, "app", {"extra-user-roles": "admin,producer"})
-    client_relation_id = harness.add_relation("kafka-client", "appii")
-    harness.update_relation_data(
-        client_relation_id, "appii", {"extra-user-roles": "admin,consumer"}
-    )
-
     peer_relation_id = harness.charm.model.get_relation("cluster").id
-
+    app_relation_id = harness.add_relation("kafka-client", "app")
+    harness.update_relation_data(app_relation_id, "app", {"extra-user-roles": "admin,producer"})
+    appii_relation_id = harness.add_relation("kafka-client", "appii")
     harness.update_relation_data(
-        peer_relation_id, harness.charm.app.name, {"relation-1": "mellon"}
-    )
-    assert len(harness.charm.kafka_config.super_users.split(";")) == 3
-
-    harness.update_relation_data(
-        peer_relation_id, harness.charm.app.name, {"relation-2": "mellon"}
+        appii_relation_id, "appii", {"extra-user-roles": "admin,consumer"}
     )
 
-    harness.update_relation_data(client_relation_id, "appii", {"extra-user-roles": "consumer"})
-    assert len(harness.charm.kafka_config.super_users.split(";")) == 3
+    assert len(harness.charm.kafka_config.super_users.split(";")) == len(INTERNAL_USERS)
+
+    harness.update_relation_data(
+        peer_relation_id, harness.charm.app.name, {f"relation-{app_relation_id}": "mellon"}
+    )
+
+    assert len(harness.charm.kafka_config.super_users.split(";")) == (len(INTERNAL_USERS) + 1)
+
+    harness.update_relation_data(
+        peer_relation_id, harness.charm.app.name, {f"relation-{appii_relation_id}": "mellon"}
+    )
+
+    assert len(harness.charm.kafka_config.super_users.split(";")) == (len(INTERNAL_USERS) + 2)
+
+    harness.update_relation_data(appii_relation_id, "appii", {"extra-user-roles": "consumer"})
+
+    assert len(harness.charm.kafka_config.super_users.split(";")) == (len(INTERNAL_USERS) + 1)

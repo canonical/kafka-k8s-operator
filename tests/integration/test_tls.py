@@ -98,7 +98,7 @@ async def test_kafka_tls(ops_test: OpsTest):
 
     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME)
     logger.info("Check for Kafka TLS")
-    check_tls(ip=kafka_address, port=9093)
+    check_tls(ip=kafka_address, port=19093)
 
     # Rotate credentials
     new_private_key = generate_private_key().decode("utf-8")
@@ -142,4 +142,4 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
     """
 
     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME, unit_num=2)
-    check_tls(ip=kafka_address, port=9093)
+    check_tls(ip=kafka_address, port=19093)
