@@ -27,28 +27,31 @@ def zk_relation_id(harness):
     return relation_id
 
 
-# def test_all_storages_in_log_dirs(harness):
-#     """Checks that the log.dirs property updates with all available storages."""
-#     with harness.hooks_disabled():
-#         harness.add_storage(storage_name=STORAGE, attach=True)
-
-#     assert len(harness.charm.kafka_config.log_dirs.split(",")) == len(
-#         harness.charm.model.storages[STORAGE]
-#     )
-
 def test_all_storages_in_log_dirs(harness):
     """Checks that the log.dirs property updates with all available storages."""
-    storage_metadata = harness.charm.meta.storages["log-data"]
-    print("Storage meta: ", storage_metadata)
-    min_storages = storage_metadata.multiple_range[0] if storage_metadata.multiple_range else 0
-    print(min_storages)
     with harness.hooks_disabled():
-        harness.add_storage(storage_name="log-data", attach=True)
-    print("HERE: ", harness.charm.model.storages["log-data"])
-    print("HERE1: ",harness.charm.kafka_config.log_dirs.split(","))
+        harness.add_storage(storage_name=STORAGE, attach=True)
+    print(f"{harness.charm.kafka_config.log_dirs}")
+    print(f"{harness.charm.kafka_config.log_dirs.split(',')}")
+    print(f"{harness.charm.model.storages[STORAGE]}")
+    print(f"{len(harness.charm.model.storages[STORAGE])}")
     assert len(harness.charm.kafka_config.log_dirs.split(",")) == len(
-        harness.charm.model.storages["log-data"]
+        harness.charm.model.storages[STORAGE]
     )
+
+# def test_all_storages_in_log_dirs(harness):
+#     """Checks that the log.dirs property updates with all available storages."""
+#     storage_metadata = harness.charm.meta.storages["log-data"]
+#     print("Storage meta: ", storage_metadata)
+#     min_storages = storage_metadata.multiple_range[0] if storage_metadata.multiple_range else 0
+#     print(min_storages)
+#     with harness.hooks_disabled():
+#         harness.add_storage(storage_name="log-data", attach=True)
+#     print("HERE: ", harness.charm.model.storages["log-data"])
+#     print("HERE1: ",harness.charm.kafka_config.log_dirs.split(","))
+#     assert len(harness.charm.kafka_config.log_dirs.split(",")) == len(
+#         harness.charm.model.storages["log-data"]
+    # )
 
 def test_log_dirs_in_server_properties(zk_relation_id, harness):
     """Checks that log.dirs are added to server_properties."""
