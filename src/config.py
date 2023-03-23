@@ -330,7 +330,9 @@ class KafkaConfig:
     def internal_listener(self) -> Listener:
         """Return the internal listener."""
         protocol = self.security_protocol
-        return Listener(host=self.get_host_from_unit(unit=self.charm.unit), protocol=protocol, scope="INTERNAL")
+        return Listener(
+            host=self.get_host_from_unit(unit=self.charm.unit), protocol=protocol, scope="INTERNAL"
+        )
 
     @property
     def client_listeners(self) -> List[Listener]:
@@ -340,7 +342,9 @@ class KafkaConfig:
             return []
 
         return [
-            Listener(host=self.get_host_from_unit(unit=self.charm.unit), protocol=auth, scope="CLIENT")
+            Listener(
+                host=self.get_host_from_unit(unit=self.charm.unit), protocol=auth, scope="CLIENT"
+            )
             for auth in self.auth_mechanisms
         ]
 
