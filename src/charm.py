@@ -201,7 +201,6 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         self.kafka_config.set_zk_jaas_config()
         self.kafka_config.set_client_properties()
 
-        # ASK HERE
         # do not start units until SCRAM users have been added to ZooKeeper for server-server auth
         # set internal passwords
         if self.unit.is_leader():
