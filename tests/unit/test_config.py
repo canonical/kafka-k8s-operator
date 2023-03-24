@@ -9,7 +9,7 @@ import pytest
 from ops.testing import Harness
 
 from charm import KafkaK8sCharm
-from literals import ADMIN_USER, INTER_BROKER_USER, INTERNAL_USERS
+from literals import ADMIN_USER, INTER_BROKER_USER, INTERNAL_USERS, STORAGE
 
 ops.testing.SIMULATE_CAN_CONNECT = True
 
@@ -27,18 +27,14 @@ def zk_relation_id(harness):
     return relation_id
 
 
-# def test_all_storages_in_log_dirs(harness):
-#     """Checks that the log.dirs property updates with all available storages."""
-#     with harness.hooks_disabled():
-#         harness.add_storage(storage_name=STORAGE, attach=True)
+def test_all_storages_in_log_dirs(harness):
+    """Checks that the log.dirs property updates with all available storages."""
+    with harness.hooks_disabled():
+        harness.add_storage(storage_name=STORAGE, attach=True)
 
-#     print(f"{harness.charm.kafka_config.log_dirs}")
-#     print(f"{harness.charm.kafka_config.log_dirs.split(',')}")
-#     print(f"{harness.charm.model.storages[STORAGE]}")
-#     print(f"{len(harness.charm.model.storages[STORAGE])}")
-#     assert len(harness.charm.kafka_config.log_dirs.split(",")) == len(
-#         harness.charm.model.storages[STORAGE]
-#     )
+    assert len(harness.charm.kafka_config.log_dirs.split(",")) == len(
+        harness.charm.model.storages[STORAGE]
+    )
 
 
 def test_log_dirs_in_server_properties(zk_relation_id, harness):

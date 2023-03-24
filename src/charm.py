@@ -147,6 +147,8 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
     def _on_storage_attached(self, event: StorageAttachedEvent) -> None:
         """Handler for `storage_attached` events."""
+        print("Storage attacherd")
+
         # checks first whether the broker is active before warning
         if not self.kafka_config.zookeeper_connected or not broker_active(
             unit=self.unit, zookeeper_config=self.kafka_config.zookeeper_config
@@ -281,6 +283,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
     def _on_leader_elected(self, event: LeaderElectedEvent) -> None:
         """Handler for `leader_elected` event, ensuring internal user passwords get set."""
+        print("Leader elected")
         if not self.peer_relation:
             logger.debug("no peer relation")
             event.defer()
@@ -374,14 +377,6 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             self.kafka_config.zookeeper_config.get("tls", "disabled") == "enabled"
         ):
             msg = "TLS must be enabled for Zookeeper and Kafka"
-            logger.error(msg)
-            self.unit.status = BlockedStatus(msg)
-            return False
-
-        storage_metadata = self.meta.storages["log-data"]
-        min_storages = storage_metadata.multiple_range[0] if storage_metadata.multiple_range else 0
-        if len(self.model.storages["log-data"]) < min_storages:
-            msg = f"Storage volumes lower than minimum of {min_storages}"
             logger.error(msg)
             self.unit.status = BlockedStatus(msg)
             return False
