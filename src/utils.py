@@ -118,8 +118,6 @@ def run_bin_command(
     )
 
     try:
-        logger.info(f"EXecute command: {command}")
-        logger.info(f"Environment: {environment}")
         process = container.exec(command=command, environment=environment)
         output, _ = process.wait_output()
         logger.debug(f"{output=}")

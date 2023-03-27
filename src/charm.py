@@ -21,7 +21,6 @@ from ops.charm import (
     RelationJoinedEvent,
     StorageAttachedEvent,
     StorageDetachingEvent,
-    StorageEvent,
 )
 from ops.framework import EventBase
 from ops.main import main
@@ -267,12 +266,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             self.kafka_config.set_server_properties()
             self.kafka_config.set_client_properties()
 
-            if isinstance(event, StorageEvent):  # to get new storages
-                self.on[f"{self.restart.name}"].acquire_lock.emit(
-                    callback_override="_disable_enable_restart"
-                )
-            else:
-                self.on[f"{self.restart.name}"].acquire_lock.emit()
+            self.on[f"{self.restart.name}"].acquire_lock.emit()
 
         # If Kafka is related to client charms, update their information.
         if self.model.relations.get(REL_NAME, None) and self.unit.is_leader():

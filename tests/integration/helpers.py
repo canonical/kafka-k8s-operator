@@ -77,8 +77,6 @@ def get_user(model_full_name: str, username: str, zookeeper_uri: str) -> str:
         shell=True,
         universal_newlines=True,
     ).splitlines()
-    logger.info(f"result: {result}")
-    logger.info(f"result[-1]: {result[-1]}")
     return result[-1]
 
 
