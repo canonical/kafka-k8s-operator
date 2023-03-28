@@ -10,14 +10,18 @@ from typing import Dict, List, Optional
 from ops.model import Container, Unit
 
 from literals import (
+    ADMIN_USER,
     CONTAINER,
     DATA_DIR,
+    INTER_BROKER_USER,
     JMX_EXPORTER_PORT,
-    LOG_DIR,
     PEER,
     REL_NAME,
+    SECURITY_PROTOCOL_PORTS,
     STORAGE,
     ZOOKEEPER_REL_NAME,
+    AuthMechanism,
+    Scope,
 )
 from utils import push
 
@@ -31,18 +35,94 @@ allow.everyone.if.no.acl.found=false
 """
 
 
+class Listener:
+    """Definition of a listener.
+
+    Args:
+        host: string with the host that will be announced
+        protocol: auth protocol to be used
+        scope: scope of the listener, CLIENT or INTERNAL.
+    """
+
+    def __init__(self, host: str, protocol: AuthMechanism, scope: Scope):
+        self.protocol: AuthMechanism = protocol
+        self.host = host
+        self.scope = scope
+
+    @property
+    def scope(self) -> Scope:
+        """Internal scope validator."""
+        return self._scope
+
+    @scope.setter
+    def scope(self, value):
+        """Internal scope validator."""
+        if value not in ["CLIENT", "INTERNAL"]:
+            raise ValueError("Only CLIENT and INTERNAL scopes are accepted")
+
+        self._scope = value
+
+    @property
+    def port(self) -> int:
+        """Port associated with the protocol/scope.
+
+        Defaults to internal port.
+
+        Returns:
+            Integer of port number.
+        """
+        if self.scope == "CLIENT":
+            return SECURITY_PROTOCOL_PORTS[self.protocol].client
+
+        return SECURITY_PROTOCOL_PORTS[self.protocol].internal
+
+    @property
+    def name(self) -> str:
+        """Name of the listener."""
+        return f"{self.scope}_{self.protocol}"
+
+    @property
+    def protocol_map(self) -> str:
+        """Return `name:protocol`."""
+        return f"{self.name}:{self.protocol}"
+
+    @property
+    def listener(self) -> str:
+        """Return `name://:port`."""
+        return f"{self.name}://:{self.port}"
+
+    @property
+    def advertised_listener(self) -> str:
+        """Return `name://host:port`."""
+        return f"{self.name}://{self.host}:{self.port}"
+
+
 class KafkaConfig:
     """Manager for handling Kafka configuration."""
 
     def __init__(self, charm):
         self.charm = charm
         self.default_config_path = f"{DATA_DIR}/config"
-        self.properties_filepath = f"{self.default_config_path}/server.properties"
-        self.jaas_filepath = f"{self.default_config_path}/kafka-jaas.cfg"
+        self.server_properties_filepath = f"{self.default_config_path}/server.properties"
+        self.client_properties_filepath = f"{self.default_config_path}/client.properties"
+        self.zk_jaas_filepath = f"{self.default_config_path}/kafka-jaas.cfg"
         self.keystore_filepath = f"{self.default_config_path}/keystore.p12"
         self.truststore_filepath = f"{self.default_config_path}/truststore.jks"
         self.jmx_exporter_filepath = "/opt/kafka/extra/jmx_prometheus_javaagent.jar"
         self.jmx_config_filepath = "/opt/kafka/default-config/jmx_prometheus.yaml"
+
+    @property
+    def internal_user_credentials(self) -> Dict[str, str]:
+        """The charm internal usernames and passwords, e.g `sync` and `admin`.
+
+        Returns:
+            Dict of usernames and passwords.
+        """
+        return {
+            user: password
+            for user in [INTER_BROKER_USER, ADMIN_USER]
+            if (password := self.charm.get_secret(scope="app", key=f"{user}-password"))
+        }
 
     @property
     def container(self) -> Container:
@@ -56,21 +136,25 @@ class KafkaConfig:
 
     @property
     def zookeeper_config(self) -> Dict[str, str]:
-        """Checks the zookeeper relations for data necessary to connect to ZooKeeper.
+        """The config from current ZooKeeper relations for data necessary for broker connection.
 
         Returns:
-            Dict with zookeeper username, password, endpoints, chroot and uris
+            Dict of ZooKeeeper:
+            `username`, `password`, `endpoints`, `chroot`, `connect`, `uris` and `tls`.
         """
         zookeeper_config = {}
+        # loop through all relations to ZK, attempt to find all needed config
         for relation in self.charm.model.relations[ZOOKEEPER_REL_NAME]:
             zk_keys = ["username", "password", "endpoints", "chroot", "uris", "tls"]
             missing_config = any(
                 relation.data[relation.app].get(key, None) is None for key in zk_keys
             )
 
+            # skip if config is missing
             if missing_config:
                 continue
 
+            # set if exists
             zookeeper_config.update(relation.data[relation.app])
             break
 
@@ -103,7 +187,7 @@ class KafkaConfig:
         Returns:
             List of Java config auth options
         """
-        return [f"-Djava.security.auth.login.config={self.jaas_filepath}"]
+        return [f"-Djava.security.auth.login.config={self.zk_jaas_filepath}"]
 
     @property
     def extra_args(self) -> List[str]:
@@ -123,13 +207,17 @@ class KafkaConfig:
         """The current Kafka uris formatted for the `bootstrap-server` command flag.
 
         Returns:
-            List of `bootstrap-server` servers
+            List of `bootstrap-server` servers.
         """
         units: List[Unit] = list(
             set([self.charm.unit] + list(self.charm.model.get_relation(PEER).units))
         )
         hosts = [self.get_host_from_unit(unit=unit) for unit in units]
-        port = 9093 if self.charm.tls.enabled else 9092
+        port = (
+            SECURITY_PROTOCOL_PORTS["SASL_SSL"].client
+            if self.charm.tls.enabled
+            else SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT"].client
+        )
         return [f"{host}:{port}" for host in hosts]
 
     @property
@@ -140,7 +228,7 @@ class KafkaConfig:
             String of startup command and expected config filepath
         """
         entrypoint = "/opt/kafka/bin/kafka-server-start.sh"
-        return f"{entrypoint} {self.properties_filepath}"
+        return f"{entrypoint} {self.server_properties_filepath}"
 
     @property
     def default_replication_properties(self) -> List[str]:
@@ -175,25 +263,95 @@ class KafkaConfig:
         ]
 
     @property
-    def tls_properties(self) -> List[str]:
-        """Builds the properties necessary for TLS authentication.
+    def zookeeper_tls_properties(self) -> List[str]:
+        """Builds the properties necessary for SSL connections to ZooKeeper.
 
         Returns:
-            list of properties to be set
+            List of properties to be set.
         """
         return [
             "zookeeper.ssl.client.enable=true",
             f"zookeeper.ssl.truststore.location={self.truststore_filepath}",
             f"zookeeper.ssl.truststore.password={self.charm.tls.truststore_password}",
             "zookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty",
+            "zookeeper.ssl.endpoint.identification.algorithm=",
+        ]
+
+    @property
+    def tls_properties(self) -> List[str]:
+        """Builds the properties necessary for TLS authentication.
+
+        Returns:
+            List of properties to be set.
+        """
+        return [
             f"ssl.truststore.location={self.truststore_filepath}",
             f"ssl.truststore.password={self.charm.tls.truststore_password}",
             f"ssl.keystore.location={self.keystore_filepath}",
             f"ssl.keystore.password={self.charm.tls.keystore_password}",
-            "zookeeper.ssl.endpoint.identification.algorithm=",
-            "ssl.endpoint.identification.algorithm=",
             "ssl.client.auth=none",
         ]
+
+    @property
+    def scram_properties(self) -> List[str]:
+        """Builds the properties for each scram listener.
+
+        Returns:
+            list of scram properties to be set.
+        """
+        scram_properties = [
+            f'listener.name.{self.internal_listener.name.lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{INTER_BROKER_USER}" password="{self.internal_user_credentials[INTER_BROKER_USER]}";'
+        ]
+        client_scram = [
+            auth.name for auth in self.client_listeners if auth.protocol.startswith("SASL_")
+        ]
+        for name in client_scram:
+            scram_properties.append(
+                f'listener.name.{name.lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{INTER_BROKER_USER}" password="{self.internal_user_credentials[INTER_BROKER_USER]}";'
+            )
+
+        return scram_properties
+
+    @property
+    def security_protocol(self) -> AuthMechanism:
+        """Infers current charm security.protocol based on current relations."""
+        # FIXME: When we have multiple auth_mechanims/listeners, remove this method
+        return "SASL_SSL" if self.charm.tls.enabled else "SASL_PLAINTEXT"
+
+    @property
+    def auth_mechanisms(self) -> List[AuthMechanism]:
+        """Return a list of enabled auth mechanisms."""
+        # TODO: At the moment only one mechanism for extra listeners. Will need to be
+        # extended with more depending on configuration settings.
+        protocol = self.security_protocol
+        return [protocol]
+
+    @property
+    def internal_listener(self) -> Listener:
+        """Return the internal listener."""
+        protocol = self.security_protocol
+        return Listener(
+            host=self.get_host_from_unit(unit=self.charm.unit), protocol=protocol, scope="INTERNAL"
+        )
+
+    @property
+    def client_listeners(self) -> List[Listener]:
+        """Return a list of extra listeners."""
+        # if there is a relation with kafka then add extra listener
+        if not self.charm.model.relations.get(REL_NAME, None):
+            return []
+
+        return [
+            Listener(
+                host=self.get_host_from_unit(unit=self.charm.unit), protocol=auth, scope="CLIENT"
+            )
+            for auth in self.auth_mechanisms
+        ]
+
+    @property
+    def all_listeners(self) -> List[Listener]:
+        """Return a list with all expected listeners."""
+        return [self.internal_listener] + self.client_listeners
 
     @property
     def super_users(self) -> str:
@@ -202,9 +360,9 @@ class KafkaConfig:
         Formatting allows passing to the `super.users` property.
 
         Returns:
-            Semi-colon delimited string of current super users
+            Semicolon delimited string of current super users.
         """
-        super_users = ["sync"]
+        super_users = [INTER_BROKER_USER, ADMIN_USER]
         for relation in self.charm.model.relations[REL_NAME]:
             extra_user_roles = relation.data[relation.app].get("extra-user-roles", "")
             password = (
@@ -232,6 +390,27 @@ class KafkaConfig:
         )
 
     @property
+    def client_properties(self) -> List[str]:
+        """Builds all properties necessary for running an admin Kafka client.
+
+        This includes SASL/SCRAM auth and security mechanisms.
+
+        Returns:
+            List of properties to be set.
+        """
+        client_properties = [
+            f'sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{ADMIN_USER}" password="{self.internal_user_credentials[ADMIN_USER]}";',
+            "sasl.mechanism=SCRAM-SHA-512",
+            f"security.protocol={self.security_protocol}",  # FIXME: will need changing once multiple listener auth schemes
+            f"bootstrap.servers={','.join(self.bootstrap_server)}",
+        ]
+
+        if self.charm.tls.enabled:
+            client_properties += self.tls_properties
+
+        return client_properties
+
+    @property
     def server_properties(self) -> List[str]:
         """Builds all properties necessary for starting Kafka service.
 
@@ -239,31 +418,31 @@ class KafkaConfig:
 
         Returns:
             List of properties to be set
+        Raises:
+            KeyError if inter-broker username and password not set to relation data.
         """
-        host = self.get_host_from_unit(unit=self.charm.unit)
-        port = 9093 if self.charm.tls.enabled else 9092
-        protocol = "SASL_SSL" if self.charm.tls.enabled else "SASL_PLAINTEXT"
+        protocol_map = [listener.protocol_map for listener in self.all_listeners]
+        listeners_repr = [listener.listener for listener in self.all_listeners]
+        advertised_listeners = [listener.advertised_listener for listener in self.all_listeners]
 
         properties = (
             [
                 f"super.users={self.super_users}",
-                f"log.dir={LOG_DIR}",
                 f"log.dirs={self.log_dirs}",
-                f"listeners={protocol}://:{port}",
-                f"advertised.listeners={protocol}://{host}:{port}",
-                f'listener.name.{(protocol).lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="sync" password="{self.sync_password}";',
-                f"security.inter.broker.protocol={protocol}",
-                f"security.protocol={protocol}",
+                f"listener.security.protocol.map={','.join(protocol_map)}",
+                f"listeners={','.join(listeners_repr)}",
+                f"advertised.listeners={','.join(advertised_listeners)}",
+                f"inter.broker.listener.name={self.internal_listener.name}",
             ]
             + self.config_properties
+            + self.scram_properties
             + self.default_replication_properties
             + self.auth_properties
             + DEFAULT_CONFIG_OPTIONS.split("\n")
         )
 
         if self.charm.tls.enabled:
-            properties += self.tls_properties
-
+            properties += self.tls_properties + self.zookeeper_tls_properties
         return properties
 
     @property
@@ -275,16 +454,8 @@ class KafkaConfig:
             if value is not None
         ]
 
-    def set_server_properties(self) -> None:
-        """Sets all kafka config properties to the `server.properties` path."""
-        push(
-            container=self.container,
-            content="\n".join(self.server_properties),
-            path=self.properties_filepath,
-        )
-
-    def set_jaas_config(self) -> None:
-        """Sets the Kafka JAAS config using zookeeper relation data."""
+    def set_zk_jaas_config(self) -> None:
+        """Writes the ZooKeeper JAAS config using ZooKeeper relation data."""
         jaas_config = f"""
             Client {{
                 org.apache.zookeeper.server.auth.DigestLoginModule required
@@ -295,7 +466,32 @@ class KafkaConfig:
         push(
             container=self.container,
             content=jaas_config,
-            path=self.jaas_filepath,
+            path=self.zk_jaas_filepath,
+        )
+
+    def set_server_properties(self) -> None:
+        """Writes all Kafka config properties to the `server.properties` path."""
+        push(
+            content="\n".join(self.server_properties),
+            path=self.server_properties_filepath,
+            container=self.container,
+        )
+
+    def set_client_properties(self) -> None:
+        """Writes all client config properties to the `client.properties` path."""
+        push(
+            content="\n".join(self.client_properties),
+            path=self.client_properties_filepath,
+            container=self.container,
+        )
+
+    def set_kafka_opts(self) -> None:
+        """Writes the env-vars needed for SASL/SCRAM auth to `/etc/environment` on the unit."""
+        opts_string = " ".join(self.extra_args)
+        push(
+            content=f"KAFKA_OPTS={opts_string}",
+            path="/etc/environment",
+            container=self.container,
         )
 
     def get_host_from_unit(self, unit: Unit) -> str:
