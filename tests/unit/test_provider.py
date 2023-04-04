@@ -2,6 +2,7 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import io
 import logging
 from pathlib import Path
 from unittest.mock import PropertyMock, patch
@@ -65,6 +66,9 @@ def test_client_relation_created_adds_user(harness):
     harness.add_relation(PEER, CHARM_KEY)
     with (
         patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
+        patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=grey")),
+        patch("config.KafkaConfig.set_server_properties"),
+        patch("config.KafkaConfig.set_client_properties"),
         patch("auth.KafkaAuth.add_user") as patched_add_user,
         patch("ops.model.Container.exec", return_value=DummyExec()),
         patch(
@@ -95,6 +99,9 @@ def test_client_relation_broken_removes_user(harness):
     with (
         patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
         patch("auth.KafkaAuth.add_user"),
+        patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=grey")),
+        patch("config.KafkaConfig.set_server_properties"),
+        patch("config.KafkaConfig.set_client_properties"),
         patch("auth.KafkaAuth.delete_user") as patched_delete_user,
         patch("auth.KafkaAuth.remove_all_user_acls") as patched_remove_acls,
         patch("ops.model.Container.exec", return_value=DummyExec()),
@@ -134,6 +141,9 @@ def test_client_relation_joined_sets_necessary_relation_data(harness):
     with (
         patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
         patch("auth.KafkaAuth.add_user"),
+        patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=grey")),
+        patch("config.KafkaConfig.set_server_properties"),
+        patch("config.KafkaConfig.set_client_properties"),
         patch("ops.model.Container.exec", return_value=DummyExec()),
         patch(
             "config.KafkaConfig.zookeeper_connected", new_callable=PropertyMock, return_value=True

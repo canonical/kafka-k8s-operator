@@ -7,7 +7,7 @@
 import logging
 
 from charms.data_platform_libs.v0.data_interfaces import KafkaProvides, TopicRequestedEvent
-from ops.charm import RelationBrokenEvent
+from ops.charm import RelationBrokenEvent, RelationCreatedEvent
 from ops.framework import Object
 
 from auth import KafkaAuth
@@ -34,9 +34,16 @@ class KafkaProvider(Object):
 
         self.kafka_provider = KafkaProvides(self.charm, REL_NAME)
 
+        self.framework.observe(self.charm.on[REL_NAME].relation_created, self._on_relation_created)
+
         self.framework.observe(self.charm.on[REL_NAME].relation_broken, self._on_relation_broken)
 
         self.framework.observe(self.kafka_provider.on.topic_requested, self.on_topic_requested)
+
+    def _on_relation_created(self, event: RelationCreatedEvent) -> None:
+        """Handler for `kafka-client-relation-created` event."""
+        # this will trigger kafka restart (if needed) before granting credentials
+        self.charm._on_config_changed(event)
 
     def on_topic_requested(self, event: TopicRequestedEvent):
         """Handle the on topic requested event."""
@@ -52,6 +59,8 @@ class KafkaProvider(Object):
             logger.debug("cannot update ACLs, ZooKeeper not yet connected")
             event.defer()
             return
+
+        self.charm._on_config_changed(event)
 
         extra_user_roles = event.extra_user_roles
         topic = event.topic
@@ -69,11 +78,15 @@ class KafkaProvider(Object):
         consumer_group_prefix = (
             event.consumer_group_prefix or f"{username}-" if "consumer" in extra_user_roles else ""
         )
-
-        self.kafka_auth.add_user(
-            username=username,
-            password=password,
-        )
+        try:
+            self.kafka_auth.add_user(
+                username=username,
+                password=password,
+            )
+        except Exception:
+            logger.warning("unable to create user just yet")
+            event.defer()
+            return
 
         # non-leader units need cluster_config_changed event to update their super.users
         self.charm.peer_relation.data[self.charm.app].update({username: password})
