@@ -11,6 +11,7 @@ from ops.model import Container, Unit
 
 from literals import (
     ADMIN_USER,
+    BINARIES_PATH,
     CONF_PATH,
     CONTAINER,
     INTER_BROKER_USER,
@@ -107,8 +108,8 @@ class KafkaConfig:
         self.zk_jaas_filepath = f"{CONF_PATH}/kafka-jaas.cfg"
         self.keystore_filepath = f"{CONF_PATH}/keystore.p12"
         self.truststore_filepath = f"{CONF_PATH}/truststore.jks"
-        self.jmx_exporter_filepath = "{BINARIES_PATH}/jmx_prometheus_javaagent.jar"
-        self.jmx_config_filepath = "{CONF_PATH}/jmx_prometheus.yaml"
+        self.jmx_exporter_filepath = f"{BINARIES_PATH}/jmx_prometheus_javaagent.jar"
+        self.jmx_config_filepath = f"{CONF_PATH}/jmx_prometheus.yaml"
 
     @property
     def internal_user_credentials(self) -> Dict[str, str]:
