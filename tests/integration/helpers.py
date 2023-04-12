@@ -14,7 +14,14 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from auth import Acl, KafkaAuth
-from literals import BINARIES_PATH, CONF_PATH, REL_NAME, SECURITY_PROTOCOL_PORTS
+from literals import (
+    BINARIES_PATH,
+    CONF_PATH,
+    DATA_PATH,
+    REL_NAME,
+    SECURITY_PROTOCOL_PORTS,
+    STORAGE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -237,13 +244,11 @@ def check_logs(model_full_name: str, kafka_unit_name: str, topic: str) -> None:
         AssertionError: if logs aren't found for desired topic
     """
     logs = check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {kafka_unit_name} 'find /var/lib/juju/storage/log-data'",
+        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {kafka_unit_name} 'find {DATA_PATH}/{STORAGE}'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
     ).splitlines()
-
-    logger.debug(f"{logs=}")
 
     passed = False
     for log in logs:
@@ -251,7 +256,7 @@ def check_logs(model_full_name: str, kafka_unit_name: str, topic: str) -> None:
             passed = True
             break
 
-    assert passed, "logs not found"
+    assert logs and passed, "logs not found"
 
 
 def check_socket(host: str, port: int) -> bool:

@@ -20,7 +20,7 @@ resources:
   kafka-image:
     type: oci-image
     description: OCI Image for Apache Kafka
-    upstream-source: ghcr.io/canonical/charmed-kafka:3-ede
+    upstream-source: ghcr.io/canonical/charmed-kafka:3-edge
 
 peers:
   cluster:
@@ -52,6 +52,7 @@ storage:
     type: filesystem
     description: Directories where the log data is stored
     minimum-size: 10G
+    location: /var/log/kafka
 
 assumes:
   - k8s-api
