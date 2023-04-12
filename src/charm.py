@@ -35,6 +35,7 @@ from literals import (
     CONTAINER,
     INTER_BROKER_USER,
     JMX_EXPORTER_PORT,
+    LOGS_PATH,
     PEER,
     REL_NAME,
     ZOOKEEPER_REL_NAME,
@@ -66,7 +67,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         self.grafana_dashboards = GrafanaDashboardProvider(self)
         self.loki_push = LogProxyConsumer(
             self,
-            log_files=["/opt/kafka/logs/server.log"],
+            log_files=[f"{LOGS_PATH}/server.log"],
             relation_name="logging",
             container_name="kafka",
         )
