@@ -7,7 +7,7 @@
 import logging
 import os
 import socket
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from charms.tls_certificates_interface.v1.tls_certificates import (
     TLSCertificatesRequiresV1,
@@ -113,7 +113,7 @@ class KafkaTLS(Object):
         new_csr = generate_csr(
             private_key=self.private_key.encode("utf-8"),
             subject=os.uname()[1],
-            sans=self._get_sans(),
+            **self._sans,
         )
 
         self.certificates.request_certificate_renewal(
@@ -223,20 +223,11 @@ class KafkaTLS(Object):
         csr = generate_csr(
             private_key=self.private_key.encode("utf-8"),
             subject=os.uname()[1],
-            sans=self._get_sans(),
+            **self._sans,
         )
         self.charm.set_secret("unit", "csr", csr.decode("utf-8").strip())
 
         self.certificates.request_certificate_creation(certificate_signing_request=csr)
-
-    def _get_sans(self) -> List[str]:
-        """Create a list of DNS names for the unit."""
-        unit_id = self.charm.unit.name.split("/")[1]
-        return [
-            f"{self.charm.app.name}-{unit_id}",
-            socket.getfqdn(),
-            self.peer_relation.data[self.charm.unit].get("private-address", None),
-        ]
 
     def set_server_key(self) -> None:
         """Sets the unit private-key."""
@@ -349,3 +340,22 @@ class KafkaTLS(Object):
         except ExecError as e:
             logger.error(e.stdout)
             raise
+
+    @property
+    def _sans(self) -> Dict[str, List[str]]:
+        """Builds a SAN dict of DNS names and IPs for the unit."""
+        unit_id = self.charm.unit.name.split("/")[1]
+
+        bind_address = ""
+        if self.charm.peer_relation:
+            if binding := self.charm.model.get_binding(self.charm.peer_relation):
+                bind_address = binding.network.bind_address
+
+        return {
+            "sans_ip": [str(bind_address)],
+            "sans_dns": [
+                f"{self.charm.app.name}-{unit_id}",
+                f"{self.charm.app.name}-{unit_id}.{self.charm.app.name}-endpoints",
+                socket.getfqdn(),
+            ],
+        }
