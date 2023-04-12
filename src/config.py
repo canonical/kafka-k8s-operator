@@ -227,7 +227,7 @@ class KafkaConfig:
         Returns:
             String of startup command and expected config filepath
         """
-        entrypoint = "/opt/kafka/bin/kafka-server-start.sh"
+        entrypoint = f"{BINARIES_PATH}/bin/kafka-server-start.sh"
         return f"{entrypoint} {self.server_properties_filepath}"
 
     @property
