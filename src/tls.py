@@ -91,10 +91,6 @@ class KafkaTLS(Object):
             event.defer()
             return
 
-        if not self.charm.container.can_connect():
-            event.defer()
-            return
-
         # avoid setting tls files and restarting
         if event.certificate_signing_request != self.csr:
             logger.error("Can't use certificate, found unknown CSR")
@@ -281,7 +277,7 @@ class KafkaTLS(Object):
     def set_truststore(self) -> None:
         """Adds CA to JKS truststore."""
         try:
-            proc = self.container.exec(
+            self.container.exec(
                 [
                     "keytool",
                     "-import",
@@ -297,8 +293,7 @@ class KafkaTLS(Object):
                     "-noprompt",
                 ],
                 working_dir=self.charm.kafka_config.default_config_path,
-            )
-            logger.debug(str(proc.wait_output()[1]))
+            ).wait_output()
         except ExecError as e:
             # in case this reruns and fails
             expected_error_string = "alias <ca> already exists"
@@ -312,7 +307,7 @@ class KafkaTLS(Object):
     def set_keystore(self) -> None:
         """Creates and adds unit cert and private-key to a PCKS12 keystore."""
         try:
-            proc = self.container.exec(
+            self.container.exec(
                 [
                     "openssl",
                     "pkcs12",
@@ -331,8 +326,7 @@ class KafkaTLS(Object):
                     f"pass:{self.keystore_password}",
                 ],
                 working_dir=self.charm.kafka_config.default_config_path,
-            )
-            logger.debug(str(proc.wait_output()[1]))
+            ).wait_output()
         except ExecError as e:
             logger.error(str(e.stdout))
             raise

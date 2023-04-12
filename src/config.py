@@ -215,7 +215,7 @@ class KafkaConfig:
         hosts = [self.get_host_from_unit(unit=unit) for unit in units]
         port = (
             SECURITY_PROTOCOL_PORTS["SASL_SSL"].client
-            if self.charm.tls.enabled
+            if self.charm.tls.enabled and self.charm.tls.certificate
             else SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT"].client
         )
         return [f"{host}:{port}" for host in hosts]
@@ -316,7 +316,11 @@ class KafkaConfig:
     def security_protocol(self) -> AuthMechanism:
         """Infers current charm security.protocol based on current relations."""
         # FIXME: When we have multiple auth_mechanims/listeners, remove this method
-        return "SASL_SSL" if self.charm.tls.enabled else "SASL_PLAINTEXT"
+        return (
+            "SASL_SSL"
+            if (self.charm.tls.enabled and self.charm.tls.certificate)
+            else "SASL_PLAINTEXT"
+        )
 
     @property
     def auth_mechanisms(self) -> List[AuthMechanism]:
@@ -405,7 +409,7 @@ class KafkaConfig:
             f"bootstrap.servers={','.join(self.bootstrap_server)}",
         ]
 
-        if self.charm.tls.enabled:
+        if self.charm.tls.enabled and self.charm.tls.certificate:
             client_properties += self.tls_properties
 
         return client_properties
@@ -441,7 +445,7 @@ class KafkaConfig:
             + DEFAULT_CONFIG_OPTIONS.split("\n")
         )
 
-        if self.charm.tls.enabled:
+        if self.charm.tls.enabled and self.charm.tls.certificate:
             properties += self.tls_properties + self.zookeeper_tls_properties
         return properties
 
