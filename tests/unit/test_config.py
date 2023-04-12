@@ -9,7 +9,15 @@ import pytest
 from ops.testing import Harness
 
 from charm import KafkaK8sCharm
-from literals import ADMIN_USER, INTER_BROKER_USER, INTERNAL_USERS, STORAGE
+from literals import (
+    ADMIN_USER,
+    BINARIES_PATH,
+    CONF_PATH,
+    INTER_BROKER_USER,
+    INTERNAL_USERS,
+    JMX_EXPORTER_PORT,
+    STORAGE,
+)
 
 ops.testing.SIMULATE_CAN_CONNECT = True
 
@@ -138,13 +146,13 @@ def test_zookeeper_config_succeeds_valid_config(zk_relation_id, harness):
 
 def test_auth_args(harness):
     args = harness.charm.kafka_config.auth_args
-    assert "-Djava.security.auth.login.config=/data/kafka/config/kafka-jaas.cfg" in args
+    assert f"-Djava.security.auth.login.config={CONF_PATH}/kafka-jaas.cfg" in args
 
 
 def test_extra_args(harness):
     args = harness.charm.kafka_config.extra_args
     assert (
-        "-javaagent:/opt/kafka/extra/jmx_prometheus_javaagent.jar=9101:/opt/kafka/default-config/jmx_prometheus.yaml"
+        f"-javaagent:{BINARIES_PATH}/jmx_prometheus_javaagent.jar={JMX_EXPORTER_PORT}:{CONF_PATH}/jmx_prometheus.yaml"
         in args
     )
 
