@@ -11,8 +11,8 @@ from ops.model import Container, Unit
 
 from literals import (
     ADMIN_USER,
+    CONF_PATH,
     CONTAINER,
-    DATA_DIR,
     INTER_BROKER_USER,
     JMX_EXPORTER_PORT,
     PEER,
@@ -102,14 +102,13 @@ class KafkaConfig:
 
     def __init__(self, charm):
         self.charm = charm
-        self.default_config_path = f"{DATA_DIR}/config"
-        self.server_properties_filepath = f"{self.default_config_path}/server.properties"
-        self.client_properties_filepath = f"{self.default_config_path}/client.properties"
-        self.zk_jaas_filepath = f"{self.default_config_path}/kafka-jaas.cfg"
-        self.keystore_filepath = f"{self.default_config_path}/keystore.p12"
-        self.truststore_filepath = f"{self.default_config_path}/truststore.jks"
-        self.jmx_exporter_filepath = "/opt/kafka/extra/jmx_prometheus_javaagent.jar"
-        self.jmx_config_filepath = "/opt/kafka/default-config/jmx_prometheus.yaml"
+        self.server_properties_filepath = f"{CONF_PATH}/server.properties"
+        self.client_properties_filepath = f"{CONF_PATH}/client.properties"
+        self.zk_jaas_filepath = f"{CONF_PATH}/kafka-jaas.cfg"
+        self.keystore_filepath = f"{CONF_PATH}/keystore.p12"
+        self.truststore_filepath = f"{CONF_PATH}/truststore.jks"
+        self.jmx_exporter_filepath = "{BINARIES_PATH}/jmx_prometheus_javaagent.jar"
+        self.jmx_config_filepath = "{CONF_PATH}/jmx_prometheus.yaml"
 
     @property
     def internal_user_credentials(self) -> Dict[str, str]:

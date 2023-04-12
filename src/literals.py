@@ -16,9 +16,12 @@ REL_NAME = "kafka-client"
 TLS_RELATION = "certificates"
 CONTAINER = "kafka"
 STORAGE = "log-data"
-DATA_DIR = "/data/kafka"
-LOG_DIR = "/logs/kafka"
 JMX_EXPORTER_PORT = 9101
+
+CONF_PATH = "/etc/kafka"
+DATA_PATH = "/var/lib/kafka"
+LOGS_PATH = "/var/log/kafka"
+BINARIES_PATH = "/opt/kafka"
 
 INTER_BROKER_USER = "sync"
 ADMIN_USER = "admin"

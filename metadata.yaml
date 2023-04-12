@@ -14,13 +14,13 @@ containers:
     resource: kafka-image
     mounts:
       - storage: log-data
-        location: /logs/kafka
+        location: /var/log/kafka
 
 resources:
   kafka-image:
     type: oci-image
     description: OCI Image for Apache Kafka
-    upstream-source: ghcr.io/canonical/charmed-kafka:3.3.2-22.04_edge
+    upstream-source: ghcr.io/canonical/charmed-kafka:3-ede
 
 peers:
   cluster:
