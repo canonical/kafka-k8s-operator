@@ -14,7 +14,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from auth import Acl, KafkaAuth
-from literals import REL_NAME, SECURITY_PROTOCOL_PORTS
+from literals import BINARIES_PATH, CONF_PATH, REL_NAME, SECURITY_PROTOCOL_PORTS
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ TLS_SERIES = "jammy"
 
 
 def load_acls(model_full_name: str, zookeeper_uri: str) -> Set[Acl]:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config=/data/kafka/config/kafka-jaas.cfg ./opt/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect={zookeeper_uri} --list"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/kafka-jaas.cfg {BINARIES_PATH}/kafka-acls.sh --authorizer-properties zookeeper.connect={zookeeper_uri} --list"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -41,7 +41,7 @@ def load_acls(model_full_name: str, zookeeper_uri: str) -> Set[Acl]:
 
 def load_super_users(model_full_name: str) -> List[str]:
     result = check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {APP_NAME}/0 'cat /data/kafka/config/server.properties'",
+        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {APP_NAME}/0 'cat {CONF_PATH}/server.properties'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -56,7 +56,7 @@ def load_super_users(model_full_name: str) -> List[str]:
 
 
 def check_user(model_full_name: str, username: str, zookeeper_uri: str) -> None:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config=/data/kafka/config/kafka-jaas.cfg ./opt/kafka/bin/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/kafka-jaas.cfg {BINARIES_PATH}/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -69,7 +69,7 @@ def check_user(model_full_name: str, username: str, zookeeper_uri: str) -> None:
 
 def get_user(model_full_name: str, username: str, zookeeper_uri: str) -> str:
     """Get information related to a user stored on zookeeper."""
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config=/data/kafka/config/kafka-jaas.cfg ./opt/kafka/bin/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/kafka-jaas.cfg {BINARIES_PATH}/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
     logger.info(f"Container command: {container_command}")
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
@@ -266,7 +266,7 @@ async def run_client_properties(ops_test: OpsTest) -> str:
         + f":{SECURITY_PROTOCOL_PORTS['SASL_PLAINTEXT'].client}"
     )
 
-    container_command = f"./opt/kafka/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config /data/kafka/config/client.properties --entity-type users"
+    container_command = f"{BINARIES_PATH}/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config {CONF_PATH}/client.properties --entity-type users"
 
     result = check_output(
         f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
