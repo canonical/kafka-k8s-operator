@@ -22,6 +22,7 @@ CONF_PATH = "/etc/kafka"
 DATA_PATH = "/var/lib/kafka"
 LOGS_PATH = "/var/log/kafka"
 BINARIES_PATH = "/opt/kafka"
+JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64"
 
 INTER_BROKER_USER = "sync"
 ADMIN_USER = "admin"

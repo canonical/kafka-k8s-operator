@@ -20,7 +20,7 @@ from tenacity.retry import retry_if_not_result
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_fixed
 
-from literals import BINARIES_PATH, CONF_PATH
+from literals import BINARIES_PATH, CONF_PATH, JAVA_HOME
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +112,7 @@ def run_bin_command(
         String of kafka bin command output
     """
     zk_tls_config_file = zk_tls_config_filepath or f"{CONF_PATH}/server.properties"
-    environment = {"KAFKA_OPTS": extra_args}
+    environment = {"KAFKA_OPTS": extra_args, "JAVA_HOME": JAVA_HOME}
     command = (
         [f"{BINARIES_PATH}/bin/kafka-{bin_keyword}.sh"]
         + bin_args

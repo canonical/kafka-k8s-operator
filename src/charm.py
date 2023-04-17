@@ -34,6 +34,7 @@ from literals import (
     CHARM_KEY,
     CONTAINER,
     INTER_BROKER_USER,
+    JAVA_HOME,
     JMX_EXPORTER_PORT,
     LOGS_PATH,
     PEER,
@@ -118,7 +119,13 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
                     "summary": "kafka",
                     "command": self.kafka_config.kafka_command,
                     "startup": "enabled",
-                    "environment": {"KAFKA_OPTS": " ".join(self.kafka_config.extra_args)},
+                    "user": "kafka",
+                    "group": "kafka",
+                    "environment": {
+                        "KAFKA_OPTS": " ".join(self.kafka_config.extra_args),
+                        "JAVA_HOME": JAVA_HOME,
+                        "LOG_DIR": LOGS_PATH,
+                    },
                 }
             },
         }
@@ -195,6 +202,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             return
 
         # required settings given zookeeper connection config has been created
+        self.kafka_config.set_environment()
         self.kafka_config.set_server_properties()
         self.kafka_config.set_zk_jaas_config()
         self.kafka_config.set_client_properties()

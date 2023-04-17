@@ -15,6 +15,7 @@ from literals import (
     CONF_PATH,
     CONTAINER,
     INTER_BROKER_USER,
+    JAVA_HOME,
     JMX_EXPORTER_PORT,
     LOGS_PATH,
     PEER,
@@ -490,11 +491,11 @@ class KafkaConfig:
             container=self.container,
         )
 
-    def set_kafka_opts(self) -> None:
+    def set_environment(self) -> None:
         """Writes the env-vars needed for SASL/SCRAM auth to `/etc/environment` on the unit."""
         opts_string = " ".join(self.extra_args)
         push(
-            content=f"KAFKA_OPTS={opts_string}\nLOG_DIR={LOGS_PATH}",
+            content=f"KAFKA_OPTS={opts_string}\nLOG_DIR={LOGS_PATH}\nJAVA_HOME={JAVA_HOME}",
             path="/etc/environment",
             container=self.container,
         )
