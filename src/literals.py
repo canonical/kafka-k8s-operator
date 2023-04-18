@@ -15,7 +15,7 @@ CHARM_USERS = ["sync"]
 REL_NAME = "kafka-client"
 TLS_RELATION = "certificates"
 CONTAINER = "kafka"
-STORAGE = "log-data"
+STORAGE = "data"
 JMX_EXPORTER_PORT = 9101
 
 CONF_PATH = "/etc/kafka"
