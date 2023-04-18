@@ -13,8 +13,8 @@ containers:
   kafka:
     resource: kafka-image
     mounts:
-      - storage: log-data
-        location: /var/lib/kafka
+      - storage: data
+        location: /var/lib/kafka/data
 
 resources:
   kafka-image:
@@ -48,11 +48,11 @@ provides:
     interface: grafana_dashboard
 
 storage:
-  log-data:
+  data:
     type: filesystem
     description: Directories where the log data is stored
     minimum-size: 10G
-    location: /var/lib/kafka
+    location: /var/lib/kafka/data
 
 assumes:
   - k8s-api

@@ -96,10 +96,10 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         )
 
         self.framework.observe(
-            getattr(self.on, "log_data_storage_attached"), self._on_storage_attached
+            getattr(self.on, "data_storage_attached"), self._on_storage_attached
         )
         self.framework.observe(
-            getattr(self.on, "log_data_storage_detaching"), self._on_storage_detaching
+            getattr(self.on, "data_storage_detaching"), self._on_storage_detaching
         )
 
     @property
