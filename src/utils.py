@@ -112,7 +112,7 @@ def run_bin_command(
         String of kafka bin command output
     """
     zk_tls_config_file = zk_tls_config_filepath or f"{CONF_PATH}/server.properties"
-    environment = {"KAFKA_OPTS": extra_args, "JAVA_HOME": JAVA_HOME}
+    environment = {"KAFKA_OPTS": " ".join(extra_args), "JAVA_HOME": JAVA_HOME}
     command = (
         [f"{BINARIES_PATH}/bin/kafka-{bin_keyword}.sh"]
         + bin_args
@@ -121,11 +121,14 @@ def run_bin_command(
 
     try:
         process = container.exec(command=command, environment=environment)
-        output, _ = process.wait_output()
-        logger.debug(f"{output=}")
+        output, error = process.wait_output()
+        logger.info(f"{output=}")
+        logger.info(f"{error=}")
         return output
     except ExecError as e:
-        logger.debug(f"cmd failed:\ncommand={e.command}\nstdout={e.stdout}\nstderr={e.stderr}")
+        logger.error(f"cmd failed: {str(e.command)=}")
+        logger.error(f"cmd failed: {str(e.stdout)=}")
+        logger.error(f"cmd failed: {str(e.stderr)=}")
         raise e
 
 

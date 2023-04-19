@@ -7,9 +7,7 @@
 import logging
 import re
 from dataclasses import asdict, dataclass
-from typing import List, Optional, Set
-
-from ops.model import Container
+from typing import Optional, Set
 
 from utils import run_bin_command
 
@@ -29,11 +27,11 @@ class Acl:
 class KafkaAuth:
     """Object for updating Kafka users and ACLs."""
 
-    def __init__(self, charm, opts: List[str], zookeeper: str, container: Container):
+    def __init__(self, charm):
         self.charm = charm
-        self.opts = " ".join(opts)
-        self.zookeeper = zookeeper
-        self.container = container
+        self.opts = self.charm.kafka_config.extra_args
+        self.zookeeper = self.charm.kafka_config.zookeeper_config.get("connect", "")
+        self.container = self.charm.container
         self.current_acls: Set[Acl] = set()
         self.new_user_acls: Set[Acl] = set()
 

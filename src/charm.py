@@ -15,17 +15,16 @@ from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from ops import pebble
 from ops.charm import (
     ActionEvent,
-    LeaderElectedEvent,
-    PebbleReadyEvent,
+    RelationChangedEvent,
+    RelationCreatedEvent,
     RelationEvent,
-    RelationJoinedEvent,
     StorageAttachedEvent,
     StorageDetachingEvent,
 )
 from ops.framework import EventBase
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, Container, Relation, WaitingStatus
-from ops.pebble import Layer, PathError, ProtocolError
+from ops.pebble import ExecError, Layer, PathError, ProtocolError
 
 from auth import KafkaAuth
 from config import KafkaConfig
@@ -33,7 +32,7 @@ from literals import (
     ADMIN_USER,
     CHARM_KEY,
     CONTAINER,
-    INTER_BROKER_USER,
+    INTERNAL_USERS,
     JAVA_HOME,
     JMX_EXPORTER_PORT,
     LOGS_PATH,
@@ -73,17 +72,20 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             container_name="kafka",
         )
 
+        self.framework.observe(getattr(self.on, "config_changed"), self._on_config_changed)
         self.framework.observe(getattr(self.on, "kafka_pebble_ready"), self._on_kafka_pebble_ready)
-        self.framework.observe(getattr(self.on, "leader_elected"), self._on_leader_elected)
         self.framework.observe(getattr(self.on, "config_changed"), self._on_config_changed)
 
         self.framework.observe(self.on[PEER].relation_changed, self._on_config_changed)
 
         self.framework.observe(
-            self.on[ZOOKEEPER_REL_NAME].relation_joined, self._on_zookeeper_joined
+            self.on[ZOOKEEPER_REL_NAME].relation_created, self._on_zookeeper_created
         )
         self.framework.observe(
-            self.on[ZOOKEEPER_REL_NAME].relation_changed, self._on_config_changed
+            self.on[ZOOKEEPER_REL_NAME].relation_joined, self._on_zookeeper_changed
+        )
+        self.framework.observe(
+            self.on[ZOOKEEPER_REL_NAME].relation_changed, self._on_zookeeper_changed
         )
         self.framework.observe(
             self.on[ZOOKEEPER_REL_NAME].relation_broken, self._on_zookeeper_broken
@@ -152,6 +154,33 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
         return self.peer_relation.data[self.unit]
 
+    @property
+    def ready_to_start(self) -> bool:
+        """Check for active ZooKeeper relation and adding of inter-broker auth username.
+
+        Returns:
+            True if ZK is related and `sync` user has been added. False otherwise.
+        """
+        if not self.peer_relation:
+            return False
+
+        if not self.kafka_config.zookeeper_related:
+            return False
+
+        if not self.kafka_config.zookeeper_connected:
+            return False
+
+        # TLS must be enabled for Kafka and ZK or disabled for both
+        if self.tls.enabled ^ (
+            self.kafka_config.zookeeper_config.get("tls", "disabled") == "enabled"
+        ):
+            return False
+
+        if not self.kafka_config.internal_user_credentials:
+            return False
+
+        return True
+
     def _on_storage_attached(self, event: StorageAttachedEvent) -> None:
         """Handler for `storage_attached` events."""
         # checks first whether the broker is active before warning
@@ -190,8 +219,13 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
         self._on_config_changed(event)
 
-    def _on_kafka_pebble_ready(self, event: PebbleReadyEvent) -> None:
-        """Handler for `kafka_pebble_ready` event."""
+    def _on_zookeeper_created(self, event: RelationCreatedEvent) -> None:
+        """Handler for `zookeeper_relation_created` events."""
+        if self.unit.is_leader():
+            event.relation.data[self.app].update({"chroot": "/" + self.app.name})
+
+    def _on_zookeeper_changed(self, event: RelationChangedEvent) -> None:
+        """Handler for `zookeeper_relation_created/joined/changed` events, ensuring internal users get created."""
         if not self.container.can_connect():
             event.defer()
             return
@@ -201,29 +235,59 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             event.defer()
             return
 
+        # TLS must be enabled for Kafka and ZK or disabled for both
+        if self.tls.enabled ^ (
+            self.kafka_config.zookeeper_config.get("tls", "disabled") == "enabled"
+        ):
+            event.defer()
+            return
+
+        # do not create users until certificate + keystores created
+        # otherwise unable to authenticate to ZK
+        if self.tls.enabled and not self.tls.certificate:
+            event.defer()
+            return
+
+        if not self.kafka_config.internal_user_credentials and self.unit.is_leader():
+            # loading the minimum config needed to authenticate to zookeeper
+            self.kafka_config.set_environment()
+            self.kafka_config.set_zk_jaas_config()
+            self.kafka_config.set_server_properties()
+
+            try:
+                internal_user_credentials = self._create_internal_credentials()
+            except (KeyError, RuntimeError, ExecError) as e:
+                logger.warning(str(e))
+                event.defer()
+                return
+
+            # only set to relation data when all set
+            for username, password in internal_user_credentials:
+                self.set_secret(scope="app", key=f"{username}-password", value=password)
+
+        self._on_config_changed(event)
+
+    def _on_zookeeper_broken(self, event: RelationEvent) -> None:
+        """Handler for `zookeeper_relation_departed/broken` events."""
+        if not self.container.can_connect():
+            event.defer()
+            return
+
+        logger.info("stopping kafka service")
+        self.container.stop(CONTAINER)
+        self.unit.status = BlockedStatus("missing required zookeeper relation")
+
+    def _on_kafka_pebble_ready(self, event: EventBase) -> None:
+        """Handler for `start` event."""
+        if not self.ready_to_start:
+            event.defer()
+            return
+
         # required settings given zookeeper connection config has been created
         self.kafka_config.set_environment()
         self.kafka_config.set_server_properties()
         self.kafka_config.set_zk_jaas_config()
         self.kafka_config.set_client_properties()
-
-        # do not start units until SCRAM users have been added to ZooKeeper for server-server auth
-        # set internal passwords
-        if self.unit.is_leader():
-            for username, password in self.kafka_config.internal_user_credentials.items():
-                updated_user = self.update_internal_user(username=username, password=password)
-                # do not continue until both internal users are updated
-                if not updated_user:
-                    event.defer()
-                    return
-
-            # updating non-leader units of creation of internal users
-            self.peer_relation.data[self.app].update({"broker-creds": "added"})
-
-        # for non-leader units
-        if not self.ready_to_start:
-            event.defer()
-            return
 
         # start kafka service
         self.container.add_layer(CONTAINER, self._kafka_layer, combine=True)
@@ -281,29 +345,48 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         if self.model.relations.get(REL_NAME, None) and self.unit.is_leader():
             self.client_relations.update_connection_info()
 
-    def _on_leader_elected(self, event: LeaderElectedEvent) -> None:
-        """Handler for `leader_elected` event, ensuring internal user passwords get set."""
-        if not self.peer_relation:
-            logger.debug("no peer relation")
+    def _restart(self, event: EventBase) -> None:
+        """Handler for `rolling_ops` restart events."""
+        # ensures service isn't referenced before pebble ready
+        if not self.unit_peer_data.get("state", None) == "started":
             event.defer()
             return
 
-        self.set_internal_passwords()
+        self.container.restart(CONTAINER)
 
-    def _on_zookeeper_joined(self, event: RelationJoinedEvent) -> None:
-        """Handler for `zookeeper_relation_joined` event, ensuring chroot gets set."""
-        if self.unit.is_leader():
-            event.relation.data[self.app].update({"chroot": "/" + self.app.name})
-
-    def _on_zookeeper_broken(self, event: RelationEvent) -> None:
-        """Handler for `zookeeper_relation_departed/broken` events."""
-        if not self.container.can_connect():
-            event.defer()
+        if broker_active(
+            unit=self.unit,
+            zookeeper_config=self.kafka_config.zookeeper_config,
+        ):
+            logger.info(f'Broker {self.unit.name.split("/")[1]} restarted')
+            self.unit.status = ActiveStatus()
+        else:
+            self.unit.status = BlockedStatus(
+                f"Broker {self.unit.name.split('/')[1]} failed to restart"
+            )
             return
 
-        logger.info("stopping kafka service")
-        self.container.stop(CONTAINER)
-        self.unit.status = BlockedStatus("missing required zookeeper relation")
+    def _get_admin_credentials_action(self, event: ActionEvent) -> None:
+        raw_properties = str(
+            self.container.pull(self.kafka_config.client_properties_filepath).read()
+        )
+        client_properties = raw_properties.splitlines()
+
+        if not client_properties:
+            msg = "client.properties file not found on target unit."
+            logger.error(msg)
+            event.fail(msg)
+            return
+
+        admin_properties = set(client_properties) - set(self.kafka_config.tls_properties)
+
+        event.set_results(
+            {
+                "username": ADMIN_USER,
+                "password": self.kafka_config.internal_user_credentials[ADMIN_USER],
+                "client-properties": "\n".join(admin_properties),
+            }
+        )
 
     def _set_password_action(self, event: ActionEvent) -> None:
         """Handler for set-password action.
@@ -330,7 +413,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             event.fail(msg)
             return
 
-        user_updated = self.update_internal_user(username=username, password=new_password)
+        user_updated = self._update_internal_user(username=username, password=new_password)
         if not user_updated:
             event.fail("Unable to update user.")
             return
@@ -339,116 +422,45 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         self.set_secret(scope="app", key=f"{username}-password", value=new_password)
         event.set_results({f"{username}-password": new_password})
 
-    def _restart(self, event: EventBase) -> None:
-        """Handler for `rolling_ops` restart events."""
-        # ensures service isn't referenced before pebble ready
-        if not self.unit_peer_data.get("state", None) == "started":
-            event.defer()
-            return
+    def _update_internal_user(self, username: str, password: str) -> None:
+        """Updates internal SCRAM usernames and passwords.
 
-        self.container.restart(CONTAINER)
-
-        if broker_active(
-            unit=self.unit,
-            zookeeper_config=self.kafka_config.zookeeper_config,
-        ):
-            logger.info(f'Broker {self.unit.name.split("/")[1]} restarted')
-            self.unit.status = ActiveStatus()
-        else:
-            self.unit.status = BlockedStatus(
-                f"Broker {self.unit.name.split('/')[1]} failed to restart"
-            )
-            return
-
-    @property
-    def ready_to_start(self) -> bool:
-        """Check for active ZooKeeper relation and adding of inter-broker auth username.
-
-        Returns:
-            True if ZK is related and `sync` user has been added. False otherwise.
+        Raises:
+            RuntimeError if called from non-leader unit
+            KeyError if attempted to update non-leader unit
+            ExecError if command to ZooKeeper failed
         """
-        if not self.peer_relation:
-            logger.debug("no peer relation")
-            return False
-
-        # TLS must be enabled for Kafka and ZK or disabled for both
-        if self.tls.enabled ^ (
-            self.kafka_config.zookeeper_config.get("tls", "disabled") == "enabled"
-        ):
-            msg = "TLS must be enabled for Zookeeper and Kafka"
-            logger.error(msg)
-            self.unit.status = BlockedStatus(msg)
-            return False
-
-        if not self.kafka_config.zookeeper_connected or not self.peer_relation.data[self.app].get(
-            "broker-creds", None
-        ):
-            return False
-
-        return True
-
-    def _get_admin_credentials_action(self, event: ActionEvent) -> None:
-        raw_properties = str(
-            self.container.pull(self.kafka_config.client_properties_filepath).read()
-        )
-        client_properties = raw_properties.splitlines()
-
-        if not client_properties:
-            msg = "client.properties file not found on target unit."
-            logger.error(msg)
-            event.fail(msg)
-            return
-
-        admin_properties = set(client_properties) - set(self.kafka_config.tls_properties)
-
-        event.set_results(
-            {
-                "username": ADMIN_USER,
-                "password": self.kafka_config.internal_user_credentials[ADMIN_USER],
-                "client-properties": "\n".join(admin_properties),
-            }
-        )
-
-    def update_internal_user(self, username: str, password: str) -> bool:
-        """Updates internal SCRAM usernames and passwords."""
         if not self.unit.is_leader():
-            logger.debug("Cannot update internal user from non-leader unit.")
-            return False
+            raise RuntimeError("Cannot update internal user from non-leader unit.")
 
-        if username not in [INTER_BROKER_USER, ADMIN_USER]:
-            msg = f"Can only update internal charm users: {INTER_BROKER_USER} or {ADMIN_USER}, not {username}."
-            logger.error(msg)
-            return False
+        if username not in INTERNAL_USERS:
+            raise KeyError(
+                f"Can only update internal charm users: {INTERNAL_USERS}, not {username}."
+            )
 
         # do not start units until SCRAM users have been added to ZooKeeper for server-server auth
-        kafka_auth = KafkaAuth(
-            self,
-            opts=self.kafka_config.auth_args,
-            zookeeper=self.kafka_config.zookeeper_config.get("connect", ""),
-            container=self.container,
+        kafka_auth = KafkaAuth(self)
+        kafka_auth.add_user(
+            username=username,
+            password=password,
         )
-        try:
-            kafka_auth.add_user(
-                username=username,
-                password=password,
-            )
-            return True
 
-        except Exception as e:
-            # command to add users fails if attempted too early
-            logger.info(f"Exception: {str(e)}")
-            return False
+    def _create_internal_credentials(self) -> list[tuple[str, str]]:
+        """Creates internal SCRAM users during cluster start.
 
-    def set_internal_passwords(self) -> None:
-        """Sets inter-broker and admin user passwords to app relation data."""
-        if not self.unit.is_leader():
-            return
+        Returns:
+            List of (username, password) for all internal users
 
-        for password in [f"{INTER_BROKER_USER}-password", f"{ADMIN_USER}-password"]:
-            current_password = self.get_secret(scope="app", key=password)
-            self.set_secret(
-                scope="app", key=password, value=(current_password or generate_password())
-            )
+        Raises:
+            RuntimeError if called from non-leader unit
+            KeyError if attempted to update non-leader unit
+            subprocess.CalledProcessError if command to ZooKeeper failed
+        """
+        credentials = [(username, generate_password()) for username in INTERNAL_USERS]
+        for username, password in credentials:
+            self._update_internal_user(username=username, password=password)
+
+        return credentials
 
     def get_secret(self, scope: str, key: str) -> Optional[str]:
         """Get TLS secret from the secret storage.

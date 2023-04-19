@@ -15,6 +15,7 @@ from literals import (
     CONF_PATH,
     CONTAINER,
     INTER_BROKER_USER,
+    INTERNAL_USERS,
     JAVA_HOME,
     JMX_EXPORTER_PORT,
     LOGS_PATH,
@@ -118,13 +119,18 @@ class KafkaConfig:
         """The charm internal usernames and passwords, e.g `sync` and `admin`.
 
         Returns:
-            Dict of usernames and passwords.
+            Dict of usernames and passwords
         """
-        return {
+        credentials = {
             user: password
-            for user in [INTER_BROKER_USER, ADMIN_USER]
+            for user in INTERNAL_USERS
             if (password := self.charm.get_secret(scope="app", key=f"{user}-password"))
         }
+
+        if not len(credentials) == len(INTERNAL_USERS):
+            return {}
+
+        return credentials
 
     @property
     def container(self) -> Container:
@@ -168,6 +174,15 @@ class KafkaConfig:
             zookeeper_config["connect"] = ",".join(sorted_uris)
 
         return zookeeper_config
+
+    @property
+    def zookeeper_related(self) -> bool:
+        """Checks if there is a relation with ZooKeeper.
+
+        Returns:
+            True if there is a ZooKeeper relation. Otherwise False
+        """
+        return bool(self.charm.model.relations[ZOOKEEPER_REL_NAME])
 
     @property
     def zookeeper_connected(self) -> bool:
@@ -301,15 +316,18 @@ class KafkaConfig:
         Returns:
             list of scram properties to be set.
         """
+        username = INTER_BROKER_USER
+        password = self.internal_user_credentials.get(INTER_BROKER_USER, "")
+
         scram_properties = [
-            f'listener.name.{self.internal_listener.name.lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{INTER_BROKER_USER}" password="{self.internal_user_credentials[INTER_BROKER_USER]}";'
+            f'listener.name.{self.internal_listener.name.lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{username}" password="{password}";'
         ]
         client_scram = [
             auth.name for auth in self.client_listeners if auth.protocol.startswith("SASL_")
         ]
         for name in client_scram:
             scram_properties.append(
-                f'listener.name.{name.lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{INTER_BROKER_USER}" password="{self.internal_user_credentials[INTER_BROKER_USER]}";'
+                f'listener.name.{name.lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{username}" password="{password}";'
             )
 
         return scram_properties
