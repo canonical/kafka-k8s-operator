@@ -285,6 +285,8 @@ class KafkaTLS(Object):
                 ],
                 working_dir=CONF_PATH,
             ).wait_output()
+            self.container.exec(["chown", "kafka:kafka", f"{CONF_PATH}/truststore.jks"])
+            self.container.exec(["chmod", "770", f"{CONF_PATH}/truststore.jks"])
         except ExecError as e:
             # in case this reruns and fails
             expected_error_string = "alias <ca> already exists"
@@ -318,6 +320,8 @@ class KafkaTLS(Object):
                 ],
                 working_dir=CONF_PATH,
             ).wait_output()
+            self.container.exec(["chown", "kafka:kafka", f"{CONF_PATH}/keystore.p12"])
+            self.container.exec(["chmod", "770", f"{CONF_PATH}/keystore.p12"])
         except ExecError as e:
             logger.error(str(e.stdout))
             raise
