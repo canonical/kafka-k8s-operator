@@ -63,7 +63,7 @@ def load_super_users(model_full_name: str) -> List[str]:
 
 
 def check_user(model_full_name: str, username: str, zookeeper_uri: str) -> None:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/kafka-jaas.cfg {BINARIES_PATH}/bin/kafka-configs.sh --{zookeeper_uri} --describe --entity-type users --entity-name {username}"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/kafka-jaas.cfg {BINARIES_PATH}/bin/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
