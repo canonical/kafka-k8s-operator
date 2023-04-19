@@ -7,7 +7,7 @@ import re
 import socket
 from contextlib import closing
 from pathlib import Path
-from subprocess import PIPE, check_output
+from subprocess import PIPE, CalledProcessError, check_output
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import yaml
@@ -194,18 +194,21 @@ def get_kafka_zk_relation_data(unit_name: str, model_full_name: str) -> Dict[str
     return zk_relation_data
 
 
-def check_tls(ip: str, port: int) -> None:
-    result = check_output(
-        f"echo | openssl s_client -connect {ip}:{port}",
-        stderr=PIPE,
-        shell=True,
-        universal_newlines=True,
-    )
-
-    # FIXME: The server cannot be validated, we would need to try to connect using the CA
-    # from self-signed certificates. This is indication enough that the server is sending a
-    # self-signed key.
-    assert "CN = kafka" in result
+def check_tls(ip: str, port: int) -> bool:
+    try:
+        result = check_output(
+            f"echo | openssl s_client -connect {ip}:{port}",
+            stderr=PIPE,
+            shell=True,
+            universal_newlines=True,
+        )
+        # FIXME: The server cannot be validated, we would need to try to connect using the CA
+        # from self-signed certificates. This is indication enough that the server is sending a
+        # self-signed key.
+        return "CN = kafka" in result
+    except CalledProcessError as e:
+        logger.error(f"command '{e.cmd}' return with error (code {e.returncode}): {e.output}")
+        return False
 
 
 def get_provider_data(

@@ -91,14 +91,14 @@ async def test_kafka_tls(ops_test: OpsTest):
 
     await ops_test.model.add_relation(APP_NAME, TLS_NAME)
     logger.info("Relate Kafka to TLS")
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=20, timeout=2000, status="active"
+            apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=30, timeout=2000, status="active"
         )
 
     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME)
     logger.info("Check for Kafka TLS")
-    check_tls(ip=kafka_address, port=19093)
+    assert check_tls(ip=kafka_address, port=19093)
 
     # Rotate credentials
     new_private_key = generate_private_key().decode("utf-8")
@@ -142,4 +142,4 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
     """
 
     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME, unit_num=2)
-    check_tls(ip=kafka_address, port=19093)
+    assert check_tls(ip=kafka_address, port=19093)
