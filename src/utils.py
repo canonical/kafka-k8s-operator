@@ -121,14 +121,10 @@ def run_bin_command(
 
     try:
         process = container.exec(command=command, environment=environment)
-        output, error = process.wait_output()
-        logger.info(f"{output=}")
-        logger.info(f"{error=}")
+        output, _ = process.wait_output()
         return output
     except ExecError as e:
-        logger.error(f"cmd failed: {str(e.command)=}")
-        logger.error(f"cmd failed: {str(e.stdout)=}")
-        logger.error(f"cmd failed: {str(e.stderr)=}")
+        logger.error(str(e.stderr))
         raise e
 
 

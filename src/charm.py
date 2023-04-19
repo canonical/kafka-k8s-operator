@@ -401,15 +401,14 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
         Set the password for a specific user, if no passwords are passed, generate them.
         """
-        if not self.peer_relation:
-            logger.debug("no peer relation")
-            event.defer()
-            return
-
         if not self.unit.is_leader():
             msg = "Password rotation must be called on leader unit"
             logger.error(msg)
             event.fail(msg)
+            return
+
+        if not self.healthy:
+            event.defer()
             return
 
         username = event.params["username"]
@@ -421,10 +420,11 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             event.fail(msg)
             return
 
-        user_updated = self._update_internal_user(username=username, password=new_password)
-        if not user_updated:
-            event.fail("Unable to update user.")
-            return
+        try:
+            self._update_internal_user(username=username, password=new_password)
+        except Exception as e:
+            logger.error(str(e))
+            event.fail(f"unable to set password for {username}")
 
         # Store the password on application databag
         self.set_secret(scope="app", key=f"{username}-password", value=new_password)

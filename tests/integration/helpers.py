@@ -82,8 +82,8 @@ def get_user(model_full_name: str, username: str, zookeeper_uri: str) -> str:
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
-    ).splitlines()
-    return result[-1]
+    )
+    return result
 
 
 def show_unit(unit_name: str, model_full_name: str) -> Any:
