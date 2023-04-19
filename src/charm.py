@@ -23,7 +23,7 @@ from ops.charm import (
 )
 from ops.framework import EventBase
 from ops.main import main
-from ops.model import ActiveStatus, BlockedStatus, Container, Relation, WaitingStatus
+from ops.model import Container, Relation, StatusBase
 from ops.pebble import ExecError, Layer, PathError, ProtocolError
 
 from auth import KafkaAuth
@@ -39,6 +39,8 @@ from literals import (
     PEER,
     REL_NAME,
     ZOOKEEPER_REL_NAME,
+    DebugLevel,
+    Status,
 )
 from provider import KafkaProvider
 from structured_config import CharmConfig
@@ -72,9 +74,9 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             container_name="kafka",
         )
 
-        self.framework.observe(getattr(self.on, "config_changed"), self._on_config_changed)
         self.framework.observe(getattr(self.on, "kafka_pebble_ready"), self._on_kafka_pebble_ready)
         self.framework.observe(getattr(self.on, "config_changed"), self._on_config_changed)
+        self.framework.observe(getattr(self.on, "update_status"), self._on_update_status)
 
         self.framework.observe(self.on[PEER].relation_changed, self._on_config_changed)
 
@@ -162,60 +164,80 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             True if ZK is related and `sync` user has been added. False otherwise.
         """
         if not self.peer_relation:
+            self._set_status(Status.NO_PEER_RELATION)
             return False
 
         if not self.kafka_config.zookeeper_related:
+            self._set_status(Status.ZK_NOT_RELATED)
             return False
 
         if not self.kafka_config.zookeeper_connected:
+            self._set_status(Status.ZK_NO_DATA)
             return False
 
         # TLS must be enabled for Kafka and ZK or disabled for both
         if self.tls.enabled ^ (
             self.kafka_config.zookeeper_config.get("tls", "disabled") == "enabled"
         ):
+            self._set_status(Status.ZK_TLS_MISMATCH)
             return False
 
         if not self.kafka_config.internal_user_credentials:
+            self._set_status(Status.NO_BROKER_CREDS)
             return False
 
         return True
 
+    @property
+    def healthy(self) -> bool:
+        """Checks and updates various charm lifecycle states.
+
+        Is slow to fail due to retries, to be used sparingly.
+
+        Returns:
+            True if service is alive and active. Otherwise False
+        """
+        if not self.ready_to_start:
+            return False
+
+        if not self.container.get_service("kafka").is_running():
+            self._set_status(Status.SERVICE_NOT_RUNNING)
+            return False
+
+        return True
+
+    def _on_update_status(self, _: EventBase) -> None:
+        """Handler for `update-status` events."""
+        if not self.healthy:
+            return
+
+        if not broker_active(
+            unit=self.unit,
+            zookeeper_config=self.kafka_config.zookeeper_config,
+        ):
+            self._set_status(Status.ZK_NOT_CONNECTED)
+            return
+
+        self._set_status(Status.ACTIVE)
+
     def _on_storage_attached(self, event: StorageAttachedEvent) -> None:
         """Handler for `storage_attached` events."""
         # checks first whether the broker is active before warning
-        if not self.kafka_config.zookeeper_connected or not broker_active(
-            unit=self.unit, zookeeper_config=self.kafka_config.zookeeper_config
-        ):
+        if not self.ready_to_start:
             return
 
         # new dirs won't be used until topic partitions are assigned to it
         # either automatically for new topics, or manually for existing
-        message = (
-            "manual partition reassignment may be needed for Kafka to utilize new storage volumes"
-        )
-        logger.warning(f"attaching storage - {message}")
-        self.unit.status = ActiveStatus(message)
-
+        self._set_status(Status.ADDED_STORAGE)
         self._on_config_changed(event)
 
     def _on_storage_detaching(self, event: StorageDetachingEvent) -> None:
         """Handler for `storage_detaching` events."""
-        # checks first whether the broker is active before warning
-        if not self.kafka_config.zookeeper_connected or not broker_active(
-            unit=self.unit, zookeeper_config=self.kafka_config.zookeeper_config
-        ):
-            return
-
         # in the case where there may be replication recovery may be possible
         if self.peer_relation and len(self.peer_relation.units):
-            message = "manual partition reassignment from replicated brokers recommended due to lost partitions on removed storage volumes"
-            logger.warning(f"removing storage - {message}")
-            self.unit.status = BlockedStatus(message)
+            self._set_status(Status.REMOVED_STORAGE)
         else:
-            message = "potential log-data loss due to storage removal without replication"
-            logger.error(f"removing storage - {message}")
-            self.unit.status = BlockedStatus(message)
+            self._set_status(Status.REMOVED_STORAGE_NO_REPL)
 
         self._on_config_changed(event)
 
@@ -231,7 +253,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             return
 
         if not self.kafka_config.zookeeper_connected:
-            self.unit.status = WaitingStatus("waiting for zookeeper relation")
+            self._set_status(Status.ZK_NO_DATA)
             event.defer()
             return
 
@@ -240,12 +262,14 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             self.kafka_config.zookeeper_config.get("tls", "disabled") == "enabled"
         ):
             event.defer()
+            self._set_status(Status.ZK_TLS_MISMATCH)
             return
 
         # do not create users until certificate + keystores created
         # otherwise unable to authenticate to ZK
         if self.tls.enabled and not self.tls.certificate:
             event.defer()
+            self._set_status(Status.NO_CERT)
             return
 
         if not self.kafka_config.internal_user_credentials and self.unit.is_leader():
@@ -275,7 +299,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
         logger.info("stopping kafka service")
         self.container.stop(CONTAINER)
-        self.unit.status = BlockedStatus("missing required zookeeper relation")
+        self._set_status(Status.ZK_NOT_RELATED)
 
     def _on_kafka_pebble_ready(self, event: EventBase) -> None:
         """Handler for `start` event."""
@@ -294,16 +318,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         self.container.replan()
 
         # service_start might fail silently, confirm with ZK if kafka is actually connected
-        if broker_active(
-            unit=self.unit,
-            zookeeper_config=self.kafka_config.zookeeper_config,
-        ):
-            logger.info(f'Broker {self.unit.name.split("/")[1]} connected')
-            self.unit_peer_data.update({"state": "started"})
-            self.unit.status = ActiveStatus()
-        else:
-            self.unit.status = BlockedStatus("kafka unit not connected to ZooKeeper")
-            return
+        self._on_update_status(event)
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
@@ -354,17 +369,10 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
         self.container.restart(CONTAINER)
 
-        if broker_active(
-            unit=self.unit,
-            zookeeper_config=self.kafka_config.zookeeper_config,
-        ):
+        if self.healthy:
             logger.info(f'Broker {self.unit.name.split("/")[1]} restarted')
-            self.unit.status = ActiveStatus()
         else:
-            self.unit.status = BlockedStatus(
-                f"Broker {self.unit.name.split('/')[1]} failed to restart"
-            )
-            return
+            logger.error(f"Broker {self.unit.name.split('/')[1]} failed to restart")
 
     def _get_admin_credentials_action(self, event: ActionEvent) -> None:
         raw_properties = str(
@@ -500,6 +508,14 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             self.app_peer_data.update({key: value})
         else:
             raise RuntimeError("Unknown secret scope.")
+
+    def _set_status(self, key: Status) -> None:
+        """Sets charm status."""
+        status: StatusBase = key.value.status
+        log_level: DebugLevel = key.value.log_level
+
+        getattr(logger, log_level.lower())(status.message)
+        self.unit.status = status
 
 
 if __name__ == "__main__":
