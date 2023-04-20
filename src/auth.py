@@ -29,7 +29,7 @@ class KafkaAuth:
 
     def __init__(self, charm):
         self.charm = charm
-        self.opts = self.charm.kafka_config.extra_args
+        self.opts = self.charm.kafka_config.auth_args
         self.zookeeper = self.charm.kafka_config.zookeeper_config.get("connect", "")
         self.container = self.charm.container
         self.current_acls: Set[Acl] = set()
