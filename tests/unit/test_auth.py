@@ -112,9 +112,6 @@ def test_get_acls_tls_adds_zk_tls_flag(harness):
     harness.update_relation_data(peer_rel_id, CHARM_KEY, {"tls": "enabled"})
     auth = KafkaAuth(
         harness.charm,
-        opts=["mordor"],
-        zookeeper="server.1:gandalf.the.grey",
-        container=harness.charm.container,
     )
 
     with patch("ops.model.Container.exec", return_value=DummyExec()) as patched_exec:
@@ -148,9 +145,6 @@ def test_add_user_adds_zk_tls_flag(harness):
     harness.update_relation_data(peer_rel_id, CHARM_KEY, {"tls": "enabled"})
     auth = KafkaAuth(
         harness.charm,
-        opts=["mordor"],
-        zookeeper="server.1:gandalf.the.grey",
-        container=harness.charm.container,
     )
 
     with patch("ops.model.Container.exec", return_value=DummyExec()) as patched_exec:
@@ -183,9 +177,6 @@ def test_delete_user_adds_zk_tls_flag(harness):
     harness.update_relation_data(peer_rel_id, CHARM_KEY, {"tls": "enabled"})
     auth = KafkaAuth(
         harness.charm,
-        opts=["mordor"],
-        zookeeper="server.1:gandalf.the.grey",
-        container=harness.charm.container,
     )
 
     with patch("ops.model.Container.exec", return_value=DummyExec()) as patched_exec:

@@ -19,7 +19,7 @@ from ops.framework import Object
 from ops.model import Container, Relation
 from ops.pebble import ExecError
 
-from literals import TLS_RELATION
+from literals import CONF_PATH, TLS_RELATION
 from utils import generate_password, parse_tls_file, push
 
 logger = logging.getLogger(__name__)
@@ -242,7 +242,7 @@ class KafkaTLS(Object):
         push(
             container=self.charm.container,
             content=self.private_key,
-            path=f"{self.charm.kafka_config.default_config_path}/server.key",
+            path=f"{CONF_PATH}/server.key",
         )
 
     def set_ca(self) -> None:
@@ -254,7 +254,7 @@ class KafkaTLS(Object):
         push(
             container=self.charm.container,
             content=self.ca,
-            path=f"{self.charm.kafka_config.default_config_path}/ca.pem",
+            path=f"{CONF_PATH}/ca.pem",
         )
 
     def set_certificate(self) -> None:
@@ -266,7 +266,7 @@ class KafkaTLS(Object):
         push(
             container=self.charm.container,
             content=self.certificate,
-            path=f"{self.charm.kafka_config.default_config_path}/server.pem",
+            path=f"{CONF_PATH}/server.pem",
         )
 
     def set_truststore(self) -> None:
@@ -287,8 +287,10 @@ class KafkaTLS(Object):
                     f"{self.truststore_password}",
                     "-noprompt",
                 ],
-                working_dir=self.charm.kafka_config.default_config_path,
+                working_dir=CONF_PATH,
             ).wait_output()
+            self.container.exec(["chown", "kafka:kafka", f"{CONF_PATH}/truststore.jks"])
+            self.container.exec(["chmod", "770", f"{CONF_PATH}/truststore.jks"])
         except ExecError as e:
             # in case this reruns and fails
             expected_error_string = "alias <ca> already exists"
@@ -320,8 +322,10 @@ class KafkaTLS(Object):
                     "-password",
                     f"pass:{self.keystore_password}",
                 ],
-                working_dir=self.charm.kafka_config.default_config_path,
+                working_dir=CONF_PATH,
             ).wait_output()
+            self.container.exec(["chown", "kafka:kafka", f"{CONF_PATH}/keystore.p12"])
+            self.container.exec(["chmod", "770", f"{CONF_PATH}/keystore.p12"])
         except ExecError as e:
             logger.error(str(e.stdout))
             raise
@@ -338,7 +342,7 @@ class KafkaTLS(Object):
                     "*.p12",
                     "*.jks",
                 ],
-                working_dir=self.charm.zookeeper_config.default_config_path,
+                working_dir=CONF_PATH,
             )
             logger.debug(str(proc.wait_output()[1]))
         except ExecError as e:

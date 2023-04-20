@@ -11,10 +11,14 @@ from ops.model import Container, Unit
 
 from literals import (
     ADMIN_USER,
+    BINARIES_PATH,
+    CONF_PATH,
     CONTAINER,
-    DATA_DIR,
     INTER_BROKER_USER,
+    INTERNAL_USERS,
+    JAVA_HOME,
     JMX_EXPORTER_PORT,
+    LOGS_PATH,
     PEER,
     REL_NAME,
     SECURITY_PROTOCOL_PORTS,
@@ -102,27 +106,31 @@ class KafkaConfig:
 
     def __init__(self, charm):
         self.charm = charm
-        self.default_config_path = f"{DATA_DIR}/config"
-        self.server_properties_filepath = f"{self.default_config_path}/server.properties"
-        self.client_properties_filepath = f"{self.default_config_path}/client.properties"
-        self.zk_jaas_filepath = f"{self.default_config_path}/kafka-jaas.cfg"
-        self.keystore_filepath = f"{self.default_config_path}/keystore.p12"
-        self.truststore_filepath = f"{self.default_config_path}/truststore.jks"
-        self.jmx_exporter_filepath = "/opt/kafka/extra/jmx_prometheus_javaagent.jar"
-        self.jmx_config_filepath = "/opt/kafka/default-config/jmx_prometheus.yaml"
+        self.server_properties_filepath = f"{CONF_PATH}/server.properties"
+        self.client_properties_filepath = f"{CONF_PATH}/client.properties"
+        self.zk_jaas_filepath = f"{CONF_PATH}/kafka-jaas.cfg"
+        self.keystore_filepath = f"{CONF_PATH}/keystore.p12"
+        self.truststore_filepath = f"{CONF_PATH}/truststore.jks"
+        self.jmx_exporter_filepath = f"{BINARIES_PATH}/jmx_prometheus_javaagent.jar"
+        self.jmx_config_filepath = f"{CONF_PATH}/jmx_prometheus.yaml"
 
     @property
     def internal_user_credentials(self) -> Dict[str, str]:
         """The charm internal usernames and passwords, e.g `sync` and `admin`.
 
         Returns:
-            Dict of usernames and passwords.
+            Dict of usernames and passwords
         """
-        return {
+        credentials = {
             user: password
-            for user in [INTER_BROKER_USER, ADMIN_USER]
+            for user in INTERNAL_USERS
             if (password := self.charm.get_secret(scope="app", key=f"{user}-password"))
         }
+
+        if not len(credentials) == len(INTERNAL_USERS):
+            return {}
+
+        return credentials
 
     @property
     def container(self) -> Container:
@@ -145,6 +153,9 @@ class KafkaConfig:
         zookeeper_config = {}
         # loop through all relations to ZK, attempt to find all needed config
         for relation in self.charm.model.relations[ZOOKEEPER_REL_NAME]:
+            if not relation.app:
+                continue
+
             zk_keys = ["username", "password", "endpoints", "chroot", "uris", "tls"]
             missing_config = any(
                 relation.data[relation.app].get(key, None) is None for key in zk_keys
@@ -166,6 +177,15 @@ class KafkaConfig:
             zookeeper_config["connect"] = ",".join(sorted_uris)
 
         return zookeeper_config
+
+    @property
+    def zookeeper_related(self) -> bool:
+        """Checks if there is a relation with ZooKeeper.
+
+        Returns:
+            True if there is a ZooKeeper relation. Otherwise False
+        """
+        return bool(self.charm.model.relations[ZOOKEEPER_REL_NAME])
 
     @property
     def zookeeper_connected(self) -> bool:
@@ -227,7 +247,7 @@ class KafkaConfig:
         Returns:
             String of startup command and expected config filepath
         """
-        entrypoint = "/opt/kafka/bin/kafka-server-start.sh"
+        entrypoint = f"{BINARIES_PATH}/bin/kafka-server-start.sh"
         return f"{entrypoint} {self.server_properties_filepath}"
 
     @property
@@ -299,15 +319,18 @@ class KafkaConfig:
         Returns:
             list of scram properties to be set.
         """
+        username = INTER_BROKER_USER
+        password = self.internal_user_credentials.get(INTER_BROKER_USER, "")
+
         scram_properties = [
-            f'listener.name.{self.internal_listener.name.lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{INTER_BROKER_USER}" password="{self.internal_user_credentials[INTER_BROKER_USER]}";'
+            f'listener.name.{self.internal_listener.name.lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{username}" password="{password}";'
         ]
         client_scram = [
             auth.name for auth in self.client_listeners if auth.protocol.startswith("SASL_")
         ]
         for name in client_scram:
             scram_properties.append(
-                f'listener.name.{name.lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{INTER_BROKER_USER}" password="{self.internal_user_credentials[INTER_BROKER_USER]}";'
+                f'listener.name.{name.lower()}.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{username}" password="{password}";'
             )
 
         return scram_properties
@@ -489,11 +512,11 @@ class KafkaConfig:
             container=self.container,
         )
 
-    def set_kafka_opts(self) -> None:
+    def set_environment(self) -> None:
         """Writes the env-vars needed for SASL/SCRAM auth to `/etc/environment` on the unit."""
         opts_string = " ".join(self.extra_args)
         push(
-            content=f"KAFKA_OPTS={opts_string}",
+            content=f"KAFKA_OPTS={opts_string}\nLOG_DIR={LOGS_PATH}\nJAVA_HOME={JAVA_HOME}",
             path="/etc/environment",
             container=self.container,
         )

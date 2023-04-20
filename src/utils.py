@@ -20,6 +20,8 @@ from tenacity.retry import retry_if_not_result
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_fixed
 
+from literals import BINARIES_PATH, CONF_PATH, JAVA_HOME
+
 logger = logging.getLogger(__name__)
 
 
@@ -109,10 +111,10 @@ def run_bin_command(
     Returns:
         String of kafka bin command output
     """
-    zk_tls_config_file = zk_tls_config_filepath or "/data/kafka/config/server.properties"
-    environment = {"KAFKA_OPTS": extra_args}
+    zk_tls_config_file = zk_tls_config_filepath or f"{CONF_PATH}/server.properties"
+    environment = {"KAFKA_OPTS": " ".join(extra_args), "JAVA_HOME": JAVA_HOME}
     command = (
-        [f"/opt/kafka/bin/kafka-{bin_keyword}.sh"]
+        [f"{BINARIES_PATH}/bin/kafka-{bin_keyword}.sh"]
         + bin_args
         + [f"--zk-tls-config-file={zk_tls_config_file}"]
     )
@@ -120,10 +122,9 @@ def run_bin_command(
     try:
         process = container.exec(command=command, environment=environment)
         output, _ = process.wait_output()
-        logger.debug(f"{output=}")
         return output
     except ExecError as e:
-        logger.debug(f"cmd failed:\ncommand={e.command}\nstdout={e.stdout}\nstderr={e.stderr}")
+        logger.error(str(e.stderr))
         raise e
 
 

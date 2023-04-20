@@ -13,14 +13,14 @@ containers:
   kafka:
     resource: kafka-image
     mounts:
-      - storage: log-data
-        location: /logs/kafka
+      - storage: data
+        location: /var/lib/kafka/data
 
 resources:
   kafka-image:
     type: oci-image
     description: OCI Image for Apache Kafka
-    upstream-source: ghcr.io/canonical/charmed-kafka:3.3.2-22.04_edge
+    upstream-source: ghcr.io/canonical/charmed-kafka:3-edge
 
 peers:
   cluster:
@@ -48,10 +48,11 @@ provides:
     interface: grafana_dashboard
 
 storage:
-  log-data:
+  data:
     type: filesystem
     description: Directories where the log data is stored
     minimum-size: 10G
+    location: /var/lib/kafka/data
 
 assumes:
   - k8s-api

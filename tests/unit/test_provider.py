@@ -12,7 +12,7 @@ import yaml
 from ops.testing import Harness
 
 from charm import KafkaK8sCharm
-from literals import CHARM_KEY, PEER, REL_NAME
+from literals import CHARM_KEY, CONTAINER, PEER, REL_NAME
 
 from .helpers import DummyExec
 
@@ -26,6 +26,7 @@ METADATA = str(yaml.safe_load(Path("./metadata.yaml").read_text()))
 @pytest.fixture
 def harness():
     harness = Harness(KafkaK8sCharm, meta=METADATA)
+    harness.set_can_connect(CONTAINER, True)
     harness.add_relation("restart", CHARM_KEY)
     harness._update_config(
         {
@@ -79,6 +80,8 @@ def test_client_relation_created_adds_user(harness):
             new_callable=PropertyMock,
             return_value={"connect": "yes"},
         ),
+        patch("charm.KafkaK8sCharm.healthy", return_value=True),
+        patch("ops.model.Container.restart"),
     ):
         harness.set_leader(True)
         client_rel_id = harness.add_relation(REL_NAME, "app")
@@ -113,6 +116,8 @@ def test_client_relation_broken_removes_user(harness):
             new_callable=PropertyMock,
             return_value={"connect": "yes"},
         ),
+        patch("charm.KafkaK8sCharm.healthy", return_value=True),
+        patch("ops.model.Container.restart"),
     ):
         harness.set_leader(True)
         client_rel_id = harness.add_relation(REL_NAME, "app")
@@ -153,6 +158,8 @@ def test_client_relation_joined_sets_necessary_relation_data(harness):
             new_callable=PropertyMock,
             return_value={"connect": "yes"},
         ),
+        patch("charm.KafkaK8sCharm.healthy", return_value=True),
+        patch("ops.model.Container.restart"),
     ):
         harness.set_leader(True)
         client_rel_id = harness.add_relation(REL_NAME, "app")

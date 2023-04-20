@@ -9,16 +9,13 @@ from unittest.mock import PropertyMock, patch
 
 import pytest
 import yaml
-from ops.model import BlockedStatus, WaitingStatus
+from ops.model import BlockedStatus
 from ops.testing import Harness
-from tenacity.wait import wait_none
 
 from charm import KafkaK8sCharm
 from literals import (
-    ADMIN_USER,
     CHARM_KEY,
     CONTAINER,
-    INTER_BROKER_USER,
     PEER,
     REL_NAME,
     STORAGE,
@@ -56,19 +53,11 @@ def test_opts_in_pebble_layer(harness):
     assert layer["services"][CONTAINER].get("environment", {}).get("KAFKA_OPTS")
 
 
-def test_pebble_ready_waits_until_zookeeper_relation(harness):
+def test_pebble_ready_blocks_until_zookeeper_relation(harness):
     """Checks unit goes to WaitingStatus without ZK relation on install hook."""
+    harness.add_relation(PEER, CHARM_KEY)
     harness.container_pebble_ready(CONTAINER)
-    assert isinstance(harness.charm.unit.status, WaitingStatus)
-
-
-def test_leader_elected_sets_passwords(harness):
-    """Checks inter-broker passwords are created on leaderelected hook."""
-    peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-    harness.add_relation_unit(peer_rel_id, f"{CHARM_KEY}/0")
-    harness.set_leader(True)
-
-    assert harness.charm.app_peer_data.get("sync-password", None)
+    assert isinstance(harness.charm.unit.status, BlockedStatus)
 
 
 def test_zookeeper_joined_sets_chroot(harness):
@@ -122,6 +111,8 @@ def test_pebble_ready_sets_necessary_config(harness):
     )
 
     with (
+        patch("charm.KafkaK8sCharm.ready_to_start", return_value=True),
+        patch("charm.broker_active", return_value=True),
         patch("config.KafkaConfig.set_zk_jaas_config") as patched_jaas,
         patch("config.KafkaConfig.set_server_properties") as patched_server_properties,
         patch("config.KafkaConfig.set_client_properties") as patched_client_properties,
@@ -130,49 +121,6 @@ def test_pebble_ready_sets_necessary_config(harness):
         patched_jaas.assert_called_once()
         patched_server_properties.assert_called_once()
         patched_client_properties.assert_called_once()
-
-
-def test_pebble_ready_sets_auth_and_broker_creds_on_leader(harness):
-    """Checks inter-broker user is created on leader on pebble_ready hook."""
-    peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
-    harness.add_relation_unit(zk_rel_id, "zookeeper/0")
-    harness.update_relation_data(
-        zk_rel_id,
-        ZOOKEEPER_REL_NAME,
-        {
-            "username": "relation-1",
-            "password": "mellon",
-            "endpoints": "123.123.123",
-            "chroot": "/kafka",
-            "uris": "123.123.123/kafka",
-            "tls": "disabled",
-        },
-    )
-    harness.update_relation_data(peer_rel_id, CHARM_KEY, {"sync-password": "mellon"})
-
-    with (
-        patch("auth.KafkaAuth.add_user") as patched_add_user,
-        patch("config.KafkaConfig.set_zk_jaas_config"),
-        patch("config.KafkaConfig.set_server_properties"),
-        patch("config.KafkaConfig.set_client_properties"),
-        patch("charm.broker_active") as patched_broker_active,
-    ):
-        # verify non-leader does not set creds
-        patched_broker_active.retry.wait = wait_none
-        harness.container_pebble_ready(CONTAINER)
-        patched_add_user.assert_not_called()
-        assert not harness.charm.app_peer_data.get("broker-creds", None)
-
-        # verify leader sets creds
-        harness.set_leader(True)
-        harness.container_pebble_ready(CONTAINER)
-        patched_add_user.assert_called()
-
-        for call in patched_add_user.call_args_list:
-            assert call.kwargs["username"] in [INTER_BROKER_USER, ADMIN_USER]
-
-        assert harness.charm.app_peer_data.get("broker-creds", None)
 
 
 def test_pebble_ready_does_not_start_if_not_ready(harness):
@@ -407,6 +355,9 @@ def test_config_changed_restarts(harness):
         ),
         patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
         patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=white")),
+        patch("config.KafkaConfig.set_zk_jaas_config"),
+        patch("config.KafkaConfig.set_client_properties"),
+        patch("config.KafkaConfig.set_server_properties"),
         patch("utils.push", return_value=None),
         patch("ops.model.Container.restart") as patched_restart,
         patch("charm.broker_active", return_value=True),

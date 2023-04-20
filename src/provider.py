@@ -5,14 +5,17 @@
 """KafkaProvider class and methods."""
 
 import logging
+from typing import Optional
 
 from charms.data_platform_libs.v0.data_interfaces import KafkaProvides, TopicRequestedEvent
 from ops.charm import RelationBrokenEvent, RelationCreatedEvent
 from ops.framework import Object
+from ops.model import Relation
+from ops.pebble import ExecError
 
 from auth import KafkaAuth
 from config import KafkaConfig
-from literals import CONTAINER, REL_NAME
+from literals import PEER, REL_NAME
 from utils import generate_password
 
 logger = logging.getLogger(__name__)
@@ -27,9 +30,6 @@ class KafkaProvider(Object):
         self.kafka_config = KafkaConfig(self.charm)
         self.kafka_auth = KafkaAuth(
             charm,
-            container=self.charm.unit.get_container(CONTAINER),
-            opts=self.kafka_config.auth_args,
-            zookeeper=self.kafka_config.zookeeper_config.get("connect", ""),
         )
 
         self.kafka_provider = KafkaProvides(self.charm, REL_NAME)
@@ -40,6 +40,11 @@ class KafkaProvider(Object):
 
         self.framework.observe(self.kafka_provider.on.topic_requested, self.on_topic_requested)
 
+    @property
+    def peer_relation(self) -> Optional[Relation]:
+        """The Kafka cluster's peer relation."""
+        return self.charm.model.get_relation(PEER)
+
     def _on_relation_created(self, event: RelationCreatedEvent) -> None:
         """Handler for `kafka-client-relation-created` event."""
         # this will trigger kafka restart (if needed) before granting credentials
@@ -47,30 +52,21 @@ class KafkaProvider(Object):
 
     def on_topic_requested(self, event: TopicRequestedEvent):
         """Handle the on topic requested event."""
-        if not self.charm.unit.is_leader():
-            return
-
-        if not self.charm.ready_to_start:
-            logger.debug("cannot add user, ZooKeeper not yet connected")
+        if not self.charm.healthy:
             event.defer()
             return
 
-        if not self.charm.kafka_config.zookeeper_connected:
-            logger.debug("cannot update ACLs, ZooKeeper not yet connected")
-            event.defer()
-            return
-
+        # on all unit update the server properties to enable client listener if needed
         self.charm._on_config_changed(event)
 
-        extra_user_roles = event.extra_user_roles
-        topic = event.topic
+        if not self.charm.unit.is_leader() or not self.peer_relation:
+            return
 
+        extra_user_roles = event.extra_user_roles or ""
+        topic = event.topic or ""
         relation = event.relation
-
         username = f"relation-{relation.id}"
-        password = (
-            self.charm.peer_relation.data[self.charm.app].get(username) or generate_password()
-        )
+        password = self.peer_relation.data[self.charm.app].get(username) or generate_password()
         bootstrap_server = self.charm.kafka_config.bootstrap_server
         zookeeper_uris = self.charm.kafka_config.zookeeper_config.get("connect", "")
         tls = "enabled" if self.charm.tls.enabled else "disabled"
@@ -78,18 +74,20 @@ class KafkaProvider(Object):
         consumer_group_prefix = (
             event.consumer_group_prefix or f"{username}-" if "consumer" in extra_user_roles else ""
         )
+
+        # catching error here in case listeners not established for bootstrap-server auth
         try:
             self.kafka_auth.add_user(
                 username=username,
                 password=password,
             )
-        except Exception:
-            logger.warning("unable to create user just yet")
+        except ExecError:
+            logger.warning("unable to create internal user just yet")
             event.defer()
             return
 
         # non-leader units need cluster_config_changed event to update their super.users
-        self.charm.peer_relation.data[self.charm.app].update({username: password})
+        self.peer_relation.data[self.charm.app].update({username: password})
 
         self.kafka_auth.load_current_acls()
 
@@ -101,7 +99,7 @@ class KafkaProvider(Object):
         )
 
         # non-leader units need cluster_config_changed event to update their super.users
-        self.charm.peer_relation.data[self.charm.app].update(
+        self.peer_relation.data[self.charm.app].update(
             {"super-users": self.kafka_config.super_users}
         )
 
