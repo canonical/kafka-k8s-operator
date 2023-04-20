@@ -84,10 +84,9 @@ async def test_listeners(ops_test: OpsTest, app_charm):
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME].status == "active"
 
-    async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=600
-        )
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=600
+    )
 
     # check that client listener is active
     assert check_socket(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT"].client)
@@ -95,10 +94,9 @@ async def test_listeners(ops_test: OpsTest, app_charm):
     await ops_test.model.applications[APP_NAME].remove_relation(
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME}:{REL_NAME_ADMIN}"
     )
-    async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(
-            apps=[APP_NAME], idle_period=30, status="active", timeout=600
-        )
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME], idle_period=30, status="active", timeout=600
+    )
 
     assert not check_socket(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT"].client)
 
@@ -109,10 +107,9 @@ async def test_client_properties_makes_admin_connection(ops_test: OpsTest):
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME].status == "active"
 
-    async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=600
-        )
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=600
+    )
 
     result = await run_client_properties(ops_test=ops_test)
     assert result

@@ -153,6 +153,9 @@ class KafkaConfig:
         zookeeper_config = {}
         # loop through all relations to ZK, attempt to find all needed config
         for relation in self.charm.model.relations[ZOOKEEPER_REL_NAME]:
+            if not relation.app:
+                continue
+
             zk_keys = ["username", "password", "endpoints", "chroot", "uris", "tls"]
             missing_config = any(
                 relation.data[relation.app].get(key, None) is None for key in zk_keys

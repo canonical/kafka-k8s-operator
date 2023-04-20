@@ -317,6 +317,9 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         self.container.add_layer(CONTAINER, self._kafka_layer, combine=True)
         self.container.replan()
 
+        # flag that the unit has actually started the new layer service, not default
+        self.unit_peer_data.update({"started": "True"})
+
         # service_start might fail silently, confirm with ZK if kafka is actually connected
         self._on_update_status(event)
 
@@ -362,8 +365,8 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
     def _restart(self, event: EventBase) -> None:
         """Handler for `rolling_ops` restart events."""
-        # ensures service isn't referenced before pebble ready
-        if not self.unit_peer_data.get("state", None) == "started":
+        # only attempt restart if service is already active
+        if not self.healthy or not self.unit_peer_data.get("started", ""):
             event.defer()
             return
 
