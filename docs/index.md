@@ -43,17 +43,17 @@ The Charmed Kafka K8s Operator is free software, distributed under the Apache So
 
 # Navigation
 
-| Level | Path                 | Navlink                                                              |
-|-------|----------------------|----------------------------------------------------------------------|
-| 1     | how-to               | [How To]()                                                           |
-| 2     | h-manage-units       | [Manage units](/t/charmed-kafka-how-to-manage-units/10287)           |
-| 2     | h-enable-encryption  | [Enable encryption](/t/charmed-kafka-how-to-enable-encryption/10281) |
-| 2     | h-manage-app         | [Manage applications](/t/charmed-kafka-how-to-manage-app/10285)      |
-| 2     | h-enable-monitoring  | [Enable Monitoring](/t/charmed-kafka-how-to-enable-monitoring/10283) |
-| 1     | reference            | [Reference]()                                                        |
-| 2     | r-actions            | [Actions](https://charmhub.io/kafka-k8s/actions)                     |
-| 2     | r-configurations     | [Configurations](https://charmhub.io/kafka-k8s/configure)            |
-| 2     | r-libraries          | [Libraries](https://charmhub.io/kafka-k8s/libraries/helpers)         |
+| Level | Path                 | Navlink                                                                  |
+|-------|----------------------|--------------------------------------------------------------------------|
+| 1     | how-to               | [How To]()                                                               |
+| 2     | h-manage-units       | [Manage units](/t/charmed-kafka-k8s-how-to-manage-units/10295)           |
+| 2     | h-enable-encryption  | [Enable encryption](/t/charmed-kafka-k8s-how-to-enable-encryption/10289) |
+| 2     | h-manage-app         | [Manage applications](/t/charmed-kafka-k8s-how-to-manage-app/10293)      |
+| 2     | h-enable-monitoring  | [Enable Monitoring](/t/charmed-kafka-k8s-how-to-enable-monitoring/10291) |
+| 1     | reference            | [Reference]()                                                            |
+| 2     | r-actions            | [Actions](https://charmhub.io/kafka-k8s/actions)                         |
+| 2     | r-configurations     | [Configurations](https://charmhub.io/kafka-k8s/configure)                |
+| 2     | r-libraries          | [Libraries](https://charmhub.io/kafka-k8s/libraries/helpers)             |
 
 # Redirects
 

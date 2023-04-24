@@ -3,6 +3,7 @@
 
 name: kafka-k8s
 display-name: Kafka K8s
+docs: https://discourse.charmhub.io/t/charmed-kafka-k8s-documentation/10296
 description: |
   Kafka is an event streaming platform. This charm deploys and operates Kafka.
 summary: The Charmed Kafka K8s Operator
