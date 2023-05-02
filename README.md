@@ -29,8 +29,8 @@ While the following requirements are meant to be for production, the charm can b
 
 The Kafka and ZooKeeper operators can both be deployed as follows:
 ```shell
-$ juju deploy zookeeper-k8s --channel latest/edge -n 5
-$ juju deploy kafka-k8s --channel latest/edge -n 3
+$ juju deploy zookeeper-k8s --channel edge -n 5
+$ juju deploy kafka-k8s --channel edge -n 3
 ```
 
 After this, it is necessary to connect them:
