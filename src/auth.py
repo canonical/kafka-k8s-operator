@@ -9,6 +9,9 @@ import re
 from dataclasses import asdict, dataclass
 from typing import Optional, Set
 
+from ops.pebble import ExecError
+
+from literals import REL_NAME
 from utils import run_bin_command
 
 logger = logging.getLogger(__name__)
@@ -32,8 +35,13 @@ class KafkaAuth:
         self.opts = self.charm.kafka_config.auth_args
         self.zookeeper = self.charm.kafka_config.zookeeper_config.get("connect", "")
         self.container = self.charm.container
-        self.current_acls: Set[Acl] = set()
         self.new_user_acls: Set[Acl] = set()
+
+    @property
+    def current_acls(self) -> Set[Acl]:
+        """Sets the current cluster ACLs."""
+        acls = self._get_acls_from_cluster()
+        return self._parse_acls(acls=acls)
 
     def _get_acls_from_cluster(self) -> str:
         """Loads the currently active ACLs from the Kafka cluster."""
@@ -87,18 +95,6 @@ class KafkaAuth:
                 )
 
         return current_acls
-
-    def load_current_acls(self) -> None:
-        """Sets the current cluster ACLs to the instance state.
-
-        State is set to `KafkaAuth.current_acls`.
-
-        Raises:
-            `subprocess.CalledProcessError`: if the error returned a non-zero exit code
-        """
-        acls = self._get_acls_from_cluster()
-
-        self.current_acls = self._parse_acls(acls=acls)
 
     @staticmethod
     def _generate_producer_acls(topic: str, username: str, **_) -> Set[Acl]:
@@ -185,13 +181,19 @@ class KafkaAuth:
             f"--entity-name={username}",
             "--delete-config=SCRAM-SHA-512",
         ]
-        run_bin_command(
-            container=self.container,
-            bin_keyword="configs",
-            bin_args=command,
-            extra_args=self.opts,
-            zk_tls_config_filepath=self.charm.kafka_config.server_properties_filepath,
-        )
+        try:
+            run_bin_command(
+                container=self.container,
+                bin_keyword="configs",
+                bin_args=command,
+                extra_args=self.opts,
+                zk_tls_config_filepath=self.charm.kafka_config.server_properties_filepath,
+            )
+        except ExecError as e:
+            if "delete a user credential that does not exist" in str(e.stderr):
+                logger.warning(f"User: {username} can't be deleted, it does not exist")
+                return
+            raise
 
     def add_acl(
         self, username: str, operation: str, resource_type: str, resource_name: str
@@ -331,3 +333,20 @@ class KafkaAuth:
         acls_to_remove = current_user_acls - self.new_user_acls
         for acl in acls_to_remove:
             self.remove_acl(**asdict(acl))
+
+    def clear_users(self) -> None:
+        """Check existing relations and remove deleted users."""
+        current_usernames = [acl.username for acl in self.current_acls]
+        relation_usernames = [
+            f"relation-{relation.id}" for relation in self.charm.model.relation[REL_NAME]
+        ]
+        to_remove = [
+            username for username in current_usernames if username not in relation_usernames
+        ]
+
+        for username in to_remove:
+            self.remove_all_user_acls(username=username)
+            self.delete_user(username=username)
+            # non-leader units need cluster_config_changed event to update their super.users
+            # update on the peer relation data will trigger an update of server properties on all unit
+            self.charm.app_peer_data.update({username: ""})
