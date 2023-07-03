@@ -107,22 +107,18 @@ class KafkaProvider(Object):
         Args:
             event: the event from a related client application needing a user
         """
-        print("1")
         # don't remove anything if app is going down
         if self.charm.app.planned_units == 0:
             return
 
-        print("2")
         if not self.charm.unit.is_leader() or not self.charm.peer_relation:
             return
 
-        print("3")
         if not self.charm.ready_to_start:
             logger.debug("cannot remove user, ZooKeeper not yet connected")
             event.defer()
             return
 
-        print("4")
         if event.relation.app != self.charm.app or not self.charm.app.planned_units() == 0:
             username = f"relation-{event.relation.id}"
             self.kafka_auth.remove_all_user_acls(username=username)
