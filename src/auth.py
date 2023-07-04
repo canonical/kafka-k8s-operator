@@ -333,20 +333,3 @@ class KafkaAuth:
         acls_to_remove = current_user_acls - self.new_user_acls
         for acl in acls_to_remove:
             self.remove_acl(**asdict(acl))
-
-    def clear_users(self) -> None:
-        """Check existing relations and remove deleted users."""
-        current_usernames = [acl.username for acl in self.current_acls]
-        relation_usernames = [
-            f"relation-{relation.id}" for relation in self.charm.model.relation[REL_NAME]
-        ]
-        to_remove = [
-            username for username in current_usernames if username not in relation_usernames
-        ]
-
-        for username in to_remove:
-            self.remove_all_user_acls(username=username)
-            self.delete_user(username=username)
-            # non-leader units need cluster_config_changed event to update their super.users
-            # update on the peer relation data will trigger an update of server properties on all unit
-            self.charm.app_peer_data.update({username: ""})

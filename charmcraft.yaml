@@ -6,6 +6,7 @@ parts:
   charm:
     charm-binary-python-packages:
       - setuptools
+      - pydantic
     build-packages:
       - libffi-dev
       - libssl-dev
