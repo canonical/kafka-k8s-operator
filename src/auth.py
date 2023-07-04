@@ -11,7 +11,6 @@ from typing import Optional, Set
 
 from ops.pebble import ExecError
 
-from literals import REL_NAME
 from utils import run_bin_command
 
 logger = logging.getLogger(__name__)
