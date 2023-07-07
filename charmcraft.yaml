@@ -1,4 +1,4 @@
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 type: charm
@@ -6,6 +6,7 @@ parts:
   charm:
     charm-binary-python-packages:
       - setuptools
+      - pydantic
     build-packages:
       - libffi-dev
       - libssl-dev

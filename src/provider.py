@@ -5,17 +5,15 @@
 """KafkaProvider class and methods."""
 
 import logging
-from typing import Optional
 
 from charms.data_platform_libs.v0.data_interfaces import KafkaProvides, TopicRequestedEvent
 from ops.charm import RelationBrokenEvent, RelationCreatedEvent
 from ops.framework import Object
-from ops.model import Relation
 from ops.pebble import ExecError
 
 from auth import KafkaAuth
 from config import KafkaConfig
-from literals import PEER, REL_NAME
+from literals import REL_NAME
 from utils import generate_password
 
 logger = logging.getLogger(__name__)
@@ -38,17 +36,9 @@ class KafkaProvider(Object):
 
         self.framework.observe(self.charm.on[REL_NAME].relation_broken, self._on_relation_broken)
 
-        self.framework.observe(self.kafka_provider.on.topic_requested, self.on_topic_requested)
-
-    @property
-    def peer_relation(self) -> Optional[Relation]:
-        """The Kafka cluster's peer relation."""
-        return self.charm.model.get_relation(PEER)
-
-    def _on_relation_created(self, event: RelationCreatedEvent) -> None:
-        """Handler for `kafka-client-relation-created` event."""
-        # this will trigger kafka restart (if needed) before granting credentials
-        self.charm._on_config_changed(event)
+        self.framework.observe(
+            getattr(self.kafka_provider.on, "topic_requested"), self.on_topic_requested
+        )
 
     def on_topic_requested(self, event: TopicRequestedEvent):
         """Handle the on topic requested event."""
@@ -59,14 +49,14 @@ class KafkaProvider(Object):
         # on all unit update the server properties to enable client listener if needed
         self.charm._on_config_changed(event)
 
-        if not self.charm.unit.is_leader() or not self.peer_relation:
+        if not self.charm.unit.is_leader() or not self.charm.peer_relation:
             return
 
         extra_user_roles = event.extra_user_roles or ""
         topic = event.topic or ""
         relation = event.relation
         username = f"relation-{relation.id}"
-        password = self.peer_relation.data[self.charm.app].get(username) or generate_password()
+        password = self.charm.app_peer_data.get(username) or generate_password()
         bootstrap_server = self.charm.kafka_config.bootstrap_server
         zookeeper_uris = self.charm.kafka_config.zookeeper_config.get("connect", "")
         tls = "enabled" if self.charm.tls.enabled else "disabled"
@@ -86,10 +76,7 @@ class KafkaProvider(Object):
             event.defer()
             return
 
-        # non-leader units need cluster_config_changed event to update their super.users
-        self.peer_relation.data[self.charm.app].update({username: password})
-
-        self.kafka_auth.load_current_acls()
+        self.charm.app_peer_data.update({username: password})
 
         self.kafka_auth.update_user_acls(
             username=username,
@@ -98,10 +85,7 @@ class KafkaProvider(Object):
             group=consumer_group_prefix,
         )
 
-        # non-leader units need cluster_config_changed event to update their super.users
-        self.peer_relation.data[self.charm.app].update(
-            {"super-users": self.kafka_config.super_users}
-        )
+        self.charm.app_peer_data.update({"super-users": self.kafka_config.super_users})
 
         self.kafka_provider.set_bootstrap_server(relation.id, ",".join(bootstrap_server))
         self.kafka_provider.set_consumer_group_prefix(relation.id, consumer_group_prefix)
@@ -109,6 +93,11 @@ class KafkaProvider(Object):
         self.kafka_provider.set_tls(relation.id, tls)
         self.kafka_provider.set_zookeeper_uris(relation.id, zookeeper_uris)
         self.kafka_provider.set_topic(relation.id, topic)
+
+    def _on_relation_created(self, event: RelationCreatedEvent) -> None:
+        """Handler for `kafka-client-relation-created` event."""
+        # this will trigger kafka restart (if needed) before granting credentials
+        self.charm._on_config_changed(event)
 
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
         """Handler for `kafka-client-relation-broken` event.
@@ -118,7 +107,11 @@ class KafkaProvider(Object):
         Args:
             event: the event from a related client application needing a user
         """
-        if not self.charm.unit.is_leader():
+        # don't remove anything if app is going down
+        if self.charm.app.planned_units == 0:
+            return
+
+        if not self.charm.unit.is_leader() or not self.charm.peer_relation:
             return
 
         if not self.charm.ready_to_start:
@@ -127,14 +120,11 @@ class KafkaProvider(Object):
             return
 
         if event.relation.app != self.charm.app or not self.charm.app.planned_units() == 0:
-            self.kafka_auth.load_current_acls()
             username = f"relation-{event.relation.id}"
-            self.kafka_auth.remove_all_user_acls(
-                username=username,
-            )
+            self.kafka_auth.remove_all_user_acls(username=username)
             self.kafka_auth.delete_user(username=username)
             # non-leader units need cluster_config_changed event to update their super.users
-            self.charm.peer_relation.data[self.charm.app].update({username: ""})
+            self.charm.app_peer_data.update({username: ""})
 
     def update_connection_info(self):
         """Updates all relations with current endpoints, bootstrap-server and tls data.
