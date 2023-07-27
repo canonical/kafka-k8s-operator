@@ -7,3 +7,5 @@ coverage.xml
 __pycache__/
 *.py[cod]
 .vscode
+.idea
+.python-version
