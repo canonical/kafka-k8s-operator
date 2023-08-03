@@ -36,11 +36,11 @@ from literals import (
     JAVA_HOME,
     JMX_EXPORTER_PORT,
     LOGS_PATH,
+    LOGS_RULES_DIR,
+    METRICS_RULES_DIR,
     PEER,
     REL_NAME,
     ZOOKEEPER_REL_NAME,
-    METRICS_RULES_DIR,
-    LOGS_RULES_DIR,
     DebugLevel,
     Status,
 )
