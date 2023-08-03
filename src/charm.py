@@ -39,6 +39,8 @@ from literals import (
     PEER,
     REL_NAME,
     ZOOKEEPER_REL_NAME,
+    METRICS_RULES_DIR,
+    LOGS_RULES_DIR,
     DebugLevel,
     Status,
 )
@@ -65,11 +67,13 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         self.metrics_endpoint = MetricsEndpointProvider(
             self,
             jobs=[{"static_configs": [{"targets": [f"*:{JMX_EXPORTER_PORT}"]}]}],
+            alert_rules_path=METRICS_RULES_DIR,
         )
         self.grafana_dashboards = GrafanaDashboardProvider(self)
         self.loki_push = LogProxyConsumer(
             self,
             log_files=[f"{LOGS_PATH}/server.log"],
+            alert_rules_path=LOGS_RULES_DIR,
             relation_name="logging",
             container_name="kafka",
         )

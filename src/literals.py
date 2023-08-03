@@ -27,6 +27,9 @@ LOGS_PATH = "/var/log/kafka"
 BINARIES_PATH = "/opt/kafka"
 JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64"
 
+METRICS_RULES_DIR = "./src/alert_rules/prometheus"
+LOGS_RULES_DIR = "./src/alert_rules/loki"
+
 INTER_BROKER_USER = "sync"
 ADMIN_USER = "admin"
 INTERNAL_USERS = [INTER_BROKER_USER, ADMIN_USER]
