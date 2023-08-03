@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Library to provide simple API for promoting typed, validated and structured dataclass in charms.
+r"""Library to provide simple API for promoting typed, validated and structured dataclass in charms.
 
 Dict-like data structure are often used in charms. They are used for config, action parameters
 and databag. This library aims at providing simple API for using pydantic BaseModel-derived class
@@ -168,9 +168,9 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 1
+LIBPATCH = 3
 
-PYDEPS = ["ops>=2.0.0", "pydantic>=1.10"]
+PYDEPS = ["ops>=2.0.0", "pydantic>=1.10,<2"]
 
 G = TypeVar("G")
 T = TypeVar("T", bound=BaseModel)
@@ -248,10 +248,10 @@ def read(relation_data: MutableMapping[str, str], obj: Type[T]) -> T:
         **{
             field_name: (
                 relation_data[parsed_key]
-                if field.type_ in [int, str, float]
+                if field.annotation in [int, str, float]
                 else json.loads(relation_data[parsed_key])
             )
-            for field_name, field in obj.__fields__.items()
+            for field_name, field in obj.__fields__.items()  # pyright: ignore[reportGeneralTypeIssues]
             if (parsed_key := field_name.replace("_", "-")) in relation_data
             if relation_data[parsed_key]
         }
@@ -275,8 +275,8 @@ def parse_relation_data(
             [
                 CharmBase,
                 RelationEvent,
-                Union[AppModel, ValidationError],
-                Union[UnitModel, ValidationError],
+                Optional[Union[AppModel, ValidationError]],
+                Optional[Union[UnitModel, ValidationError]],
             ],
             G,
         ]
@@ -286,7 +286,7 @@ def parse_relation_data(
             try:
                 app_data = (
                     read(event.relation.data[event.app], app_model)
-                    if app_model is not None
+                    if app_model is not None and event.app
                     else None
                 )
             except pydantic.ValidationError as e:
@@ -295,7 +295,7 @@ def parse_relation_data(
             try:
                 unit_data = (
                     read(event.relation.data[event.unit], unit_model)
-                    if unit_model is not None
+                    if unit_model is not None and event.unit
                     else None
                 )
             except pydantic.ValidationError as e:
