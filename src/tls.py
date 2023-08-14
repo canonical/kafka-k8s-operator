@@ -350,6 +350,20 @@ class KafkaTLS(Object):
             raise
 
     @property
+    def _extra_sans(self) -> List[str]:
+        """Parse the certificate_extra_sans config option."""
+        extra_sans = self.charm.config.certificate_extra_sans or ""
+        parsed_sans = []
+
+        if extra_sans == "":
+            return parsed_sans
+
+        for sans in extra_sans.split(","):
+            parsed_sans.append(sans.replace("{unit}", self.charm.unit.name.split("/")[1]))
+
+        return parsed_sans
+
+    @property
     def _sans(self) -> Dict[str, List[str]]:
         """Builds a SAN dict of DNS names and IPs for the unit."""
         unit_id = self.charm.unit.name.split("/")[1]
@@ -365,5 +379,6 @@ class KafkaTLS(Object):
                 f"{self.charm.app.name}-{unit_id}",
                 f"{self.charm.app.name}-{unit_id}.{self.charm.app.name}-endpoints",
                 socket.getfqdn(),
-            ],
+            ]
+            + self._extra_sans,
         }
