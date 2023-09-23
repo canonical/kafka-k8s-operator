@@ -1,4 +1,4 @@
-## Charmed Kafka K8s Documentation
+# Charmed Kafka K8s Documentation
 
 The Charmed Kafka K8s Operator delivers automated operations management from day 0 to day 2 on the [Apache Kafka](https://kafka.apache.org) event streaming platform deployed on top of a [Kubernetes cluster](https://kubernetes.io/). It is an open source, end-to-end, production ready data platform on top of cloud native technologies.
 
@@ -40,24 +40,3 @@ Please see the [Juju SDK docs](https://juju.is/docs/sdk) for guidelines on enhan
 ## License
 
 The Charmed Kafka K8s Operator is free software, distributed under the Apache Software License, version 2.0. See [LICENSE](https://github.com/canonical/kafka-operator/blob/main/LICENSE) for more information.
-
-# Navigation
-
-| Level | Path                 | Navlink                                                                  |
-|-------|----------------------|--------------------------------------------------------------------------|
-| 1     | how-to               | [How To]()                                                               |
-| 2     | h-manage-units       | [Manage units](/t/charmed-kafka-k8s-how-to-manage-units/10295)           |
-| 2     | h-enable-encryption  | [Enable encryption](/t/charmed-kafka-k8s-how-to-enable-encryption/10289) |
-| 2     | h-manage-app         | [Manage applications](/t/charmed-kafka-k8s-how-to-manage-app/10293)      |
-| 2     | h-enable-monitoring  | [Enable Monitoring](/t/charmed-kafka-k8s-how-to-enable-monitoring/10291) |
-| 1     | reference            | [Reference]()                                                            |
-| 2     | r-actions            | [Actions](https://charmhub.io/kafka-k8s/actions)                         |
-| 2     | r-configurations     | [Configurations](https://charmhub.io/kafka-k8s/configure)                |
-| 2     | r-libraries          | [Libraries](https://charmhub.io/kafka-k8s/libraries/helpers)             |
-
-# Redirects
-
-[details=Mapping table]
-| Path | Location |
-| ---- | -------- |
-[/details]
