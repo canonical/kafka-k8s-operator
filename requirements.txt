@@ -1,6 +1,6 @@
 attrs==23.1.0 ; python_version >= "3.8"
 cffi==1.15.1 ; python_version >= "3.8"
-cryptography==39.0.2 ; python_version >= "3.8"
+cryptography==41.0.4 ; python_version >= "3.8"
 importlib-resources==6.1.0 ; python_version < "3.9" and python_version >= "3.8"
 jsonschema-specifications==2023.7.1 ; python_version >= "3.8"
 jsonschema==4.19.1 ; python_version >= "3.8"
