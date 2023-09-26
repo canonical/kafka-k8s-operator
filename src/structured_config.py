@@ -67,6 +67,7 @@ class CharmConfig(BaseConfigModel):
     ssl_cipher_suites: Optional[str]
     replication_quota_window_num: int
     zookeeper_ssl_cipher_suites: Optional[str]
+    certificate_extra_sans: Optional[str]
 
     @validator("*", pre=True)
     @classmethod
