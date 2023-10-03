@@ -96,8 +96,6 @@ As before, the admin password is under the result: `password`.
 
 ### Rotate the password
 
-#### With application downtime
-
 The easiest way to rotate user credentials using the `data-integrator` is by removing and then re-relating the `data-integrator` with the `kafka-k8s` charm
 
 ```shell
@@ -127,27 +125,4 @@ kafka:
 ok: "True"
 ```
 
-#### Without application downtime
-
-In some use-cases credentials should be rotated with no or limited application downtime.
-In order to achieve this, you can deploy a new `data-integrator` with the same permissions and resource definition
-```shell
-juju deploy data-integrator rotated-user --channel stable \
-  --config topic-name=test-topic --config extra-user-roles=admin
-```
-
-The `data-integrator` charm can then be related to the `kafka-k8s` charm to create a new user
-```shell
-juju relate kafka-k8s rotated-user
-```
-
-At this point, we effectively have two overlapping users, therefore allowing applications to swap the password
-from one to another. 
-If the applications consist of fleets of independent producers and consumers, user credentials can be rotated
-progressively across fleets, such that no effective downtime is achieved. 
-
-Once all applications have rotated their credentials, it is then safe to remove data first `data-integrator` charm
-
-```shell
-juju remove-application data-integrator
-```
+In order to rotate external password with no or limited downtime, please refer to the how-to guide on [app management](/t/charmed-kafka-k8s-how-to-manage-app/10293).
