@@ -14,8 +14,10 @@ from literals import REL_NAME, SECURITY_PROTOCOL_PORTS
 
 from .helpers import (
     APP_NAME,
+    DUMMY_NAME,
     KAFKA_CONTAINER,
     KAFKA_SERIES,
+    REL_NAME_ADMIN,
     ZK_NAME,
     ZK_SERIES,
     check_application_status,
@@ -26,9 +28,6 @@ from .helpers import (
 )
 
 logger = logging.getLogger(__name__)
-
-DUMMY_NAME = "app"
-REL_NAME_ADMIN = "kafka-client-admin"
 
 
 @pytest.mark.abort_on_fail

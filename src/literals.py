@@ -13,7 +13,7 @@ from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, StatusBase
 CHARM_KEY = "kafka-k8s"
 ZK_NAME = "zookeeper-k8s"
 PEER = "cluster"
-ZOOKEEPER_REL_NAME = "zookeeper"
+ZK_REL_NAME = "zookeeper"
 CHARM_USERS = ["sync"]
 REL_NAME = "kafka-client"
 TLS_RELATION = "certificates"

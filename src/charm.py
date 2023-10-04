@@ -40,7 +40,7 @@ from literals import (
     METRICS_RULES_DIR,
     PEER,
     REL_NAME,
-    ZOOKEEPER_REL_NAME,
+    ZK_REL_NAME,
     DebugLevel,
     Status,
 )
@@ -84,18 +84,10 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
         self.framework.observe(self.on[PEER].relation_changed, self._on_config_changed)
 
-        self.framework.observe(
-            self.on[ZOOKEEPER_REL_NAME].relation_created, self._on_zookeeper_created
-        )
-        self.framework.observe(
-            self.on[ZOOKEEPER_REL_NAME].relation_joined, self._on_zookeeper_changed
-        )
-        self.framework.observe(
-            self.on[ZOOKEEPER_REL_NAME].relation_changed, self._on_zookeeper_changed
-        )
-        self.framework.observe(
-            self.on[ZOOKEEPER_REL_NAME].relation_broken, self._on_zookeeper_broken
-        )
+        self.framework.observe(self.on[ZK_REL_NAME].relation_created, self._on_zookeeper_created)
+        self.framework.observe(self.on[ZK_REL_NAME].relation_joined, self._on_zookeeper_changed)
+        self.framework.observe(self.on[ZK_REL_NAME].relation_changed, self._on_zookeeper_changed)
+        self.framework.observe(self.on[ZK_REL_NAME].relation_broken, self._on_zookeeper_broken)
 
         self.framework.observe(getattr(self.on, "set_password_action"), self._set_password_action)
         self.framework.observe(
@@ -257,7 +249,6 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
         if not self.kafka_config.zookeeper_connected:
             self._set_status(Status.ZK_NO_DATA)
-            event.defer()
             return
 
         # TLS must be enabled for Kafka and ZK or disabled for both
@@ -328,7 +319,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
-        if not self.ready_to_start:
+        if not self.healthy:
             event.defer()
             return
 

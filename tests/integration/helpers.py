@@ -27,11 +27,15 @@ logger = logging.getLogger(__name__)
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 KAFKA_CONTAINER = METADATA["resources"]["kafka-image"]["upstream-source"]
-KAFKA_SERIES = "jammy"
 APP_NAME = METADATA["name"]
+KAFKA_SERIES = "jammy"
 ZK_NAME = "zookeeper-k8s"
 ZK_SERIES = "jammy"
+DATA_INTEGRATOR_NAME = "data-integrator"
 TLS_SERIES = "jammy"
+DUMMY_NAME = "app"
+REL_NAME_ADMIN = "kafka-client-admin"
+TEST_DEFAULT_MESSAGES = 15
 
 
 def load_acls(model_full_name: str, zookeeper_uri: str) -> Set[Acl]:

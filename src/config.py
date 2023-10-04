@@ -23,7 +23,7 @@ from literals import (
     REL_NAME,
     SECURITY_PROTOCOL_PORTS,
     STORAGE,
-    ZOOKEEPER_REL_NAME,
+    ZK_REL_NAME,
     AuthMechanism,
     Scope,
 )
@@ -152,7 +152,7 @@ class KafkaConfig:
         """
         zookeeper_config = {}
         # loop through all relations to ZK, attempt to find all needed config
-        for relation in self.charm.model.relations[ZOOKEEPER_REL_NAME]:
+        for relation in self.charm.model.relations[ZK_REL_NAME]:
             if not relation.app:
                 continue
 
@@ -185,7 +185,7 @@ class KafkaConfig:
         Returns:
             True if there is a ZooKeeper relation. Otherwise False
         """
-        return bool(self.charm.model.relations[ZOOKEEPER_REL_NAME])
+        return bool(self.charm.model.relations[ZK_REL_NAME])
 
     @property
     def zookeeper_connected(self) -> bool:
