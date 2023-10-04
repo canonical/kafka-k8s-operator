@@ -19,7 +19,7 @@ from literals import (
     PEER,
     REL_NAME,
     STORAGE,
-    ZOOKEEPER_REL_NAME,
+    ZK_REL_NAME,
 )
 
 logger = logging.getLogger(__name__)
@@ -64,18 +64,18 @@ def test_zookeeper_joined_sets_chroot(harness):
     """Checks chroot is added to ZK relation data on ZKrelationjoined hook."""
     harness.add_relation(PEER, CHARM_KEY)
     harness.set_leader(True)
-    zk_rel_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
+    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
     harness.add_relation_unit(zk_rel_id, "zookeeper/0")
 
-    assert CHARM_KEY in harness.charm.model.relations[ZOOKEEPER_REL_NAME][0].data[
-        harness.charm.app
-    ].get("chroot", "")
+    assert CHARM_KEY in harness.charm.model.relations[ZK_REL_NAME][0].data[harness.charm.app].get(
+        "chroot", ""
+    )
 
 
 def test_zookeeper_broken_stops_service(harness):
     """Checks service stops and unit blocks on ZKrelationbroken hook."""
     harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
+    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
 
     with patch("ops.model.Container.stop") as patched_stop:
         harness.remove_relation(zk_rel_id)
@@ -95,11 +95,11 @@ def test_pebble_ready_defers_without_zookeeper(harness):
 def test_pebble_ready_sets_necessary_config(harness):
     """Checks event writes all needed config to unit on pebble_ready hook."""
     harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
+    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
     harness.add_relation_unit(zk_rel_id, "zookeeper/0")
     harness.update_relation_data(
         zk_rel_id,
-        ZOOKEEPER_REL_NAME,
+        ZK_REL_NAME,
         {
             "username": "relation-1",
             "password": "mellon",
@@ -126,11 +126,11 @@ def test_pebble_ready_sets_necessary_config(harness):
 def test_pebble_ready_does_not_start_if_not_ready(harness):
     """Checks service does not start before ready on pebble_ready hook."""
     peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
+    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
     harness.add_relation_unit(zk_rel_id, "zookeeper/0")
     harness.update_relation_data(
         zk_rel_id,
-        ZOOKEEPER_REL_NAME,
+        ZK_REL_NAME,
         {
             "username": "relation-1",
             "password": "mellon",
@@ -160,11 +160,11 @@ def test_pebble_ready_does_not_start_if_not_ready(harness):
 def test_pebble_ready_does_not_start_if_not_same_tls_as_zk(harness):
     """Checks service does not start if mismatch Kafka+ZK TLS on pebble_ready hook."""
     peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
+    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
     harness.add_relation_unit(zk_rel_id, "zookeeper/0")
     harness.update_relation_data(
         zk_rel_id,
-        ZOOKEEPER_REL_NAME,
+        ZK_REL_NAME,
         {
             "username": "relation-1",
             "password": "mellon",
@@ -192,11 +192,11 @@ def test_pebble_ready_does_not_start_if_not_same_tls_as_zk(harness):
 def test_pebble_ready_does_not_start_if_leader_has_not_set_creds(harness):
     """Checks service does not start without inter-broker creds on pebble_ready hook."""
     peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
+    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
     harness.add_relation_unit(zk_rel_id, "zookeeper/0")
     harness.update_relation_data(
         zk_rel_id,
-        ZOOKEEPER_REL_NAME,
+        ZK_REL_NAME,
         {
             "username": "relation-1",
             "password": "mellon",
@@ -232,7 +232,7 @@ def test_config_changed_updates_properties(harness):
             return_value=["gandalf=white"],
         ),
         patch("config.KafkaConfig.set_client_properties"),
-        patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
+        patch("charm.KafkaK8sCharm.healthy", new_callable=PropertyMock, return_value=True),
         patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=grey")),
         patch("config.KafkaConfig.set_server_properties") as set_props,
     ):
@@ -244,11 +244,11 @@ def test_config_changed_updates_properties(harness):
 def test_start_does_not_start_if_leader_has_not_set_creds(harness):
     """Checks snap service does not start without inter-broker creds on start hook."""
     peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
+    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
     harness.add_relation_unit(zk_rel_id, "zookeeper/0")
     harness.update_relation_data(
         zk_rel_id,
-        ZOOKEEPER_REL_NAME,
+        ZK_REL_NAME,
         {
             "username": "relation-1",
             "password": "mellon",
@@ -283,7 +283,7 @@ def test_config_changed_updates_server_properties(harness):
             new_callable=PropertyMock,
             return_value=["gandalf=white"],
         ),
-        patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
+        patch("charm.KafkaK8sCharm.healthy", new_callable=PropertyMock, return_value=True),
         patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=grey")),
         patch("config.KafkaConfig.set_server_properties") as set_server_properties,
         patch("config.KafkaConfig.set_client_properties"),
@@ -309,7 +309,7 @@ def test_config_changed_updates_client_properties(harness):
             new_callable=PropertyMock,
             return_value=["sauron=bad"],
         ),
-        patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
+        patch("charm.KafkaK8sCharm.healthy", new_callable=PropertyMock, return_value=True),
         patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=grey")),
         patch("config.KafkaConfig.set_server_properties"),
         patch("config.KafkaConfig.set_client_properties") as set_client_properties,
@@ -331,7 +331,7 @@ def test_config_changed_updates_client_data(harness):
             new_callable=PropertyMock,
             return_value=["gandalf=white"],
         ),
-        patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
+        patch("charm.KafkaK8sCharm.healthy", new_callable=PropertyMock, return_value=True),
         patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=white")),
         patch("provider.KafkaProvider.update_connection_info") as patched_update_connection_info,
     ):

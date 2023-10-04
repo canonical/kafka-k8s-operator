@@ -29,6 +29,7 @@ from integration.helpers import (
     KAFKA_SERIES,
     ZK_NAME,
     ZK_SERIES,
+    check_application_status,
 )
 
 RESTART_DELAY = 60
@@ -86,20 +87,20 @@ async def test_build_and_deploy(ops_test: OpsTest):
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME, ZK_NAME, DATA_INTEGRATOR_NAME], idle_period=30, timeout=3600
     )
-    assert ops_test.model.applications[APP_NAME].status == "blocked"
-    assert ops_test.model.applications[ZK_NAME].status == "active"
-    assert ops_test.model.applications[DATA_INTEGRATOR_NAME].status == "blocked"
+    assert check_application_status(ops_test, APP_NAME) == "waiting"
+    assert check_application_status(ops_test, ZK_NAME) == "active"
+    assert check_application_status(ops_test, DATA_INTEGRATOR_NAME) == "waiting"
 
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
     async with ops_test.fast_forward(fast_interval="30s"):
         await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], idle_period=30)
-        assert ops_test.model.applications[APP_NAME].status == "active"
-        assert ops_test.model.applications[ZK_NAME].status == "active"
+        assert check_application_status(ops_test, APP_NAME) == "active"
+        assert check_application_status(ops_test, ZK_NAME) == "active"
 
     await ops_test.model.add_relation(APP_NAME, DATA_INTEGRATOR_NAME)
     await ops_test.model.wait_for_idle(apps=[APP_NAME, DATA_INTEGRATOR_NAME], idle_period=30)
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[DATA_INTEGRATOR_NAME].status == "active"
+    assert check_application_status(ops_test, APP_NAME) == "active"
+    assert check_application_status(ops_test, DATA_INTEGRATOR_NAME) == "active"
 
 
 @pytest.mark.do_test

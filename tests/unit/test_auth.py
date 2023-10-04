@@ -13,7 +13,7 @@ from tests.unit.helpers import DummyExec
 
 from auth import Acl, KafkaAuth
 from charm import KafkaK8sCharm
-from literals import CHARM_KEY, CONTAINER, PEER, ZOOKEEPER_REL_NAME
+from literals import CHARM_KEY, CONTAINER, PEER, ZK_REL_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +95,11 @@ def test_generate_consumer_acls():
 
 def test_get_acls_tls_adds_zk_tls_flag(harness):
     peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
+    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
     harness.add_relation_unit(zk_rel_id, "zookeeper/0")
     harness.update_relation_data(
         zk_rel_id,
-        ZOOKEEPER_REL_NAME,
+        ZK_REL_NAME,
         {
             "username": "relation-1",
             "password": "mellon",
@@ -128,11 +128,11 @@ def test_get_acls_tls_adds_zk_tls_flag(harness):
 
 def test_add_user_adds_zk_tls_flag(harness):
     peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
+    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
     harness.add_relation_unit(zk_rel_id, "zookeeper/0")
     harness.update_relation_data(
         zk_rel_id,
-        ZOOKEEPER_REL_NAME,
+        ZK_REL_NAME,
         {
             "username": "relation-1",
             "password": "mellon",
@@ -160,11 +160,11 @@ def test_add_user_adds_zk_tls_flag(harness):
 
 def test_delete_user_adds_zk_tls_flag(harness):
     peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
+    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
     harness.add_relation_unit(zk_rel_id, "zookeeper/0")
     harness.update_relation_data(
         zk_rel_id,
-        ZOOKEEPER_REL_NAME,
+        ZK_REL_NAME,
         {
             "username": "relation-1",
             "password": "mellon",
