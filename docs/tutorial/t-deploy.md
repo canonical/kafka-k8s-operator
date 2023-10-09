@@ -74,12 +74,16 @@ Providing you the `username` and `password` of the Kafka cluster admin user.
 Nevertheless, it is still possible to run a command from within the Kafka cluster. To do so, log in into one of the Kafka container in one of the units
 
 ```shell
-juju ssh --container kafka kafka-k8s/0 /bin/bash
+juju ssh --container kafka kafka-k8s/leader sudo -i 
 ```
 
 The Charmed Kafka K8s image ships with the Apache Kafka `bin/*.sh` commands, that can be found under `/opt/kafka/bin/`.
 These allow admin to do various administrative tasks, e.g `bin/kafka-config.sh` to update cluster configuration, `bin/kafka-topics.sh` for topic management, and many more! 
 Within the image you can also find a `client.properties` file that already provides the relevant settings to connect to the cluster using the CLI. 
+
+```shell
+export CLIENT_PROPERTIES=/etc/kafka/client.properties
+```
 
 Since we don't have any client applications related yet and therefore external listeners are initially closed, if you wish to run a command from the cluster you ought to use the internal listeners exposed at ports 19092.  
 ```shell
@@ -91,7 +95,7 @@ We are now ready to perform some administrative tasks. For example, in order to 
 /opt/kafka/bin//kafka-topics.sh \
     --create --topic test_topic \
     --bootstrap-server  $INTERNAL_LISTENERS \
-    --command-config /etc/kafka/client.properties
+    --command-config $CLIENT_PROPERTIES
 ```
 
 You can similarly then list the topic, using
@@ -99,7 +103,7 @@ You can similarly then list the topic, using
 /opt/kafka/bin//kafka-topics.sh \
     --list \
     --bootstrap-server  $INTERNAL_LISTENERS \
-    --command-config /etc/kafka/client.properties
+    --command-config $CLIENT_PROPERTIES
 ```
 
 making sure the topic was successfully created.
@@ -110,9 +114,8 @@ You can finally delete the topic, using
 /opt/kafka/bin//kafka-topics.sh \
     --delete --topic test_topic \
     --bootstrap-server  $INTERNAL_LISTENERS \
-    --command-config /etc/kafka/client.properties
+    --command-config $CLIENT_PROPERTIES
 ```
-
 
 However, although the commands above can run within the cluster, it is generally recommended during operations
 to enable external listeners and use these for running the admin commands from outside the cluster. 
