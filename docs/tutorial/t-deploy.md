@@ -4,7 +4,7 @@ This is part of the [Charmed Kafka K8s Tutorial](/t/charmed-kafka-k8s-documentat
 
 ## Deploy
 
-To deploy Charmed Kafka, all you need to do is run the following command, which will fetch the needed charms([Kafka](https://charmhub.io/kafka-k8s?channel=3/stable) and [Zookeeper](https://charmhub.io/zookeeper-k8s?channel=3/stable)) from [Charmhub](https://charmhub.io/) and deploy it to your model:
+To deploy Charmed Kafka K8s, all you need to do is run the following commands, which will automatically fetch [Kafka](https://charmhub.io/kafka-k8s?channel=3/stable) and [Zookeeper](https://charmhub.io/zookeeper-k8s?channel=3/stable) charms from [Charmhub](https://charmhub.io/) and deploy them to your model. For example, to deploy a 5 Zookeeper unit and 3 Kafka unit cluster, you can simply run
 
 ```shell
 $ juju deploy zookeeper-k8s -n 3 --channel=3/edge
@@ -79,7 +79,7 @@ juju ssh --container kafka kafka-k8s/leader sudo -i
 
 The Charmed Kafka K8s image ships with the Apache Kafka `bin/*.sh` commands, that can be found under `/opt/kafka/bin/`.
 These allow admin to do various administrative tasks, e.g `bin/kafka-config.sh` to update cluster configuration, `bin/kafka-topics.sh` for topic management, and many more! 
-Within the image you can also find a `client.properties` file that already provides the relevant settings to connect to the cluster using the CLI. 
+Within the image you can also find a `client.properties` file that already provides the relevant settings to connect to the cluster using the CLI:
 
 ```shell
 export CLIENT_PROPERTIES=/etc/kafka/client.properties
