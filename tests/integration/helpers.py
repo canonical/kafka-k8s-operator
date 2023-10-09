@@ -5,6 +5,7 @@
 import logging
 import re
 import socket
+import subprocess
 from contextlib import closing
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
@@ -127,6 +128,82 @@ async def get_address(ops_test: OpsTest, app_name=APP_NAME, unit_num=0) -> str:
     status = await ops_test.model.get_status()  # noqa: F821
     address = status["applications"][app_name]["units"][f"{app_name}/{unit_num}"]["address"]
     return address
+
+
+def get_unit_address_map(ops_test: OpsTest, app_name: str = APP_NAME) -> dict[str, str]:
+    """Returns map on unit name and host.
+
+    Args:
+        ops_test: OpsTest
+        app_name: the Juju application to get hosts from
+            Defaults to `kafka-k8s`
+
+    Returns:
+        Dict of key unit name, value unit address
+    """
+    ips = subprocess.check_output(
+        f"JUJU_MODEL={ops_test.model.info.name} juju status {app_name} --format json | jq '.applications | .\"{app_name}\" | .units | .. .address? // empty' | xargs | tr -d '\"'",
+        shell=True,
+        universal_newlines=True,
+    ).split()
+    hosts = subprocess.check_output(
+        f'JUJU_MODEL={ops_test.model.info.name} juju status {app_name} --format json | jq \'.applications | ."{app_name}" | .units | keys | join(" ")\' | tr -d \'"\'',
+        shell=True,
+        universal_newlines=True,
+    ).split()
+
+    return {hosts[i]: ips[i] for i in range(len(ips))}
+
+
+def get_bootstrap_servers(ops_test: OpsTest, app_name: str = APP_NAME, port: int = 9092) -> str:
+    """Gets all Kafka server addresses for a given application.
+
+    Args:
+        ops_test: OpsTest
+        app_name: the Juju application to get hosts from
+            Defaults to `kafka-k8s`
+        port: the desired Kafka port.
+            Defaults to `9092`
+
+    Returns:
+        List of Kafka server addresses and ports
+    """
+    return ",".join(f"{host}:{port}" for host in get_unit_address_map(ops_test, app_name).values())
+
+
+def get_unit_name_from_host(ops_test: OpsTest, host: str, app_name: str = APP_NAME) -> str:
+    """Gets unit name for a given Kafka server address.
+
+    Args:
+        ops_test: OpsTest
+        host: the Kafka ip address and port
+        app_name: the Juju application the Kafka server belongs to
+            Defaults to `kafka-k8s`
+
+    Returns:
+        String of unit name
+    """
+    for unit, address in get_unit_address_map(ops_test, app_name).items():
+        if address == host.split(":")[0]:
+            return unit
+
+    raise KeyError(f"{host} not found")
+
+
+def get_k8s_host_from_unit(unit_name: str, app_name: str = APP_NAME) -> str:
+    """Builds K8s host address for a given unit.
+
+    Args:
+        unit_name: name of the Juju unit
+        app_name: the Juju application the Kafka server belongs to
+            Defaults to `kafka-k8s`
+
+    Returns:
+        String of k8s host address
+    """
+    broker_id = unit_name.split("/")[1]
+
+    return f"{app_name}-{broker_id}.{app_name}-endpoints"
 
 
 async def set_password(ops_test: OpsTest, username="sync", password=None, num_unit=0) -> str:

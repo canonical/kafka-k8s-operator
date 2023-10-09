@@ -23,7 +23,7 @@ from tenacity import (
     wait_random,
 )
 
-from integration.helpers import DUMMY_NAME, get_provider_data
+from integration.helpers import DUMMY_NAME, get_bootstrap_servers, get_provider_data
 
 logger = logging.getLogger(__name__)
 
@@ -54,26 +54,32 @@ class ContinuousWrites:
         wait=wait_fixed(wait=5) + wait_random(0, 5),
         stop=stop_after_attempt(5),
     )
-    def start(self) -> None:
+    async def start(self) -> None:
         """Run continuous writes in the background."""
         if not self._is_stopped:
             self.clear()
 
         # create topic
         self._create_replicated_topic()
+        logger.info("CREATED TOPIC")
 
         # create process
         self._create_process()
-
+        logger.info("CREATING PROCESS")
         # pass the model full name to the process once it starts
+        logger.info("PASSING INFORMATION")
         self.update()
+        logger.info("INFORMATION PASSED")
 
         # start writes
         self._process.start()
 
     def update(self):
         """Update cluster related conf. Useful in cases such as scaling, pwd change etc."""
-        self._queue.put(SimpleNamespace(model_full_name=self._ops_test.model_full_name))
+        self._queue.put(
+            SimpleNamespace(model_full_name=self._ops_test.model.info.name),
+            bootstrap_servers=get_bootstrap_servers(self._ops_test),
+        )
 
     @retry(
         wait=wait_fixed(wait=5) + wait_random(0, 5),
@@ -108,11 +114,13 @@ class ContinuousWrites:
     def _create_replicated_topic(self):
         """Create topic with replication_factor = 3."""
         client = self._client()
+        logger.info("CLIENT CREATED FOR NEW TOPIC")
         topic_config = NewTopic(
             name=self.TOPIC_NAME,
             num_partitions=1,
             replication_factor=3,
         )
+        logger.info("CALLING CREATE TOPIC")
         client.create_topic(topic=topic_config)
 
     @retry(
@@ -162,11 +170,11 @@ class ContinuousWrites:
         """Build a Kafka client."""
         relation_data = get_provider_data(
             unit_name=f"{DUMMY_NAME}/0",
-            model_full_name=self._ops_test.model_full_name,
+            model_full_name=self._ops_test.model.info.name,
             endpoint="kafka-client-admin",
         )
         return KafkaClient(
-            servers=relation_data["endpoints"].split(","),
+            servers=get_bootstrap_servers(self._ops_test),
             username=relation_data["username"],
             password=relation_data["password"],
             security_protocol="SASL_PLAINTEXT",
@@ -175,7 +183,9 @@ class ContinuousWrites:
     @staticmethod
     async def _run(event: Event, data_queue: Queue, starting_number: int) -> None:  # noqa: C901
         """Continuous writing."""
+        logger.info("BLOCKING TO GET DATA")
         initial_data = data_queue.get(True)
+        logger.info("GOT DATA")
 
         def _client():
             """Build a Kafka client."""
@@ -185,7 +195,7 @@ class ContinuousWrites:
                 endpoint="kafka-client-admin",
             )
             return KafkaClient(
-                servers=relation_data["endpoints"].split(","),
+                servers=initial_data.bootstrap_servers,
                 username=relation_data["username"],
                 password=relation_data["password"],
                 security_protocol="SASL_PLAINTEXT",
