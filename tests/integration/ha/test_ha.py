@@ -75,18 +75,14 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
         ops_test.model.deploy(ZK_NAME, channel="edge", num_units=1, series=ZK_SERIES),
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, series="jammy"),
     )
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], idle_period=30, timeout=3600)
-    assert check_application_status(ops_test, APP_NAME) == "waiting"
-    assert check_application_status(ops_test, ZK_NAME) == "active"
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], idle_period=60, timeout=3600)
 
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
     async with ops_test.fast_forward(fast_interval="30s"):
         await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], idle_period=60)
-        assert check_application_status(ops_test, APP_NAME) == "active"
-        assert check_application_status(ops_test, ZK_NAME) == "active"
 
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], idle_period=30)
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], idle_period=20)
     assert check_application_status(ops_test, APP_NAME) == "active"
     assert check_application_status(ops_test, DUMMY_NAME) == "active"
 

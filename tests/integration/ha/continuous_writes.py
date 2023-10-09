@@ -23,7 +23,7 @@ from tenacity import (
     wait_random,
 )
 
-from integration.helpers import DUMMY_NAME, get_bootstrap_servers, get_provider_data
+from integration.helpers import DUMMY_NAME, get_provider_data
 
 logger = logging.getLogger(__name__)
 
@@ -76,10 +76,7 @@ class ContinuousWrites:
 
     def update(self):
         """Update cluster related conf. Useful in cases such as scaling, pwd change etc."""
-        self._queue.put(
-            SimpleNamespace(model_full_name=self._ops_test.model.info.name),
-            bootstrap_servers=get_bootstrap_servers(self._ops_test),
-        )
+        self._queue.put(SimpleNamespace(model_full_name=self._ops_test.model.info.name))
 
     @retry(
         wait=wait_fixed(wait=5) + wait_random(0, 5),
@@ -174,7 +171,7 @@ class ContinuousWrites:
             endpoint="kafka-client-admin",
         )
         return KafkaClient(
-            servers=get_bootstrap_servers(self._ops_test),
+            servers=relation_data["endpoints"],
             username=relation_data["username"],
             password=relation_data["password"],
             security_protocol="SASL_PLAINTEXT",
@@ -195,7 +192,7 @@ class ContinuousWrites:
                 endpoint="kafka-client-admin",
             )
             return KafkaClient(
-                servers=initial_data.bootstrap_servers,
+                servers=relation_data["endpoints"],
                 username=relation_data["username"],
                 password=relation_data["password"],
                 security_protocol="SASL_PLAINTEXT",
