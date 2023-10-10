@@ -152,7 +152,7 @@ def get_unit_address_map(ops_test: OpsTest, app_name: str = APP_NAME) -> dict[st
         universal_newlines=True,
     ).split()
 
-    return {hosts[i]: ips[i] for i in range(len(ips))}
+    return dict(zip(hosts, ips))
 
 
 def get_bootstrap_servers(ops_test: OpsTest, app_name: str = APP_NAME, port: int = 9092) -> str:
@@ -169,25 +169,6 @@ def get_bootstrap_servers(ops_test: OpsTest, app_name: str = APP_NAME, port: int
         List of Kafka server addresses and ports
     """
     return ",".join(f"{host}:{port}" for host in get_unit_address_map(ops_test, app_name).values())
-
-
-def get_unit_name_from_host(ops_test: OpsTest, host: str, app_name: str = APP_NAME) -> str:
-    """Gets unit name for a given Kafka server address.
-
-    Args:
-        ops_test: OpsTest
-        host: the Kafka ip address and port
-        app_name: the Juju application the Kafka server belongs to
-            Defaults to `kafka-k8s`
-
-    Returns:
-        String of unit name
-    """
-    for unit, address in get_unit_address_map(ops_test, app_name).items():
-        if address == host.split(":")[0]:
-            return unit
-
-    raise KeyError(f"{host} not found")
 
 
 def get_k8s_host_from_unit(unit_name: str, app_name: str = APP_NAME) -> str:

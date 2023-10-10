@@ -54,22 +54,19 @@ class ContinuousWrites:
         wait=wait_fixed(wait=5) + wait_random(0, 5),
         stop=stop_after_attempt(5),
     )
-    async def start(self) -> None:
+    def start(self) -> None:
         """Run continuous writes in the background."""
         if not self._is_stopped:
             self.clear()
 
         # create topic
         self._create_replicated_topic()
-        logger.info("CREATED TOPIC")
 
         # create process
         self._create_process()
-        logger.info("CREATING PROCESS")
+
         # pass the model full name to the process once it starts
-        logger.info("PASSING INFORMATION")
         self.update()
-        logger.info("INFORMATION PASSED")
 
         # start writes
         self._process.start()
@@ -111,14 +108,13 @@ class ContinuousWrites:
     def _create_replicated_topic(self):
         """Create topic with replication_factor = 3."""
         client = self._client()
-        logger.info("CLIENT CREATED FOR NEW TOPIC")
         topic_config = NewTopic(
             name=self.TOPIC_NAME,
             num_partitions=1,
             replication_factor=3,
         )
-        logger.info("CALLING CREATE TOPIC")
         client.create_topic(topic=topic_config)
+        logger.info(f"Created topic {self.TOPIC_NAME}")
 
     @retry(
         wait=wait_fixed(wait=5) + wait_random(0, 5),
@@ -180,9 +176,7 @@ class ContinuousWrites:
     @staticmethod
     async def _run(event: Event, data_queue: Queue, starting_number: int) -> None:  # noqa: C901
         """Continuous writing."""
-        logger.info("BLOCKING TO GET DATA")
         initial_data = data_queue.get(True)
-        logger.info("GOT DATA")
 
         def _client():
             """Build a Kafka client."""

@@ -69,9 +69,7 @@ def get_topic_description(
     return TopicDescription(leader, in_sync_replicas)
 
 
-async def get_topic_offsets(
-    ops_test: OpsTest, topic: str, unit_name: Optional[str] = None
-) -> list[str]:
+def get_topic_offsets(ops_test: OpsTest, topic: str, unit_name: Optional[str] = None) -> list[str]:
     """Get the offsets of a topic on a unit.
 
     Args:
@@ -179,15 +177,17 @@ def add_k8s_hosts(ops_test=OpsTest):
     for item in dns_pod_map:
         cmd = f"echo {item} | sudo tee -a /etc/hosts"
         check_output(cmd, stderr=PIPE, shell=True, universal_newlines=True)
+        logger.info(f"Added {item} to /etc/hosts")
 
 
 def remove_k8s_hosts(ops_test: OpsTest):
     """Removes the dns hostnames from /etc/hosts file."""
     address_map = get_unit_address_map(ops_test=ops_test)
 
-    for pod_ip in address_map.values():
-        cmd = f"sudo sed -i -e '/^{pod_ip}.*/d' /etc/hosts"
+    for unit_name in address_map.keys():
+        cmd = f"sudo sed -i -e '/.*{get_k8s_host_from_unit(unit_name)}$/d' /etc/hosts"
         check_output(cmd, stderr=PIPE, shell=True, universal_newlines=True)
+        logger.info(f"Removed {unit_name} from /etc/hosts")
 
 
 def is_up(ops_test: OpsTest, broker_id: int) -> bool:
