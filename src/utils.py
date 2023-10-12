@@ -20,7 +20,7 @@ from tenacity.retry import retry_if_not_result
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_fixed
 
-from literals import BINARIES_PATH, CONF_PATH, JAVA_HOME
+from literals import BINARIES_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -95,8 +95,7 @@ def run_bin_command(
     container: Container,
     bin_keyword: str,
     bin_args: List[str],
-    extra_args: str,
-    zk_tls_config_filepath: Optional[str] = None,
+    environment: Optional[str] = None,
 ) -> str:
     """Runs kafka bin command with desired args.
 
@@ -105,19 +104,15 @@ def run_bin_command(
         bin_keyword: the kafka shell script to run
             e.g `configs`, `topics` etc
         bin_args: the shell command args
-        extra_args (optional): the desired `KAFKA_OPTS` env var values for the command
-        zk_tls_config_filepath (optional): the path to properties file for ZK TLS
+        env: any additional environment strings
 
     Returns:
         String of kafka bin command output
     """
-    zk_tls_config_file = zk_tls_config_filepath or f"{CONF_PATH}/server.properties"
-    environment = {"KAFKA_OPTS": " ".join(extra_args), "JAVA_HOME": JAVA_HOME}
-    command = (
-        [f"{BINARIES_PATH}/bin/kafka-{bin_keyword}.sh"]
-        + bin_args
-        + [f"--zk-tls-config-file={zk_tls_config_file}"]
-    )
+    args_string = " ".join(bin_args)
+    command = [f"{BINARIES_PATH}/bin/kafka-{bin_keyword}.sh {args_string}"]
+
+    logger.error(f"\nEXECUTING ON: {container.name}\nCOMMMMMMAND:\n {command}")
 
     try:
         process = container.exec(command=command, environment=environment)
@@ -128,12 +123,66 @@ def run_bin_command(
         raise e
 
 
-def push(container: Container, content: str, path: str) -> None:
-    """Wrapper for writing a file and contents to a container.
+def safe_pull_file(container: Container, filepath: str) -> Optional[List[str]]:
+    """Load file contents from charm workload.
 
     Args:
-        container: container to push the files into
-        content: the text content to write to a file path
-        path: the full path of the desired file
+        container: Container to pull from
+        filepath: the filepath to load data from
+
+    Returns:
+        List of file content lines
+        None if file does not exist
+    """
+    if not container.exists(filepath):
+        return None
+    else:
+        with container.pull(filepath) as f:
+            content = f.read().split("\n")
+
+    return content
+
+
+def safe_push_to_file(container: Container, content: str, path: str) -> None:
+    """Ensures destination filepath exists before writing.
+
+    Args:
+        container: Container to push to
+        content: the content to be written to a file
+        path: the full destination filepath
     """
     container.push(path, content, make_dirs=True)
+
+
+def map_env(env: list[str]) -> dict[str, str]:
+    """Builds environment map for arbitrary env-var strings.
+
+    Returns:
+        Dict of env-var and value
+    """
+    map_env = {}
+    for var in env:
+        key = "".join(var.split("=", maxsplit=1)[0])
+        value = "".join(var.split("=", maxsplit=1)[1:])
+        if key:
+            # only check for keys, as we can have an empty value for a variable
+            map_env[key] = value
+
+    return map_env
+
+
+def get_env(container: Container) -> dict[str, str]:
+    """Builds map of current basic environment for all processes.
+
+    Returns:
+        Dict of env-var and value
+    """
+    raw_env = safe_pull_file(container, "/etc/environment") or []
+    return map_env(env=raw_env)
+
+
+def update_env(container: Container, env: dict[str, str]) -> None:
+    """Updates /etc/environment file."""
+    updated_env = get_env(container) | env
+    content = "\n".join([f"{key}={value}" for key, value in updated_env.items()])
+    safe_push_to_file(container=container, content=content, path="/etc/environment")

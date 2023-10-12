@@ -211,7 +211,10 @@ class ContinuousWrites:
             f.write(f"{str(write_value)}")
             os.fsync(f)
 
-        client.close()
+        try:
+            client.close()
+        except KafkaError:
+            pass
 
     @staticmethod
     def _produce_message(client: KafkaClient, write_value: int) -> None:

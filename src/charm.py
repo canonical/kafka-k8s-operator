@@ -61,8 +61,8 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         super().__init__(*args)
         self.name = CHARM_KEY
         self.kafka_config = KafkaConfig(self)
-        self.client_relations = KafkaProvider(self)
         self.tls = KafkaTLS(self)
+        self.client_relations = KafkaProvider(self)
         self.restart = RollingOpsManager(self, relation="restart", callback=self._restart)
         self.metrics_endpoint = MetricsEndpointProvider(
             self,
@@ -121,7 +121,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
                     "user": "kafka",
                     "group": "kafka",
                     "environment": {
-                        "KAFKA_OPTS": " ".join(self.kafka_config.extra_args),
+                        "KAFKA_OPTS": " ".join(self.kafka_config.start_args),
                         "JAVA_HOME": JAVA_HOME,
                         "LOG_DIR": LOGS_PATH,
                     },
@@ -455,6 +455,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         kafka_auth.add_user(
             username=username,
             password=password,
+            zk_auth=True,
         )
 
     def _create_internal_credentials(self) -> list[tuple[str, str]]:
@@ -475,7 +476,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         return credentials
 
     def get_secret(self, scope: str, key: str) -> Optional[str]:
-        """Get TLS secret from the secret storage.
+        """Get secret from the secret storage.
 
         Args:
             scope: whether this secret is for a `unit` or `app`
@@ -493,7 +494,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             raise RuntimeError("Unknown secret scope.")
 
     def set_secret(self, scope: str, key: str, value: Optional[str]) -> None:
-        """Get TLS secret from the secret storage.
+        """Get secret from the secret storage.
 
         Args:
             scope: whether this secret is for a `unit` or `app`

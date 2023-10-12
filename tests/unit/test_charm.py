@@ -358,7 +358,7 @@ def test_config_changed_restarts(harness):
         patch("config.KafkaConfig.set_zk_jaas_config"),
         patch("config.KafkaConfig.set_client_properties"),
         patch("config.KafkaConfig.set_server_properties"),
-        patch("utils.push", return_value=None),
+        patch("utils.safe_push_to_file", return_value=None),
         patch("ops.model.Container.restart") as patched_restart,
         patch("charm.broker_active", return_value=True),
     ):

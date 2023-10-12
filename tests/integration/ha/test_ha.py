@@ -71,7 +71,7 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
             series=KAFKA_SERIES,
             resources={"kafka-image": KAFKA_CONTAINER},
         ),
-        ops_test.model.deploy(ZK_NAME, channel="edge", num_units=1, series=ZK_SERIES),
+        ops_test.model.deploy(ZK_NAME, channel="edge", num_units=3, series=ZK_SERIES),
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, series="jammy"),
     )
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
@@ -171,7 +171,7 @@ async def test_restart_broker_with_topic_leader(
     result = c_writes.stop()
     assert_continuous_writes_consistency(result=result)
 
-
+@pytest.mark.do_test
 async def test_freeze_broker_with_topic_leader(
     ops_test: OpsTest,
     c_writes: ContinuousWrites,
