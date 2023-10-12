@@ -95,7 +95,7 @@ def run_bin_command(
     container: Container,
     bin_keyword: str,
     bin_args: List[str],
-    environment: Optional[str] = None,
+    environment: dict[str, str] = None,
 ) -> str:
     """Runs kafka bin command with desired args.
 
@@ -104,15 +104,12 @@ def run_bin_command(
         bin_keyword: the kafka shell script to run
             e.g `configs`, `topics` etc
         bin_args: the shell command args
-        env: any additional environment strings
+        environment: any additional environment strings
 
     Returns:
         String of kafka bin command output
     """
-    args_string = " ".join(bin_args)
-    command = [f"{BINARIES_PATH}/bin/kafka-{bin_keyword}.sh {args_string}"]
-
-    logger.error(f"\nEXECUTING ON: {container.name}\nCOMMMMMMAND:\n {command}")
+    command = [f"{BINARIES_PATH}/bin/kafka-{bin_keyword}.sh"] + bin_args
 
     try:
         process = container.exec(command=command, environment=environment)

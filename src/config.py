@@ -19,7 +19,6 @@ from literals import (
     JAVA_HOME,
     JMX_EXPORTER_PORT,
     LOGS_PATH,
-    PEER,
     REL_NAME,
     SECURITY_PROTOCOL_PORTS,
     STORAGE,

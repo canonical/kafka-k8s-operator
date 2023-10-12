@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Optional, Set
 
 from ops.pebble import ExecError
 
+from literals import JAVA_HOME
 from utils import get_env, run_bin_command
 
 if TYPE_CHECKING:
@@ -166,7 +167,10 @@ class KafkaAuth:
                 f"--zk-tls-config-file={self.server_properties}",
             ]
             environment = get_env(self.container)
-            kafka_env = {"KAFKA_OPTS": environment["KAFKA_OPTS"]}
+            kafka_env = {
+                "KAFKA_OPTS": environment["KAFKA_OPTS"].replace("'", ""),
+                "JAVA_HOME": JAVA_HOME,
+            }
         else:
             command = base_command + [
                 f"--bootstrap-server={self.bootstrap_server}",
@@ -174,11 +178,6 @@ class KafkaAuth:
             ]
             kafka_env = None
 
-        binary_exists = self.container.exists("/opt/kafka/bin/kafka-configs.sh")
-        server_properties_exists = self.container.exists(self.server_properties)
-        jaas_exists = self.container.exists(self.charm.kafka_config.zk_jaas_filepath)
-        logger.error(f"\n\n BINARY EXISTS: {binary_exists} - SERVER_PROPERTIES: {server_properties_exists} - JAAS: {jaas_exists}")
-        
         run_bin_command(
             container=self.container,
             bin_keyword="configs",

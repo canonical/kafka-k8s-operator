@@ -24,7 +24,7 @@ from ops.charm import (
 from ops.framework import EventBase
 from ops.main import main
 from ops.model import Container, Relation, StatusBase
-from ops.pebble import ExecError, Layer, PathError, ProtocolError
+from ops.pebble import APIError, ExecError, Layer, PathError, ProtocolError
 
 from auth import KafkaAuth
 from config import KafkaConfig
@@ -281,7 +281,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
             try:
                 internal_user_credentials = self._create_internal_credentials()
-            except (KeyError, RuntimeError, ExecError) as e:
+            except (KeyError, RuntimeError, ExecError, APIError) as e:
                 logger.warning(str(e))
                 event.defer()
                 return

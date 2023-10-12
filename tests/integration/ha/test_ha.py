@@ -171,7 +171,7 @@ async def test_restart_broker_with_topic_leader(
     result = c_writes.stop()
     assert_continuous_writes_consistency(result=result)
 
-@pytest.mark.do_test
+
 async def test_freeze_broker_with_topic_leader(
     ops_test: OpsTest,
     c_writes: ContinuousWrites,
