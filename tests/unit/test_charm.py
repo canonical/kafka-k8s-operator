@@ -116,11 +116,13 @@ def test_pebble_ready_sets_necessary_config(harness):
         patch("config.KafkaConfig.set_zk_jaas_config") as patched_jaas,
         patch("config.KafkaConfig.set_server_properties") as patched_server_properties,
         patch("config.KafkaConfig.set_client_properties") as patched_client_properties,
+        patch("config.KafkaConfig.set_environment") as patched_set_env,
     ):
         harness.container_pebble_ready(CONTAINER)
         patched_jaas.assert_called_once()
         patched_server_properties.assert_called_once()
         patched_client_properties.assert_called_once()
+        patched_set_env.assert_called_once()
 
 
 def test_pebble_ready_does_not_start_if_not_ready(harness):

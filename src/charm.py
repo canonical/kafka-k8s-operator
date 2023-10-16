@@ -127,13 +127,6 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
                     },
                 }
             },
-            # "checks": {
-            #     CONTAINER: {
-            #         "override": "replace",
-            #         "level": "alive",
-            #         "exec": {"command": f"echo ruok | nc {unit_host} {self.cluster.client_port}"},
-            #     }
-            # }
         }
         return Layer(layer_config)
 

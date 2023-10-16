@@ -144,17 +144,48 @@ def test_zookeeper_config_succeeds_valid_config(zk_relation_id, harness):
     assert harness.charm.kafka_config.zookeeper_connected
 
 
-def test_auth_args(harness):
-    args = harness.charm.kafka_config.auth_args
-    assert f"-Djava.security.auth.login.config={CONF_PATH}/kafka-jaas.cfg" in args
-
-
-def test_extra_args(harness):
-    args = harness.charm.kafka_config.extra_args
+def test_start_args(harness):
+    args = harness.charm.kafka_config.start_args
     assert (
         f"-javaagent:{BINARIES_PATH}/jmx_prometheus_javaagent.jar={JMX_EXPORTER_PORT}:{CONF_PATH}/jmx_prometheus.yaml"
         in args
     )
+    assert f"-Djava.security.auth.login.config={CONF_PATH}/zookeeper-jaas.cfg" in args
+
+
+def test_kafka_opts(harness):
+    """Checks necessary args for KAFKA_OPTS."""
+    args = harness.charm.kafka_config.kafka_opts
+    assert "-Djava.security.auth.login.config" in args
+    assert "KAFKA_OPTS" in args
+
+
+def test_log4j_opts(harness):
+    """Checks necessary args for KAFKA_LOG4J_OPTS."""
+    args = harness.charm.kafka_config.log4j_opts
+    assert "-Dlog4j.configuration=file:" in args
+    assert "KAFKA_LOG4J_OPTS" in args
+
+
+def test_jmx_opts(harness):
+    """Checks necessary args for KAFKA_JMX_OPTS."""
+    args = harness.charm.kafka_config.jmx_opts
+    assert "-javaagent:" in args
+    assert len(args.split(":")) == 3
+    assert args.split(":")[1].split("=")[-1] == str(JMX_EXPORTER_PORT)
+    assert "KAFKA_JMX_OPTS" in args
+
+
+def test_set_environment(harness):
+    """Checks all necessary env-vars are written to /etc/environment."""
+    with patch("utils.safe_push_to_file") as patched_push:
+        harness.charm.kafka_config.set_environment()
+
+        for call in patched_push.call_args_list:
+            assert "KAFKA_OPTS" in call.kwargs.get("content", "")
+            assert "KAFKA_LOG4J_OPTS" in call.kwargs.get("content", "")
+            assert "KAFKA_JMX_OPTS" in call.kwargs.get("content", "")
+            assert "/etc/environment" == call.kwargs.get("path", "")
 
 
 def test_bootstrap_server(harness):

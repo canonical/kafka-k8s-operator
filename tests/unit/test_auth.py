@@ -9,11 +9,10 @@ from unittest.mock import patch
 import pytest
 import yaml
 from ops.testing import Harness
-from tests.unit.helpers import DummyExec
 
 from auth import Acl, KafkaAuth
 from charm import KafkaK8sCharm
-from literals import CHARM_KEY, CONTAINER, PEER, ZK_REL_NAME
+from literals import CHARM_KEY, CONTAINER
 
 logger = logging.getLogger(__name__)
 
@@ -93,98 +92,17 @@ def test_generate_consumer_acls():
     assert sorted(resource_types) == sorted({"TOPIC", "GROUP"})
 
 
-def test_get_acls_tls_adds_zk_tls_flag(harness):
-    peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
-    harness.add_relation_unit(zk_rel_id, "zookeeper/0")
-    harness.update_relation_data(
-        zk_rel_id,
-        ZK_REL_NAME,
-        {
-            "username": "relation-1",
-            "password": "mellon",
-            "endpoints": "123.123.123",
-            "chroot": "/kafka",
-            "uris": "123.123.123/kafka",
-            "tls": "enabled",
-        },
-    )
-    harness.update_relation_data(peer_rel_id, CHARM_KEY, {"tls": "enabled"})
-    auth = KafkaAuth(
-        harness.charm,
-    )
-
-    with patch("ops.model.Container.exec", return_value=DummyExec()) as patched_exec:
-        auth._get_acls_from_cluster()
-
-        found = False
-        logger.info(patched_exec.call_args.kwargs)
-        for arg in patched_exec.call_args.kwargs.get("command", []):
-            if "--zk-tls-config-file" in arg:
-                found = True
-
-        assert found, "--zk-tls-config-file flag not found"
-
-
 def test_add_user_adds_zk_tls_flag(harness):
-    peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
-    harness.add_relation_unit(zk_rel_id, "zookeeper/0")
-    harness.update_relation_data(
-        zk_rel_id,
-        ZK_REL_NAME,
-        {
-            "username": "relation-1",
-            "password": "mellon",
-            "endpoints": "123.123.123",
-            "chroot": "/kafka",
-            "uris": "123.123.123/kafka",
-            "tls": "enabled",
-        },
-    )
-    harness.update_relation_data(peer_rel_id, CHARM_KEY, {"tls": "enabled"})
-    auth = KafkaAuth(
-        harness.charm,
-    )
+    """Checks zk-tls-config-file flag is called for configs bin command."""
+    with (
+        patch("auth.get_env", return_value={"KAFKA_OPTS": "myopts"}),
+        patch("auth.run_bin_command") as patched_exec,
+    ):
+        auth = KafkaAuth(harness.charm)
+        auth.add_user("samwise", "gamgee", zk_auth=True)
 
-    with patch("ops.model.Container.exec", return_value=DummyExec()) as patched_exec:
-        auth.add_user("samwise", "gamgee")
-
-        found = False
-        for arg in patched_exec.call_args.kwargs.get("command", []):
-            if "--zk-tls-config-file" in arg:
-                found = True
-
-        assert found, "--zk-tls-config-file flag not found"
-
-
-def test_delete_user_adds_zk_tls_flag(harness):
-    peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-    zk_rel_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
-    harness.add_relation_unit(zk_rel_id, "zookeeper/0")
-    harness.update_relation_data(
-        zk_rel_id,
-        ZK_REL_NAME,
-        {
-            "username": "relation-1",
-            "password": "mellon",
-            "endpoints": "123.123.123",
-            "chroot": "/kafka",
-            "uris": "123.123.123/kafka",
-            "tls": "enabled",
-        },
-    )
-    harness.update_relation_data(peer_rel_id, CHARM_KEY, {"tls": "enabled"})
-    auth = KafkaAuth(
-        harness.charm,
-    )
-
-    with patch("ops.model.Container.exec", return_value=DummyExec()) as patched_exec:
-        auth.delete_user("samwise")
-
-        found = False
-        for arg in patched_exec.call_args.kwargs.get("command", []):
-            if "--zk-tls-config-file" in arg:
-                found = True
-
-        assert found, "--zk-tls-config-file flag not found"
+        assert (
+            "--zk-tls-config-file=/etc/kafka/server.properties"
+            in patched_exec.call_args.kwargs["bin_args"]
+        )
+        assert "--zookeeper=" in patched_exec.call_args.kwargs["bin_args"]
