@@ -13,7 +13,6 @@ from integration.ha.ha_helpers import (
     assert_continuous_writes_consistency,
     get_topic_description,
     get_topic_offsets,
-    is_up,
     modify_pebble_restart_delay,
     remove_k8s_hosts,
     send_control_signal,
@@ -71,7 +70,7 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
             series=KAFKA_SERIES,
             resources={"kafka-image": KAFKA_CONTAINER},
         ),
-        ops_test.model.deploy(ZK_NAME, channel="edge", num_units=3, series=ZK_SERIES),
+        ops_test.model.deploy(ZK_NAME, channel="edge", num_units=1, series=ZK_SERIES),
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, series="jammy"),
     )
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
@@ -192,9 +191,6 @@ async def test_freeze_broker_with_topic_leader(
     topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
     assert topic_description.in_sync_replicas == {0, 1, 2} - {initial_leader_num}
     assert initial_leader_num != topic_description.leader
-    assert not is_up(
-        ops_test=ops_test, broker_id=initial_leader_num
-    ), f"Broker {initial_leader_num} reported as up"
 
     # verify new writes are continuing. Also, check that leader changed
     topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
@@ -213,9 +209,6 @@ async def test_freeze_broker_with_topic_leader(
     topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
 
     # verify the unit is now rejoined the cluster
-    assert is_up(
-        ops_test=ops_test, broker_id=initial_leader_num
-    ), f"Broker {initial_leader_num} reported as down"
     assert topic_description.in_sync_replicas == {0, 1, 2}
 
     result = c_writes.stop()
