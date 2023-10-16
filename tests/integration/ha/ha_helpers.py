@@ -55,7 +55,7 @@ def get_topic_description(
     unit_name = unit_name or ops_test.model.applications[APP_NAME].units[0].name
 
     output = check_output(
-        f"microk8s.kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {BINARIES_PATH}/bin/kafka-topics.sh --describe --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {CONF_PATH}/client.properties",
+        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {BINARIES_PATH}/bin/kafka-topics.sh --describe --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {CONF_PATH}/client.properties",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -80,7 +80,7 @@ def get_topic_offsets(ops_test: OpsTest, topic: str, unit_name: Optional[str] = 
 
     # example of topic offset output: 'test-topic:0:10'
     result = check_output(
-        f"microk8s.kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {BINARIES_PATH}/bin/kafka-get-offsets.sh --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {CONF_PATH}/client.properties",
+        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {BINARIES_PATH}/bin/kafka-get-offsets.sh --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {CONF_PATH}/client.properties",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -105,7 +105,7 @@ async def send_control_signal(
         container_name: the container to run command on
             Defaults to '{container_name}'
     """
-    cmd = f"microk8s.kubectl exec {unit_name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- pkill --signal {signal} -f {PROCESS}"
+    cmd = f"kubectl exec {unit_name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- pkill --signal {signal} -f {PROCESS}"
     check_output(
         cmd,
         stderr=PIPE,
@@ -141,7 +141,7 @@ def modify_pebble_restart_delay(
             f"Copying extend_pebble_restart_delay manifest to {unit.name} {container_name} container..."
         )
         check_output(
-            f"microk8s.kubectl cp ./tests/integration/ha/manifests/{policy}_pebble_restart_delay.yaml {unit.name.replace('/', '-')}:{pebble_patch_path} -c {container_name} -n {ops_test.model.info.name}",
+            f"kubectl cp ./tests/integration/ha/manifests/{policy}_pebble_restart_delay.yaml {unit.name.replace('/', '-')}:{pebble_patch_path} -c {container_name} -n {ops_test.model.info.name}",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,
@@ -149,7 +149,7 @@ def modify_pebble_restart_delay(
 
         logger.info(f"Adding {policy} policy to {container_name} pebble plan...")
         check_output(
-            f"microk8s.kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble add --combine {service_name} {pebble_patch_path}",
+            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble add --combine {service_name} {pebble_patch_path}",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,
@@ -157,7 +157,7 @@ def modify_pebble_restart_delay(
 
         logger.info(f"Replanning {service_name} service...")
         check_output(
-            f"microk8s.kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble replan",
+            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble replan",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,
