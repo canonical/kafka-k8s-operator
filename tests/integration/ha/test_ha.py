@@ -25,6 +25,7 @@ from integration.helpers import (
     REL_NAME_ADMIN,
     ZK_NAME,
     ZK_SERIES,
+    check_logs,
 )
 
 RESTART_DELAY = 60
@@ -98,6 +99,56 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
     )
 
     assert ops_test.model.applications[APP_NAME].status == "active"
+
+
+async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
+    second_kafka_name = f"{APP_NAME}-two"
+    second_zk_name = f"{ZK_NAME}-two"
+
+    await asyncio.gather(
+        ops_test.model.deploy(
+            kafka_charm,
+            application_name=second_kafka_name,
+            num_units=1,
+            series=KAFKA_SERIES,
+            resources={"kafka-image": KAFKA_CONTAINER},
+        ),
+        ops_test.model.deploy(
+            ZK_NAME, application_name=second_zk_name, channel="edge", series=ZK_SERIES
+        ),
+    )
+    await ops_test.model.add_relation(second_kafka_name, second_zk_name)
+
+    async with ops_test.fast_forward(fast_interval="30s"):
+        await ops_test.model.wait_for_idle(
+            apps=[second_kafka_name, second_zk_name], idle_period=30, status="active", timeout=2000
+        )
+
+    assert ops_test.model.applications[second_kafka_name].status == "active"
+    assert ops_test.model.applications[second_zk_name].status == "active"
+
+    # produce to first cluster
+    action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("produce")
+    await action.wait()
+    asyncio.sleep(10)
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30)
+    assert ops_test.model.applications[APP_NAME].status == "active"
+    assert ops_test.model.applications[DUMMY_NAME].status == "active"
+
+    # logs exist on first cluster
+    check_logs(
+        model_full_name=ops_test.model_full_name,
+        kafka_unit_name=f"{APP_NAME}/0",
+        topic="test-topic",
+    )
+
+    # Check that logs are not found on the second cluster
+    with pytest.raises(AssertionError):
+        check_logs(
+            model_full_name=ops_test.model_full_name,
+            kafka_unit_name=f"{second_kafka_name}/0",
+            topic="test-topic",
+        )
 
 
 async def test_kill_broker_with_topic_leader(
@@ -276,46 +327,3 @@ async def test_full_cluster_restart(
 
     result = c_writes.stop()
     assert_continuous_writes_consistency(result=result)
-
-
-# @pytest.mark.skip
-# async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
-#     second_kafka_name = f"{APP_NAME}-two"
-#     second_zk_name = f"{ZK_NAME}-two"
-
-#     await asyncio.gather(
-#         ops_test.model.deploy(
-#             kafka_charm, application_name=second_kafka_name, num_units=1, series="jammy"
-#         ),
-#         ops_test.model.deploy(
-#             ZK_NAME, channel="edge", application_name=second_zk_name, num_units=1, series="jammy"
-#         ),
-#     )
-
-#     await ops_test.model.wait_for_idle(
-#         apps=[second_kafka_name, second_zk_name],
-#         idle_period=30,
-#         timeout=3600,
-#     )
-#     assert ops_test.model.applications[second_kafka_name].status == "blocked"
-
-#     await ops_test.model.add_relation(second_kafka_name, second_zk_name)
-#     await ops_test.model.wait_for_idle(
-#         apps=[second_kafka_name, second_zk_name, APP_NAME],
-#         idle_period=30,
-#     )
-
-#     produce_and_check_logs(
-#         model_full_name=ops_test.model_full_name,
-#         kafka_unit_name=f"{APP_NAME}/0",
-#         provider_unit_name=f"{DUMMY_NAME}/0",
-#         topic="hot-topic",
-#     )
-
-#     # Check that logs are not found on the second cluster
-#     with pytest.raises(AssertionError):
-#         check_logs(
-#             model_full_name=ops_test.model_full_name,
-#             kafka_unit_name=f"{second_kafka_name}/0",
-#             topic="hot-topic",
-#         )

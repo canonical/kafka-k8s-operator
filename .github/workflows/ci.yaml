@@ -69,11 +69,11 @@ jobs:
       fail-fast: false
       matrix:
         tox-environments:
-          #- integration-charm
-          #- integration-scaling
-          #- integration-provider
+          - integration-charm
+          - integration-scaling
+          - integration-provider
           - integration-password-rotation
-          #- integration-tls
+          - integration-tls
     name: ${{ matrix.tox-environments }}
     needs:
       - lint
