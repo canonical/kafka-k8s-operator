@@ -150,6 +150,14 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
             topic="test-topic",
         )
 
+    # fast removal of second cluster
+    await asyncio.gather(
+        ops_test.juju(
+            f"remove-application --force --destroy-storage --no-wait {second_kafka_name}"
+        ),
+        ops_test.juju(f"remove-application --force --destroy-storage --no-wait {second_zk_name}"),
+    )
+
 
 async def test_kill_broker_with_topic_leader(
     ops_test: OpsTest,
