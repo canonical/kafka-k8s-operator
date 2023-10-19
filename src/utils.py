@@ -9,7 +9,7 @@ import logging
 import re
 import secrets
 import string
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Set
 
 from charms.zookeeper.v0.client import QuorumLeaderNotFoundError, ZooKeeperManager
 from kazoo.exceptions import AuthFailedError, NoNodeError
@@ -95,7 +95,7 @@ def run_bin_command(
     container: Container,
     bin_keyword: str,
     bin_args: List[str],
-    environment: dict[str, str] = None,
+    environment: dict[str, str] | None = None,
 ) -> str:
     """Runs kafka bin command with desired args.
 
@@ -120,7 +120,7 @@ def run_bin_command(
         raise e
 
 
-def safe_pull_file(container: Container, filepath: str) -> Optional[List[str]]:
+def safe_pull_file(container: Container, filepath: str) -> list[str] | None:
     """Load file contents from charm workload.
 
     Args:
