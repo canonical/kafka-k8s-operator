@@ -2,7 +2,10 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 import logging
+import os
 import re
+import string
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime
 from subprocess import PIPE, check_output
@@ -162,6 +165,85 @@ def modify_pebble_restart_delay(
             shell=True,
             universal_newlines=True,
         )
+
+
+def deploy_chaos_mesh(namespace: str) -> None:
+    """Deploy chaos mesh to the provided namespace.
+
+    Args:
+        namespace: The namespace to deploy chaos mesh to
+    """
+    env = os.environ
+    env["KUBECONFIG"] = os.path.expanduser("~/.kube/config")
+
+    check_output(
+        " ".join(
+            [
+                "tests/integration/ha/scripts/deploy_chaos_mesh.sh",
+                namespace,
+            ]
+        ),
+        shell=True,
+        env=env,
+    )
+
+
+def destroy_chaos_mesh(namespace: str) -> None:
+    """Remove chaos mesh from the provided namespace.
+
+    Args:
+        namespace: The namespace to deploy chaos mesh to
+    """
+    env = os.environ
+    env["KUBECONFIG"] = os.path.expanduser("~/.kube/config")
+
+    check_output(
+        f"tests/integration/ha/scripts/destroy_chaos_mesh.sh {namespace}",
+        shell=True,
+        env=env,
+    )
+
+
+def isolate_instance_from_cluster(ops_test: OpsTest, unit_name: str) -> None:
+    """Apply a NetworkChaos file to use chaos-mesh to simulate a network cut.
+
+    Args:
+        ops_test: OpsTest
+        unit_name: the Juju unit running the ZooKeeper process
+    """
+    with tempfile.NamedTemporaryFile() as temp_file:
+        with open(
+            "tests/integration/ha/manifests/chaos_network_loss.yaml", "r"
+        ) as chaos_network_loss_file:
+            template = string.Template(chaos_network_loss_file.read())
+            chaos_network_loss = template.substitute(
+                namespace=ops_test.model.info.name,
+                pod=unit_name.replace("/", "-"),
+            )
+
+            temp_file.write(str.encode(chaos_network_loss))
+            temp_file.flush()
+
+        env = os.environ
+        env["KUBECONFIG"] = os.path.expanduser("~/.kube/config")
+
+        check_output(" ".join(["kubectl", "apply", "-f", temp_file.name]), shell=True, env=env)
+
+
+def remove_instance_isolation(ops_test: OpsTest) -> None:
+    """Delete the NetworkChaos that is isolating the primary unit of the cluster.
+
+    Args:
+        ops_test: OpsTest
+    """
+    env = os.environ
+    env["KUBECONFIG"] = os.path.expanduser("~/.kube/config")
+
+    check_output(
+        f"kubectl -n {ops_test.model.info.name} delete --ignore-not-found=true networkchaos network-loss-primary",
+        shell=True,
+        env=env,
+    )
 
 
 def add_k8s_hosts(ops_test=OpsTest):
