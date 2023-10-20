@@ -410,27 +410,38 @@ async def test_network_cut_without_ip_change(
     isolate_instance_from_cluster(ops_test=ops_test, unit_name=f"{APP_NAME}/{initial_leader_num}")
     await asyncio.sleep(REELECTION_TIME * 2)
 
+    available_unit = f"{APP_NAME}/{next(iter({0, 1, 2} - {initial_leader_num}))}"
     # verify replica is not in sync
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(
+        ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
+    )
     assert topic_description.in_sync_replicas == {0, 1, 2} - {initial_leader_num}
     assert initial_leader_num != topic_description.leader
 
     # verify new writes are continuing. Also, check that leader changed
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
-    initial_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(
+        ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
+    )
+    initial_offsets = get_topic_offsets(
+        ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
+    )
     await asyncio.sleep(CLIENT_TIMEOUT * 2)
-    next_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    next_offsets = get_topic_offsets(
+        ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
+    )
 
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
 
     # Release the network
     logger.info(f"Releasing network of broker: {initial_leader_num}")
     remove_instance_isolation(ops_test)
-    await asyncio.sleep(REELECTION_TIME)
+
+    async with ops_test.fast_forward(fast_interval="15s"):
+        result = c_writes.stop()
+        await asyncio.sleep(CLIENT_TIMEOUT * 6)
 
     # verify the unit is now rejoined the cluster
     topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
     assert topic_description.in_sync_replicas == {0, 1, 2}
 
-    result = c_writes.stop()
     assert_continuous_writes_consistency(result=result)
