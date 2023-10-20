@@ -188,6 +188,15 @@ def remove_k8s_hosts(ops_test: OpsTest):
         logger.info(f"Removed {unit_name} from /etc/hosts")
 
 
+def delete_pod(ops_test: OpsTest, unit_name: str):
+    check_output(
+        f"kubectl delete pod {unit_name.replace('/', '-')} -n {ops_test.model.info.name}",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+
+
 def assert_continuous_writes_consistency(result: ContinuousWritesResult):
     """Check results of a stopped ContinuousWrites call against expected results."""
     assert (

@@ -11,6 +11,7 @@ from integration.ha.continuous_writes import ContinuousWrites
 from integration.ha.ha_helpers import (
     add_k8s_hosts,
     assert_continuous_writes_consistency,
+    delete_pod,
     get_topic_description,
     get_topic_offsets,
     modify_pebble_restart_delay,
@@ -331,6 +332,44 @@ async def test_full_cluster_restart(
     topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
 
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
+    assert topic_description.in_sync_replicas == {0, 1, 2}
+
+    result = c_writes.stop()
+    assert_continuous_writes_consistency(result=result)
+
+
+async def test_pod_reschedule(
+    ops_test: OpsTest,
+    c_writes: ContinuousWrites,
+    c_writes_runner: ContinuousWrites,
+):
+    # Let some time pass to create messages
+    await asyncio.sleep(5)
+    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    initial_leader_num = topic_description.leader
+
+    logger.info(
+        f"Killing pod of leader for topic '{ContinuousWrites.TOPIC_NAME}': {initial_leader_num}"
+    )
+    delete_pod(ops_test, unit_name=f"{APP_NAME}/{initial_leader_num}")
+
+    # let pod reschedule process be noticed up by juju
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME], idle_period=30, status="active", timeout=1000
+    )
+
+    # refresh hosts with the new ip
+    remove_k8s_hosts(ops_test=ops_test)
+    add_k8s_hosts(ops_test=ops_test)
+
+    # Check offsets after killing leader
+    initial_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    await asyncio.sleep(CLIENT_TIMEOUT * 2)
+    next_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    assert int(next_offsets[-1]) > int(initial_offsets[-1])
+
+    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    assert initial_leader_num != topic_description.leader
     assert topic_description.in_sync_replicas == {0, 1, 2}
 
     result = c_writes.stop()
