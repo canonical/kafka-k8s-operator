@@ -24,7 +24,7 @@ from ops.charm import (
 from ops.framework import EventBase
 from ops.main import main
 from ops.model import Container, Relation, StatusBase
-from ops.pebble import ExecError, Layer, PathError, ProtocolError
+from ops.pebble import APIError, ExecError, Layer, PathError, ProtocolError
 
 from auth import KafkaAuth
 from config import KafkaConfig
@@ -40,7 +40,7 @@ from literals import (
     METRICS_RULES_DIR,
     PEER,
     REL_NAME,
-    ZOOKEEPER_REL_NAME,
+    ZK_REL_NAME,
     DebugLevel,
     Status,
 )
@@ -61,8 +61,8 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         super().__init__(*args)
         self.name = CHARM_KEY
         self.kafka_config = KafkaConfig(self)
-        self.client_relations = KafkaProvider(self)
         self.tls = KafkaTLS(self)
+        self.client_relations = KafkaProvider(self)
         self.restart = RollingOpsManager(self, relation="restart", callback=self._restart)
         self.metrics_endpoint = MetricsEndpointProvider(
             self,
@@ -84,18 +84,10 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
         self.framework.observe(self.on[PEER].relation_changed, self._on_config_changed)
 
-        self.framework.observe(
-            self.on[ZOOKEEPER_REL_NAME].relation_created, self._on_zookeeper_created
-        )
-        self.framework.observe(
-            self.on[ZOOKEEPER_REL_NAME].relation_joined, self._on_zookeeper_changed
-        )
-        self.framework.observe(
-            self.on[ZOOKEEPER_REL_NAME].relation_changed, self._on_zookeeper_changed
-        )
-        self.framework.observe(
-            self.on[ZOOKEEPER_REL_NAME].relation_broken, self._on_zookeeper_broken
-        )
+        self.framework.observe(self.on[ZK_REL_NAME].relation_created, self._on_zookeeper_created)
+        self.framework.observe(self.on[ZK_REL_NAME].relation_joined, self._on_zookeeper_changed)
+        self.framework.observe(self.on[ZK_REL_NAME].relation_changed, self._on_zookeeper_changed)
+        self.framework.observe(self.on[ZK_REL_NAME].relation_broken, self._on_zookeeper_broken)
 
         self.framework.observe(getattr(self.on, "set_password_action"), self._set_password_action)
         self.framework.observe(
@@ -129,7 +121,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
                     "user": "kafka",
                     "group": "kafka",
                     "environment": {
-                        "KAFKA_OPTS": " ".join(self.kafka_config.extra_args),
+                        "KAFKA_OPTS": " ".join(self.kafka_config.start_args),
                         "JAVA_HOME": JAVA_HOME,
                         "LOG_DIR": LOGS_PATH,
                     },
@@ -257,7 +249,6 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
         if not self.kafka_config.zookeeper_connected:
             self._set_status(Status.ZK_NO_DATA)
-            event.defer()
             return
 
         # TLS must be enabled for Kafka and ZK or disabled for both
@@ -283,7 +274,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
             try:
                 internal_user_credentials = self._create_internal_credentials()
-            except (KeyError, RuntimeError, ExecError) as e:
+            except (KeyError, RuntimeError, ExecError, APIError) as e:
                 logger.warning(str(e))
                 event.defer()
                 return
@@ -328,7 +319,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
-        if not self.ready_to_start:
+        if not self.healthy:
             event.defer()
             return
 
@@ -457,6 +448,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         kafka_auth.add_user(
             username=username,
             password=password,
+            zk_auth=True,
         )
 
     def _create_internal_credentials(self) -> list[tuple[str, str]]:
@@ -477,7 +469,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         return credentials
 
     def get_secret(self, scope: str, key: str) -> Optional[str]:
-        """Get TLS secret from the secret storage.
+        """Get secret from the secret storage.
 
         Args:
             scope: whether this secret is for a `unit` or `app`
@@ -495,7 +487,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             raise RuntimeError("Unknown secret scope.")
 
     def set_secret(self, scope: str, key: str, value: Optional[str]) -> None:
-        """Get TLS secret from the secret storage.
+        """Get secret from the secret storage.
 
         Args:
             scope: whether this secret is for a `unit` or `app`

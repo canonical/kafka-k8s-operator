@@ -5,7 +5,7 @@
 """Manager for handling Kafka configuration."""
 import logging
 import os
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from ops.model import Container, Unit
 
@@ -19,15 +19,17 @@ from literals import (
     JAVA_HOME,
     JMX_EXPORTER_PORT,
     LOGS_PATH,
-    PEER,
     REL_NAME,
     SECURITY_PROTOCOL_PORTS,
     STORAGE,
-    ZOOKEEPER_REL_NAME,
+    ZK_REL_NAME,
     AuthMechanism,
     Scope,
 )
-from utils import push
+from utils import map_env, safe_push_to_file, update_env
+
+if TYPE_CHECKING:
+    from charm import KafkaK8sCharm
 
 logger = logging.getLogger(__name__)
 
@@ -105,12 +107,13 @@ class KafkaConfig:
     """Manager for handling Kafka configuration."""
 
     def __init__(self, charm):
-        self.charm = charm
+        self.charm: "KafkaK8sCharm" = charm
         self.server_properties_filepath = f"{CONF_PATH}/server.properties"
         self.client_properties_filepath = f"{CONF_PATH}/client.properties"
-        self.zk_jaas_filepath = f"{CONF_PATH}/kafka-jaas.cfg"
+        self.zk_jaas_filepath = f"{CONF_PATH}/zookeeper-jaas.cfg"
         self.keystore_filepath = f"{CONF_PATH}/keystore.p12"
         self.truststore_filepath = f"{CONF_PATH}/truststore.jks"
+        self.log4j_properties_filepath = f"{CONF_PATH}/log4j.properties"
         self.jmx_exporter_filepath = f"{BINARIES_PATH}/jmx_prometheus_javaagent.jar"
         self.jmx_config_filepath = f"{CONF_PATH}/jmx_prometheus.yaml"
 
@@ -152,7 +155,7 @@ class KafkaConfig:
         """
         zookeeper_config = {}
         # loop through all relations to ZK, attempt to find all needed config
-        for relation in self.charm.model.relations[ZOOKEEPER_REL_NAME]:
+        for relation in self.charm.model.relations[ZK_REL_NAME]:
             if not relation.app:
                 continue
 
@@ -185,7 +188,7 @@ class KafkaConfig:
         Returns:
             True if there is a ZooKeeper relation. Otherwise False
         """
-        return bool(self.charm.model.relations[ZOOKEEPER_REL_NAME])
+        return bool(self.charm.model.relations[ZK_REL_NAME])
 
     @property
     def zookeeper_connected(self) -> bool:
@@ -201,26 +204,55 @@ class KafkaConfig:
         return False
 
     @property
-    def auth_args(self) -> List[str]:
-        """The necessary Java config options for SASL/SCRAM auth.
-
-        Returns:
-            List of Java config auth options
-        """
-        return [f"-Djava.security.auth.login.config={self.zk_jaas_filepath}"]
-
-    @property
-    def extra_args(self) -> List[str]:
+    def start_args(self) -> List[str]:
         """Collection of extra Java config arguments.
 
         Returns:
             String of command argument to be prepended to start-up command
         """
-        extra_args = [
-            f"-javaagent:{self.jmx_exporter_filepath}={JMX_EXPORTER_PORT}:{self.jmx_config_filepath}"
-        ] + self.auth_args
+        return [
+            f"-javaagent:{self.jmx_exporter_filepath}={JMX_EXPORTER_PORT}:{self.jmx_config_filepath}",
+            f"-Djava.security.auth.login.config={self.zk_jaas_filepath}",
+        ]
 
-        return extra_args
+    @property
+    def jmx_opts(self) -> str:
+        """The JMX options for configuring the prometheus exporter.
+
+        Returns:
+            String of JMX options
+        """
+        opts = [
+            "-Dcom.sun.management.jmxremote",
+            f"-javaagent:{self.jmx_exporter_filepath}={JMX_EXPORTER_PORT}:{self.jmx_config_filepath}",
+        ]
+
+        return f"KAFKA_JMX_OPTS='{' '.join(opts)}'"
+
+    @property
+    def log4j_opts(self) -> str:
+        """The Java config options for specifying log4j properties.
+
+        Returns:
+            String of Java config options
+        """
+        opts = [f"-Dlog4j.configuration=file:{self.log4j_properties_filepath}"]
+
+        return f"KAFKA_LOG4J_OPTS='{' '.join(opts)}'"
+
+    @property
+    def kafka_opts(self) -> str:
+        """Extra Java config options.
+
+        Returns:
+            String of Java config options
+        """
+        opts = [
+            f"-Djava.security.auth.login.config={self.zk_jaas_filepath}",
+            "-Djavax.net.debug=ssl:handshake:verbose:session:keymanager:trustmanager",
+        ]
+
+        return f"KAFKA_OPTS='{' '.join(opts)}'"
 
     @property
     def bootstrap_server(self) -> List[str]:
@@ -229,9 +261,11 @@ class KafkaConfig:
         Returns:
             List of `bootstrap-server` servers.
         """
-        units: List[Unit] = list(
-            set([self.charm.unit] + list(self.charm.model.get_relation(PEER).units))
-        )
+        if not self.charm.peer_relation:
+            return []
+
+        units: List[Unit] = list(set([self.charm.unit] + list(self.charm.peer_relation.units)))
+
         hosts = [self.get_host_from_unit(unit=unit) for unit in units]
         port = (
             SECURITY_PROTOCOL_PORTS["SASL_SSL"].client
@@ -391,12 +425,12 @@ class KafkaConfig:
         """
         super_users = [INTER_BROKER_USER, ADMIN_USER]
         for relation in self.charm.model.relations[REL_NAME]:
+            if not relation or not relation.app or not self.charm.peer_relation:
+                continue
+
             extra_user_roles = relation.data[relation.app].get("extra-user-roles", "")
-            password = (
-                self.charm.model.get_relation(PEER)
-                .data[self.charm.app]
-                .get(f"relation-{relation.id}", None)
-            )
+            password = self.charm.get_secret(scope="app", key=f"relation-{relation.id}")
+
             # if passwords are set for client admins, they're good to load
             if "admin" in extra_user_roles and password is not None:
                 super_users.append(f"relation-{relation.id}")
@@ -490,7 +524,7 @@ class KafkaConfig:
                 password="{self.zookeeper_config['password']}";
             }};
         """
-        push(
+        safe_push_to_file(
             container=self.container,
             content=jaas_config,
             path=self.zk_jaas_filepath,
@@ -498,28 +532,27 @@ class KafkaConfig:
 
     def set_server_properties(self) -> None:
         """Writes all Kafka config properties to the `server.properties` path."""
-        push(
+        safe_push_to_file(
+            container=self.container,
             content="\n".join(self.server_properties),
             path=self.server_properties_filepath,
-            container=self.container,
         )
 
     def set_client_properties(self) -> None:
         """Writes all client config properties to the `client.properties` path."""
-        push(
+        safe_push_to_file(
+            container=self.container,
             content="\n".join(self.client_properties),
             path=self.client_properties_filepath,
-            container=self.container,
         )
 
     def set_environment(self) -> None:
         """Writes the env-vars needed for SASL/SCRAM auth to `/etc/environment` on the unit."""
-        opts_string = " ".join(self.extra_args)
-        push(
-            content=f"KAFKA_OPTS={opts_string}\nLOG_DIR={LOGS_PATH}\nJAVA_HOME={JAVA_HOME}",
-            path="/etc/environment",
-            container=self.container,
-        )
+        java_home = f"JAVA_HOME='{JAVA_HOME}'"
+        log_dir = f"LOG_DIR='{LOGS_PATH}'"
+        updated_env_list = [self.kafka_opts, self.jmx_opts, self.log4j_opts, java_home, log_dir]
+
+        update_env(container=self.container, env=map_env(env=updated_env_list))
 
     def get_host_from_unit(self, unit: Unit) -> str:
         """Builds K8s host address for a given `Unit`.

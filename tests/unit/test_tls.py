@@ -9,7 +9,7 @@ import yaml
 from ops.testing import Harness
 
 from charm import KafkaK8sCharm
-from literals import CHARM_KEY, PEER, ZOOKEEPER_REL_NAME
+from literals import CHARM_KEY, PEER, ZK_REL_NAME
 
 CONFIG = str(yaml.safe_load(Path("./config.yaml").read_text()))
 ACTIONS = str(yaml.safe_load(Path("./actions.yaml").read_text()))
@@ -29,7 +29,7 @@ def harness():
     harness.begin()
 
     # Relate to ZK with tls enabled
-    zk_relation_id = harness.add_relation(ZOOKEEPER_REL_NAME, ZOOKEEPER_REL_NAME)
+    zk_relation_id = harness.add_relation(ZK_REL_NAME, ZK_REL_NAME)
     harness.add_relation_unit(zk_relation_id, "zookeeper/0")
     harness.update_relation_data(
         zk_relation_id,

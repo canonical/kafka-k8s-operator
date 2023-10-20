@@ -4,7 +4,6 @@
 
 import asyncio
 import logging
-import time
 
 import pytest
 import requests
@@ -14,8 +13,10 @@ from literals import REL_NAME, SECURITY_PROTOCOL_PORTS
 
 from .helpers import (
     APP_NAME,
+    DUMMY_NAME,
     KAFKA_CONTAINER,
     KAFKA_SERIES,
+    REL_NAME_ADMIN,
     ZK_NAME,
     ZK_SERIES,
     check_application_status,
@@ -26,9 +27,6 @@ from .helpers import (
 )
 
 logger = logging.getLogger(__name__)
-
-DUMMY_NAME = "app"
-REL_NAME_ADMIN = "kafka-client-admin"
 
 
 @pytest.mark.abort_on_fail
@@ -75,18 +73,19 @@ async def test_listeners(ops_test: OpsTest, app_charm):
     )  # Internal listener
     # Client listener should not be enable if there is no relations
     assert not check_socket(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT"].client)
+
     # Add relation with dummy app
     await asyncio.gather(
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, num_units=1, series="jammy"),
     )
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME, ZK_NAME])
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
+
+    async with ops_test.fast_forward(fast_interval="30s"):
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=800
+        )
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME].status == "active"
-
-    await ops_test.model.wait_for_idle(
-        apps=[APP_NAME, ZK_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=600
-    )
 
     # check that client listener is active
     assert check_socket(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT"].client)
@@ -104,36 +103,38 @@ async def test_listeners(ops_test: OpsTest, app_charm):
 @pytest.mark.abort_on_fail
 async def test_client_properties_makes_admin_connection(ops_test: OpsTest):
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[DUMMY_NAME].status == "active"
 
-    await ops_test.model.wait_for_idle(
-        apps=[APP_NAME, ZK_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=600
-    )
+    async with ops_test.fast_forward(fast_interval="30s"):
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=800
+        )
 
     result = await run_client_properties(ops_test=ops_test)
     assert result
     assert len(result.strip().split("\n")) == 3
+
     await ops_test.model.applications[APP_NAME].remove_relation(
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME}:{REL_NAME_ADMIN}"
     )
-    await ops_test.model.wait_for_idle(apps=[APP_NAME])
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME], idle_period=30, status="active", timeout=600
+    )
 
 
 @pytest.mark.abort_on_fail
 async def test_logs_write_to_storage(ops_test: OpsTest):
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME])
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
-    time.sleep(10)
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[DUMMY_NAME].status == "active"
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME, DUMMY_NAME])
 
+    async with ops_test.fast_forward(fast_interval="30s"):
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=800
+        )
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME].status == "active"
+
     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("produce")
     await action.wait()
-    time.sleep(10)
+
     await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30)
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME].status == "active"

@@ -55,7 +55,7 @@ def check_valid_values(_harness, field: str, accepted_values: list, is_long_fiel
             return_value=["gandalf=grey"],
         ),
         patch("config.KafkaConfig.set_client_properties"),
-        patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
+        patch("charm.KafkaK8sCharm.healthy", new_callable=PropertyMock, return_value=True),
         patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=white")),
     ):
         for value in accepted_values:
@@ -72,7 +72,7 @@ def check_invalid_values(_harness, field: str, erroneus_values: list) -> None:
             return_value=["gandalf=grey"],
         ),
         patch("config.KafkaConfig.set_client_properties"),
-        patch("charm.KafkaK8sCharm.ready_to_start", new_callable=PropertyMock, return_value=True),
+        patch("charm.KafkaK8sCharm.healthy", new_callable=PropertyMock, return_value=True),
         patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=white")),
     ):
         for value in erroneus_values:

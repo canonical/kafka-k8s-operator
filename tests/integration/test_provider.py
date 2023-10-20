@@ -14,6 +14,8 @@ from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
     KAFKA_SERIES,
+    REL_NAME,
+    REL_NAME_ADMIN,
     TLS_SERIES,
     ZK_NAME,
     ZK_SERIES,
@@ -29,10 +31,8 @@ logger = logging.getLogger(__name__)
 DUMMY_NAME_1 = "app"
 DUMMY_NAME_2 = "appii"
 TLS_NAME = "tls-certificates-operator"
-REL_NAME = "kafka-client"
 REL_NAME_CONSUMER = "kafka-client-consumer"
 REL_NAME_PRODUCER = "kafka-client-producer"
-REL_NAME_ADMIN = "kafka-client-admin"
 
 
 @pytest.mark.abort_on_fail

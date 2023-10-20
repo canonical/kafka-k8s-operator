@@ -5,6 +5,7 @@
 """KafkaProvider class and methods."""
 
 import logging
+from typing import TYPE_CHECKING
 
 from charms.data_platform_libs.v0.data_interfaces import KafkaProvides, TopicRequestedEvent
 from ops.charm import RelationBrokenEvent, RelationCreatedEvent
@@ -16,6 +17,9 @@ from config import KafkaConfig
 from literals import REL_NAME
 from utils import generate_password
 
+if TYPE_CHECKING:
+    from charm import KafkaK8sCharm
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,12 +28,9 @@ class KafkaProvider(Object):
 
     def __init__(self, charm) -> None:
         super().__init__(charm, "kafka_client")
-        self.charm = charm
+        self.charm: "KafkaK8sCharm" = charm
         self.kafka_config = KafkaConfig(self.charm)
-        self.kafka_auth = KafkaAuth(
-            charm,
-        )
-
+        self.kafka_auth = KafkaAuth(charm)
         self.kafka_provider = KafkaProvides(self.charm, REL_NAME)
 
         self.framework.observe(self.charm.on[REL_NAME].relation_created, self._on_relation_created)

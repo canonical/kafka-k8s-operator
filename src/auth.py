@@ -7,11 +7,15 @@
 import logging
 import re
 from dataclasses import asdict, dataclass
-from typing import Optional, Set
+from typing import TYPE_CHECKING, Optional, Set
 
 from ops.pebble import ExecError
 
-from utils import run_bin_command
+from literals import JAVA_HOME
+from utils import get_env, run_bin_command
+
+if TYPE_CHECKING:
+    from charm import KafkaK8sCharm
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +34,13 @@ class KafkaAuth:
     """Object for updating Kafka users and ACLs."""
 
     def __init__(self, charm):
-        self.charm = charm
-        self.opts = self.charm.kafka_config.auth_args
+        self.charm: "KafkaK8sCharm" = charm
         self.zookeeper = self.charm.kafka_config.zookeeper_config.get("connect", "")
         self.container = self.charm.container
+        self.bootstrap_server = ",".join(self.charm.kafka_config.bootstrap_server)
+        self.client_properties = self.charm.kafka_config.client_properties_filepath
+        self.server_properties = self.charm.kafka_config.server_properties_filepath
+
         self.new_user_acls: Set[Acl] = set()
 
     @property
@@ -45,17 +52,11 @@ class KafkaAuth:
     def _get_acls_from_cluster(self) -> str:
         """Loads the currently active ACLs from the Kafka cluster."""
         command = [
-            "--authorizer-properties",
-            f"zookeeper.connect={self.zookeeper}",
+            f"--bootstrap-server={self.bootstrap_server}",
+            f"--command-config={self.client_properties}",
             "--list",
         ]
-        acls = run_bin_command(
-            container=self.container,
-            bin_keyword="acls",
-            bin_args=command,
-            extra_args=self.opts,
-            zk_tls_config_filepath=self.charm.kafka_config.server_properties_filepath,
-        )
+        acls = run_bin_command(container=self.container, bin_keyword="acls", bin_args=command)
 
         return acls
 
@@ -139,29 +140,49 @@ class KafkaAuth:
 
         return consumer_acls
 
-    def add_user(self, username: str, password: str) -> None:
+    def add_user(self, username: str, password: str, zk_auth: bool = False) -> None:
         """Adds new user credentials to ZooKeeper.
 
         Args:
             username: the user name to add
             password: the user password
+            zk_auth: flag to specify adding users using ZooKeeper authorizer
+                For use before cluster start
 
         Raises:
             `subprocess.CalledProcessError`: if the error returned a non-zero exit code
         """
-        command = [
-            f"--zookeeper={self.zookeeper}",
+        base_command = [
             "--alter",
             "--entity-type=users",
             f"--entity-name={username}",
             f"--add-config=SCRAM-SHA-512=[password={password}]",
         ]
+
+        # needed only here, as internal SCRAM users cannot be created using `--bootstrap-server`
+        # until the cluster has initialised instead must be authorized using ZooKeeper JAAS
+        if zk_auth:
+            command = base_command + [
+                f"--zookeeper={self.zookeeper}",
+                f"--zk-tls-config-file={self.server_properties}",
+            ]
+            environment = get_env(self.container)
+            kafka_env = {
+                "KAFKA_OPTS": environment["KAFKA_OPTS"].replace("'", ""),
+                "JAVA_HOME": JAVA_HOME,
+            }
+        else:
+            command = base_command + [
+                f"--bootstrap-server={self.bootstrap_server}",
+                f"--command-config={self.client_properties}",
+            ]
+            kafka_env = None
+
         run_bin_command(
             container=self.container,
             bin_keyword="configs",
             bin_args=command,
-            extra_args=self.opts,
-            zk_tls_config_filepath=self.charm.kafka_config.server_properties_filepath,
+            environment=kafka_env,
         )
 
     def delete_user(self, username: str) -> None:
@@ -174,20 +195,15 @@ class KafkaAuth:
             `subprocess.CalledProcessError`: if the error returned a non-zero exit code
         """
         command = [
-            f"--zookeeper={self.zookeeper}",
+            f"--bootstrap-server={self.bootstrap_server}",
+            f"--command-config={self.client_properties}",
             "--alter",
             "--entity-type=users",
             f"--entity-name={username}",
             "--delete-config=SCRAM-SHA-512",
         ]
         try:
-            run_bin_command(
-                container=self.container,
-                bin_keyword="configs",
-                bin_args=command,
-                extra_args=self.opts,
-                zk_tls_config_filepath=self.charm.kafka_config.server_properties_filepath,
-            )
+            run_bin_command(container=self.container, bin_keyword="configs", bin_args=command)
         except ExecError as e:
             if "delete a user credential that does not exist" in str(e.stderr):
                 logger.warning(f"User: {username} can't be deleted, it does not exist")
@@ -214,8 +230,8 @@ class KafkaAuth:
             `subprocess.CalledProcessError`: if the error returned a non-zero exit code
         """
         command = [
-            "--authorizer-properties",
-            f"zookeeper.connect={self.zookeeper}",
+            f"--bootstrap-server={self.bootstrap_server}",
+            f"--command-config={self.client_properties}",
             "--add",
             f"--allow-principal=User:{username}",
             f"--operation={operation}",
@@ -228,13 +244,7 @@ class KafkaAuth:
                 "--resource-pattern-type=PREFIXED",
             ]
 
-        run_bin_command(
-            container=self.container,
-            bin_keyword="acls",
-            bin_args=command,
-            extra_args=self.opts,
-            zk_tls_config_filepath=self.charm.kafka_config.server_properties_filepath,
-        )
+        run_bin_command(container=self.container, bin_keyword="acls", bin_args=command)
 
     def remove_acl(
         self, username: str, operation: str, resource_type: str, resource_name: str
@@ -253,31 +263,19 @@ class KafkaAuth:
             `subprocess.CalledProcessError`: if the error returned a non-zero exit code
         """
         command = [
-            "--authorizer-properties",
-            f"zookeeper.connect={self.zookeeper}",
+            f"--bootstrap-server={self.bootstrap_server}",
+            f"--command-config={self.client_properties}",
             "--remove",
             f"--allow-principal=User:{username}",
             f"--operation={operation}",
+            "--force",
         ]
         if resource_type == "TOPIC":
-            command += [
-                f"--topic={resource_name}",
-                "--force",
-            ]
+            command += [f"--topic={resource_name}"]
         if resource_type == "GROUP":
-            command += [
-                f"--group={resource_name}",
-                "--resource-pattern-type=PREFIXED",
-                "--force",
-            ]
+            command += [f"--group={resource_name}", "--resource-pattern-type=PREFIXED"]
 
-        run_bin_command(
-            container=self.container,
-            bin_keyword="acls",
-            bin_args=command,
-            extra_args=self.opts,
-            zk_tls_config_filepath=self.charm.kafka_config.server_properties_filepath,
-        )
+        run_bin_command(container=self.container, bin_keyword="acls", bin_args=command)
 
     def remove_all_user_acls(self, username: str) -> None:
         """Removes all active ACLs for a given user.

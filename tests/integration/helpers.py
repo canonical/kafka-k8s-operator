@@ -5,6 +5,7 @@
 import logging
 import re
 import socket
+import subprocess
 from contextlib import closing
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
@@ -27,15 +28,19 @@ logger = logging.getLogger(__name__)
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 KAFKA_CONTAINER = METADATA["resources"]["kafka-image"]["upstream-source"]
-KAFKA_SERIES = "jammy"
 APP_NAME = METADATA["name"]
+KAFKA_SERIES = "jammy"
 ZK_NAME = "zookeeper-k8s"
 ZK_SERIES = "jammy"
+DATA_INTEGRATOR_NAME = "data-integrator"
 TLS_SERIES = "jammy"
+DUMMY_NAME = "app"
+REL_NAME_ADMIN = "kafka-client-admin"
+TEST_DEFAULT_MESSAGES = 15
 
 
 def load_acls(model_full_name: str, zookeeper_uri: str) -> Set[Acl]:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/kafka-jaas.cfg {BINARIES_PATH}/bin/kafka-acls.sh --authorizer-properties zookeeper.connect={zookeeper_uri} --list"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/zookeeper-jaas.cfg {BINARIES_PATH}/bin/kafka-acls.sh --authorizer-properties zookeeper.connect={zookeeper_uri} --list"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -63,7 +68,7 @@ def load_super_users(model_full_name: str) -> List[str]:
 
 
 def check_user(model_full_name: str, username: str, zookeeper_uri: str) -> None:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/kafka-jaas.cfg {BINARIES_PATH}/bin/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/zookeeper-jaas.cfg {BINARIES_PATH}/bin/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -76,7 +81,7 @@ def check_user(model_full_name: str, username: str, zookeeper_uri: str) -> None:
 
 def get_user(model_full_name: str, username: str, zookeeper_uri: str) -> str:
     """Get information related to a user stored on zookeeper."""
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/kafka-jaas.cfg {BINARIES_PATH}/bin/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/zookeeper-jaas.cfg {BINARIES_PATH}/bin/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -123,6 +128,63 @@ async def get_address(ops_test: OpsTest, app_name=APP_NAME, unit_num=0) -> str:
     status = await ops_test.model.get_status()  # noqa: F821
     address = status["applications"][app_name]["units"][f"{app_name}/{unit_num}"]["address"]
     return address
+
+
+def get_unit_address_map(ops_test: OpsTest, app_name: str = APP_NAME) -> dict[str, str]:
+    """Returns map on unit name and host.
+
+    Args:
+        ops_test: OpsTest
+        app_name: the Juju application to get hosts from
+            Defaults to `kafka-k8s`
+
+    Returns:
+        Dict of key unit name, value unit address
+    """
+    ips = subprocess.check_output(
+        f"JUJU_MODEL={ops_test.model.info.name} juju status {app_name} --format json | jq '.applications | .\"{app_name}\" | .units | .. .address? // empty' | xargs | tr -d '\"'",
+        shell=True,
+        universal_newlines=True,
+    ).split()
+    hosts = subprocess.check_output(
+        f'JUJU_MODEL={ops_test.model.info.name} juju status {app_name} --format json | jq \'.applications | ."{app_name}" | .units | keys | join(" ")\' | tr -d \'"\'',
+        shell=True,
+        universal_newlines=True,
+    ).split()
+
+    return dict(zip(hosts, ips))
+
+
+def get_bootstrap_servers(ops_test: OpsTest, app_name: str = APP_NAME, port: int = 9092) -> str:
+    """Gets all Kafka server addresses for a given application.
+
+    Args:
+        ops_test: OpsTest
+        app_name: the Juju application to get hosts from
+            Defaults to `kafka-k8s`
+        port: the desired Kafka port.
+            Defaults to `9092`
+
+    Returns:
+        List of Kafka server addresses and ports
+    """
+    return ",".join(f"{host}:{port}" for host in get_unit_address_map(ops_test, app_name).values())
+
+
+def get_k8s_host_from_unit(unit_name: str, app_name: str = APP_NAME) -> str:
+    """Builds K8s host address for a given unit.
+
+    Args:
+        unit_name: name of the Juju unit
+        app_name: the Juju application the Kafka server belongs to
+            Defaults to `kafka-k8s`
+
+    Returns:
+        String of k8s host address
+    """
+    broker_id = unit_name.split("/")[1]
+
+    return f"{app_name}-{broker_id}.{app_name}-endpoints"
 
 
 async def set_password(ops_test: OpsTest, username="sync", password=None, num_unit=0) -> str:
@@ -273,7 +335,7 @@ async def run_client_properties(ops_test: OpsTest) -> str:
         + f":{SECURITY_PROTOCOL_PORTS['SASL_PLAINTEXT'].client}"
     )
 
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/kafka-jaas.cfg {BINARIES_PATH}/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config {CONF_PATH}/client.properties --entity-type users"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/zookeeper-jaas.cfg {BINARIES_PATH}/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config {CONF_PATH}/client.properties --entity-type users"
 
     result = check_output(
         f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",

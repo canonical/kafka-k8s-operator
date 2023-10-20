@@ -7,7 +7,7 @@
 import logging
 import os
 import socket
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from charms.tls_certificates_interface.v1.tls_certificates import (
     TLSCertificatesRequiresV1,
@@ -20,7 +20,10 @@ from ops.model import Container, Relation
 from ops.pebble import ExecError
 
 from literals import CONF_PATH, TLS_RELATION
-from utils import generate_password, parse_tls_file, push
+from utils import generate_password, parse_tls_file, safe_push_to_file
+
+if TYPE_CHECKING:
+    from charm import KafkaK8sCharm
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +33,7 @@ class KafkaTLS(Object):
 
     def __init__(self, charm):
         super().__init__(charm, "tls")
-        self.charm = charm
+        self.charm: "KafkaK8sCharm" = charm
         self.certificates = TLSCertificatesRequiresV1(self.charm, TLS_RELATION)
 
         self.framework.observe(
@@ -52,7 +55,7 @@ class KafkaTLS(Object):
 
     def _tls_relation_created(self, _) -> None:
         """Handler for `certificates_relation_created` event."""
-        if not self.charm.unit.is_leader():
+        if not self.charm.unit.is_leader() or not self.peer_relation:
             return
 
         self.peer_relation.data[self.charm.app].update({"tls": "enabled"})
@@ -239,7 +242,7 @@ class KafkaTLS(Object):
             logger.error("Can't set private-key to unit, missing private-key in relation data")
             return
 
-        push(
+        safe_push_to_file(
             container=self.charm.container,
             content=self.private_key,
             path=f"{CONF_PATH}/server.key",
@@ -251,7 +254,7 @@ class KafkaTLS(Object):
             logger.error("Can't set CA to unit, missing CA in relation data")
             return
 
-        push(
+        safe_push_to_file(
             container=self.charm.container,
             content=self.ca,
             path=f"{CONF_PATH}/ca.pem",
@@ -263,7 +266,7 @@ class KafkaTLS(Object):
             logger.error("Can't set certificate to unit, missing certificate in relation data")
             return
 
-        push(
+        safe_push_to_file(
             container=self.charm.container,
             content=self.certificate,
             path=f"{CONF_PATH}/server.pem",
