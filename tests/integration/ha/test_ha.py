@@ -436,9 +436,11 @@ async def test_network_cut_without_ip_change(
     logger.info(f"Releasing network of broker: {initial_leader_num}")
     remove_instance_isolation(ops_test)
 
+    await asyncio.sleep(REELECTION_TIME)
+
     async with ops_test.fast_forward(fast_interval="15s"):
         result = c_writes.stop()
-        await asyncio.sleep(CLIENT_TIMEOUT * 6)
+        await asyncio.sleep(CLIENT_TIMEOUT * 4)
 
     # verify the unit is now rejoined the cluster
     topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
