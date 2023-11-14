@@ -370,9 +370,10 @@ async def test_pod_reschedule(
     delete_pod(ops_test, unit_name=f"{APP_NAME}/{initial_leader_num}")
 
     # let pod reschedule process be noticed up by juju
-    await ops_test.model.wait_for_idle(
-        apps=[APP_NAME], idle_period=30, status="active", timeout=1000
-    )
+    async with ops_test.fast_forward("60s"):
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME], idle_period=30, status="active", timeout=1000
+        )
 
     # refresh hosts with the new ip
     remove_k8s_hosts(ops_test=ops_test)
