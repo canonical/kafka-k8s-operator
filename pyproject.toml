@@ -26,7 +26,7 @@ profile = "black"
 name = "kafka-k8s-operator"
 version = "1.0"
 description = "kafka-k8s-operator"
-authors = [""]
+authors = []
 
 [tool.poetry.dependencies]
 python = ">=3.8"
@@ -74,7 +74,7 @@ optional = true
 
 [tool.poetry.group.integration.dependencies]
 pytest = ">=7.2"
-juju = "^2.9.44"
+juju = "^3.2.0"
 coverage = {extras = ["toml"], version = ">7.0"}
 pytest-operator = ">0.20"
 kazoo = ">=2.8"

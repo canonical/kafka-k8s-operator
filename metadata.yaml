@@ -9,6 +9,7 @@ description: |
 summary: The Charmed Kafka K8s Operator
 maintainers:
   - Marc Oppenheimer <marc.oppenheimer@canonical.com>
+  - Raul Zamora <raul.zamora@canonical.com>
 
 containers:
   kafka:
