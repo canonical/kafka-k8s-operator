@@ -441,7 +441,7 @@ async def test_network_cut_without_ip_change(
 
     async with ops_test.fast_forward(fast_interval="15s"):
         result = c_writes.stop()
-        await asyncio.sleep(CLIENT_TIMEOUT * 4)
+        await asyncio.sleep(CLIENT_TIMEOUT * 8)
 
     # verify the unit is now rejoined the cluster
     topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
