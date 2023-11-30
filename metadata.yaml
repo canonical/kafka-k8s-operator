@@ -22,7 +22,7 @@ resources:
   kafka-image:
     type: oci-image
     description: OCI Image for Apache Kafka
-    upstream-source: ghcr.io/canonical/charmed-kafka@sha256:4b349591ca84194dccd1c2d3f51337c0595fcdbcc133945a8f0a01fc737c6346
+    upstream-source: docker.io/gtato/charmed-kafka@sha256:74e809db37dadf6ad50d5e3420989757c77ba867b466d2e44e2bac68311e4e27
 
 peers:
   cluster:
@@ -49,6 +49,8 @@ requires:
   logging:
     interface: loki_push_api
     optional: true
+  oauth:
+    interface: oauth
 
 provides:
   kafka-client:
