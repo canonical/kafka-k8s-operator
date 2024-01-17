@@ -4,6 +4,7 @@
 
 """Structured configuration for the Kafka charm."""
 import logging
+import re
 from enum import Enum
 from typing import Optional
 
@@ -13,29 +14,21 @@ from pydantic import validator
 logger = logging.getLogger(__name__)
 
 
-class BaseEnumStr(str, Enum):
-    """Base class for string enum."""
-
-    def __str__(self) -> str:
-        """Return the value as a string."""
-        return str(self.value)
-
-
-class LogMessageTimestampType(BaseEnumStr):
+class LogMessageTimestampType(str, Enum):
     """Enum for the `log_message_timestamp_type` field."""
 
     CREATE_TIME = "CreateTime"
     LOG_APPEND_TIME = "LogAppendTime"
 
 
-class LogCleanupPolicy(BaseEnumStr):
+class LogCleanupPolicy(str, Enum):
     """Enum for the `log_cleanup_policy` field."""
 
     COMPACT = "compact"
     DELETE = "delete"
 
 
-class CompressionType(BaseEnumStr):
+class CompressionType(str, Enum):
     """Enum for the `compression_type` field."""
 
     GZIP = "gzip"
@@ -49,7 +42,7 @@ class CompressionType(BaseEnumStr):
 class CharmConfig(BaseConfigModel):
     """Manager for the structured configuration."""
 
-    compression_type: CompressionType
+    compression_type: str
     log_flush_interval_messages: int  # int  # long
     log_flush_interval_ms: Optional[int]  # long
     log_flush_offset_checkpoint_interval_ms: int
@@ -62,11 +55,13 @@ class CharmConfig(BaseConfigModel):
     unclean_leader_election_enable: bool
     log_cleaner_delete_retention_ms: int  # long
     log_cleaner_min_compaction_lag_ms: int  # long
-    log_cleanup_policy: LogCleanupPolicy
-    log_message_timestamp_type: LogMessageTimestampType
+    log_cleanup_policy: str
+    log_message_timestamp_type: str
     ssl_cipher_suites: Optional[str]
+    ssl_principal_mapping_rules: str
     replication_quota_window_num: int
     zookeeper_ssl_cipher_suites: Optional[str]
+    profile: str
     certificate_extra_sans: Optional[str]
 
     @validator("*", pre=True)
@@ -75,6 +70,30 @@ class CharmConfig(BaseConfigModel):
         """Check for empty strings."""
         if value == "":
             return None
+        return value
+
+    @validator("log_message_timestamp_type")
+    @classmethod
+    def log_message_timestamp_type_validator(cls, value: str) -> Optional[str]:
+        """Check validity of `log_message_timestamp_type` field."""
+        try:
+            _log_message_timestap_type = LogMessageTimestampType(value)
+        except Exception as e:
+            raise ValueError(
+                f"Value out of the accepted values. Could not properly parsed the roles configuration: {e}"
+            )
+        return value
+
+    @validator("log_cleanup_policy")
+    @classmethod
+    def log_cleanup_policy_validator(cls, value: str) -> Optional[str]:
+        """Check validity of `log_cleanup_policy` field."""
+        try:
+            _log_cleanup_policy = LogCleanupPolicy(value)
+        except Exception as e:
+            raise ValueError(
+                f"Value out of the accepted values. Could not properly parsed the roles configuration: {e}"
+            )
         return value
 
     @validator("log_cleaner_min_compaction_lag_ms")
@@ -95,6 +114,21 @@ class CharmConfig(BaseConfigModel):
             return int_value
         raise ValueError("Value out of range.")
 
+    @validator("ssl_principal_mapping_rules")
+    @classmethod
+    def ssl_principal_mapping_rules_validator(cls, value: str) -> Optional[str]:
+        """Check that the list is formed by valid regex values."""
+        # get all regex up until replacement position "/"
+        # TODO: check that there is a replacement as well, not: RULE:regex/
+        pat = re.compile(r"RULE:([^/]+)(?:,RULE:[^/]+)*(?:DEFAULT){0,1}")
+        matches = re.findall(pat, value)
+        for match in matches:
+            try:
+                re.compile(match)
+            except re.error:
+                raise ValueError("Non valid regex pattern")
+        return value
+
     @validator("transaction_state_log_num_partitions", "offsets_topic_num_partitions")
     @classmethod
     def between_zero_and_10k(cls, value: int) -> Optional[int]:
@@ -109,7 +143,7 @@ class CharmConfig(BaseConfigModel):
         """Check value greater than -1."""
         int_value = int(value)
         if int_value < -1:
-            raise ValueError("Value below -1. Accepted values are greater or equal than -1.")
+            raise ValueError("Value below -1. Accepted value are greater or equal than -1.")
         return int_value
 
     @validator("log_flush_interval_messages", "log_flush_interval_ms")
@@ -118,7 +152,7 @@ class CharmConfig(BaseConfigModel):
         """Check value greater than one."""
         int_value = int(value)
         if int_value < 1:
-            raise ValueError("Value below 1. Accepted values are greater or equal than 1.")
+            raise ValueError("Value below 1. Accepted value are greater or equal than 1.")
         return int_value
 
     @validator("replication_quota_window_num", "log_segment_bytes", "message_max_bytes")
@@ -126,7 +160,19 @@ class CharmConfig(BaseConfigModel):
     def greater_than_zero(cls, value: int) -> Optional[int]:
         """Check value greater than zero."""
         if value < 0:
-            raise ValueError("Value below 0. Accepted values are greater or equal than 0.")
+            raise ValueError("Value below -1. Accepted value are greater or equal than -1.")
+        return value
+
+    @validator("compression_type")
+    @classmethod
+    def value_compression_type(cls, value: str) -> Optional[str]:
+        """Check validity of `compression_type` field."""
+        try:
+            _compression_type = CompressionType(value)
+        except Exception as e:
+            raise ValueError(
+                f"Value out of the accepted values. Could not properly parsed the roles configuration: {e}"
+            )
         return value
 
     @validator(
@@ -159,3 +205,12 @@ class CharmConfig(BaseConfigModel):
         if int_value >= -9223372036854775807 and int_value <= 9223372036854775808:
             return int_value
         raise ValueError("Value is not a long")
+
+    @validator("profile")
+    @classmethod
+    def profile_values(cls, value: str) -> Optional[str]:
+        """Check profile config option is one of `testing`, `staging` or `production`."""
+        if value not in ["testing", "staging", "production"]:
+            raise ValueError("Value not one of 'testing', 'staging' or 'production'")
+
+        return value

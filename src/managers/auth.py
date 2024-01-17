@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Supporting objects for Kafka user and ACL management."""
 
 import logging
 import re
+import subprocess
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING, Optional, Set
+from typing import Optional, Set
 
-from ops.pebble import ExecError
-
-from literals import JAVA_HOME
-from utils import get_env, run_bin_command
-
-if TYPE_CHECKING:
-    from charm import KafkaK8sCharm
+from core.cluster import ClusterState
+from k8s_workload import KafkaWorkload
 
 logger = logging.getLogger(__name__)
 
@@ -30,16 +26,18 @@ class Acl:
     username: str
 
 
-class KafkaAuth:
+class AuthManager:
     """Object for updating Kafka users and ACLs."""
 
-    def __init__(self, charm):
-        self.charm: "KafkaK8sCharm" = charm
-        self.zookeeper = self.charm.kafka_config.zookeeper_config.get("connect", "")
-        self.container = self.charm.container
-        self.bootstrap_server = ",".join(self.charm.kafka_config.bootstrap_server)
-        self.client_properties = self.charm.kafka_config.client_properties_filepath
-        self.server_properties = self.charm.kafka_config.server_properties_filepath
+    def __init__(self, state: ClusterState, workload: KafkaWorkload, kafka_opts: str):
+        self.state = state
+        self.workload = workload
+        self.kafka_opts = kafka_opts
+
+        self.zookeeper_connect = self.state.zookeeper.zookeeper_config.get("connect", "")
+        self.bootstrap_server = ",".join(self.state.bootstrap_server)
+        self.client_properties = self.workload.paths.client_properties
+        self.server_properties = self.workload.paths.server_properties
 
         self.new_user_acls: Set[Acl] = set()
 
@@ -56,7 +54,7 @@ class KafkaAuth:
             f"--command-config={self.client_properties}",
             "--list",
         ]
-        acls = run_bin_command(container=self.container, bin_keyword="acls", bin_args=command)
+        acls = self.workload.run_bin_command(bin_keyword="acls", bin_args=command)
 
         return acls
 
@@ -159,31 +157,22 @@ class KafkaAuth:
             f"--add-config=SCRAM-SHA-512=[password={password}]",
         ]
 
-        # needed only here, as internal SCRAM users cannot be created using `--bootstrap-server`
-        # until the cluster has initialised instead must be authorized using ZooKeeper JAAS
+        # needed only here, as internal SCRAM users cannot be created using `--bootstrap-server` until the cluster has initialised
+        # instead must be authorized using ZooKeeper JAAS
         if zk_auth:
             command = base_command + [
-                f"--zookeeper={self.zookeeper}",
+                f"--zookeeper={self.zookeeper_connect}",
                 f"--zk-tls-config-file={self.server_properties}",
             ]
-            environment = get_env(self.container)
-            kafka_env = {
-                "KAFKA_OPTS": environment["KAFKA_OPTS"].replace("'", ""),
-                "JAVA_HOME": JAVA_HOME,
-            }
+            opts = [self.kafka_opts]
         else:
             command = base_command + [
                 f"--bootstrap-server={self.bootstrap_server}",
                 f"--command-config={self.client_properties}",
             ]
-            kafka_env = None
+            opts = []
 
-        run_bin_command(
-            container=self.container,
-            bin_keyword="configs",
-            bin_args=command,
-            environment=kafka_env,
-        )
+        self.workload.run_bin_command(bin_keyword="configs", bin_args=command, opts=opts)
 
     def delete_user(self, username: str) -> None:
         """Deletes user credentials from ZooKeeper.
@@ -203,9 +192,9 @@ class KafkaAuth:
             "--delete-config=SCRAM-SHA-512",
         ]
         try:
-            run_bin_command(container=self.container, bin_keyword="configs", bin_args=command)
-        except ExecError as e:
-            if "delete a user credential that does not exist" in str(e.stderr):
+            self.workload.run_bin_command(bin_keyword="configs", bin_args=command)
+        except subprocess.CalledProcessError as e:
+            if "delete a user credential that does not exist" in e.stderr:
                 logger.warning(f"User: {username} can't be deleted, it does not exist")
                 return
             raise
@@ -236,6 +225,7 @@ class KafkaAuth:
             f"--allow-principal=User:{username}",
             f"--operation={operation}",
         ]
+
         if resource_type == "TOPIC":
             command += [f"--topic={resource_name}"]
         if resource_type == "GROUP":
@@ -243,8 +233,7 @@ class KafkaAuth:
                 f"--group={resource_name}",
                 "--resource-pattern-type=PREFIXED",
             ]
-
-        run_bin_command(container=self.container, bin_keyword="acls", bin_args=command)
+        self.workload.run_bin_command(bin_keyword="acls", bin_args=command)
 
     def remove_acl(
         self, username: str, operation: str, resource_type: str, resource_name: str
@@ -270,12 +259,16 @@ class KafkaAuth:
             f"--operation={operation}",
             "--force",
         ]
+
         if resource_type == "TOPIC":
             command += [f"--topic={resource_name}"]
         if resource_type == "GROUP":
-            command += [f"--group={resource_name}", "--resource-pattern-type=PREFIXED"]
+            command += [
+                f"--group={resource_name}",
+                "--resource-pattern-type=PREFIXED",
+            ]
 
-        run_bin_command(container=self.container, bin_keyword="acls", bin_args=command)
+        self.workload.run_bin_command(bin_keyword="acls", bin_args=command)
 
     def remove_all_user_acls(self, username: str) -> None:
         """Removes all active ACLs for a given user.

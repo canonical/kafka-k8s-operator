@@ -33,9 +33,16 @@ peers:
 requires:
   zookeeper:
     interface: zookeeper
+    limit: 1
   certificates:
     interface: tls-certificates
     limit: 1
+    optional: true
+  trusted-ca:
+    interface: tls-certificates
+    optional: true
+  trusted-certificate:
+    interface: tls-certificates
     optional: true
   logging:
     interface: loki_push_api
