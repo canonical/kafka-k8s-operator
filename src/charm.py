@@ -11,7 +11,7 @@ from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
-from ops import pebble
+from ops import InstallEvent, pebble
 from ops.charm import (
     ActionEvent,
     StorageAttachedEvent,
@@ -70,7 +70,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         # MANAGERS
 
         self.config_manager = KafkaConfigManager(self.state, self.workload, self.config)
-        self.tls_manager = TLSManager(self.state, self.workload)
+        self.tls_manager = TLSManager(self.state, self.workload, self.substrate)
         self.auth_manager = AuthManager(self.state, self.workload, self.config_manager.kafka_opts)
 
         self.restart = RollingOpsManager(self, relation="restart", callback=self._restart)
@@ -88,6 +88,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             container_name="kafka",
         )
 
+        self.framework.observe(getattr(self.on, "install"), self._on_install)
         self.framework.observe(getattr(self.on, "kafka_pebble_ready"), self._on_kafka_pebble_ready)
         self.framework.observe(getattr(self.on, "config_changed"), self._on_config_changed)
         self.framework.observe(getattr(self.on, "update_status"), self._on_update_status)
@@ -109,6 +110,12 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
     @property
     def _kafka_layer(self) -> Layer:
         """Returns a Pebble configuration layer for Kafka."""
+        extra_opts = [
+            f"-javaagent:{self.workload.paths.jmx_prometheus_javaagent}={JMX_EXPORTER_PORT}:{self.workload.paths.jmx_prometheus_config}",
+            f"-Djava.security.auth.login.config={self.workload.paths.zk_jaas}",
+        ]
+        command = f"{self.workload.paths.binaries_path}/bin/kafka-server-start.sh {self.workload.paths.server_properties}"
+
         layer_config: pebble.LayerDict = {
             "summary": "kafka layer",
             "description": "Pebble config layer for kafka",
@@ -116,13 +123,12 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
                 CONTAINER: {
                     "override": "replace",
                     "summary": "kafka",
-                    "command": f"{self.workload.paths.binaries_path}/bin/kafka-server-start.sh {self.workload.paths.server_properties}",
+                    "command": command,
                     "startup": "enabled",
                     "user": "kafka",
                     "group": "kafka",
                     "environment": {
-                        "KAFKA_OPTS": " ".join(self.config_manager.kafka_opts),
-                        "KAFKA_JMX_OPTS": " ".join(self.config_manager.jmx_opts),
+                        "KAFKA_OPTS": " ".join(extra_opts),
                         "JAVA_HOME": self.workload.paths.java_home,
                         "LOG_DIR": self.workload.paths.logs_path,
                     },
@@ -133,12 +139,13 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
     def _on_kafka_pebble_ready(self, event: EventBase) -> None:
         """Handler for `start` event."""
-        if not self.state.ready_to_start:
+        ready_state = self.state.ready_to_start
+        if ready_state != Status.ACTIVE:
+            self._set_status(ready_state)
             event.defer()
             return
 
         # required settings given zookeeper connection config has been created
-        self.config_manager.set_environment()
         self.config_manager.set_server_properties()
         self.config_manager.set_zk_jaas_config()
         self.config_manager.set_client_properties()
@@ -149,6 +156,14 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         # service_start might fail silently, confirm with ZK if kafka is actually connected
         self._on_update_status(event)
 
+    def _on_install(self, event: InstallEvent) -> None:
+        """Generate internal passwords for the application."""
+        if not self.unit.get_container(CONTAINER).can_connect():
+            event.defer()
+            return
+
+        self.config_manager.set_environment()
+
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
         if not self.healthy:
@@ -156,38 +171,35 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             return
 
         # Load current properties set in the charm workload
-        raw_properties = None
+        properties = None
         try:
-            raw_properties = str(
-                self.container.pull(self.kafka_config.server_properties_filepath).read()
-            )
-            properties = raw_properties.splitlines()
+            properties = self.workload.read(self.workload.paths.server_properties)
         except (ProtocolError, PathError) as e:
             logger.debug(str(e))
             event.defer()
             return
 
-        if not raw_properties:
+        if not properties:
             # Event fired before charm has properly started
             event.defer()
             return
 
-        if set(properties) ^ set(self.kafka_config.server_properties):
+        if set(properties) ^ set(self.config_manager.server_properties):
             logger.info(
                 (
                     f'Broker {self.unit.name.split("/")[1]} updating config - '
-                    f"OLD PROPERTIES = {set(properties) - set(self.kafka_config.server_properties)}, "
-                    f"NEW PROPERTIES = {set(self.kafka_config.server_properties) - set(properties)}"
+                    f"OLD PROPERTIES = {set(properties) - set(self.config_manager.server_properties)}, "
+                    f"NEW PROPERTIES = {set(self.config_manager.server_properties) - set(properties)}"
                 )
             )
-            self.kafka_config.set_server_properties()
-            self.kafka_config.set_client_properties()
+            self.config_manager.set_server_properties()
+            self.config_manager.set_client_properties()
 
             self.on[f"{self.restart.name}"].acquire_lock.emit()
 
         # If Kafka is related to client charms, update their information.
         if self.model.relations.get(REL_NAME, None) and self.unit.is_leader():
-            self.client_relations.update_connection_info()
+            self.provider.update_connection_info()
 
     def _on_update_status(self, event: EventBase) -> None:
         """Handler for `update-status` events."""
@@ -207,13 +219,11 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
     def _on_storage_attached(self, event: StorageAttachedEvent) -> None:
         """Handler for `storage_attached` events."""
         # checks first whether the broker is active before warning
-        if not self.state.ready_to_start:
-            return
-
-        # new dirs won't be used until topic partitions are assigned to it
-        # either automatically for new topics, or manually for existing
-        self._set_status(Status.ADDED_STORAGE)
-        self._on_config_changed(event)
+        if self.workload.active():
+            # new dirs won't be used until topic partitions are assigned to it
+            # either automatically for new topics, or manually for existing
+            self._set_status(Status.ADDED_STORAGE)
+            self._on_config_changed(event)
 
     def _on_storage_detaching(self, event: StorageDetachingEvent) -> None:
         """Handler for `storage_detaching` events."""
@@ -257,6 +267,11 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             return
 
         username = event.params["username"]
+        if username not in INTERNAL_USERS:
+            msg = f"Can only update internal charm users: {INTERNAL_USERS}, not {username}."
+            logger.error(msg)
+            event.fail(msg)
+
         new_password = event.params.get("password", self.workload.generate_password())
 
         if new_password in self.state.cluster.internal_user_credentials.values():
@@ -294,30 +309,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             }
         )
 
-    def _update_internal_user(self, username: str, password: str) -> None:
-        """Updates internal SCRAM usernames and passwords.
-
-        Raises:
-            RuntimeError if called from non-leader unit
-            KeyError if attempted to update non-leader unit
-            ExecError if command to ZooKeeper failed
-        """
-        if not self.unit.is_leader():
-            raise RuntimeError("Cannot update internal user from non-leader unit.")
-
-        if username not in INTERNAL_USERS:
-            raise KeyError(
-                f"Can only update internal charm users: {INTERNAL_USERS}, not {username}."
-            )
-
-        # do not start units until SCRAM users have been added to ZooKeeper for server-server auth
-        self.auth_manager.add_user(
-            username=username,
-            password=password,
-            zk_auth=True,
-        )
-
-    def _create_internal_credentials(self) -> list[tuple[str, str]]:
+    def create_internal_credentials(self) -> list[tuple[str, str]]:
         """Creates internal SCRAM users during cluster start.
 
         Returns:
@@ -336,6 +328,24 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
         return credentials
 
+    def _update_internal_user(self, username: str, password: str) -> None:
+        """Updates internal SCRAM usernames and passwords.
+
+        Raises:
+            RuntimeError if called from non-leader unit
+            KeyError if attempted to update non-leader unit
+            ExecError if command to ZooKeeper failed
+        """
+        if not self.unit.is_leader():
+            raise RuntimeError("Cannot update internal user from non-leader unit.")
+
+        # do not start units until SCRAM users have been added to ZooKeeper for server-server auth
+        self.auth_manager.add_user(
+            username=username,
+            password=password,
+            zk_auth=True,
+        )
+
     @property
     def healthy(self) -> bool:
         """Checks and updates various charm lifecycle states.
@@ -345,7 +355,9 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         Returns:
             True if service is alive and active. Otherwise False
         """
-        if not self.state.ready_to_start:
+        ready_state = self.state.ready_to_start
+        if ready_state != Status.ACTIVE:
+            self._set_status(ready_state)
             return False
 
         if not self.workload.active():

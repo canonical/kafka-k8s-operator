@@ -7,9 +7,8 @@ import logging
 import time
 
 import pytest
+from helpers import get_active_brokers
 from pytest_operator.plugin import OpsTest
-
-from utils import get_active_brokers
 
 from .helpers import (
     APP_NAME,
@@ -23,7 +22,6 @@ from .helpers import (
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.skip  # skip until scaling operations work in MicroK8s
 @pytest.mark.abort_on_fail
 async def test_kafka_simple_scale_up(ops_test: OpsTest):
     kafka_charm = await ops_test.build_charm(".")
@@ -65,7 +63,6 @@ async def test_kafka_simple_scale_up(ops_test: OpsTest):
     assert f"{chroot}/brokers/ids/2" in active_brokers
 
 
-@pytest.mark.skip  # skip until scaling operations work in MicroK8s
 @pytest.mark.abort_on_fail
 async def test_kafka_simple_scale_down(ops_test: OpsTest):
     await ops_test.model.applications[APP_NAME].destroy_units(f"{APP_NAME}/1")

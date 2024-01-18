@@ -12,17 +12,12 @@ from subprocess import PIPE, CalledProcessError, check_output
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import yaml
+from charms.zookeeper.v0.client import QuorumLeaderNotFoundError, ZooKeeperManager
+from kazoo.exceptions import AuthFailedError, NoNodeError
 from pytest_operator.plugin import OpsTest
 
-from auth import Acl, KafkaAuth
-from literals import (
-    BINARIES_PATH,
-    CONF_PATH,
-    DATA_PATH,
-    REL_NAME,
-    SECURITY_PROTOCOL_PORTS,
-    STORAGE,
-)
+from core.literals import PATHS, REL_NAME, SECURITY_PROTOCOL_PORTS, STORAGE
+from managers.auth import Acl, AuthManager
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +27,6 @@ APP_NAME = METADATA["name"]
 KAFKA_SERIES = "jammy"
 ZK_NAME = "zookeeper-k8s"
 ZK_SERIES = "jammy"
-DATA_INTEGRATOR_NAME = "data-integrator"
 TLS_SERIES = "jammy"
 DUMMY_NAME = "app"
 REL_NAME_ADMIN = "kafka-client-admin"
@@ -40,7 +34,7 @@ TEST_DEFAULT_MESSAGES = 15
 
 
 def load_acls(model_full_name: str, zookeeper_uri: str) -> Set[Acl]:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/zookeeper-jaas.cfg {BINARIES_PATH}/bin/kafka-acls.sh --authorizer-properties zookeeper.connect={zookeeper_uri} --list"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-acls.sh --authorizer-properties zookeeper.connect={zookeeper_uri} --list"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -48,12 +42,12 @@ def load_acls(model_full_name: str, zookeeper_uri: str) -> Set[Acl]:
         universal_newlines=True,
     )
 
-    return KafkaAuth._parse_acls(acls=result)
+    return AuthManager._parse_acls(acls=result)
 
 
 def load_super_users(model_full_name: str) -> List[str]:
     result = check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {APP_NAME}/0 'cat {CONF_PATH}/server.properties'",
+        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {APP_NAME}/0 'cat {PATHS['CONF']}/server.properties'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -68,7 +62,7 @@ def load_super_users(model_full_name: str) -> List[str]:
 
 
 def check_user(model_full_name: str, username: str, zookeeper_uri: str) -> None:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/zookeeper-jaas.cfg {BINARIES_PATH}/bin/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -81,7 +75,7 @@ def check_user(model_full_name: str, username: str, zookeeper_uri: str) -> None:
 
 def get_user(model_full_name: str, username: str, zookeeper_uri: str) -> str:
     """Get information related to a user stored on zookeeper."""
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/zookeeper-jaas.cfg {BINARIES_PATH}/bin/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-configs.sh --zookeeper {zookeeper_uri} --describe --entity-type users --entity-name {username}"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -121,6 +115,33 @@ def get_zookeeper_connection(unit_name: str, model_full_name: str) -> Tuple[List
         return usernames, zookeeper_uri
     else:
         raise Exception("config not found")
+
+
+def get_active_brokers(config: Dict) -> Set[str]:
+    """Gets all brokers currently connected to ZooKeeper.
+
+    Args:
+        config: the relation data provided by ZooKeeper
+
+    Returns:
+        Set of active broker ids
+    """
+    chroot = config.get("chroot", "")
+    hosts = config.get("endpoints", "").split(",")
+    username = config.get("username", "")
+    password = config.get("password", "")
+
+    zk = ZooKeeperManager(hosts=hosts, username=username, password=password)
+    path = f"{chroot}/brokers/ids/"
+
+    try:
+        brokers = zk.leader_znodes(path=path)
+    # auth might not be ready with ZK after relation yet
+    except (NoNodeError, AuthFailedError, QuorumLeaderNotFoundError) as e:
+        logger.debug(str(e))
+        return set()
+
+    return brokers
 
 
 async def get_address(ops_test: OpsTest, app_name=APP_NAME, unit_num=0) -> str:
@@ -308,7 +329,7 @@ def check_logs(model_full_name: str, kafka_unit_name: str, topic: str) -> None:
         AssertionError: if logs aren't found for desired topic
     """
     logs = check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {kafka_unit_name} 'find {DATA_PATH}/{STORAGE}'",
+        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {kafka_unit_name} 'find {PATHS['DATA']}/{STORAGE}'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -335,7 +356,7 @@ async def run_client_properties(ops_test: OpsTest) -> str:
         + f":{SECURITY_PROTOCOL_PORTS['SASL_PLAINTEXT'].client}"
     )
 
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={CONF_PATH}/zookeeper-jaas.cfg {BINARIES_PATH}/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config {CONF_PATH}/client.properties --entity-type users"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config {PATHS['CONF']}/client.properties --entity-type users"
 
     result = check_output(
         f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",

@@ -9,7 +9,7 @@ import pytest
 import requests
 from pytest_operator.plugin import OpsTest
 
-from literals import REL_NAME, SECURITY_PROTOCOL_PORTS
+from core.literals import REL_NAME, SECURITY_PROTOCOL_PORTS
 
 from .helpers import (
     APP_NAME,

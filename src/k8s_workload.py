@@ -7,14 +7,11 @@
 import logging
 import secrets
 import string
-from typing import Dict, List, override
+from typing import Dict, List
 
 from ops import Container
 from ops.pebble import ExecError, Layer
-from tenacity import retry
-from tenacity.retry import retry_if_not_result
-from tenacity.stop import stop_after_attempt
-from tenacity.wait import wait_fixed
+from typing_extensions import override
 
 from core.literals import PATHS
 from core.workload import PathsBase, WorkloadBase
@@ -144,31 +141,15 @@ class KafkaWorkload(WorkloadBase):
             logger.error(str(e.stderr))
             raise e
 
-    @retry(
-        wait=wait_fixed(1),
-        stop=stop_after_attempt(5),
-        retry_error_callback=lambda state: state.outcome.result(),  # type: ignore
-        retry=retry_if_not_result(lambda result: True if result else False),
-    )
     @override
     def active(self) -> bool:
-        self.container.get_service(self.CONTAINER_SERVICE).is_running()
-
-    def disable_enable(self) -> None:
-        """Disables then enables snap service.
-
-        Necessary for snap services to recognise new storage mounts
-
-        Raises:
-            subprocess.CalledProcessError if error occurs
-        """
-        pass
+        return self.container.get_service(self.CONTAINER_SERVICE).is_running()
 
     def run_bin_command(
         self,
         bin_keyword: str,
         bin_args: List[str],
-        opts: Dict[str, str] | None = None,
+        opts: List[str] = [],
     ) -> str:
         """Runs kafka bin command with desired args.
 
@@ -181,8 +162,13 @@ class KafkaWorkload(WorkloadBase):
         Returns:
             String of kafka bin command output
         """
+        parsed_opts = {}
+        for opt in opts:
+            k, v = opt.split("=", maxsplit=1)
+            parsed_opts[k] = v.replace("'", "")
+
         command = f"{self.paths.binaries_path}/bin/kafka-{bin_keyword}.sh {' '.join(bin_args)}"
-        return self.exec(command=command, environment=opts)
+        return self.exec(command=command, env=parsed_opts or None)
 
     def update_environment(self, env: Dict[str, str]) -> None:
         """Updates /etc/environment file."""
