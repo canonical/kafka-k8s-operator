@@ -9,6 +9,7 @@ description: |
 summary: The Charmed Kafka K8s Operator
 maintainers:
   - Marc Oppenheimer <marc.oppenheimer@canonical.com>
+  - Raul Zamora <raul.zamora@canonical.com>
 
 containers:
   kafka:
@@ -21,7 +22,7 @@ resources:
   kafka-image:
     type: oci-image
     description: OCI Image for Apache Kafka
-    upstream-source: ghcr.io/canonical/charmed-kafka@sha256:39985479af690c37c366e62aa2f1258c64e538043cc4b370d7b49cfae82cf6c9
+    upstream-source: ghcr.io/canonical/charmed-kafka@sha256:0be7852a3b3227871ac6156e34982f2ffad26af311fe711c324e6d4f300125f0
 
 peers:
   cluster:
