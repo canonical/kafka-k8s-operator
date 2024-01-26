@@ -47,7 +47,7 @@ def test_config_parsing_parameters_integer_values(harness) -> None:
 
 
 def check_valid_values(_harness, field: str, accepted_values: list, is_long_field=False) -> None:
-    """Check the correcteness of the passed values for a field."""
+    """Check the correctness of the passed values for a field."""
     with (
         patch(
             "config.KafkaConfig.server_properties",

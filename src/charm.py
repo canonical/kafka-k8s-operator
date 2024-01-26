@@ -11,23 +11,22 @@ from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
-from ops import InstallEvent, pebble
-from ops.charm import (
-    ActionEvent,
-    StorageAttachedEvent,
-    StorageDetachingEvent,
-)
+from ops import ActiveStatus, InstallEvent, pebble
+from ops.charm import StorageAttachedEvent, StorageDetachingEvent
 from ops.framework import EventBase
 from ops.main import main
 from ops.model import StatusBase
 from ops.pebble import Layer, PathError, ProtocolError
 
 from core.cluster import ClusterState
-from core.literals import (
-    ADMIN_USER,
+from core.structured_config import CharmConfig
+from events.provider import KafkaProvider
+from events.tls import TLSHandler
+from events.zookeeper import ZooKeeperHandler
+from k8s_workload import KafkaWorkload
+from literals import (
     CHARM_KEY,
     CONTAINER,
-    INTERNAL_USERS,
     JMX_EXPORTER_PORT,
     LOGS_RULES_DIR,
     METRICS_RULES_DIR,
@@ -37,11 +36,6 @@ from core.literals import (
     Status,
     Substrate,
 )
-from core.structured_config import CharmConfig
-from events.provider import KafkaProvider
-from events.tls import TLSHandler
-from events.zookeeper import ZooKeeperHandler
-from k8s_workload import KafkaWorkload
 from managers.auth import AuthManager
 from managers.config import KafkaConfigManager
 from managers.tls import TLSManager
@@ -89,16 +83,12 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         )
 
         self.framework.observe(getattr(self.on, "install"), self._on_install)
+        self.framework.observe(getattr(self.on, "start"), self._on_start)
         self.framework.observe(getattr(self.on, "kafka_pebble_ready"), self._on_kafka_pebble_ready)
         self.framework.observe(getattr(self.on, "config_changed"), self._on_config_changed)
         self.framework.observe(getattr(self.on, "update_status"), self._on_update_status)
 
         self.framework.observe(self.on[PEER].relation_changed, self._on_config_changed)
-
-        self.framework.observe(getattr(self.on, "set_password_action"), self._set_password_action)
-        self.framework.observe(
-            getattr(self.on, "get_admin_credentials_action"), self._get_admin_credentials_action
-        )
 
         self.framework.observe(
             getattr(self.on, "data_storage_attached"), self._on_storage_attached
@@ -139,9 +129,8 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
     def _on_kafka_pebble_ready(self, event: EventBase) -> None:
         """Handler for `start` event."""
-        ready_state = self.state.ready_to_start
-        if ready_state != Status.ACTIVE:
-            self._set_status(ready_state)
+        self._set_status(self.state.ready_to_start)
+        if not isinstance(self.unit.status, ActiveStatus):
             event.defer()
             return
 
@@ -152,9 +141,14 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
         # start kafka service
         self.workload.start(layer=self._kafka_layer)
+        logger.info("Kafka service started")
 
         # service_start might fail silently, confirm with ZK if kafka is actually connected
         self._on_update_status(event)
+
+    def _on_start(self, event: EventBase) -> None:
+        """Wrapper for start event."""
+        self._on_kafka_pebble_ready(event)
 
     def _on_install(self, event: InstallEvent) -> None:
         """Generate internal passwords for the application."""
@@ -249,103 +243,6 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         else:
             logger.error(f"Broker {self.unit.name.split('/')[1]} failed to restart")
 
-    def _set_password_action(self, event: ActionEvent) -> None:
-        """Handler for set-password action.
-
-        Set the password for a specific user, if no passwords are passed, generate them.
-        """
-        if not self.unit.is_leader():
-            msg = "Password rotation must be called on leader unit"
-            logger.error(msg)
-            event.fail(msg)
-            return
-
-        if not self.healthy:
-            msg = "Unit is not healthy"
-            logger.error(msg)
-            event.fail(msg)
-            return
-
-        username = event.params["username"]
-        if username not in INTERNAL_USERS:
-            msg = f"Can only update internal charm users: {INTERNAL_USERS}, not {username}."
-            logger.error(msg)
-            event.fail(msg)
-
-        new_password = event.params.get("password", self.workload.generate_password())
-
-        if new_password in self.state.cluster.internal_user_credentials.values():
-            msg = "Password already exists, please choose a different password."
-            logger.error(msg)
-            event.fail(msg)
-            return
-
-        try:
-            self._update_internal_user(username=username, password=new_password)
-        except Exception as e:
-            logger.error(str(e))
-            event.fail(f"unable to set password for {username}")
-
-        # Store the password on application databag
-        self.state.cluster.relation_data.update({f"{username}-password": new_password})
-        event.set_results({f"{username}-password": new_password})
-
-    def _get_admin_credentials_action(self, event: ActionEvent) -> None:
-        client_properties = self.workload.read(self.workload.paths.client_properties)
-
-        if not client_properties:
-            msg = "client.properties file not found on target unit."
-            logger.error(msg)
-            event.fail(msg)
-            return
-
-        admin_properties = set(client_properties) - set(self.config_manager.tls_properties)
-
-        event.set_results(
-            {
-                "username": ADMIN_USER,
-                "password": self.state.cluster.internal_user_credentials[ADMIN_USER],
-                "client-properties": "\n".join(admin_properties),
-            }
-        )
-
-    def create_internal_credentials(self) -> list[tuple[str, str]]:
-        """Creates internal SCRAM users during cluster start.
-
-        Returns:
-            List of (username, password) for all internal users
-
-        Raises:
-            RuntimeError if called from non-leader unit
-            KeyError if attempted to update non-leader unit
-            subprocess.CalledProcessError if command to ZooKeeper failed
-        """
-        credentials = [
-            (username, self.workload.generate_password()) for username in INTERNAL_USERS
-        ]
-        for username, password in credentials:
-            self._update_internal_user(username=username, password=password)
-
-        return credentials
-
-    def _update_internal_user(self, username: str, password: str) -> None:
-        """Updates internal SCRAM usernames and passwords.
-
-        Raises:
-            RuntimeError if called from non-leader unit
-            KeyError if attempted to update non-leader unit
-            ExecError if command to ZooKeeper failed
-        """
-        if not self.unit.is_leader():
-            raise RuntimeError("Cannot update internal user from non-leader unit.")
-
-        # do not start units until SCRAM users have been added to ZooKeeper for server-server auth
-        self.auth_manager.add_user(
-            username=username,
-            password=password,
-            zk_auth=True,
-        )
-
     @property
     def healthy(self) -> bool:
         """Checks and updates various charm lifecycle states.
@@ -355,9 +252,8 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         Returns:
             True if service is alive and active. Otherwise False
         """
-        ready_state = self.state.ready_to_start
-        if ready_state != Status.ACTIVE:
-            self._set_status(ready_state)
+        self._set_status(self.state.ready_to_start)
+        if not isinstance(self.unit.status, ActiveStatus):
             return False
 
         if not self.workload.active():

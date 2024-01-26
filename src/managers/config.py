@@ -5,10 +5,12 @@
 """Manager for handling Kafka configuration."""
 
 import logging
-from typing import List, cast
+from typing import cast
 
 from core.cluster import ClusterState
-from core.literals import (
+from core.structured_config import CharmConfig, LogLevel
+from k8s_workload import KafkaWorkload
+from literals import (
     ADMIN_USER,
     INTER_BROKER_USER,
     JMX_EXPORTER_PORT,
@@ -18,8 +20,6 @@ from core.literals import (
     AuthMechanism,
     Scope,
 )
-from core.structured_config import CharmConfig
-from k8s_workload import KafkaWorkload
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,8 @@ authorizer.class.name=kafka.security.authorizer.AclAuthorizer
 allow.everyone.if.no.acl.found=false
 auto.create.topics.enable=false
 """
+
+SERVER_PROPERTIES_BLACKLIST = ["profile", "log_level", "certificate_extra_sans"]
 
 
 class Listener:
@@ -108,15 +110,16 @@ class KafkaConfigManager:
         self.config = config
 
     @property
-    def log4j_opts(self) -> str:
-        """The Java config options for specifying log4j properties.
+    def log_level(self) -> str:
+        """Return the Java-compliant logging level set by the user.
 
         Returns:
-            String of Java config options
+            String with these possible values: DEBUG, INFO, WARN, ERROR
         """
-        opts = [f"-Dlog4j.configuration=file:{self.workload.paths.log4j_properties}"]
-
-        return f"KAFKA_LOG4J_OPTS='{' '.join(opts)}'"
+        # Remapping to WARN that is generally used in Java applications based on log4j and logback.
+        if self.config.log_level == LogLevel.WARNING.value:
+            return "WARN"
+        return self.config.log_level
 
     @property
     def jmx_opts(self) -> str:
@@ -175,12 +178,13 @@ class KafkaConfigManager:
         """
         opts = [
             f"-Djava.security.auth.login.config={self.workload.paths.zk_jaas}",
+            f"-Dcharmed.kafka.log.level={self.log_level}",
         ]
 
         return f"KAFKA_OPTS='{' '.join(opts)}'"
 
     @property
-    def default_replication_properties(self) -> List[str]:
+    def default_replication_properties(self) -> list[str]:
         """Builds replication-related properties based on the expected app size.
 
         Returns:
@@ -199,7 +203,7 @@ class KafkaConfigManager:
         ]
 
     @property
-    def auth_properties(self) -> List[str]:
+    def auth_properties(self) -> list[str]:
         """Builds properties necessary for inter-broker authorization through ZooKeeper.
 
         Returns:
@@ -207,11 +211,11 @@ class KafkaConfigManager:
         """
         return [
             f"broker.id={self.state.broker.unit_id}",
-            f'zookeeper.connect={self.state.zookeeper.zookeeper_config["connect"]}',
+            f"zookeeper.connect={self.state.zookeeper.connect}",
         ]
 
     @property
-    def zookeeper_tls_properties(self) -> List[str]:
+    def zookeeper_tls_properties(self) -> list[str]:
         """Builds the properties necessary for SSL connections to ZooKeeper.
 
         Returns:
@@ -225,7 +229,7 @@ class KafkaConfigManager:
         ]
 
     @property
-    def tls_properties(self) -> List[str]:
+    def tls_properties(self) -> list[str]:
         """Builds the properties necessary for TLS authentication.
 
         Returns:
@@ -241,7 +245,7 @@ class KafkaConfigManager:
         ]
 
     @property
-    def scram_properties(self) -> List[str]:
+    def scram_properties(self) -> list[str]:
         """Builds the properties for each scram listener.
 
         Returns:
@@ -274,7 +278,7 @@ class KafkaConfigManager:
         )
 
     @property
-    def auth_mechanisms(self) -> List[AuthMechanism]:
+    def auth_mechanisms(self) -> list[AuthMechanism]:
         """Return a list of enabled auth mechanisms."""
         # TODO: At the moment only one mechanism for extra listeners. Will need to be
         # extended with more depending on configuration settings.
@@ -282,7 +286,7 @@ class KafkaConfigManager:
         if self.state.cluster.mtls_enabled:
             protocol += ["SSL"]
 
-        return cast(List[AuthMechanism], protocol)
+        return cast(list[AuthMechanism], protocol)
 
     @property
     def internal_listener(self) -> Listener:
@@ -291,7 +295,7 @@ class KafkaConfigManager:
         return Listener(host=self.state.broker.host, protocol=protocol, scope="INTERNAL")
 
     @property
-    def client_listeners(self) -> List[Listener]:
+    def client_listeners(self) -> list[Listener]:
         """Return a list of extra listeners."""
         # if there is a relation with kafka then add extra listener
         if not self.state.client_relations:
@@ -303,12 +307,12 @@ class KafkaConfigManager:
         ]
 
     @property
-    def all_listeners(self) -> List[Listener]:
+    def all_listeners(self) -> list[Listener]:
         """Return a list with all expected listeners."""
         return [self.internal_listener] + self.client_listeners
 
     @property
-    def rack_properties(self) -> List[str]:
+    def rack_properties(self) -> list[str]:
         """Builds all properties related to rack awareness configuration.
 
         Returns:
@@ -319,7 +323,7 @@ class KafkaConfigManager:
         return self.workload.read(rack_path) or []
 
     @property
-    def client_properties(self) -> List[str]:
+    def client_properties(self) -> list[str]:
         """Builds all properties necessary for running an admin Kafka client.
 
         This includes SASL/SCRAM auth and security mechanisms.
@@ -333,7 +337,8 @@ class KafkaConfigManager:
         client_properties = [
             f'sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{username}" password="{password}";',
             "sasl.mechanism=SCRAM-SHA-512",
-            f"security.protocol={self.security_protocol}",  # FIXME: will need changing once multiple listener auth schemes
+            f"security.protocol={self.security_protocol}",
+            # FIXME: security.protocol will need changing once multiple listener auth schemes
             f"bootstrap.servers={','.join(self.state.bootstrap_server)}",
         ]
 
@@ -343,7 +348,7 @@ class KafkaConfigManager:
         return client_properties
 
     @property
-    def server_properties(self) -> List[str]:
+    def server_properties(self) -> list[str]:
         """Builds all properties necessary for starting Kafka service.
 
         This includes charm config, replication, SASL/SCRAM auth and default properties.
@@ -381,24 +386,33 @@ class KafkaConfigManager:
         return properties
 
     @property
-    def config_properties(self) -> List[str]:
+    def config_properties(self) -> list[str]:
         """Configure server properties from config."""
         return [
-            f"{conf_key.replace('_', '.')}={str(value)}"
+            f"{self._translate_config_key(conf_key)}={str(value)}"
             for conf_key, value in self.config.dict().items()
             if value is not None
         ]
 
-    def set_zk_jaas_config(self) -> None:
-        """Writes the ZooKeeper JAAS config using ZooKeeper relation data."""
-        jaas_config = f"""
+    @property
+    def zk_jaas_config(self) -> str:
+        """Builds the JAAS config for Client authentication with ZooKeeper.
+
+        Returns:
+            String of Jaas config for ZooKeeper auth
+        """
+        return f"""
 Client {{
     org.apache.zookeeper.server.auth.DigestLoginModule required
-    username="{self.state.zookeeper.zookeeper_config['username']}"
-    password="{self.state.zookeeper.zookeeper_config['password']}";
-}};\n
+    username="{self.state.zookeeper.username}"
+    password="{self.state.zookeeper.password}";
+}};
+
         """
-        self.workload.write(content=jaas_config, path=self.workload.paths.zk_jaas)
+
+    def set_zk_jaas_config(self) -> None:
+        """Writes the ZooKeeper JAAS config using ZooKeeper relation data."""
+        self.workload.write(content=self.zk_jaas_config, path=self.workload.paths.zk_jaas)
 
     def set_server_properties(self) -> None:
         """Writes all Kafka config properties to the `server.properties` path."""
@@ -417,8 +431,32 @@ Client {{
         updated_env_list = [
             self.kafka_opts,
             self.jmx_opts,
-            self.log4j_opts,
             self.jvm_performance_opts,
             self.heap_opts,
         ]
-        self.workload.update_environment(env=self.workload.map_env(env=updated_env_list))
+
+        def map_env(env: list[str]) -> dict[str, str]:
+            map_env = {}
+            for var in env:
+                key = "".join(var.split("=", maxsplit=1)[0])
+                value = "".join(var.split("=", maxsplit=1)[1:])
+                if key:
+                    # only check for keys, as we can have an empty value for a variable
+                    map_env[key] = value
+            return map_env
+
+        raw_current_env = self.workload.read("/etc/environment")
+        current_env = map_env(raw_current_env)
+
+        updated_env = current_env | map_env(updated_env_list)
+        content = "\n".join([f"{key}={value}" for key, value in updated_env.items()])
+        self.workload.write(content=content, path="/etc/environment")
+
+    @staticmethod
+    def _translate_config_key(key: str):
+        """Format config names into server properties, blacklisted property are commented out.
+
+        Returns:
+            String with Kafka configuration name to be placed in the server.properties file
+        """
+        return key.replace("_", ".") if key not in SERVER_PROPERTIES_BLACKLIST else f"# {key}"

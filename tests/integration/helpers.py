@@ -16,7 +16,7 @@ from charms.zookeeper.v0.client import QuorumLeaderNotFoundError, ZooKeeperManag
 from kazoo.exceptions import AuthFailedError, NoNodeError
 from pytest_operator.plugin import OpsTest
 
-from core.literals import PATHS, REL_NAME, SECURITY_PROTOCOL_PORTS, STORAGE
+from literals import PATHS, REL_NAME, SECURITY_PROTOCOL_PORTS, STORAGE
 from managers.auth import Acl, AuthManager
 
 logger = logging.getLogger(__name__)
@@ -366,3 +366,14 @@ async def run_client_properties(ops_test: OpsTest) -> str:
     )
 
     return result
+
+
+def count_lines_with(model_full_name: str, unit: str, file: str, pattern: str) -> int:
+    result = check_output(
+        f"JUJU_MODEL={model_full_name} juju ssh {unit} sudo -i 'grep \"{pattern}\" {file} | wc -l'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+
+    return int(result)

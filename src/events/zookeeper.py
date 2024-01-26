@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from ops import Object, RelationChangedEvent, RelationEvent
 from ops.pebble import ExecError
 
-from core.literals import ZK, Status
+from literals import INTERNAL_USERS, ZK, Status
 
 if TYPE_CHECKING:
     from charm import KafkaK8sCharm
@@ -52,8 +52,8 @@ class ZooKeeperHandler(Object):
         # do not create users until certificate + keystores created
         # otherwise unable to authenticate to ZK
         if self.charm.state.cluster.tls_enabled and not self.charm.state.broker.certificate:
-            event.defer()
             self.charm._set_status(Status.NO_CERT)
+            event.defer()
             return
 
         if not self.charm.state.cluster.internal_user_credentials and self.model.unit.is_leader():
@@ -62,7 +62,7 @@ class ZooKeeperHandler(Object):
             self.charm.config_manager.set_server_properties()
 
             try:
-                internal_user_credentials = self.charm.create_internal_credentials()
+                internal_user_credentials = self._create_internal_credentials()
             except (KeyError, RuntimeError, subprocess.CalledProcessError, ExecError) as e:
                 logger.warning(str(e))
                 event.defer()
@@ -72,6 +72,11 @@ class ZooKeeperHandler(Object):
             for username, password in internal_user_credentials:
                 self.charm.state.cluster.update({f"{username}-password": password})
 
+        # attempt re-start of Kafka for all units on zookeeper-changed
+        # avoids relying on deferred events elsewhere that may not exist after cluster init
+        if not self.charm.healthy and self.charm.state.cluster.internal_user_credentials:
+            self.charm._on_start(event)
+
         self.charm._on_config_changed(event)
 
     def _on_zookeeper_broken(self, _: RelationEvent) -> None:
@@ -80,3 +85,36 @@ class ZooKeeperHandler(Object):
 
         logger.info(f'Broker {self.model.unit.name.split("/")[1]} disconnected')
         self.charm._set_status(Status.ZK_NOT_RELATED)
+
+        # Kafka keeps a meta.properties in every log.dir with a unique ClusterID
+        # this ID is provided by ZK, and removing it on relation-broken allows
+        # re-joining to another ZK cluster.
+        for storage in self.charm.model.storages["data"]:
+            self.charm.workload.exec(f"rm {storage.location}/meta.properties")
+
+        if not self.charm.unit.is_leader():
+            return
+
+        # other charm methods assume credentials == ACLs
+        # necessary to clean-up credentials once ZK relation is lost
+        for username in self.charm.state.cluster.internal_user_credentials:
+            self.charm.state.cluster.update({f"{username}-password": ""})
+
+    def _create_internal_credentials(self) -> list[tuple[str, str]]:
+        """Creates internal SCRAM users during cluster start.
+
+        Returns:
+            List of (username, password) for all internal users
+
+        Raises:
+            RuntimeError if called from non-leader unit
+            KeyError if attempted to update non-leader unit
+            subprocess.CalledProcessError if command to ZooKeeper failed
+        """
+        credentials = [
+            (username, self.charm.workload.generate_password()) for username in INTERNAL_USERS
+        ]
+        for username, password in credentials:
+            self.charm.auth_manager.add_user(username=username, password=password, zk_auth=True)
+
+        return credentials

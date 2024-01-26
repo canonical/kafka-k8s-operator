@@ -13,7 +13,7 @@ from ops.charm import RelationBrokenEvent, RelationCreatedEvent
 from ops.framework import Object
 from ops.pebble import ExecError
 
-from core.literals import REL_NAME
+from literals import REL_NAME
 
 if TYPE_CHECKING:
     from charm import KafkaK8sCharm
@@ -53,11 +53,11 @@ class KafkaProvider(Object):
         relation = event.relation
         username = f"relation-{relation.id}"
         password = (
-            self.charm.state.cluster.relation_data.get(username)
+            self.charm.state.cluster.client_passwords.get(username)
             or self.charm.workload.generate_password()
         )
         bootstrap_server = self.charm.state.bootstrap_server
-        zookeeper_uris = self.charm.state.zookeeper.zookeeper_config.get("connect", "")
+        zookeeper_uris = self.charm.state.zookeeper.connect
         tls = "enabled" if self.charm.state.cluster.tls_enabled else "disabled"
 
         consumer_group_prefix = (
@@ -132,11 +132,11 @@ class KafkaProvider(Object):
         If information didn't change, no events will trigger.
         """
         bootstrap_server = self.charm.state.bootstrap_server
-        zookeeper_uris = self.charm.state.zookeeper.zookeeper_config.get("connect", "")
+        zookeeper_uris = self.charm.state.zookeeper.connect
         tls = "enabled" if self.charm.state.cluster.tls_enabled else "disabled"
 
         for relation in self.charm.model.relations[REL_NAME]:
-            if self.charm.state.cluster.relation_data.get(f"relation-{relation.id}", None):
+            if f"relation-{relation.id}" in self.charm.state.cluster.client_passwords:
                 self.kafka_provider.set_bootstrap_server(
                     relation_id=relation.id, bootstrap_server=",".join(bootstrap_server)
                 )

@@ -10,8 +10,8 @@ import subprocess
 from ops.pebble import ExecError
 
 from core.cluster import ClusterState
-from core.literals import Substrate
 from k8s_workload import KafkaWorkload
+from literals import Substrate
 
 logger = logging.getLogger(__name__)
 

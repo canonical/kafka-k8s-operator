@@ -29,7 +29,7 @@ description = "kafka-k8s-operator"
 authors = []
 
 [tool.poetry.dependencies]
-python = ">=3.8"
+python = ">=3.8,<4.0"
 ops = ">=2.4.1"
 kazoo = ">=2.8.0"
 tenacity = ">=8.0.1"
@@ -60,6 +60,7 @@ optional = true
 [tool.poetry.group.unit.dependencies]
 pytest = ">=7.2"
 coverage = {extras = ["toml"], version = ">7.0"}
+pytest-mock = "^3.11.1"
 
 [tool.poetry.group.security]
 optional = true

@@ -13,8 +13,8 @@ from ops import Container
 from ops.pebble import ExecError, Layer
 from typing_extensions import override
 
-from core.literals import PATHS
 from core.workload import PathsBase, WorkloadBase
+from literals import PATHS
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ class KafkaPaths(PathsBase):
 
         Used for scraping and exposing mBeans of a JMX target.
         """
-        return f"{self.binaries_path}/jmx_prometheus_javaagent.jar"
+        return f"{self.binaries_path}/libs/jmx_prometheus_javaagent.jar"
 
     @property
     def jmx_prometheus_config(self):

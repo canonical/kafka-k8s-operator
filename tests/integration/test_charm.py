@@ -9,7 +9,7 @@ import pytest
 import requests
 from pytest_operator.plugin import OpsTest
 
-from core.literals import REL_NAME, SECURITY_PROTOCOL_PORTS
+from literals import REL_NAME, SECURITY_PROTOCOL_PORTS
 
 from .helpers import (
     APP_NAME,
@@ -22,6 +22,7 @@ from .helpers import (
     check_application_status,
     check_logs,
     check_socket,
+    count_lines_with,
     get_address,
     run_client_properties,
 )
@@ -118,6 +119,44 @@ async def test_client_properties_makes_admin_connection(ops_test: OpsTest):
     )
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME], idle_period=30, status="active", timeout=600
+    )
+
+
+@pytest.mark.abort_on_fail
+async def test_log_level_change(ops_test: OpsTest):
+
+    for unit in ops_test.model.applications[APP_NAME].units:
+        assert (
+            count_lines_with(
+                ops_test.model_full_name,
+                unit.name,
+                "/var/snap/charmed-kafka/common/var/log/kafka/server.log",
+                "DEBUG",
+            )
+            == 0
+        )
+
+    await ops_test.model.applications[APP_NAME].set_config({"log_level": "DEBUG"})
+
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME], status="active", timeout=1000, idle_period=30
+    )
+
+    for unit in ops_test.model.applications[APP_NAME].units:
+        assert (
+            count_lines_with(
+                ops_test.model_full_name,
+                unit.name,
+                "/var/snap/charmed-kafka/common/var/log/kafka/server.log",
+                "DEBUG",
+            )
+            > 0
+        )
+
+    await ops_test.model.applications[APP_NAME].set_config({"log_level": "INFO"})
+
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME], status="active", timeout=1000, idle_period=30
     )
 
 

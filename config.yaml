@@ -86,3 +86,7 @@ options:
      description: 'Profile representing the scope of deployment, and used to enable high-level customisation of sysconfigs, resource checks/allocation, warning levels, etc. Allowed values are: “production”, “staging” and “testing”'
      type: string
      default: production
+  log_level:
+    description: 'Level of logging for the different components operated by the charm. Possible values: ERROR, WARNING, INFO, DEBUG'
+    type: string
+    default: "INFO"
