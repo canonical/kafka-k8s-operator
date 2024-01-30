@@ -39,7 +39,6 @@ class KafkaProvider(Object):
     def on_topic_requested(self, event: TopicRequestedEvent):
         """Handle the on topic requested event."""
         if not self.charm.healthy:
-            print("not healthy")
             event.defer()
             return
 
@@ -65,7 +64,6 @@ class KafkaProvider(Object):
             event.consumer_group_prefix or f"{username}-" if "consumer" in extra_user_roles else ""
         )
 
-        print("all the way down to add user")
         # catching error here in case listeners not established for bootstrap-server auth
         try:
             self.charm.auth_manager.add_user(
@@ -99,7 +97,6 @@ class KafkaProvider(Object):
 
     def _on_relation_created(self, event: RelationCreatedEvent) -> None:
         """Handler for `kafka-client-relation-created` event."""
-        print("relation created")
         self.charm._on_config_changed(event)
 
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
