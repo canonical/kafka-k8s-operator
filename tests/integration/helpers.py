@@ -16,7 +16,7 @@ from charms.zookeeper.v0.client import QuorumLeaderNotFoundError, ZooKeeperManag
 from kazoo.exceptions import AuthFailedError, NoNodeError
 from pytest_operator.plugin import OpsTest
 
-from literals import PATHS, REL_NAME, SECURITY_PROTOCOL_PORTS, STORAGE
+from literals import PATHS, REL_NAME, SECURITY_PROTOCOL_PORTS
 from managers.auth import Acl, AuthManager
 
 logger = logging.getLogger(__name__)
@@ -31,6 +31,7 @@ TLS_SERIES = "jammy"
 DUMMY_NAME = "app"
 REL_NAME_ADMIN = "kafka-client-admin"
 TEST_DEFAULT_MESSAGES = 15
+STORAGE = "data"
 
 
 def load_acls(model_full_name: str, zookeeper_uri: str) -> Set[Acl]:

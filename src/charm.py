@@ -16,14 +16,13 @@ from ops.charm import StorageAttachedEvent, StorageDetachingEvent
 from ops.framework import EventBase
 from ops.main import main
 from ops.model import StatusBase
-from ops.pebble import Layer, PathError, ProtocolError
+from ops.pebble import Layer
 
 from core.cluster import ClusterState
 from core.structured_config import CharmConfig
 from events.provider import KafkaProvider
 from events.tls import TLSHandler
 from events.zookeeper import ZooKeeperHandler
-from k8s_workload import KafkaWorkload
 from literals import (
     CHARM_KEY,
     CONTAINER,
@@ -39,11 +38,12 @@ from literals import (
 from managers.auth import AuthManager
 from managers.config import KafkaConfigManager
 from managers.tls import TLSManager
+from workload import KafkaWorkload
 
 logger = logging.getLogger(__name__)
 
 
-class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
+class KafkaCharm(TypedCharmBase[CharmConfig]):
     """Charmed Operator for Kafka K8s."""
 
     config_type = CharmConfig
@@ -119,7 +119,8 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
                     "group": "kafka",
                     "environment": {
                         "KAFKA_OPTS": " ".join(extra_opts),
-                        "JAVA_HOME": self.workload.paths.java_home,
+                        # FIXME https://github.com/canonical/kafka-k8s-operator/issues/80
+                        "JAVA_HOME": "/usr/lib/jvm/java-17-openjdk-amd64",
                         "LOG_DIR": self.workload.paths.logs_path,
                     },
                 }
@@ -165,20 +166,35 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
             return
 
         # Load current properties set in the charm workload
-        properties = None
-        try:
-            properties = self.workload.read(self.workload.paths.server_properties)
-        except (ProtocolError, PathError) as e:
-            logger.debug(str(e))
-            event.defer()
-            return
+        properties = self.workload.read(self.workload.paths.server_properties)
+        properties_changed = set(properties) ^ set(self.config_manager.server_properties)
 
-        if not properties:
+        zk_jaas = self.workload.read(self.workload.paths.zk_jaas)
+        zk_jaas_changed = set(zk_jaas) ^ set(self.config_manager.zk_jaas_config.splitlines())
+
+        if not properties or not zk_jaas:
             # Event fired before charm has properly started
             event.defer()
             return
 
-        if set(properties) ^ set(self.config_manager.server_properties):
+        # update environment
+        self.config_manager.set_environment()
+
+        if zk_jaas_changed:
+            clean_broker_jaas = [conf.strip() for conf in zk_jaas]
+            clean_config_jaas = [
+                conf.strip() for conf in self.config_manager.zk_jaas_config.splitlines()
+            ]
+            logger.info(
+                (
+                    f'Broker {self.unit.name.split("/")[1]} updating JAAS config - '
+                    f"OLD JAAS = {set(clean_broker_jaas) - set(clean_config_jaas)}, "
+                    f"NEW JAAS = {set(clean_config_jaas) - set(clean_broker_jaas)}"
+                )
+            )
+            self.config_manager.set_zk_jaas_config()
+
+        if properties_changed:
             logger.info(
                 (
                     f'Broker {self.unit.name.split("/")[1]} updating config - '
@@ -187,9 +203,12 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
                 )
             )
             self.config_manager.set_server_properties()
-            self.config_manager.set_client_properties()
 
+        if zk_jaas_changed or properties_changed:
             self.on[f"{self.restart.name}"].acquire_lock.emit()
+
+        # update client_properties whenever possible
+        self.config_manager.set_client_properties()
 
         # If Kafka is related to client charms, update their information.
         if self.model.relations.get(REL_NAME, None) and self.unit.is_leader():
@@ -252,6 +271,7 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
         Returns:
             True if service is alive and active. Otherwise False
         """
+        print("why here")
         self._set_status(self.state.ready_to_start)
         if not isinstance(self.unit.status, ActiveStatus):
             return False
@@ -272,4 +292,4 @@ class KafkaK8sCharm(TypedCharmBase[CharmConfig]):
 
 
 if __name__ == "__main__":
-    main(KafkaK8sCharm)
+    main(KafkaCharm)

@@ -30,7 +30,7 @@ from ops.model import ActiveStatus, BlockedStatus
 from literals import TLS_RELATION, TRUSTED_CA_RELATION, TRUSTED_CERTIFICATE_RELATION
 
 if TYPE_CHECKING:
-    from charm import KafkaK8sCharm
+    from charm import KafkaCharm
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class TLSHandler(Object):
 
     def __init__(self, charm):
         super().__init__(charm, "tls")
-        self.charm: "KafkaK8sCharm" = charm
+        self.charm: "KafkaCharm" = charm
 
         self.certificates = TLSCertificatesRequiresV1(self.charm, TLS_RELATION)
 

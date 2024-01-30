@@ -9,7 +9,7 @@ from typing import cast
 
 from core.cluster import ClusterState
 from core.structured_config import CharmConfig, LogLevel
-from k8s_workload import KafkaWorkload
+from core.workload import WorkloadBase
 from literals import (
     ADMIN_USER,
     INTER_BROKER_USER,
@@ -102,7 +102,7 @@ class KafkaConfigManager:
     def __init__(
         self,
         state: ClusterState,
-        workload: KafkaWorkload,
+        workload: WorkloadBase,
         config: CharmConfig,
     ):
         self.state = state

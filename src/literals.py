@@ -19,8 +19,9 @@ REL_NAME = "kafka-client"
 TLS_RELATION = "certificates"
 TRUSTED_CERTIFICATE_RELATION = "trusted-certificate"
 TRUSTED_CA_RELATION = "trusted-ca"
-STORAGE = "data"
 JMX_EXPORTER_PORT = 9101
+
+SUBSTRATE = "k8s"
 
 INTER_BROKER_USER = "sync"
 ADMIN_USER = "admin"

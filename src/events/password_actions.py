@@ -12,7 +12,7 @@ from ops.framework import Object
 from literals import ADMIN_USER, INTERNAL_USERS
 
 if TYPE_CHECKING:
-    from charm import KafkaK8sCharm
+    from charm import KafkaCharm
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class PasswordActionEvents(Object):
 
     def __init__(self, charm):
         super().__init__(charm, "password_events")
-        self.charm: "KafkaK8sCharm" = charm
+        self.charm: "KafkaCharm" = charm
 
         self.framework.observe(
             getattr(self.charm.on, "set_password_action"), self._set_password_action

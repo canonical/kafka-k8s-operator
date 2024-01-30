@@ -10,7 +10,7 @@ import subprocess
 from ops.pebble import ExecError
 
 from core.cluster import ClusterState
-from k8s_workload import KafkaWorkload
+from core.workload import WorkloadBase
 from literals import Substrate
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class TLSManager:
     """Manager for building necessary files for Java TLS auth."""
 
-    def __init__(self, state: ClusterState, workload: KafkaWorkload, substrate: Substrate):
+    def __init__(self, state: ClusterState, workload: WorkloadBase, substrate: Substrate):
         self.state = state
         self.workload = workload
         self.substrate = substrate
@@ -66,12 +66,8 @@ class TLSManager:
         try:
             self.workload.exec(command=command, working_dir=self.workload.paths.conf_path)
             if self.substrate == "vm":
-                self.workload.set_snap_ownership(
-                    path=f"{self.workload.paths.conf_path}/truststore.jks"
-                )
-                self.workload.set_snap_mode_bits(
-                    path=f"{self.workload.paths.conf_path}/truststore.jks"
-                )
+                self.workload.set_ownership(path=f"{self.workload.paths.conf_path}/truststore.jks")
+                self.workload.set_mode_bits(path=f"{self.workload.paths.conf_path}/truststore.jks")
         except (subprocess.CalledProcessError, ExecError) as e:
             # in case this reruns and fails
             if e.stdout and "already exists" in e.stdout:
@@ -85,12 +81,8 @@ class TLSManager:
         try:
             self.workload.exec(command=command, working_dir=self.workload.paths.conf_path)
             if self.substrate == "vm":
-                self.workload.set_snap_ownership(
-                    path=f"{self.workload.paths.conf_path}/keystore.p12"
-                )
-                self.workload.set_snap_mode_bits(
-                    path=f"{self.workload.paths.conf_path}/keystore.p12"
-                )
+                self.workload.set_ownership(path=f"{self.workload.paths.conf_path}/keystore.p12")
+                self.workload.set_mode_bits(path=f"{self.workload.paths.conf_path}/keystore.p12")
         except (subprocess.CalledProcessError, ExecError) as e:
             logger.error(e.stdout)
             raise e

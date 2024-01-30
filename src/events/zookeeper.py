@@ -14,7 +14,7 @@ from ops.pebble import ExecError
 from literals import INTERNAL_USERS, ZK, Status
 
 if TYPE_CHECKING:
-    from charm import KafkaK8sCharm
+    from charm import KafkaCharm
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class ZooKeeperHandler(Object):
 
     def __init__(self, charm) -> None:
         super().__init__(charm, "zookeeper_client")
-        self.charm: "KafkaK8sCharm" = charm
+        self.charm: "KafkaCharm" = charm
 
         self.framework.observe(self.charm.on[ZK].relation_created, self._on_zookeeper_created)
         self.framework.observe(self.charm.on[ZK].relation_joined, self._on_zookeeper_changed)

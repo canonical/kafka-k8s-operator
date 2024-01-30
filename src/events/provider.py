@@ -16,7 +16,7 @@ from ops.pebble import ExecError
 from literals import REL_NAME
 
 if TYPE_CHECKING:
-    from charm import KafkaK8sCharm
+    from charm import KafkaCharm
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class KafkaProvider(Object):
 
     def __init__(self, charm) -> None:
         super().__init__(charm, "kafka_client")
-        self.charm: "KafkaK8sCharm" = charm
+        self.charm: "KafkaCharm" = charm
         self.kafka_provider = KafkaProvides(self.charm, REL_NAME)
 
         self.framework.observe(self.charm.on[REL_NAME].relation_created, self._on_relation_created)
@@ -39,6 +39,7 @@ class KafkaProvider(Object):
     def on_topic_requested(self, event: TopicRequestedEvent):
         """Handle the on topic requested event."""
         if not self.charm.healthy:
+            print("not healthy")
             event.defer()
             return
 
@@ -64,6 +65,7 @@ class KafkaProvider(Object):
             event.consumer_group_prefix or f"{username}-" if "consumer" in extra_user_roles else ""
         )
 
+        print("all the way down to add user")
         # catching error here in case listeners not established for bootstrap-server auth
         try:
             self.charm.auth_manager.add_user(
@@ -97,6 +99,7 @@ class KafkaProvider(Object):
 
     def _on_relation_created(self, event: RelationCreatedEvent) -> None:
         """Handler for `kafka-client-relation-created` event."""
+        print("relation created")
         self.charm._on_config_changed(event)
 
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
