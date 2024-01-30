@@ -271,7 +271,6 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         Returns:
             True if service is alive and active. Otherwise False
         """
-        print("why here")
         self._set_status(self.state.ready_to_start)
         if not isinstance(self.unit.status, ActiveStatus):
             return False
