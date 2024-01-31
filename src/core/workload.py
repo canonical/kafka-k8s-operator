@@ -3,8 +3,9 @@
 # See LICENSE file for licensing details.
 
 """Supporting objects for Kafka charm state."""
-
+import os
 import secrets
+import shutil
 import string
 from abc import ABC, abstractmethod
 
@@ -145,6 +146,24 @@ class WorkloadBase(ABC):
             String of kafka bin command output
         """
         ...
+
+    @staticmethod
+    def set_ownership(path: str) -> None:
+        """Sets a filepath `snap_daemon` ownership."""
+        shutil.chown(path, user="snap_daemon", group="root")
+
+        for root, dirs, files in os.walk(path):
+            for fp in dirs + files:
+                shutil.chown(os.path.join(root, fp), user="snap_daemon", group="root")
+
+    @staticmethod
+    def set_mode_bits(path: str) -> None:
+        """Sets filepath mode bits."""
+        os.chmod(path, 0o770)  # nosec B103
+
+        for root, dirs, files in os.walk(path):
+            for fp in dirs + files:
+                os.chmod(os.path.join(root, fp), 0o770)  # nosec B103
 
     @staticmethod
     def generate_password() -> str:

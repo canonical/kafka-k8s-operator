@@ -5,7 +5,7 @@
 """Supporting objects for Kafka-Zookeeper relation."""
 
 import logging
-import subprocess
+import subprocess  # nosec B404
 from typing import TYPE_CHECKING
 
 from ops import Object, RelationChangedEvent, RelationEvent
