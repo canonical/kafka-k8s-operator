@@ -233,9 +233,32 @@ async def set_tls_private_key(ops_test: OpsTest, key: Optional[str] = None, num_
     return (await action.wait()).results
 
 
+async def set_mtls_client_acls(ops_test: OpsTest, bootstrap_server: str) -> str:
+    """Adds ACLs for principal `User:client` and `TEST-TOPIC`."""
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-acls.sh --bootstrap-server {bootstrap_server} --add --allow-principal=User:client --operation READ --operation WRITE --operation CREATE --topic TEST-TOPIC --command-config {PATHS['CONF']}/client.properties"
+
+    result = check_output(
+        f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+
+    return result
+
+
 def extract_private_key(data: dict, unit: int = 0) -> Optional[str]:
     list_keys = [
         element["local-unit"]["data"]["private-key"]
+        for element in data[f"{APP_NAME}/{unit}"]["relation-info"]
+        if element["endpoint"] == "cluster"
+    ]
+    return list_keys[0] if len(list_keys) else None
+
+
+def extract_ca(data: dict, unit: int = 0) -> Optional[str]:
+    list_keys = [
+        element["local-unit"]["data"]["ca"]
         for element in data[f"{APP_NAME}/{unit}"]["relation-info"]
         if element["endpoint"] == "cluster"
     ]
@@ -371,7 +394,7 @@ async def run_client_properties(ops_test: OpsTest) -> str:
 
 def count_lines_with(model_full_name: str, unit: str, file: str, pattern: str) -> int:
     result = check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh {unit} sudo -i 'grep \"{pattern}\" {file} | wc -l'",
+        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {unit} 'grep \"{pattern}\" {file} | wc -l'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,

@@ -181,7 +181,7 @@ async def test_log_level_change(ops_test: OpsTest):
             count_lines_with(
                 ops_test.model_full_name,
                 unit.name,
-                "/var/snap/charmed-kafka/common/var/log/kafka/server.log",
+                "/var/log/kafka/server.log",
                 "DEBUG",
             )
             == 0
@@ -198,7 +198,7 @@ async def test_log_level_change(ops_test: OpsTest):
             count_lines_with(
                 ops_test.model_full_name,
                 unit.name,
-                "/var/snap/charmed-kafka/common/var/log/kafka/server.log",
+                "/var/log/kafka/server.log",
                 "DEBUG",
             )
             > 0

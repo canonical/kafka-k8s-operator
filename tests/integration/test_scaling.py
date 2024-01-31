@@ -27,7 +27,9 @@ async def test_kafka_simple_scale_up(ops_test: OpsTest):
     kafka_charm = await ops_test.build_charm(".")
 
     await asyncio.gather(
-        ops_test.model.deploy(ZK_NAME, application_name=ZK_NAME, num_units=1, series=ZK_SERIES),
+        ops_test.model.deploy(
+            ZK_NAME, channel="edge", application_name=ZK_NAME, num_units=1, series=ZK_SERIES
+        ),
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
