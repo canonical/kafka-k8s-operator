@@ -23,10 +23,12 @@ from core.structured_config import CharmConfig
 from events.password_actions import PasswordActionEvents
 from events.provider import KafkaProvider
 from events.tls import TLSHandler
+from events.upgrade import KafkaDependencyModel, KafkaUpgradeEvents
 from events.zookeeper import ZooKeeperHandler
 from literals import (
     CHARM_KEY,
     CONTAINER,
+    DEPENDENCIES,
     GROUP,
     JMX_EXPORTER_PORT,
     LOGS_RULES_DIR,
@@ -64,6 +66,12 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.zookeeper = ZooKeeperHandler(self)
         self.tls = TLSHandler(self)
         self.provider = KafkaProvider(self)
+        self.upgrade = KafkaUpgradeEvents(
+            self,
+            dependency_model=KafkaDependencyModel(
+                **DEPENDENCIES  # pyright: ignore[reportGeneralTypeIssues]
+            ),
+        )
 
         # MANAGERS
 

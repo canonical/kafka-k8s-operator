@@ -54,6 +54,15 @@ PATHS = {
     "BIN": "/opt/kafka",
 }
 
+DEPENDENCIES = {
+    "kafka_service": {
+        "dependencies": {"zookeeper": ">3.6"},
+        "name": "kafka",
+        "upgrade_supported": "^3",  # zk support removed in 4.0
+        "version": "3.6.0",
+    },
+}
+
 
 @dataclass
 class Ports:
