@@ -67,13 +67,10 @@ async def test_deploy_charms_relate_active(
 
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_1}:{REL_NAME_CONSUMER}")
 
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME], idle_period=20, status="active", timeout=2000
+            apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME], idle_period=30, status="active", timeout=2000
         )
-
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[DUMMY_NAME_1].status == "active"
 
     # implicitly tests setting of kafka app data
     returned_usernames, zookeeper_uri = get_zookeeper_connection(
