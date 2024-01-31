@@ -7,7 +7,6 @@ import logging
 import time
 
 import pytest
-from helpers import get_active_brokers
 from pytest_operator.plugin import OpsTest
 
 from .helpers import (
@@ -16,6 +15,7 @@ from .helpers import (
     KAFKA_SERIES,
     ZK_NAME,
     ZK_SERIES,
+    get_active_brokers,
     get_kafka_zk_relation_data,
 )
 
