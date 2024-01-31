@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from ops import Object, RelationChangedEvent, RelationEvent
 from ops.pebble import ExecError
+from tenacity import Retrying, stop_after_attempt, wait_fixed
 
 from literals import INTERNAL_USERS, ZK, Status
 
@@ -109,12 +110,16 @@ class ZooKeeperHandler(Object):
         Raises:
             RuntimeError if called from non-leader unit
             KeyError if attempted to update non-leader unit
-            subprocess.CalledProcessError if command to ZooKeeper failed
+            subprocess.CalledProcessError | ExecError if command to ZooKeeper failed
         """
         credentials = [
             (username, self.charm.workload.generate_password()) for username in INTERNAL_USERS
         ]
         for username, password in credentials:
-            self.charm.auth_manager.add_user(username=username, password=password, zk_auth=True)
+            for attempt in Retrying(stop=stop_after_attempt(6), wait=wait_fixed(10), reraise=True):
+                with attempt:
+                    self.charm.auth_manager.add_user(
+                        username=username, password=password, zk_auth=True
+                    )
 
         return credentials
