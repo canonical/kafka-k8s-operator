@@ -69,6 +69,9 @@ class KafkaWorkload(WorkloadBase):
 
     @override
     def active(self) -> bool:
+        if not self.container.can_connect():
+            return False
+
         return self.container.get_service(self.CONTAINER_SERVICE).is_running()
 
     @override
