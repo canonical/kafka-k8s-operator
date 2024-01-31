@@ -147,6 +147,10 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             event.defer()
             return
 
+        # don't want to run default pebble ready during upgrades
+        if not self.upgrade.idle:
+            return
+
         # required settings given zookeeper connection config has been created
         self.config_manager.set_server_properties()
         self.config_manager.set_zk_jaas_config()
@@ -173,7 +177,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
-        if not self.healthy:
+        if not self.healthy or not self.upgrade.idle:
             event.defer()
             return
 
