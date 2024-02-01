@@ -27,11 +27,13 @@ from events.zookeeper import ZooKeeperHandler
 from literals import (
     CHARM_KEY,
     CONTAINER,
+    GROUP,
     JMX_EXPORTER_PORT,
     LOGS_RULES_DIR,
     METRICS_RULES_DIR,
     PEER,
     REL_NAME,
+    USER,
     DebugLevel,
     Status,
     Substrate,
@@ -117,8 +119,8 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
                     "summary": "kafka",
                     "command": command,
                     "startup": "enabled",
-                    "user": "kafka",
-                    "group": "kafka",
+                    "user": USER,
+                    "group": GROUP,
                     "environment": {
                         "KAFKA_OPTS": " ".join(extra_opts),
                         # FIXME https://github.com/canonical/kafka-k8s-operator/issues/80

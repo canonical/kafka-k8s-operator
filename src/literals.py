@@ -22,6 +22,8 @@ TRUSTED_CA_RELATION = "trusted-ca"
 JMX_EXPORTER_PORT = 9101
 
 SUBSTRATE = "k8s"
+USER = "kafka"
+GROUP = "kafka"
 
 INTER_BROKER_USER = "sync"
 ADMIN_USER = "admin"
