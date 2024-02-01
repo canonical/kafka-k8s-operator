@@ -246,7 +246,7 @@ async def test_connection_updated_on_tls_enabled(ops_test: OpsTest, app_charm: P
 
     await ops_test.model.deploy(TLS_NAME, channel="stable", config=tls_config, series=TLS_SERIES)
     await ops_test.model.add_relation(TLS_NAME, ZK_NAME)
-    await ops_test.model.add_relation(f"{APP_NAME}:{TLS_RELATION}", APP_NAME)
+    await ops_test.model.add_relation(TLS_NAME, f"{APP_NAME}:{TLS_RELATION}")
 
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME, ZK_NAME, TLS_NAME, DUMMY_NAME_1],
