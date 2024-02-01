@@ -172,38 +172,33 @@ async def test_exporter_endpoints(ops_test: OpsTest):
 
 
 @pytest.mark.abort_on_fail
+@pytest.mark.skip(reason="No feature yet, needs newer image")
 async def test_log_level_change(ops_test: OpsTest):
-
     for unit in ops_test.model.applications[APP_NAME].units:
-        assert (
-            count_lines_with(
-                ops_test.model_full_name,
-                unit.name,
-                "/var/log/kafka/server.log",
-                "DEBUG",
-            )
-            == 0
+        total_lines = count_lines_with(
+            ops_test.model_full_name,
+            unit.name,
+            "/var/log/kafka/server.log",
+            "DEBUG",
         )
+        assert total_lines == 0
 
     await ops_test.model.applications[APP_NAME].set_config({"log_level": "DEBUG"})
-
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME], status="active", timeout=1000, idle_period=30
     )
 
     for unit in ops_test.model.applications[APP_NAME].units:
-        assert (
-            count_lines_with(
-                ops_test.model_full_name,
-                unit.name,
-                "/var/log/kafka/server.log",
-                "DEBUG",
-            )
-            > 0
+        total_lines = count_lines_with(
+            ops_test.model_full_name,
+            unit.name,
+            "/var/log/kafka/server.log",
+            "DEBUG",
         )
+        assert total_lines > 0
 
+    # cleanup
     await ops_test.model.applications[APP_NAME].set_config({"log_level": "INFO"})
-
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME], status="active", timeout=1000, idle_period=30
     )
