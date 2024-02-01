@@ -139,7 +139,7 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
     )
     await ops_test.model.add_relation(second_kafka_name, second_zk_name)
 
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
             apps=[second_kafka_name, second_zk_name], idle_period=30, status="active", timeout=2000
         )
@@ -150,7 +150,7 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
     # produce to first cluster
     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("produce")
     await action.wait()
-    asyncio.sleep(10)
+    await asyncio.sleep(10)
     await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30)
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME].status == "active"
