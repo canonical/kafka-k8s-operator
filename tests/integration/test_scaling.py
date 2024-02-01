@@ -91,5 +91,5 @@ async def test_kafka_simple_scale_down(ops_test: OpsTest):
     active_brokers = get_active_brokers(config=kafka_zk_relation_data)
     chroot = kafka_zk_relation_data.get("chroot", "")
     assert f"{chroot}/brokers/ids/0" in active_brokers
-    assert f"{chroot}/brokers/ids/1" not in active_brokers
-    assert f"{chroot}/brokers/ids/2" in active_brokers
+    assert f"{chroot}/brokers/ids/1" in active_brokers
+    assert f"{chroot}/brokers/ids/2" not in active_brokers
