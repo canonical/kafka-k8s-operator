@@ -44,7 +44,6 @@ class KafkaUpgradeEvents(DataUpgrade):
     def __init__(self, charm: "KafkaCharm", **kwargs):
         super().__init__(charm, **kwargs)
         self.charm = charm
-        self.substrate = self.charm.state.substrate
 
         self.framework.observe(
             getattr(self.charm.on, "upgrade_charm"), self._on_kafka_pebble_ready_upgrade
@@ -82,6 +81,7 @@ class KafkaUpgradeEvents(DataUpgrade):
             self.post_upgrade_check()
         except ClusterNotReadyError as e:
             logger.error(e.cause)
+            self.set_unit_failed()
             return
 
         # service_start might fail silently, confirm with ZK if kafka is actually connected
@@ -101,6 +101,12 @@ class KafkaUpgradeEvents(DataUpgrade):
             True if cluster state is idle. Otherwise False
         """
         return not bool(self.upgrade_stack)
+
+    @property
+    def current_version(self) -> str:
+        """Get current Kafka version."""
+        dependency_model: DependencyModel = getattr(self.dependency_model, "kafka_service")
+        return dependency_model.version
 
     @override
     def pre_upgrade_check(self) -> None:

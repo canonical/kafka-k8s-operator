@@ -68,6 +68,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.provider = KafkaProvider(self)
         self.upgrade = KafkaUpgradeEvents(
             self,
+            substrate=self.substrate,
             dependency_model=KafkaDependencyModel(
                 **DEPENDENCIES  # pyright: ignore[reportGeneralTypeIssues]
             ),
@@ -75,9 +76,18 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         # MANAGERS
 
-        self.config_manager = KafkaConfigManager(self.state, self.workload, self.config)
-        self.tls_manager = TLSManager(self.state, self.workload, self.substrate)
-        self.auth_manager = AuthManager(self.state, self.workload, self.config_manager.kafka_opts)
+        self.config_manager = KafkaConfigManager(
+            state=self.state,
+            workload=self.workload,
+            config=self.config,
+            current_version=self.upgrade.current_version,
+        )
+        self.tls_manager = TLSManager(
+            state=self.state, workload=self.workload, substrate=self.substrate
+        )
+        self.auth_manager = AuthManager(
+            state=self.state, workload=self.workload, kafka_opts=self.config_manager.kafka_opts
+        )
 
         self.restart = RollingOpsManager(self, relation="restart", callback=self._restart)
         self.metrics_endpoint = MetricsEndpointProvider(
