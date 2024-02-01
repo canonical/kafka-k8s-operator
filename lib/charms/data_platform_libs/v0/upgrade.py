@@ -532,10 +532,11 @@ class DataUpgrade(Object, ABC):
         self.framework.observe(
             getattr(self.charm.on, "pre_upgrade_check_action"), self._on_pre_upgrade_check_action
         )
-        if self.substrate == "k8s":
-            self.framework.observe(
-                getattr(self.charm.on, "resume_upgrade_action"), self._on_resume_upgrade_action
-            )
+        # FIXME: this is disabled as we don't need the functionality. Should be added as an arg to the lib
+        # if self.substrate == "k8s":
+        #     self.framework.observe(
+        #         getattr(self.charm.on, "resume_upgrade_action"), self._on_resume_upgrade_action
+        #     )
 
     @property
     def peer_relation(self) -> Optional[Relation]:
