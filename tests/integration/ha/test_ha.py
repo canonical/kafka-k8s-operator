@@ -88,7 +88,7 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
             series=KAFKA_SERIES,
             resources={"kafka-image": KAFKA_CONTAINER},
         ),
-        ops_test.model.deploy(ZK_NAME, channel="edge", num_units=3, series=ZK_SERIES),
+        ops_test.model.deploy(ZK_NAME, channel="edge", num_units=1, series=ZK_SERIES),
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, series="jammy"),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
@@ -116,15 +116,8 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
     assert ops_test.model.applications[ZK_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME].status == "active"
 
-    await ops_test.model.applications[APP_NAME].add_units(count=2)
-    await ops_test.model.block_until(lambda: len(ops_test.model.applications[APP_NAME].units) == 3)
-    await ops_test.model.wait_for_idle(
-        apps=[APP_NAME], status="active", timeout=1000, idle_period=40
-    )
 
-    assert ops_test.model.applications[APP_NAME].status == "active"
-
-
+# run this test early, in case of resource limits on runners with too many units
 async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
     second_kafka_name = f"{APP_NAME}-two"
     second_zk_name = f"{ZK_NAME}-two"
@@ -187,6 +180,19 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
             f"remove-application --force --destroy-storage --no-wait --no-prompt {second_zk_name}"
         ),
     )
+
+
+async def test_scale_up_zk_kafka(ops_test: OpsTest):
+    await ops_test.model.applications[APP_NAME].add_units(count=2)
+    await ops_test.model.applications[ZK_NAME].add_units(count=2)
+    await ops_test.model.block_until(lambda: len(ops_test.model.applications[APP_NAME].units) == 3)
+    await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME], status="active", timeout=1000, idle_period=30
+    )
+
+    assert ops_test.model.applications[APP_NAME].status == "active"
+    assert ops_test.model.applications[ZK_NAME].status == "active"
 
 
 async def test_kill_broker_with_topic_leader(
