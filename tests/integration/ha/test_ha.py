@@ -91,6 +91,9 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
         ops_test.model.deploy(ZK_NAME, channel="edge", num_units=3, series=ZK_SERIES),
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, series="jammy"),
     )
+    await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=2000)
+
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
 
     async with ops_test.fast_forward(fast_interval="30s"):

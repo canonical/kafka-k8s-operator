@@ -52,7 +52,7 @@ def patched_sysctl_config():
 
 @pytest.fixture(autouse=True)
 def patched_exec():
-    with patch("core.workload.WorkloadBase.exec") as patched_exec:
+    with patch("workload.KafkaWorkload.exec") as patched_exec:
         yield patched_exec
 
 
