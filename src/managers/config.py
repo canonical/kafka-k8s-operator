@@ -104,10 +104,12 @@ class KafkaConfigManager:
         state: ClusterState,
         workload: WorkloadBase,
         config: CharmConfig,
+        current_version: str,
     ):
         self.state = state
         self.workload = workload
         self.config = config
+        self.current_version = current_version
 
     @property
     def log_level(self) -> str:
@@ -312,6 +314,17 @@ class KafkaConfigManager:
         return [self.internal_listener] + self.client_listeners
 
     @property
+    def inter_broker_protocol_version(self) -> str:
+        """Creates the protocol version from the kafka version.
+
+        Returns:
+            String with the `major.minor` version
+        """
+        # Remove patch number from full vervion.
+        major_minor = self.current_version.split(".", maxsplit=2)
+        return ".".join(major_minor[:2])
+
+    @property
     def rack_properties(self) -> list[str]:
         """Builds all properties related to rack awareness configuration.
 
@@ -371,6 +384,7 @@ class KafkaConfigManager:
                 f"listeners={','.join(listeners_repr)}",
                 f"advertised.listeners={','.join(advertised_listeners)}",
                 f"inter.broker.listener.name={self.internal_listener.name}",
+                f"inter.broker.protocol.version={self.inter_broker_protocol_version}",
             ]
             + self.config_properties
             + self.scram_properties

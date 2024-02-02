@@ -70,13 +70,10 @@ async def test_deploy_tls(ops_test: OpsTest, app_charm):
     await ops_test.model.add_relation(TLS_NAME, ZK_NAME)
     logger.info("Relate Zookeeper to TLS")
 
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[TLS_NAME, ZK_NAME], idle_period=20, status="active", timeout=2000
+            apps=[TLS_NAME, ZK_NAME], idle_period=30, status="active", timeout=2000
         )
-
-    assert ops_test.model.applications[TLS_NAME].status == "active"
-    assert ops_test.model.applications[ZK_NAME].status == "active"
 
 
 @pytest.mark.abort_on_fail
@@ -88,7 +85,8 @@ async def test_kafka_tls(ops_test: OpsTest):
     """
     # Relate Zookeeper[TLS] to Kafka[Non-TLS]
     await ops_test.model.add_relation(ZK_NAME, APP_NAME)
-    await ops_test.model.wait_for_idle(apps=[ZK_NAME], idle_period=60, timeout=2000)
+    async with ops_test.fast_forward(fast_interval="60s"):
+        await ops_test.model.wait_for_idle(apps=[ZK_NAME], idle_period=30, timeout=2000)
 
     # Unit is on 'blocked' but whole app is on 'waiting'
     assert check_application_status(ops_test=ops_test, app_name=APP_NAME) == "waiting"
@@ -105,7 +103,7 @@ async def test_kafka_tls(ops_test: OpsTest):
 
     logger.info("Relate Kafka to TLS")
     await ops_test.model.add_relation(f"{APP_NAME}:{TLS_RELATION}", TLS_NAME)
-    async with ops_test.fast_forward():
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
             apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=30, timeout=2000, status="active"
         )
@@ -114,14 +112,11 @@ async def test_kafka_tls(ops_test: OpsTest):
     # Client port shouldn't be up before relating to client app.
     assert not check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].client)
 
-    async with ops_test.fast_forward():
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, DUMMY_NAME], timeout=3600, idle_period=60, status="active"
+            apps=[APP_NAME, DUMMY_NAME], timeout=3600, idle_period=30, status="active"
         )
-
-        assert ops_test.model.applications[APP_NAME].status == "active"
-        assert ops_test.model.applications[DUMMY_NAME].status == "active"
 
     logger.info("Check for Kafka TLS")
     assert check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].client)
@@ -236,7 +231,7 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
     kafka_zk_relation_data = get_kafka_zk_relation_data(
         unit_name=f"{APP_NAME}/2", model_full_name=ops_test.model_full_name
     )
-    active_brokers = get_active_brokers(zookeeper_config=kafka_zk_relation_data)
+    active_brokers = get_active_brokers(config=kafka_zk_relation_data)
     chroot = kafka_zk_relation_data.get("chroot", "")
     assert f"{chroot}/brokers/ids/0" in active_brokers
     assert f"{chroot}/brokers/ids/1" in active_brokers

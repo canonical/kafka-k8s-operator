@@ -23,10 +23,12 @@ from core.structured_config import CharmConfig
 from events.password_actions import PasswordActionEvents
 from events.provider import KafkaProvider
 from events.tls import TLSHandler
+from events.upgrade import KafkaDependencyModel, KafkaUpgradeEvents
 from events.zookeeper import ZooKeeperHandler
 from literals import (
     CHARM_KEY,
     CONTAINER,
+    DEPENDENCIES,
     GROUP,
     JMX_EXPORTER_PORT,
     LOGS_RULES_DIR,
@@ -64,12 +66,28 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.zookeeper = ZooKeeperHandler(self)
         self.tls = TLSHandler(self)
         self.provider = KafkaProvider(self)
+        self.upgrade = KafkaUpgradeEvents(
+            self,
+            substrate=self.substrate,
+            dependency_model=KafkaDependencyModel(
+                **DEPENDENCIES  # pyright: ignore[reportGeneralTypeIssues]
+            ),
+        )
 
         # MANAGERS
 
-        self.config_manager = KafkaConfigManager(self.state, self.workload, self.config)
-        self.tls_manager = TLSManager(self.state, self.workload, self.substrate)
-        self.auth_manager = AuthManager(self.state, self.workload, self.config_manager.kafka_opts)
+        self.config_manager = KafkaConfigManager(
+            state=self.state,
+            workload=self.workload,
+            config=self.config,
+            current_version=self.upgrade.current_version,
+        )
+        self.tls_manager = TLSManager(
+            state=self.state, workload=self.workload, substrate=self.substrate
+        )
+        self.auth_manager = AuthManager(
+            state=self.state, workload=self.workload, kafka_opts=self.config_manager.kafka_opts
+        )
 
         self.restart = RollingOpsManager(self, relation="restart", callback=self._restart)
         self.metrics_endpoint = MetricsEndpointProvider(
@@ -139,6 +157,10 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             event.defer()
             return
 
+        # don't want to run default pebble ready during upgrades
+        if not self.upgrade.idle:
+            return
+
         # required settings given zookeeper connection config has been created
         self.config_manager.set_server_properties()
         self.config_manager.set_zk_jaas_config()
@@ -165,7 +187,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
-        if not self.healthy:
+        if not self.healthy or not self.upgrade.idle:
             event.defer()
             return
 

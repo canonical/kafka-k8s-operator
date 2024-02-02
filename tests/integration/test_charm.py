@@ -50,20 +50,18 @@ async def test_build_and_deploy(ops_test: OpsTest):
         ),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=1000)
+    async with ops_test.fast_forward(fast_interval="60s"):
+        await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=30)
 
     assert check_application_status(ops_test, APP_NAME) == "waiting"
     assert ops_test.model.applications[ZK_NAME].status == "active"
 
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
 
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=20, status="active"
+            apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=30, status="active"
         )
-
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[ZK_NAME].status == "active"
 
 
 @pytest.mark.abort_on_fail
@@ -76,7 +74,7 @@ async def test_remove_zk_relation_relate(ops_test: OpsTest):
     assert ops_test.model.applications[ZK_NAME].status == "active"
 
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
-    async with ops_test.fast_forward():
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
             apps=[APP_NAME, ZK_NAME], status="active", idle_period=30, timeout=1000
         )
@@ -97,7 +95,7 @@ async def test_listeners(ops_test: OpsTest, app_charm):
     )
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
             apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=800
         )
@@ -121,7 +119,7 @@ async def test_listeners(ops_test: OpsTest, app_charm):
 async def test_client_properties_makes_admin_connection(ops_test: OpsTest):
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
             apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=800
         )
@@ -142,7 +140,7 @@ async def test_client_properties_makes_admin_connection(ops_test: OpsTest):
 async def test_logs_write_to_storage(ops_test: OpsTest):
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
             apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=800
         )
@@ -174,38 +172,33 @@ async def test_exporter_endpoints(ops_test: OpsTest):
 
 
 @pytest.mark.abort_on_fail
+@pytest.mark.skip(reason="No feature yet, needs newer image")
 async def test_log_level_change(ops_test: OpsTest):
-
     for unit in ops_test.model.applications[APP_NAME].units:
-        assert (
-            count_lines_with(
-                ops_test.model_full_name,
-                unit.name,
-                "/var/log/kafka/server.log",
-                "DEBUG",
-            )
-            == 0
+        total_lines = count_lines_with(
+            ops_test.model_full_name,
+            unit.name,
+            "/var/log/kafka/server.log",
+            "DEBUG",
         )
+        assert total_lines == 0
 
     await ops_test.model.applications[APP_NAME].set_config({"log_level": "DEBUG"})
-
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME], status="active", timeout=1000, idle_period=30
     )
 
     for unit in ops_test.model.applications[APP_NAME].units:
-        assert (
-            count_lines_with(
-                ops_test.model_full_name,
-                unit.name,
-                "/var/log/kafka/server.log",
-                "DEBUG",
-            )
-            > 0
+        total_lines = count_lines_with(
+            ops_test.model_full_name,
+            unit.name,
+            "/var/log/kafka/server.log",
+            "DEBUG",
         )
+        assert total_lines > 0
 
+    # cleanup
     await ops_test.model.applications[APP_NAME].set_config({"log_level": "INFO"})
-
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME], status="active", timeout=1000, idle_period=30
     )
