@@ -66,6 +66,10 @@ options:
     description: A list of cipher suites. This is a named combination of authentication, encryption, MAC and key exchange algorithm used to negotiate the security settings for a network connection using TLS or SSL network protocol. By default all the available cipher suites are supported.
     type: string
     default: ""
+  ssl_principal_mapping_rules:
+    description: "A list of rules for mapping from distinguished name from the client certificate to short name. Each rule starts with 'RULE:' and contains an expression as the following. 'RULE:pattern/replacement/[LU]'. A valid set of rules could look something like this 'RULE:^.*[Cc][Nn]=([a-zA-Z0-9.-_@]*).*$/$1/L,DEFAULT'"
+    type: string
+    default: "DEFAULT"
   replication_quota_window_num:
     description: The number of samples to retain in memory for replication quotas.
     type: int
@@ -78,3 +82,11 @@ options:
     description: Config options to add extra-sans to the ones used when requesting server certificates. The extra-sans are specified by comma-separated names to be added when requesting signed certificates. Use "{unit}" as a placeholder to be filled with the unit number, e.g. "worker-{unit}" will be translated as "worker-0" for unit 0 and "worker-1" for unit 1 when requesting the certificate.
     type: string
     default: ""
+  profile:
+     description: 'Profile representing the scope of deployment, and used to enable high-level customisation of sysconfigs, resource checks/allocation, warning levels, etc. Allowed values are: “production”, “staging” and “testing”'
+     type: string
+     default: production
+  log_level:
+    description: 'Level of logging for the different components operated by the charm. Possible values: ERROR, WARNING, INFO, DEBUG'
+    type: string
+    default: "INFO"

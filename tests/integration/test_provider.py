@@ -10,6 +10,8 @@ from typing import Set
 import pytest
 from pytest_operator.plugin import OpsTest
 
+from literals import TLS_RELATION
+
 from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
@@ -58,20 +60,17 @@ async def test_deploy_charms_relate_active(
     )
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
 
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME], idle_period=20, status="active", timeout=2000
+            apps=[APP_NAME, ZK_NAME], idle_period=30, status="active", timeout=2000
         )
 
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_1}:{REL_NAME_CONSUMER}")
 
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME], idle_period=20, status="active", timeout=2000
+            apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME], idle_period=30, status="active", timeout=2000
         )
-
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[DUMMY_NAME_1].status == "active"
 
     # implicitly tests setting of kafka app data
     returned_usernames, zookeeper_uri = get_zookeeper_connection(
@@ -247,7 +246,7 @@ async def test_connection_updated_on_tls_enabled(ops_test: OpsTest, app_charm: P
 
     await ops_test.model.deploy(TLS_NAME, channel="stable", config=tls_config, series=TLS_SERIES)
     await ops_test.model.add_relation(TLS_NAME, ZK_NAME)
-    await ops_test.model.add_relation(TLS_NAME, APP_NAME)
+    await ops_test.model.add_relation(TLS_NAME, f"{APP_NAME}:{TLS_RELATION}")
 
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME, ZK_NAME, TLS_NAME, DUMMY_NAME_1],

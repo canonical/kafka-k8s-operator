@@ -2,17 +2,15 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import io
 import logging
 from pathlib import Path
-from unittest.mock import PropertyMock, patch
 
 import pytest
 import yaml
 from ops.testing import Harness
 
-from charm import KafkaK8sCharm
-from literals import CHARM_KEY
+from charm import KafkaCharm
+from literals import CHARM_KEY, CONTAINER, SUBSTRATE
 
 CONFIG = str(yaml.safe_load(Path("./config.yaml").read_text()))
 ACTIONS = str(yaml.safe_load(Path("./actions.yaml").read_text()))
@@ -23,9 +21,13 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def harness():
-    harness = Harness(KafkaK8sCharm, meta=METADATA, config=CONFIG, actions=ACTIONS)
+    harness = Harness(KafkaCharm, meta=METADATA, config=CONFIG, actions=ACTIONS)
+
+    if SUBSTRATE == "k8s":
+        harness.set_can_connect(CONTAINER, True)
+
     harness.add_relation("restart", CHARM_KEY)
-    harness.begin_with_initial_hooks()
+    harness.begin()
     return harness
 
 
@@ -47,38 +49,18 @@ def test_config_parsing_parameters_integer_values(harness) -> None:
 
 
 def check_valid_values(_harness, field: str, accepted_values: list, is_long_field=False) -> None:
-    """Check the correcteness of the passed values for a field."""
-    with (
-        patch(
-            "config.KafkaConfig.server_properties",
-            new_callable=PropertyMock,
-            return_value=["gandalf=grey"],
-        ),
-        patch("config.KafkaConfig.set_client_properties"),
-        patch("charm.KafkaK8sCharm.healthy", new_callable=PropertyMock, return_value=True),
-        patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=white")),
-    ):
-        for value in accepted_values:
-            _harness.update_config({field: value})
-            assert _harness.charm.config[field] == value if not is_long_field else int(value)
+    """Check the correctness of the passed values for a field."""
+    for value in accepted_values:
+        _harness.update_config({field: value})
+        assert _harness.charm.config[field] == value if not is_long_field else int(value)
 
 
 def check_invalid_values(_harness, field: str, erroneus_values: list) -> None:
     """Check the incorrectness of the passed values for a field."""
-    with (
-        patch(
-            "config.KafkaConfig.server_properties",
-            new_callable=PropertyMock,
-            return_value=["gandalf=grey"],
-        ),
-        patch("config.KafkaConfig.set_client_properties"),
-        patch("charm.KafkaK8sCharm.healthy", new_callable=PropertyMock, return_value=True),
-        patch("ops.model.Container.pull", return_value=io.StringIO("gandalf=white")),
-    ):
-        for value in erroneus_values:
-            _harness.update_config({field: value})
-            with pytest.raises(ValueError):
-                _ = _harness.charm.config[field]
+    for value in erroneus_values:
+        _harness.update_config({field: value})
+        with pytest.raises(ValueError):
+            _ = _harness.charm.config[field]
 
 
 def test_product_related_values(harness) -> None:

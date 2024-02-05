@@ -14,6 +14,9 @@ set-password:
       description: The password will be auto-generated if this option is not specified.
   required: [username]
 
+pre-upgrade-check:
+  description: Run necessary pre-upgrade checks before executing a charm upgrade.
+
 set-tls-private-key:
   description: Sets the private key identifying the target unit, which will be used for certificate signing requests (CSR).
     When updated, certificates will be reissued to the unit.

@@ -20,7 +20,7 @@ from integration.helpers import (
     get_k8s_host_from_unit,
     get_unit_address_map,
 )
-from literals import BINARIES_PATH, CONF_PATH
+from literals import PATHS
 
 PROCESS = "kafka.Kafka"
 CONTAINER = "kafka"
@@ -58,7 +58,7 @@ def get_topic_description(
     unit_name = unit_name or ops_test.model.applications[APP_NAME].units[0].name
 
     output = check_output(
-        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {BINARIES_PATH}/bin/kafka-topics.sh --describe --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {CONF_PATH}/client.properties",
+        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {PATHS['BIN']}/bin/kafka-topics.sh --describe --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {PATHS['CONF']}/client.properties",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -83,7 +83,7 @@ def get_topic_offsets(ops_test: OpsTest, topic: str, unit_name: Optional[str] = 
 
     # example of topic offset output: 'test-topic:0:10'
     result = check_output(
-        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {BINARIES_PATH}/bin/kafka-get-offsets.sh --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {CONF_PATH}/client.properties",
+        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {PATHS['BIN']}/bin/kafka-get-offsets.sh --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {PATHS['CONF']}/client.properties",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,

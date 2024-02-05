@@ -22,20 +22,29 @@ resources:
   kafka-image:
     type: oci-image
     description: OCI Image for Apache Kafka
-    upstream-source: ghcr.io/canonical/charmed-kafka@sha256:0be7852a3b3227871ac6156e34982f2ffad26af311fe711c324e6d4f300125f0
+    upstream-source: ghcr.io/canonical/charmed-kafka@sha256:4b349591ca84194dccd1c2d3f51337c0595fcdbcc133945a8f0a01fc737c6346
 
 peers:
   cluster:
     interface: cluster
   restart:
     interface: rolling_op
+  upgrade:
+    interface: upgrade
 
 requires:
   zookeeper:
     interface: zookeeper
+    limit: 1
   certificates:
     interface: tls-certificates
     limit: 1
+    optional: true
+  trusted-ca:
+    interface: tls-certificates
+    optional: true
+  trusted-certificate:
+    interface: tls-certificates
     optional: true
   logging:
     interface: loki_push_api

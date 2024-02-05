@@ -88,19 +88,25 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
             series=KAFKA_SERIES,
             resources={"kafka-image": KAFKA_CONTAINER},
         ),
-        ops_test.model.deploy(ZK_NAME, channel="edge", num_units=3, series=ZK_SERIES),
+        ops_test.model.deploy(ZK_NAME, channel="edge", num_units=1, series=ZK_SERIES),
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, series="jammy"),
     )
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=2000)
+
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
 
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME], idle_period=30, status="active", timeout=2000
+            apps=[APP_NAME, ZK_NAME],
+            idle_period=30,
+            status="active",
+            timeout=2000,
+            raise_on_error=False,
         )
 
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
             apps=[APP_NAME, DUMMY_NAME, ZK_NAME], idle_period=30, status="active", timeout=2000
         )
@@ -109,15 +115,8 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
     assert ops_test.model.applications[ZK_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME].status == "active"
 
-    await ops_test.model.applications[APP_NAME].add_units(count=2)
-    await ops_test.model.block_until(lambda: len(ops_test.model.applications[APP_NAME].units) == 3)
-    await ops_test.model.wait_for_idle(
-        apps=[APP_NAME], status="active", timeout=1000, idle_period=40
-    )
 
-    assert ops_test.model.applications[APP_NAME].status == "active"
-
-
+# run this test early, in case of resource limits on runners with too many units
 async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
     second_kafka_name = f"{APP_NAME}-two"
     second_zk_name = f"{ZK_NAME}-two"
@@ -136,9 +135,13 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
     )
     await ops_test.model.add_relation(second_kafka_name, second_zk_name)
 
-    async with ops_test.fast_forward(fast_interval="30s"):
+    async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[second_kafka_name, second_zk_name], idle_period=30, status="active", timeout=2000
+            apps=[second_kafka_name, second_zk_name],
+            idle_period=30,
+            status="active",
+            timeout=2000,
+            raise_on_error=False,
         )
 
     assert ops_test.model.applications[second_kafka_name].status == "active"
@@ -147,7 +150,7 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
     # produce to first cluster
     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("produce")
     await action.wait()
-    asyncio.sleep(10)
+    await asyncio.sleep(10)
     await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30)
     assert ops_test.model.applications[APP_NAME].status == "active"
     assert ops_test.model.applications[DUMMY_NAME].status == "active"
@@ -168,12 +171,21 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
         )
 
     # fast removal of second cluster
-    await asyncio.gather(
-        ops_test.juju(
-            f"remove-application --force --destroy-storage --no-wait {second_kafka_name}"
-        ),
-        ops_test.juju(f"remove-application --force --destroy-storage --no-wait {second_zk_name}"),
+    remove_apps = f"remove-application --force --destroy-storage --no-wait --no-prompt {second_kafka_name} {second_zk_name}"
+    await ops_test.juju(*remove_apps.split(), check=True)
+
+
+async def test_scale_up_zk_kafka(ops_test: OpsTest):
+    await ops_test.model.applications[APP_NAME].add_units(count=2)
+    await ops_test.model.applications[ZK_NAME].add_units(count=2)
+    await ops_test.model.block_until(lambda: len(ops_test.model.applications[APP_NAME].units) == 3)
+    await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME], status="active", timeout=1000, idle_period=30
     )
+
+    assert ops_test.model.applications[APP_NAME].status == "active"
+    assert ops_test.model.applications[ZK_NAME].status == "active"
 
 
 async def test_kill_broker_with_topic_leader(

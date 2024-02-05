@@ -40,7 +40,7 @@ class ContinuousWrites:
     """Utility class for managing continuous writes."""
 
     TOPIC_NAME = "ha-test-topic"
-    LAST_WRITTEN_VAL_PATH = "last_written_value"
+    LAST_WRITTEN_VAL_PATH = "/tmp/last_written_value"
 
     def __init__(self, ops_test: OpsTest, app: str):
         self._ops_test = ops_test
