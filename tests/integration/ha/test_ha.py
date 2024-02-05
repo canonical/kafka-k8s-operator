@@ -171,14 +171,8 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
         )
 
     # fast removal of second cluster
-    await asyncio.gather(
-        ops_test.juju(
-            f"remove-application --force --destroy-storage --no-wait --no-prompt {second_kafka_name}"
-        ),
-        ops_test.juju(
-            f"remove-application --force --destroy-storage --no-wait --no-prompt {second_zk_name}"
-        ),
-    )
+    remove_apps = f"remove-application --force --destroy-storage --no-wait --no-prompt {second_kafka_name} {second_zk_name}"
+    await ops_test.juju(*remove_apps.split(), check=True)
 
 
 async def test_scale_up_zk_kafka(ops_test: OpsTest):
