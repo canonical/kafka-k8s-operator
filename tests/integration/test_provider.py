@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 DUMMY_NAME_1 = "app"
 DUMMY_NAME_2 = "appii"
-TLS_NAME = "tls-certificates-operator"
+TLS_NAME = "self-signed-certificates"
 REL_NAME_CONSUMER = "kafka-client-consumer"
 REL_NAME_PRODUCER = "kafka-client-producer"
 
@@ -242,9 +242,9 @@ async def test_connection_updated_on_tls_enabled(ops_test: OpsTest, app_charm: P
     await ops_test.model.wait_for_idle(apps=[DUMMY_NAME_1], timeout=1000, idle_period=30)
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_1}:{REL_NAME_CONSUMER}")
     await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1], timeout=1000, idle_period=30)
-    tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "kafka"}
+    tls_config = {"ca-common-name": "kafka"}
 
-    await ops_test.model.deploy(TLS_NAME, channel="stable", config=tls_config, series=TLS_SERIES)
+    await ops_test.model.deploy(TLS_NAME, channel="edge", config=tls_config, series=TLS_SERIES)
     await ops_test.model.add_relation(TLS_NAME, ZK_NAME)
     await ops_test.model.add_relation(TLS_NAME, f"{APP_NAME}:{TLS_RELATION}")
 

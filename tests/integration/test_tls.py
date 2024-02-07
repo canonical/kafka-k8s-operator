@@ -32,7 +32,9 @@ from .helpers import (
 
 logger = logging.getLogger(__name__)
 
-TLS_NAME = "tls-certificates-operator"
+TLS_NAME = "self-signed-certificates"
+CERTS_NAME = "tls-certificates-operator"
+
 MTLS_NAME = "mtls"
 DUMMY_NAME = "app"
 
@@ -41,10 +43,10 @@ DUMMY_NAME = "app"
 @pytest.mark.skip_if_deployed
 async def test_deploy_tls(ops_test: OpsTest, app_charm):
     kafka_charm = await ops_test.build_charm(".")
-    tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "kafka"}
+    tls_config = {"ca-common-name": "kafka"}
 
     await asyncio.gather(
-        ops_test.model.deploy(TLS_NAME, channel="stable", config=tls_config, series=TLS_SERIES),
+        ops_test.model.deploy(TLS_NAME, channel="edge", config=tls_config, series=TLS_SERIES),
         ops_test.model.deploy(ZK_NAME, channel="edge", num_units=3, series=ZK_SERIES),
         ops_test.model.deploy(
             kafka_charm,
@@ -157,7 +159,7 @@ async def test_mtls(ops_test: OpsTest):
         "ca-certificate": encoded_client_ca,
     }
     await ops_test.model.deploy(
-        TLS_NAME, channel="stable", config=tls_config, series="jammy", application_name=MTLS_NAME
+        CERTS_NAME, channel="stable", config=tls_config, series="jammy", application_name=MTLS_NAME
     )
     await ops_test.model.wait_for_idle(apps=[MTLS_NAME], timeout=1000, idle_period=15)
     async with ops_test.fast_forward():
