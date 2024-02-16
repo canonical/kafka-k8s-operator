@@ -214,18 +214,6 @@ async def test_mtls(ops_test: OpsTest):
     assert max_offset == str(num_messages)
 
 
-async def test_pod_reschedule_tls(ops_test: OpsTest):
-    delete_pod(ops_test, f"{APP_NAME}-0")
-
-    async with ops_test.fast_forward():  # if kafka isn't connected, should be BlockedStatus from update-status
-        await ops_test.model.wait_for_idle(
-            apps=[APP_NAME],
-            status="active",
-            idle_period=40,
-            timeout=2000,
-        )
-
-
 async def test_kafka_tls_scaling(ops_test: OpsTest):
     """Scale the application while using TLS to check that new units will configure correctly."""
     await ops_test.model.applications[APP_NAME].scale(scale=3)
@@ -255,3 +243,15 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
 
     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME, unit_num=2)
     assert check_tls(ip=kafka_address, port=19093)
+
+
+async def test_pod_reschedule_tls(ops_test: OpsTest):
+    delete_pod(ops_test, f"{APP_NAME}-0")
+
+    async with ops_test.fast_forward():  # if kafka isn't connected, should be BlockedStatus from update-status
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME],
+            status="active",
+            idle_period=40,
+            timeout=2000,
+        )
