@@ -8,8 +8,8 @@ import logging
 
 import pytest
 from charms.tls_certificates_interface.v1.tls_certificates import generate_private_key
+from ha.ha_helpers import delete_pod
 from pytest_operator.plugin import OpsTest
-from tests.integration.ha.ha_helpers import delete_pod
 
 from literals import SECURITY_PROTOCOL_PORTS, TLS_RELATION, TRUSTED_CERTIFICATE_RELATION
 
