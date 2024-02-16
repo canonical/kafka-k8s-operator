@@ -74,6 +74,19 @@ class KafkaUpgradeEvents(DataUpgrade):
         self.charm.config_manager.set_zk_jaas_config()
         self.charm.config_manager.set_client_properties()
 
+        # during pod-reschedules (e.g upgrades or otherwise) we lose all files
+        # need to manually add-back key/truststores
+        if (
+            self.charm.state.cluster.tls_enabled
+            and self.charm.state.broker.certificate
+            and self.charm.state.broker.ca
+        ):  # TLS is probably completed
+            self.charm.tls_manager.set_server_key()
+            self.charm.tls_manager.set_ca()
+            self.charm.tls_manager.set_certificate()
+            self.charm.tls_manager.set_truststore()
+            self.charm.tls_manager.set_keystore()
+
         # start kafka service
         self.charm.workload.start(layer=self.charm._kafka_layer)
 

@@ -166,6 +166,19 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.config_manager.set_zk_jaas_config()
         self.config_manager.set_client_properties()
 
+        # during pod-reschedules (e.g upgrades or otherwise) we lose all files
+        # need to manually add-back key/truststores
+        if (
+            self.state.cluster.tls_enabled
+            and self.state.broker.certificate
+            and self.state.broker.ca
+        ):  # TLS is probably completed
+            self.tls_manager.set_server_key()
+            self.tls_manager.set_ca()
+            self.tls_manager.set_certificate()
+            self.tls_manager.set_truststore()
+            self.tls_manager.set_keystore()
+
         # start kafka service
         self.workload.start(layer=self._kafka_layer)
         logger.info("Kafka service started")

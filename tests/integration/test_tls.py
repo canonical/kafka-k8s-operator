@@ -9,6 +9,7 @@ import logging
 import pytest
 from charms.tls_certificates_interface.v1.tls_certificates import generate_private_key
 from pytest_operator.plugin import OpsTest
+from tests.integration.ha.ha_helpers import delete_pod
 
 from literals import SECURITY_PROTOCOL_PORTS, TLS_RELATION, TRUSTED_CERTIFICATE_RELATION
 
@@ -211,6 +212,18 @@ async def test_mtls(ops_test: OpsTest):
     assert topic_name == "TEST-TOPIC"
     assert min_offset == "0"
     assert max_offset == str(num_messages)
+
+
+async def test_pod_reschedule_tls(ops_test: OpsTest):
+    delete_pod(ops_test, f"{APP_NAME}-0")
+
+    async with ops_test.fast_forward():  # if kafka isn't connected, should be BlockedStatus from update-status
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME],
+            status="active",
+            idle_period=40,
+            timeout=2000,
+        )
 
 
 async def test_kafka_tls_scaling(ops_test: OpsTest):
