@@ -32,8 +32,8 @@ Model     Controller  Cloud/Region        Version  SLA          Timestamp
 tutorial  microk8s    microk8s/localhost  3.1.5    unsupported  17:22:21+02:00
 
 App            Version  Status  Scale  Charm          Channel  Rev  Address         Exposed  Message
-kafka-k8s               active      3  kafka-k8s      3/edge    39  10.152.183.237  no
-zookeeper-k8s           active      3  zookeeper-k8s  3/edge    33  10.152.183.134  no
+kafka-k8s               active      3  kafka-k8s      3/beta    46  10.152.183.237  no
+zookeeper-k8s           active      3  zookeeper-k8s  3/beta    37  10.152.183.134  no
 
 Unit              Workload  Agent  Address     Ports  Message
 kafka-k8s/0       active    idle   10.1.36.78
@@ -69,7 +69,7 @@ username: admin
 
 Providing you the `username` and `password` of the Kafka cluster admin user. 
 
-**IMPORTANT** Note that when no other application is related to Kafka, the cluster is secured-by-default and external listeners (binded to port 9092) are disabled, thus preventing any external incoming connection. 
+> **IMPORTANT** Note that when no other application is related to Kafka, the cluster is secured-by-default and external listeners (binded to port 9092) are disabled, thus preventing any external incoming connection. 
 
 Nevertheless, it is still possible to run a command from within the Kafka cluster. To do so, log in into one of the Kafka container in one of the units
 
