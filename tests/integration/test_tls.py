@@ -248,10 +248,12 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
 async def test_pod_reschedule_tls(ops_test: OpsTest):
     delete_pod(ops_test, f"{APP_NAME}-0")
 
-    async with ops_test.fast_forward():  # if kafka isn't connected, should be BlockedStatus from update-status
+    async with ops_test.fast_forward(
+        fast_interval="60s"
+    ):  # if kafka isn't connected, should be BlockedStatus from update-status
         await ops_test.model.wait_for_idle(
             apps=[APP_NAME],
             status="active",
-            idle_period=40,
+            idle_period=30,
             timeout=2000,
         )
