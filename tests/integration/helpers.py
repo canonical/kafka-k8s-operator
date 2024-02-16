@@ -487,3 +487,12 @@ def produce_and_check_logs(
         client.produce_message(topic_name=topic, message_content=message)
 
     check_logs(model_full_name, kafka_unit_name, topic)
+
+
+def delete_pod(ops_test: OpsTest, unit_name: str):
+    check_output(
+        f"kubectl delete pod {unit_name.replace('/', '-')} -n {ops_test.model.info.name}",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
