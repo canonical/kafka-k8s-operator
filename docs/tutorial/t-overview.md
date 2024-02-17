@@ -19,18 +19,21 @@ While this tutorial intends to guide and teach you as you deploy Charmed Kafka, 
 - Basic terminal commands.
 - Kafka concepts such as replication and users.
 
+## Minimum requirements
+
+Before we start, make sure your machine meets the following requirements:
+- Ubuntu 20.04 (Focal) or later.
+- 8GB of RAM.
+- 2 CPU threads.
+- At least 20GB of available storage.
+- Access to the internet for downloading the required snaps and charms.
+
 ## Step-by-step guide
 
 Here’s an overview of the steps required with links to our separate tutorials that deal with each individual step:
 * [Set up the environment](/t/charmed-kafka-k8s-documentation-tutorial-setup-environment/11946)
 * [Deploy Kafka](/t/charmed-kafka-k8s-documentation-tutorial-deploy-kafka/11947)
+* [Integrate with client applications](/t/charmed-kafka-k8s-documentation-tutorial-relate-applications/11949)
 * [Manage passwords](/t/charmed-kafka-k8s-documentation-tutorial-manage-passwords/11948)
-* [Relate your Kafka to other applications](/t/charmed-kafka-k8s-documentation-tutorial-relate-applications/11949)
 * [Enable encryption](/t/charmed-kafka-k8s-documentation-tutorial-enable-encryption/11950)
 * [Cleanup your environment](/t/charmed-kafka-k8s-documentation-tutorial-cleanup-environment/11951)
-
-## License
-The Charmed Kafka K8s Operator is free software, distributed under the Apache Software License, version 2.0. See [LICENSE](https://github.com/canonical/kafka-k8s-operator/blob/main/LICENSE) for more information.
-
-## Trademark Notice
-Kafka is a registered trademark of The Apache Software Foundation. Other trademarks are property of their respective owners.

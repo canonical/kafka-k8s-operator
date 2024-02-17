@@ -15,8 +15,18 @@ $ juju relate kafka-k8s zookeeper-k8s
 
 To watch the process, `juju status` can be used. Once all the units show as `active|idle` the credentials to access a broker can be queried with:
 ```shell
-juju run-action kafka-k8s/leader get-admin-credentials --wait 
+juju run kafka-k8s/leader get-admin-credentials
 ```
+
+The Charmed Kafka OCI Image ships with `/opt/kafka/bin/*.sh` commands to do various administrative tasks, e.g `kafka-config.sh` to update cluster configuration, `kafka-topics.sh` for topic management, and many more! The Charmed Kafka K8s Operator provides these commands to administrators to easily run their desired cluster configurations securely with SASL authentication, either from within the cluster or as an external client.
+
+If you wish to run a command from the cluster, in order to (for example) list the current topics on the Kafka cluster, you can run:
+```
+BOOTSTRAP_SERVERS=$(juju run kafka-k8s/leader get-admin-credentials | grep "bootstrap.servers" | cut -d "=" -f 2)
+juju ssh --container kafka kafka-k8s/leader '/opt/kafka/bin/kafka-topics.sh --bootstrap-server $BOOTSTRAP_SERVERS --list --command-config /etc/kafka/client.properties'
+```
+
+Note that when no other application is related to Kafka, the cluster is secured-by-default and listeners are disabled, thus preventing any incoming connection. However, even for running the commands above, listeners must be enable. If there is no other application, deploy a `data-integrator` charm and relate it to Kafka, as outlined in the Relation section to enable listeners.
 
 ## Replication
 

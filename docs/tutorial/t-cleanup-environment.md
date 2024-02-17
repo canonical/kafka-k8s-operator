@@ -1,15 +1,15 @@
-# Cleanup and extra info
-
 This is part of the [Charmed Kafka K8s Tutorial](/t/charmed-kafka-k8s-documentation-tutorial-overview/11945). Please refer to this page for more information and the overview of the content.
 
-## Remove and cleanup environment
+## Cleanup your environment
 If you're done with testing and would like to free up resources on your machine, just remove Multipass VM.
-*Warning: when you remove VM as shown below you will lose all the data in Kafka and any other applications inside Multipass VM!*
+
+> **Warning** When you remove VM as shown below you will lose all the data in Kafka and any other applications inside Multipass VM!
+
 ```shell
 multipass delete --purge my-vm
 ```
 
-## Next Steps
+## What's next?
 
 In this tutorial we've successfully deployed Kafka, added/removed users, connected client applications and even enabled and disabled TLS. 
 If you're looking for what to do next you can:

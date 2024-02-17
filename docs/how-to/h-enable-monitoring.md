@@ -1,8 +1,7 @@
 # Enable Monitoring
 
-The Charmed Kafka K8s Operator comes with several exporters by default. The metrics can be queried by accessing the following endpoints:
-
-- JMX exporter: `http://<pod-ip>:9101/metrics`
+Both Charmed Kafka and Charmed ZooKeeper comes with the [JMX exporter](https://github.com/prometheus/jmx_exporter/).
+The metrics can be queried by accessing the `http://<kafka-unit-ip>:9101/metrics` and `http://<zookeeper-unit-ip>:9998/metrics` endpoints, respectively.
 
 Additionally, the charm provides integration with the [Canonical Observability Stack](https://charmhub.io/topics/canonical-observability-stack).
 
