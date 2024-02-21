@@ -1,16 +1,7 @@
-# Environment Setup
-
 This is part of the [Charmed Kafka Tutorial](/t/charmed-kafka-k8s-documentation-tutorial-overview/11945). Please refer to this page for more information and the overview of the content.
 
-## Minimum requirements
-Before we start, make sure your machine meets the following requirements:
-- Ubuntu 20.04 (Focal) or later.
-- 8GB of RAM.
-- 2 CPU threads.
-- At least 20GB of available storage.
-- Access to the internet for downloading the required snaps and charms.
+## Setup the environment
 
-## Multipass environment
 [Multipass](https://multipass.run/) is a quick and easy way to launch virtual machines running Ubuntu. It uses "[cloud-init](https://cloud-init.io/)" standard to install and configure all the necessary parts automatically.
 
 Let's install Multipass from [Snap](https://snapcraft.io/multipass) and launch a new VM using "[charm-dev](https://github.com/canonical/multipass-blueprints/blob/main/v1/charm-dev.yaml)" cloud-init config:

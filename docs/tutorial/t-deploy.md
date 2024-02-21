@@ -1,14 +1,12 @@
-# Get a Charmed Kafka and Zookeeper up and running
-
 This is part of the [Charmed Kafka K8s Tutorial](/t/charmed-kafka-k8s-documentation-tutorial-overview/11945). Please refer to this page for more information and the overview of the content. 
 
-## Deploy
+## Deploy Charmed Kafka K8s (and Charmed ZooKeeper K8s)
 
 To deploy Charmed Kafka K8s, all you need to do is run the following commands, which will automatically fetch [Kafka](https://charmhub.io/kafka-k8s?channel=3/stable) and [Zookeeper](https://charmhub.io/zookeeper-k8s?channel=3/stable) charms from [Charmhub](https://charmhub.io/) and deploy them to your model. For example, to deploy a 5 Zookeeper unit and 3 Kafka unit cluster, you can simply run
 
 ```shell
-$ juju deploy zookeeper-k8s -n 3 --channel=3/edge
-$ juju deploy kafka-k8s -n 3 --channel=3/edge
+$ juju deploy zookeeper-k8s -n 3 
+$ juju deploy kafka-k8s -n 3 
 ```
 
 After this, it is necessary to connect them:
@@ -32,8 +30,8 @@ Model     Controller  Cloud/Region        Version  SLA          Timestamp
 tutorial  microk8s    microk8s/localhost  3.1.5    unsupported  17:22:21+02:00
 
 App            Version  Status  Scale  Charm          Channel  Rev  Address         Exposed  Message
-kafka-k8s               active      3  kafka-k8s      3/edge    39  10.152.183.237  no
-zookeeper-k8s           active      3  zookeeper-k8s  3/edge    33  10.152.183.134  no
+kafka-k8s               active      3  kafka-k8s      3/beta    46  10.152.183.237  no
+zookeeper-k8s           active      3  zookeeper-k8s  3/beta    37  10.152.183.134  no
 
 Unit              Workload  Agent  Address     Ports  Message
 kafka-k8s/0       active    idle   10.1.36.78
@@ -45,7 +43,7 @@ zookeeper-k8s/2   active    idle   10.1.36.85
 ```
 To exit the screen with `juju status --watch 1s`, enter `Ctrl+c`.
 
-## Retrieving Kafka cluster admin credentials
+## Access Kafka cluster
 
 To watch the process, `juju status` can be used. Once all the units show as `active|idle` the credentials to access a broker can be queried with:
 ```shell
@@ -69,12 +67,12 @@ username: admin
 
 Providing you the `username` and `password` of the Kafka cluster admin user. 
 
-**IMPORTANT** Note that when no other application is related to Kafka, the cluster is secured-by-default and external listeners (binded to port 9092) are disabled, thus preventing any external incoming connection. 
+> **IMPORTANT** Note that when no other application is related to Kafka, the cluster is secured-by-default and external listeners (binded to port 9092) are disabled, thus preventing any external incoming connection. 
 
 Nevertheless, it is still possible to run a command from within the Kafka cluster. To do so, log in into one of the Kafka container in one of the units
 
 ```shell
-juju ssh --container kafka kafka-k8s/leader sudo -i 
+juju ssh --container kafka kafka-k8s/leader /bin/bash
 ```
 
 The Charmed Kafka K8s image ships with the Apache Kafka `bin/*.sh` commands, that can be found under `/opt/kafka/bin/`.
@@ -116,6 +114,8 @@ You can finally delete the topic, using
     --bootstrap-server  $INTERNAL_LISTENERS \
     --command-config $CLIENT_PROPERTIES
 ```
+
+## What's next?
 
 However, although the commands above can run within the cluster, it is generally recommended during operations
 to enable external listeners and use these for running the admin commands from outside the cluster. 

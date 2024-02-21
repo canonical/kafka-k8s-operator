@@ -1,13 +1,14 @@
-# Relate your Kafka deployment 
-
 This is part of the [Charmed Kafka K8s Tutorial](/t/charmed-kafka-k8s-documentation-tutorial-overview/11945). Please refer to this page for more information and the overview of the content. 
 
-## Relations
-Relations, or what Juju documentation [describes as Integration](https://juju.is/docs/sdk/integration), are the easiest way to create a user for Kafka in Charmed Kafka. Relations automatically create a username, password, and topic for the desired user/application. 
+## Integrate with client applications
+
+As mentioned in the previous section of the Tutorial, the recommended way to create and manage users is by means of another charm: the [Data Integrator Charm](https://charmhub.io/data-integrator). This will allow us to encode users directly in the Juju model, and - as shown in the following - to rotate user credentials rotations with and without application downtime using Relations.
+
+> Relations, or what Juju documentation describes also as [Integration](https://juju.is/docs/sdk/integration), allow two charms to exchange information and interact with one another. Creating a relation between Kafka and the Data Integrator will allow us to automatically create a username, password, and topic for the desired user/application, and this is indeed the easiest way to create and manage users for Kafka in Charmed Kafka.
 
 ### Data Integrator Charm
-Even though in the previous section we could access the cluster using the internal listeners, the proper way of 
-accessing using the Kafka cluster is via the [Data Integrator Charm](https://charmhub.io/data-integrator). This is a bare-bones charm that allows for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Kafka, OpenSearch, etc) with a consistent, opinionated and robust user experience. In order to deploy the Data Integrator Charm we can use the command `juju deploy` we have learned above:
+
+The [Data Integrator Charm](https://charmhub.io/data-integrator) is a bare-bones charm that allows for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Kafka, OpenSearch, etc) with a consistent, opinionated and robust user experience. In order to deploy the Data Integrator Charm we can use the command `juju deploy` we have learned above:
 
 ```shell
 juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=admin
@@ -61,7 +62,7 @@ Save the value listed under `endpoints`, `username` and `password`. *(Note: your
 
 ### Produce/Consume messages
 
-We will now use the username and password to produce some messages to Kafka. To do so, we will first deploy a test charm that bundles some python scripts to push data to Kafka, e.g.
+We will now use the username and password to produce some messages to Kafka. To do so, we will first deploy the Kafka Test App (available [here](https://charmhub.io/kafka-test-app)): a test charm that also bundles some python scripts to push data to Kafka, e.g.
 
 ```shell
 juju deploy kafka-test-app -n1 --channel edge
@@ -141,28 +142,27 @@ python3 -m charms.kafka.v0.client \
   -c "cg"
 ```
 
-### Remove the user
-To remove the user, remove the relation. Removing the relation automatically removes the user that was created when the relation was created. Enter the following to remove the relation:
-```shell
-juju remove-relation kafka data-integrator
-```
-
 ### Charm Client Applications
+
+Actually, the Data Integrator is only a very special client charm,  that implements the `kafka_client` relation for exchanging data with the Kafka charm and allowing user management via relations. 
+
+For example,  the steps above for producing and consuming messages to Kafka have also been implemented in the `kafka-test-app` charm (that also implement the `kafka_client` relation) providing a fully integrated charmed user-experience, where producing/consuming messages can simply be achieved using relations.  
 
 #### Producing messages
 
-Although in the steps above we have manually implemented the connection with Kafka, the `kafka-test-app` actually already implements the entire process above (from creating a user, producing/consuming messages, and delete the user), fully integrated with in a charmed experience. 
-In fact, in order to produce messages to Kafka, we could first set the appropriate configurations for producing messages, e.g. 
+To produce messages to Kafka, we need to configure the kafka-test-app to act as producer, publishing messages to a specific topic
 
 ```shell
 juju config kafka-test-app topic_name=test_kafka_app_topic role=producer num_messages=20
 ```
 
-and then relate the two charms
+In order to start to produce messages to Kafka, we **JUST** simply relate the Kafka Test App with Kafka
 
 ```shell
 juju relate kafka-test-app kafka-k8s
 ```
+
+> **Note** This will both take care of creating a dedicated user (as much as done for the data-integrator) as well as start a producer process publishing messages to the `test_kafka_app_topic` topic. 
 
 After some time, the `juju status` output should show
 
@@ -187,8 +187,7 @@ indicating that the process has started. To make sure that this is indeed the ca
 juju exec --application kafka-test-app "tail /tmp/*.log"
 ```
 
-To stop the process (although it is very likely that the process has already stopped given the low number of messages that were provided) and remove the user, 
-you can just remove the relation 
+To stop the process (although it is very likely that the process has already stopped given the low number of messages that were provided) and remove the user,  you can just remove the relation 
 
 ```shell
 juju remove-relation kafka-test-app kafka-k8s
@@ -201,3 +200,9 @@ Note that the `kafka-test-app` charm can also similarly be used to consume messa
 ```shell
 juju config kafka-test-app topic_name=test_kafka_app_topic role=consumer consumer_group_prefix=cg
 ```
+
+After configuring the Kafka Test App, just relate it again with the Kafka charm. This will again create a new user and start the consumer process. 
+
+## What's next?
+
+In the next section, we will learn how to rotate and manage the passwords for the Kafka users, both the admin one and the ones managed by the data-integrator.
