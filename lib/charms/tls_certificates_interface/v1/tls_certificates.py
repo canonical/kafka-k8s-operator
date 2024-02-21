@@ -382,6 +382,8 @@ PROVIDER_JSON_SCHEMA = {
 
 logger = logging.getLogger(__name__)
 
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class CertificateAvailableEvent(EventBase):
     """Charm Event triggered when a TLS certificate is available."""
