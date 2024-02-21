@@ -152,13 +152,13 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
     def _on_kafka_pebble_ready(self, event: EventBase) -> None:
         """Handler for `start` event."""
+        # don't want to run default pebble ready during upgrades
+        if not self.upgrade.idle:
+            return
+
         self._set_status(self.state.ready_to_start)
         if not isinstance(self.unit.status, ActiveStatus):
             event.defer()
-            return
-
-        # don't want to run default pebble ready during upgrades
-        if not self.upgrade.idle:
             return
 
         # required settings given zookeeper connection config has been created
@@ -200,7 +200,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
-        if not self.healthy or not self.upgrade.idle:
+        if not self.upgrade.idle or not self.healthy:
             event.defer()
             return
 
@@ -255,7 +255,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
     def _on_update_status(self, event: EventBase) -> None:
         """Handler for `update-status` events."""
-        if not self.healthy:
+        if not self.upgrade.idle or not self.healthy:
             return
 
         if not self.state.zookeeper.broker_active():
