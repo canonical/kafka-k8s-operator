@@ -134,7 +134,6 @@ class KafkaUpgradeEvents(DataUpgrade):
         if self.idle:
             self._set_rolling_update_partition(partition=len(self.charm.state.brokers) - 1)
 
-
     def post_upgrade_check(self) -> None:
         """Runs necessary checks validating the unit is in a healthy state after upgrade."""
         self.pre_upgrade_check()

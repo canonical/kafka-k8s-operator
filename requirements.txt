@@ -40,7 +40,7 @@ poetry-plugin-export==1.6.0 ; python_version >= "3.10" and python_version < "4.0
 poetry==1.7.1 ; python_version >= "3.10" and python_version < "4.0"
 ptyprocess==0.7.0 ; python_version >= "3.10" and python_version < "4.0"
 pure-sasl==0.6.2 ; python_version >= "3.10" and python_version < "4.0"
-pycparser==2.21 ; python_version >= "3.10" and python_version < "4.0" and (platform_python_implementation != "PyPy" or sys_platform == "darwin")
+pycparser==2.21 ; python_version >= "3.10" and python_version < "4.0"
 pydantic==1.10.14 ; python_version >= "3.10" and python_version < "4.0"
 pyparsing==3.1.1 ; python_version >= "3.10" and python_version < "4.0"
 pyproject-hooks==1.0.0 ; python_version >= "3.10" and python_version < "4.0"
