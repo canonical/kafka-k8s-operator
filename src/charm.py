@@ -70,7 +70,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             self,
             substrate=self.substrate,
             dependency_model=KafkaDependencyModel(
-                **DEPENDENCIES  # pyright: ignore[reportGeneralTypeIssues]
+                **DEPENDENCIES  # pyright: ignore[reportArgumentType]
             ),
         )
 
