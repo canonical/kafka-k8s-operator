@@ -90,7 +90,7 @@ export INTERNAL_LISTENERS=kafka-k8s-1.kafka-k8s-endpoints:19092,kafka-k8s-2.kafk
 
 We are now ready to perform some administrative tasks. For example, in order to create a topic, you can run:
 ```shell
-/opt/kafka/bin//kafka-topics.sh \
+/opt/kafka/bin/kafka-topics.sh \
     --create --topic test_topic \
     --bootstrap-server  $INTERNAL_LISTENERS \
     --command-config $CLIENT_PROPERTIES
@@ -109,7 +109,7 @@ making sure the topic was successfully created.
 You can finally delete the topic, using 
 
 ```shell
-/opt/kafka/bin//kafka-topics.sh \
+/opt/kafka/bin/kafka-topics.sh \
     --delete --topic test_topic \
     --bootstrap-server  $INTERNAL_LISTENERS \
     --command-config $CLIENT_PROPERTIES

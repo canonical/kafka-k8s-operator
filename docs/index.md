@@ -7,7 +7,7 @@ This operator charm comes with features such as:
 - SASL/SCRAM auth for Broker-Broker and Client-Broker authentication enabled by default.
 - Access control management supported with user-provided ACL lists.
 
-The Kafka K8s Operator uses the latest upstream Kafka binaries released by the The Apache Software Foundation that comes with Kafka, made available using the [`ubuntu/kafka` OCI image](https://registry.hub.docker.com/r/ubuntu/kafka) distributed by Canonical.
+The Kafka K8s Operator uses the latest upstream Kafka binaries released by The Apache Software Foundation that comes with Kafka, made available using the [`ubuntu/kafka` OCI image](https://registry.hub.docker.com/r/ubuntu/kafka) distributed by Canonical.
 
 As currently Kafka requires a paired ZooKeeper deployment in production, this operator makes use of the [ZooKeeper K8s Operator](https://github.com/canonical/zookeeper-k8s-operator) for various essential functions.
 
@@ -24,7 +24,7 @@ Charmed Kafka K8s is an official distribution of Apache Kafka. It’s an open-so
 - [Join the Discourse forum](/tag/kafka-k8s)
 - [Contribute](https://github.com/canonical/kafka-k8s-operator/blob/main/CONTRIBUTING.md) and report [issues](https://github.com/canonical/kafka-k8s-operator/issues/new)
 - Explore [Canonical Data Fabric solutions](https://canonical.com/data)
-- [Contacts us]([/t/charmed-kafka-k8s-documentation-reference-contacts/13206) for all further questions
+- [Contact us]([/t/charmed-kafka-k8s-documentation-reference-contacts/13206) for all further questions
 
 ## In this documentation
 
