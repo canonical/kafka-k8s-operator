@@ -56,7 +56,7 @@ def test_pre_upgrade_check_raises_not_stable(harness: Harness):
 def test_pre_upgrade_check_succeeds(harness: Harness):
     with (
         patch("charm.KafkaCharm.healthy", return_value=True),
-        patch("lightkube.core.client.Client.patch"),
+        patch("events.upgrade.KafkaUpgradeEvents._set_rolling_update_partition"),
     ):
         harness.charm.upgrade.pre_upgrade_check()
 
