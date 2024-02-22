@@ -216,14 +216,17 @@ def test_upgrade_granted_succeeds(harness: Harness):
         patch("charm.KafkaCharm.healthy", new_callable=PropertyMock, return_value=True),
         patch(
             "core.cluster.ClusterState.ready_to_start",
-            new_callable=PropertyMock, return_value=True,
+            new_callable=PropertyMock,
+            return_value=True,
         ),
         patch(
             "events.upgrade.KafkaUpgradeEvents.idle",
-            new_callable=PropertyMock, return_value=False,
+            new_callable=PropertyMock,
+            return_value=False,
         ),
         patch(
-            "core.models.ZooKeeper.broker_active", return_value=True,
+            "core.models.ZooKeeper.broker_active",
+            return_value=True,
         ),
     ):
         mock_event = MagicMock()
