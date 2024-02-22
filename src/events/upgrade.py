@@ -7,7 +7,6 @@ import logging
 from typing import TYPE_CHECKING
 
 from charms.data_platform_libs.v0.upgrade import (
-    ActiveStatus,
     ClusterNotReadyError,
     DataUpgrade,
     DependencyModel,
@@ -20,6 +19,8 @@ from lightkube.core.exceptions import ApiError
 from lightkube.resources.apps_v1 import StatefulSet
 from pydantic import BaseModel
 from typing_extensions import override
+
+from literals import Status
 
 if TYPE_CHECKING:
     from charm import KafkaCharm
@@ -74,6 +75,19 @@ class KafkaUpgradeEvents(DataUpgrade):
         self.charm.config_manager.set_zk_jaas_config()
         self.charm.config_manager.set_client_properties()
 
+        # during pod-reschedules (e.g upgrades or otherwise) we lose all files
+        # need to manually add-back key/truststores
+        if (
+            self.charm.state.cluster.tls_enabled
+            and self.charm.state.broker.certificate
+            and self.charm.state.broker.ca
+        ):  # TLS is probably completed
+            self.charm.tls_manager.set_server_key()
+            self.charm.tls_manager.set_ca()
+            self.charm.tls_manager.set_certificate()
+            self.charm.tls_manager.set_truststore()
+            self.charm.tls_manager.set_keystore()
+
         # start kafka service
         self.charm.workload.start(layer=self.charm._kafka_layer)
 
@@ -84,10 +98,8 @@ class KafkaUpgradeEvents(DataUpgrade):
             self.set_unit_failed()
             return
 
-        # service_start might fail silently, confirm with ZK if kafka is actually connected
-        self.charm._on_update_status(event)
-
-        if not isinstance(self.charm.unit.status, ActiveStatus):
+        if not self.charm.state.zookeeper.broker_active():
+            logger.error(Status.ZK_NOT_CONNECTED)
             self.set_unit_failed()
             return
 

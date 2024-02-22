@@ -75,6 +75,41 @@ def test_blocked_if_trusted_certificate_added_before_tls_relation(harness: Harne
     assert isinstance(harness.charm.app.status, BlockedStatus)
 
 
+@pytest.mark.skipif(SUBSTRATE == "vm", reason="pebble layer not used on vm")
+def test_pebble_ready_sets_tls_files(harness: Harness, passwords_data):
+    """Checks layer is the expected at start."""
+    with harness.hooks_disabled():
+        harness.set_leader(True)
+        peer_relation_id = harness.add_relation(PEER, CHARM_KEY)
+        harness.update_relation_data(peer_relation_id, CHARM_KEY, passwords_data)
+        harness.update_relation_data(peer_relation_id, CHARM_KEY, {"tls": "enabled"})
+        harness.update_relation_data(
+            peer_relation_id,
+            f"{CHARM_KEY}/0",
+            {"ca": "keep it secret", "certificate": "keep it safe"},
+        )
+
+    with (
+        patch("managers.auth.AuthManager.add_user"),
+        patch("managers.config.KafkaConfigManager.set_zk_jaas_config"),
+        patch("managers.config.KafkaConfigManager.set_server_properties"),
+        patch("managers.config.KafkaConfigManager.set_client_properties"),
+        patch("managers.tls.TLSManager.set_server_key") as patched_server_key,
+        patch("managers.tls.TLSManager.set_ca") as patched_ca,
+        patch("managers.tls.TLSManager.set_certificate") as patched_certificate,
+        patch("managers.tls.TLSManager.set_truststore") as patched_truststore,
+        patch("managers.tls.TLSManager.set_keystore") as patched_keystore,
+        patch("workload.KafkaWorkload.active", return_value=False),
+    ):
+        harness.charm.on.start.emit()
+
+        patched_server_key.assert_called_once()
+        patched_ca.assert_called_once()
+        patched_certificate.assert_called_once()
+        patched_truststore.assert_called_once()
+        patched_keystore.assert_called_once()
+
+
 def test_mtls_flag_added(harness: Harness):
     # Create peer relation
     peer_relation_id = harness.add_relation(PEER, CHARM_KEY)
