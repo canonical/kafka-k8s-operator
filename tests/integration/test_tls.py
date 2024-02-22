@@ -213,6 +213,21 @@ async def test_mtls(ops_test: OpsTest):
     assert max_offset == str(num_messages)
 
 
+# FIXME: Address on its own ticket
+@pytest.mark.skip
+@pytest.mark.abort_on_fail
+async def test_mtls_broken(ops_test: OpsTest):
+    remove_relation_cmd = f"remove-relation {APP_NAME} {TRUSTED_CERTIFICATE_RELATION}"
+    await ops_test.juju(*remove_relation_cmd.split(), check=True)
+
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME],
+        status="active",
+        idle_period=30,
+        timeout=2000,
+    )
+
+
 async def test_kafka_tls_scaling(ops_test: OpsTest):
     """Scale the application while using TLS to check that new units will configure correctly."""
     await ops_test.model.applications[APP_NAME].scale(scale=3)
