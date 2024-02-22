@@ -63,7 +63,7 @@ class KafkaUpgradeEvents(DataUpgrade):
         ):
             logger.error(
                 "Current ZooKeeper version %s does not meet requirement %s",
-                self.charm.state.zookeeper.zookeeper_version,
+                self.zookeeper_current_version,
                 dependency_model.dependencies["zookeeper"],
             )
             self.set_unit_failed()
@@ -120,14 +120,20 @@ class KafkaUpgradeEvents(DataUpgrade):
         dependency_model: DependencyModel = getattr(self.dependency_model, "kafka_service")
         return dependency_model.version
 
+    @property
+    def zookeeper_current_version(self) -> str:
+        """Get current Zookeeper version."""
+        return self.charm.state.zookeeper.zookeeper_version
+
     @override
     def pre_upgrade_check(self) -> None:
-        if self.idle:
-            self._set_rolling_update_partition(partition=len(self.charm.state.brokers) - 1)
-
         default_message = "Pre-upgrade check failed and cannot safely upgrade"
         if not self.charm.healthy:
             raise ClusterNotReadyError(message=default_message, cause="Cluster is not healthy")
+
+        if self.idle:
+            self._set_rolling_update_partition(partition=len(self.charm.state.brokers) - 1)
+
 
     def post_upgrade_check(self) -> None:
         """Runs necessary checks validating the unit is in a healthy state after upgrade."""
