@@ -70,7 +70,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             self,
             substrate=self.substrate,
             dependency_model=KafkaDependencyModel(
-                **DEPENDENCIES  # pyright: ignore[reportGeneralTypeIssues]
+                **DEPENDENCIES  # pyright: ignore[reportArgumentType]
             ),
         )
 
@@ -152,19 +152,32 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
     def _on_kafka_pebble_ready(self, event: EventBase) -> None:
         """Handler for `start` event."""
+        # don't want to run default pebble ready during upgrades
+        if not self.upgrade.idle:
+            return
+
         self._set_status(self.state.ready_to_start)
         if not isinstance(self.unit.status, ActiveStatus):
             event.defer()
-            return
-
-        # don't want to run default pebble ready during upgrades
-        if not self.upgrade.idle:
             return
 
         # required settings given zookeeper connection config has been created
         self.config_manager.set_server_properties()
         self.config_manager.set_zk_jaas_config()
         self.config_manager.set_client_properties()
+
+        # during pod-reschedules (e.g upgrades or otherwise) we lose all files
+        # need to manually add-back key/truststores
+        if (
+            self.state.cluster.tls_enabled
+            and self.state.broker.certificate
+            and self.state.broker.ca
+        ):  # TLS is probably completed
+            self.tls_manager.set_server_key()
+            self.tls_manager.set_ca()
+            self.tls_manager.set_certificate()
+            self.tls_manager.set_truststore()
+            self.tls_manager.set_keystore()
 
         # start kafka service
         self.workload.start(layer=self._kafka_layer)
@@ -187,7 +200,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
-        if not self.healthy or not self.upgrade.idle:
+        if not self.upgrade.idle or not self.healthy:
             event.defer()
             return
 
@@ -242,7 +255,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
     def _on_update_status(self, event: EventBase) -> None:
         """Handler for `update-status` events."""
-        if not self.healthy:
+        if not self.upgrade.idle or not self.healthy:
             return
 
         if not self.state.zookeeper.broker_active():

@@ -532,11 +532,10 @@ class DataUpgrade(Object, ABC):
         self.framework.observe(
             getattr(self.charm.on, "pre_upgrade_check_action"), self._on_pre_upgrade_check_action
         )
-        # FIXME: this is disabled as we don't need the functionality. Should be added as an arg to the lib
-        # if self.substrate == "k8s":
-        #     self.framework.observe(
-        #         getattr(self.charm.on, "resume_upgrade_action"), self._on_resume_upgrade_action
-        #     )
+        if self.substrate == "k8s":
+            self.framework.observe(
+                getattr(self.charm.on, "resume_upgrade_action"), self._on_resume_upgrade_action
+            )
 
     @property
     def peer_relation(self) -> Optional[Relation]:
@@ -1024,17 +1023,14 @@ class DataUpgrade(Object, ABC):
                 self.model.get_relation(self.relation_name)
             )
 
-        # FIXME: this is disabled as we don't need the functionality. Should be added as an arg to the lib
-
         # This hook shouldn't run for the last unit (the first that is upgraded). For that unit it
         # should be done through an action after the upgrade success on that unit is double-checked.
-        # if unit_number == len(self.peer_relation.units):
-        #     logger.info(
-        #         f"{self.charm.unit.name} unit upgraded. Evaluate and run `resume-upgrade` action to continue upgrade"
-        #     )
-        #     return
-
         unit_number = int(self.charm.unit.name.split("/")[1])
+        if unit_number == len(self.peer_relation.units):
+            logger.info(
+                f"{self.charm.unit.name} unit upgraded. Evaluate and run `resume-upgrade` action to continue upgrade"
+            )
+            return
 
         # Also, the hook shouldn't run for the first unit (the last that is upgraded).
         if unit_number == 0:
@@ -1080,5 +1076,3 @@ class DataUpgrade(Object, ABC):
             return
 
         raise NotImplementedError
-
-

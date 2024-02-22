@@ -449,7 +449,7 @@ async def test_network_cut_without_ip_change(
     logger.info(f"Releasing network of broker: {initial_leader_num}")
     remove_instance_isolation(ops_test)
 
-    await asyncio.sleep(REELECTION_TIME)
+    await asyncio.sleep(REELECTION_TIME * 2)
 
     async with ops_test.fast_forward(fast_interval="15s"):
         result = c_writes.stop()
