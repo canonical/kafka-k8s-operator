@@ -59,7 +59,10 @@ class KafkaWorkload(WorkloadBase):
     ) -> str:
         try:
             process = self.container.exec(
-                command=command.split(), environment=env, working_dir=working_dir
+                command=command.split(),
+                environment=env,
+                working_dir=working_dir,
+                combine_stderr=True,
             )
             output, _ = process.wait_output()
             return output
