@@ -55,6 +55,7 @@ optional = true
 black = "^22.3.0"
 ruff = ">=0.0.157"
 codespell = ">=2.2.2"
+pyright = "^1.1.318"
 
 [tool.poetry.group.unit]
 optional = true
@@ -111,3 +112,14 @@ src = ["src", "tests"]
 
 [tool.ruff.mccabe]
 max-complexity = 10
+
+[tool.pyright]
+include = ["src"]
+extraPaths = ["./lib"]
+pythonVersion = "3.10"
+pythonPlatform = "All"
+typeCheckingMode = "basic"
+reportIncompatibleMethodOverride = false
+reportImportCycles = false
+reportMissingModuleSource = true
+stubPath = ""
