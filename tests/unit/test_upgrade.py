@@ -14,7 +14,7 @@ from ops.testing import Harness
 
 from charm import KafkaCharm
 from events.upgrade import KafkaDependencyModel
-from literals import CHARM_KEY, DEPENDENCIES, PEER, ZK
+from literals import CHARM_KEY, DEPENDENCIES, PEER, SUBSTRATE, ZK
 
 logger = logging.getLogger(__name__)
 
@@ -142,30 +142,26 @@ def test_upgrade_granted_sets_failed_if_zookeeper_dependency_check_fails(harness
     assert harness.charm.upgrade.state == "failed"
 
 
-# def test_upgrade_granted_sets_failed_if_failed_snap(harness: Harness):
-#     with (
-#         patch(
-#             "events.upgrade.KafkaUpgrade.zookeeper_current_version",
-#             new_callable=PropertyMock,
-#             return_value="3.6",
-#         ),
-#         patch("workload.KafkaWorkload.stop") as patched_stop,
-#         patch("workload.KafkaWorkload.install", return_value=False),
-#     ):
-#         mock_event = MagicMock()
-#         harness.charm.upgrade._on_upgrade_granted(mock_event)
-#
-#     patched_stop.assert_called_once()
-#     assert harness.charm.upgrade.state == "failed"
+@pytest.mark.skipif(SUBSTRATE == "k8s", reason="Upgrade granted not used on K8s charms")
+def test_upgrade_granted_sets_failed_if_failed_snap(harness: Harness):
+    with (
+        patch(
+            "events.upgrade.KafkaUpgrade.zookeeper_current_version",
+            new_callable=PropertyMock,
+            return_value="3.6",
+        ),
+        patch("workload.KafkaWorkload.stop") as patched_stop,
+        patch("workload.KafkaWorkload.install", return_value=False),
+    ):
+        mock_event = MagicMock()
+        harness.charm.upgrade._on_upgrade_granted(mock_event)
+
+    patched_stop.assert_called_once()
+    assert harness.charm.upgrade.state == "failed"
 
 
 def test_upgrade_granted_sets_failed_if_failed_upgrade_check(harness: Harness):
     with (
-        patch(
-            "events.upgrade.KafkaUpgradeEvents.zookeeper_current_version",
-            new_callable=PropertyMock,
-            return_value="3.6",
-        ),
         patch(
             "core.models.ZooKeeper.zookeeper_version",
             new_callable=PropertyMock,
@@ -197,11 +193,6 @@ def test_upgrade_granted_sets_failed_if_failed_upgrade_check(harness: Harness):
 
 def test_upgrade_granted_succeeds(harness: Harness):
     with (
-        patch(
-            "events.upgrade.KafkaUpgradeEvents.zookeeper_current_version",
-            new_callable=PropertyMock,
-            return_value="3.6",
-        ),
         patch(
             "core.models.ZooKeeper.zookeeper_version",
             new_callable=PropertyMock,
@@ -236,23 +227,24 @@ def test_upgrade_granted_succeeds(harness: Harness):
     assert harness.charm.upgrade.state == "completed"
 
 
-# def test_upgrade_granted_recurses_upgrade_changed_on_leader(harness: Harness):
-#     with harness.hooks_disabled():
-#         harness.set_leader(True)
-#
-#     with (
-#         patch(
-#             "events.upgrade.KafkaUpgrade.zookeeper_current_version",
-#             new_callable=PropertyMock,
-#             return_value="3.6",
-#         ),
-#         patch("workload.KafkaWorkload.stop"),
-#         patch("workload.KafkaWorkload.restart"),
-#         patch("workload.KafkaWorkload.install", return_value=True),
-#         patch("charm.KafkaCharm.healthy", new_callable=PropertyMock, return_value=True),
-#         patch("events.upgrade.KafkaUpgrade.on_upgrade_changed") as patched_upgrade,
-#     ):
-#         mock_event = MagicMock()
-#         harness.charm.upgrade._on_upgrade_granted(mock_event)
-#
-#     patched_upgrade.assert_called_once()
+@pytest.mark.skipif(SUBSTRATE == "k8s", reason="Upgrade granted not used on K8s charms")
+def test_upgrade_granted_recurses_upgrade_changed_on_leader(harness: Harness):
+    with harness.hooks_disabled():
+        harness.set_leader(True)
+
+    with (
+        patch(
+            "events.upgrade.KafkaUpgrade.zookeeper_current_version",
+            new_callable=PropertyMock,
+            return_value="3.6",
+        ),
+        patch("workload.KafkaWorkload.stop"),
+        patch("workload.KafkaWorkload.restart"),
+        patch("workload.KafkaWorkload.install", return_value=True),
+        patch("charm.KafkaCharm.healthy", new_callable=PropertyMock, return_value=True),
+        patch("events.upgrade.KafkaUpgrade.on_upgrade_changed") as patched_upgrade,
+    ):
+        mock_event = MagicMock()
+        harness.charm.upgrade._on_upgrade_granted(mock_event)
+
+    patched_upgrade.assert_called_once()

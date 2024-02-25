@@ -63,7 +63,7 @@ class KafkaUpgradeEvents(DataUpgrade):
         ):
             logger.error(
                 "Current ZooKeeper version %s does not meet requirement %s",
-                self.zookeeper_current_version,
+                self.charm.state.zookeeper.zookeeper_version,
                 dependency_model.dependencies["zookeeper"],
             )
             self.set_unit_failed()
@@ -119,11 +119,6 @@ class KafkaUpgradeEvents(DataUpgrade):
         """Get current Kafka version."""
         dependency_model: DependencyModel = getattr(self.dependency_model, "kafka_service")
         return dependency_model.version
-
-    @property
-    def zookeeper_current_version(self) -> str:
-        """Get current Zookeeper version."""
-        return self.charm.state.zookeeper.zookeeper_version
 
     @override
     def pre_upgrade_check(self) -> None:
