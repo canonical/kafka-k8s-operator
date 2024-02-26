@@ -1,4 +1,4 @@
-# How to deploy Charmed Kafka
+# How to deploy Charmed Kafka K8s
 
 To deploy a Charmed Kafka cluster on a bare environment, it is required to:
 1. Setup a Juju Controller
