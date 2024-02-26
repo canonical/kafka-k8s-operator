@@ -25,7 +25,7 @@ In short, MirrorMaker runs as a distributed service on the new cluster, and cons
     - `yq` - https://github.com/mikefarah/yq
     - `snap install yq --channel=v3/stable`
 
-### Getting Charmed Kafka K8s cluster details and admin credentials
+### Get cluster details and admin credentials
 
 By design, the `kafka` charm will not expose any available connections until related to by a client. In this case, we deploy `data-integrator` charms and relating them to each `kafka` application, requesting `admin` level privileges:
 
