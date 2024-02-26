@@ -15,7 +15,7 @@ Together, these allow for cluster->cluster replication of topics, consumer group
 
 In short, MirrorMaker runs as a distributed service on the new cluster, and consumes all topics, groups and offsets from the still-active original cluster in production, before producing them one-way to the new cluster that may not yet be serving traffic to external clients. The original, in-production cluster is referred to as an ‘active’ cluster, and the new cluster still waiting to serve external clients is ‘passive’. The MirrorMaker service can be configured using much the same configuration as available for Kafka Connect.
 
-## Deployment and Running of MirrorMaker
+## Deploy and run MirrorMaker
 
 ### Pre-requisites
 
