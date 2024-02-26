@@ -53,7 +53,7 @@ juju show-model | yq '.[].type'
 > **IMPORTANT** If the model is **not** `k8s`, please refer to the [Charmed Kafka documentation](/t/charmed-kafka-documentation/10288) instead.
 
 
-## Deploy Charmed Kafka and Charmed ZooKeeper
+## Deploy Charmed Kafka K8s and Charmed ZooKeeper
 
 The Kafka and ZooKeeper charms can both be deployed as follows:
 
