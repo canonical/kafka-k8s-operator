@@ -1,6 +1,6 @@
 # How to upgrade between minor versions
 
-> **Note** This feature is available on Charmed Kafka and Charmed ZooKeeper from revisions XXX and YYY, respectively. Upgrade from previous versions is **not supported**.
+> **Note** This feature is available on Charmed Kafka K8s and Charmed ZooKeeper K8s from revisions 53 and 49, respectively. Upgrade from previous versions is **not supported**.
 
 Charm upgrades allow admins to upgrade both operator code (e.g. the revision used by the charm) and/or the workload version. Note that since the charm code pins a particular version of the workload, a charm upgrade may or may not involve also a workload version upgrade. In general, the following guide only applies for in-place upgrades that involve (at most) minor version upgrade of Kafka workload, e.g. between Kafka 3.4.x to 3.5.x. Major workload upgrades are generally **NOT SUPPORTED**, and they should be carried out using full cluster to cluster migrations. Please refer to the how-to guide about cluster migration [here](TODO) for more information on how this can be achieved.
 

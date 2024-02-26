@@ -45,9 +45,9 @@ k8s    admin/cos.prometheus   admin   prometheus:receive-remote-write
 
 To consume offers to be reachable in the current model, run
 ```shell
-juju consume <k8s_cos_controller>:admin/cos.grafana
-juju consume <k8s_cos_controller>:admin/cos.loki
-juju consume <k8s_cos_controller>:admin/cos.prometheus
+juju consume <k8s_cos_controller>:admin/<cos_model_name>.grafana
+juju consume <k8s_cos_controller>:admin/<cos_model_name>.loki
+juju consume <k8s_cos_controller>:admin/<cos_model_name>.prometheus
 ```
 ## Deploy and integrate Grafana
 
@@ -88,3 +88,23 @@ To connect to the Grafana web interface, follow the [Browse dashboards](https://
 ```shell
 juju run grafana/leader get-admin-password --model <k8s_cos_controller>:<cos_model_name>
 ```
+
+## Tune server logging level
+
+In order to tune the level of the server logs for Kafka and ZooKeeper, configure the `log-level` and `log_level` properties accordingly
+
+### Kafka 
+
+```
+juju config kafka log_level=<LOG_LEVEL>
+```
+
+Possible values are `ERROR`, `WARNING`, `INFO`, `DEBUG`.
+
+### ZooKeeper
+
+```
+juju config kafka log-level=<LOG_LEVEL>
+```
+
+Possible values are `ERROR`, `WARNING`, `INFO`, `DEBUG`.

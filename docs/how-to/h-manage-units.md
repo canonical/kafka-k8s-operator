@@ -40,10 +40,10 @@ bash command.
 These scripts can be found in the `/opt/kafka/bin` folder.
 
 > **IMPORTANT** Before running bash scripts, make sure that some listeners have been correctly 
-> opened by creating appropriate integrations. Please refer to [this table](TODO) for more 
+> opened by creating appropriate integrations. Please refer to [this table](/t/charmed-kafka-k8s-documentation-reference-listeners/13270) for more 
 > information about how listeners are opened based on integrations. To simply open a 
 > SASL/SCRAM listener, just integrate a client application using the data-integrator, 
-> as described [here](TODO).
+> as described [here](/t/charmed-kafka-k8s-how-to-manage-app/10293).
 
 To run most of the scripts, you need to provide:
 1. the Kafka service endpoints, generally referred to as *bootstrap servers* 
