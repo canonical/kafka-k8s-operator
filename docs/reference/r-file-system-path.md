@@ -14,13 +14,6 @@ the Kafka and ZooKeeper charms.
 | /var/lib/kafka/     | Raw data stored persistently by Kafka during its operations. The files are written and managed by Kafka only.                                                                                         | (owned and managed by `kafka`)        |
 
 
-External storage is used for storing persistent raw data, and it is  
-mounted at `/var/lib/kafka/<storage-id>`, 
-where `<storage-id>` is a progressive number allowing multiple storage units
-for providing both horizontal scalability and provide IO parallelization to 
-enhance throughput. 
-
-
 ## Zookeeper 
 
 | Path                     | Description                                                                                                                                                                                               | Permission                                |

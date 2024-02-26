@@ -1,14 +1,14 @@
 # How to deploy Charmed Kafka K8s
 
-To deploy a Charmed Kafka cluster on a bare environment, it is required to:
-1. Setup a Juju Controller
-2. Setup a Juju Model
+To deploy a Charmed Kafka cluster on a bare environment, it is necessary to:
+1. Set up a Juju Controller
+2. Set up a Juju Model
 3. Deploy Charmed Kafka and Charmed ZooKeeper
-4. (Optional) Create an external admin user
+4. (Optionally) Create an external admin user
 
 In the next subsections we will cover these steps separately by referring to 
 relevant Juju documentation and providing details on the Charmed Kafka specifics.
-If you already have a Juju controller and/or a Juju model, skip the related steps.
+If you already have a Juju controller and/or a Juju model, you can skip the associated steps.
 
 ## Juju Controller setup
 
@@ -16,7 +16,7 @@ Before deploying Kafka, make sure you have a Juju controller accessible from
 your local environment using the [Juju client snap](https://snapcraft.io/juju). 
 
 The properties of your current controller can be listed using `juju show-controller`. 
-Make sure that the controller substrate (cloud) **IS** K8s. 
+Make sure that the controller's backend cloud **is** K8s. 
 The cloud information can be retrieved with the following command
 
 ```commandline
@@ -37,7 +37,7 @@ You can create a new Juju model using
 juju add-model <model>
 ```
 
-Alternatively, you can use a pre-existing Juju model and switch to it by 
+Alternatively, you can use a pre-existing Juju model and switch to it by running the following command: 
 
 ```
 juju switch <model-name>
@@ -67,16 +67,16 @@ After this, it is necessary to connect them:
 $ juju relate kafka-k8s zookeeper-k8s
 ```
 
-> We recommend values of `<kafka-units>` of 3 and `<zookeeper-units>` of 5, for 
-ensuring reasonable high-availability margins.
+> We recommend values for `<kafka-units>` of at least 3 and for `<zookeeper-units>` of 5, to 
+ensure reasonable high-availability margins.
 
 Once all the units show as `active|idle` in the `juju status` output, the deployment 
 should be ready to be used. 
 
 ## (Optional) Create an external admin users
 
-After being deployed, the Kafka cluster is *secure by default* and, as a consequence, 
-it won't expose any external listener. 
+Charmed Kafka aims to follow the _secure by default_ paradigm. As a consequence, after being deployed the Kafka cluster
+won't expose any external listener. 
 In fact, ports are only opened when client applications are related, also 
 depending on the protocols to be used. Please refer to [this table](TODO) for 
 more information about the available listeners and protocols. 
