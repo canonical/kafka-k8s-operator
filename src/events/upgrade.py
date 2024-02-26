@@ -122,12 +122,12 @@ class KafkaUpgradeEvents(DataUpgrade):
 
     @override
     def pre_upgrade_check(self) -> None:
-        if self.idle:
-            self._set_rolling_update_partition(partition=len(self.charm.state.brokers) - 1)
-
         default_message = "Pre-upgrade check failed and cannot safely upgrade"
         if not self.charm.healthy:
             raise ClusterNotReadyError(message=default_message, cause="Cluster is not healthy")
+
+        if self.idle:
+            self._set_rolling_update_partition(partition=len(self.charm.state.brokers) - 1)
 
     def post_upgrade_check(self) -> None:
         """Runs necessary checks validating the unit is in a healthy state after upgrade."""
