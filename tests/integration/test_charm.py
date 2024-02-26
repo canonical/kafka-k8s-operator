@@ -36,7 +36,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
     await asyncio.gather(
         ops_test.model.deploy(
             ZK_NAME,
-            channel="edge",
+            channel="candidate",
             application_name=ZK_NAME,
             num_units=3,
             series=ZK_SERIES,

@@ -45,7 +45,7 @@ async def test_deploy_charms_relate_active(
     charm = await ops_test.build_charm(".")
     await asyncio.gather(
         ops_test.model.deploy(
-            ZK_NAME, channel="edge", application_name=ZK_NAME, num_units=3, series=ZK_SERIES
+            ZK_NAME, channel="candidate", application_name=ZK_NAME, num_units=3, series=ZK_SERIES
         ),
         ops_test.model.deploy(
             charm,
