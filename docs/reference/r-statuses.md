@@ -1,6 +1,8 @@
 # Charm Statuses
 
-The charm follows [standard Juju applications statuses](https://juju.is/docs/olm/status-values#heading--application-status). Here you can find the expected end-users reaction on different statuses:
+This charm follows [standard Juju applications statuses](https://juju.is/docs/olm/status-values#heading--application-status). 
+
+Here you can find the expected behavior and suggested actions for different statuses:
 
 ## Kafka
 
