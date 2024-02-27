@@ -3,9 +3,9 @@
 Charmed Kafka K8s is an open-source operator that makes it easier to manage Apache Kafka on Kubernetes, with built-in support for enterprise features. 
 
 Charmed Kafka K8s is built on top of [Juju](https://juju.is/) and reliably simplifies the deployment, scaling, design, and management of Apache Kafka on Kubernetes in production. Additionally, you can use the charm to manage your Kafka clusters with automation capabilities. It also offers replication, TLS, password rotation, easy-to-use application integration, and monitoring.
-Charmed Kafka K8s operates Apache Kafka on different Kubernetes distributions, featuring both on-prem installation (e.g. using MicroK8s) or cloud services (e.g. AWS EKS).
+Charmed Kafka K8s operates Apache Kafka on different Kubernetes distributions, featuring support for both on-premise installation (e.g. using MicroK8s) or cloud services (e.g. AWS EKS).
 
-Charmed Kafka K8s is a solution designed and developed for helping ops team and 
+Charmed Kafka K8s is a solution designed and developed for helping ops teams and 
 administrators to automate Apache Kafka operations from day 0 to day 2, across multiple cloud environments and platforms.
 
 [note]
