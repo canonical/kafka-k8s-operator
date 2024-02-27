@@ -17,5 +17,5 @@ If you're looking for what to do next you can:
 - Check out our Charmed offerings of [MySQL](https://charmhub.io/mysql-k8s), [PostgreSQL](https://charmhub.io/postgresql-k8s), [MongoDB](https://charmhub.io/mongodb-k8s).
 - Read about [High Availability Best Practices](https://canonical.com/blog/database-high-availability)
 - [Report](https://github.com/canonical/kafka-k8s-operator/issues) any problems you encountered.
-- [Give us your feedback](https://chat.charmhub.io/charmhub/channels/data-platform).
+- [Give us your feedback](https://matrix.to/#/#charmhub-data-platform:ubuntu.com).
 - [Contribute to the code base](https://github.com/canonical/kafka-k8s-operator)

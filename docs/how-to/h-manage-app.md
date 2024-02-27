@@ -4,7 +4,7 @@ Relations to new applications are supported via the "[kafka_client](https://gith
 
 ## Within juju via `kafka_client` interface
  
-If the charms supports the `kafka_client` interface, just create a relation between the two charms:
+If the charm supports the `kafka_client` interface, just create a relation between the two charms:
 
 ```shell
 juju relate kafka application

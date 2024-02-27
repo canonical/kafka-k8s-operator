@@ -1,30 +1,20 @@
 # Charmed Kafka K8s Documentation
 
-The Charmed Kafka K8s Operator delivers automated operations management from day 0 to day 2 on the [Apache Kafka](https://kafka.apache.org) event streaming platform deployed on top of a [Kubernetes cluster](https://kubernetes.io/). It is an open source, end-to-end, production ready data platform on top of cloud native technologies.
+Charmed Kafka K8s is an open-source operator that makes it easier to manage Apache Kafka on Kubernetes, with built-in support for enterprise features. 
 
-This operator charm comes with features such as:
-- Fault-tolerance, replication, scalability and high-availability out-of-the-box.
-- SASL/SCRAM auth for Broker-Broker and Client-Broker authentication enabled by default.
-- Access control management supported with user-provided ACL lists.
+Charmed Kafka K8s is built on top of [Juju](https://juju.is/) and reliably simplifies the deployment, scaling, design, and management of Apache Kafka on Kubernetes in production. Additionally, you can use the charm to manage your Kafka clusters with automation capabilities. It also offers replication, TLS, password rotation, easy-to-use application integration, and monitoring.
+Charmed Kafka K8s operates Apache Kafka on different Kubernetes distributions, featuring support for both on-premise installation (e.g. using MicroK8s) or cloud services (e.g. AWS EKS).
 
-The Kafka K8s Operator uses the latest upstream Kafka binaries released by the The Apache Software Foundation that comes with Kafka, made available using the [`ubuntu/kafka` OCI image](https://registry.hub.docker.com/r/ubuntu/kafka) distributed by Canonical.
+Charmed Kafka K8s is a solution designed and developed for helping ops teams and 
+administrators to automate Apache Kafka operations from day 0 to day 2, across multiple cloud environments and platforms.
 
-As currently Kafka requires a paired ZooKeeper deployment in production, this operator makes use of the [ZooKeeper K8s Operator](https://github.com/canonical/zookeeper-k8s-operator) for various essential functions.
+[note]
+Canonical has also developed the [Charmed Kafka operator](/t/charmed-kafka-documentation/10288) to support Kafka in VM/IAAS environments.
+[/note]
 
-The Charmed Kafka K8s operator comes in two flavours to deploy and operate Kafka on [physical/virtual machines](https://github.com/canonical/kafka-operator) and [Kubernetes](https://github.com/canonical/kafka-k8s-operator). Both offer features such as replication, TLS, password rotation, and easy to use integration with applications. The Charmed Kafka K8s Operator meets the need of deploying Kafka in a structured and consistent manner while allowing the user flexibility in configuration. It simplifies deployment, scaling, configuration and management of Kafka in production at scale in a reliable way.
-
-### License
-
-The Charmed Kafka K8s Operator is free software, distributed under the Apache Software License, version 2.0. See [LICENSE](https://github.com/canonical/kafka-operator/blob/main/LICENSE) for more information.
-
-## Project and community
-
-Charmed Kafka K8s is an official distribution of Apache Kafka. It’s an open-source project that welcomes community contributions, suggestions, fixes and constructive feedback.
-- [Read our Code of Conduct](https://ubuntu.com/community/code-of-conduct)
-- [Join the Discourse forum](/tag/kafka-k8s)
-- [Contribute](https://github.com/canonical/kafka-k8s-operator/blob/main/CONTRIBUTING.md) and report [issues](https://github.com/canonical/kafka-k8s-operator/issues/new)
-- Explore [Canonical Data Fabric solutions](https://canonical.com/data)
-- [Contacts us]([/t/charmed-kafka-k8s-documentation-reference-contacts/13206) for all further questions
+Charmed Kafka K8s is developed and supported by [Canonical](https://canonical.com/), as part of its commitment to 
+provide open-source, self-driving solutions, seamlessly integrated using the Operator Framework Juju. Please 
+refer to [charmhub.io](https://charmhub.io/), for more charmed operators integrated in the Juju ecosystem.
 
 ## In this documentation
 
@@ -32,3 +22,16 @@ Charmed Kafka K8s is an official distribution of Apache Kafka. It’s an open-so
 |--|--|
 |  [Tutorials](/t/charmed-kafka-k8s-tutorial-overview/11945)</br>  Get started - a hands-on introduction to using Charmed Kafka K8s operator for new users </br> |  [How-to guides](/t/charmed-kafka-k8s-how-to-manage-units/10295) </br> Step-by-step guides covering key operations and common tasks |
 | [Reference](https://charmhub.io/kafka-k8s/actions?channel=3/stable) </br> Technical information - specifications, APIs, architecture | [Explanation]() </br> Concepts - discussion and clarification of key topics  |
+
+## Project and community
+
+Charmed Kafka K8s is a distribution of Apache Kafka. It’s an open-source project that welcomes community contributions, suggestions, fixes and constructive feedback.
+- [Read our Code of Conduct](https://ubuntu.com/community/code-of-conduct)
+- [Join the Discourse forum](/tag/kafka-k8s)
+- [Contribute](https://github.com/canonical/kafka-k8s-operator/blob/main/CONTRIBUTING.md) and report [issues](https://github.com/canonical/kafka-k8s-operator/issues/new)
+- Explore [Canonical Data Fabric solutions](https://canonical.com/data)
+- [Contact us](/t/charmed-kafka-k8s-documentation-reference-contacts/13206) for all further questions
+
+## License
+
+The Charmed Kafka K8s Operator is free software, distributed under the Apache Software License, version 2.0. See [LICENSE](https://github.com/canonical/kafka-operator/blob/main/LICENSE) for more information.
