@@ -113,7 +113,9 @@ async def test_kafka_tls(ops_test: OpsTest):
 
     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME)
     # Client port shouldn't be up before relating to client app.
-    assert not check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].client)
+    assert not check_tls(
+        ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"]["SCRAM-SHA-512"].client
+    )
 
     async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
@@ -122,7 +124,9 @@ async def test_kafka_tls(ops_test: OpsTest):
         )
 
     logger.info("Check for Kafka TLS")
-    assert check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].client)
+    assert check_tls(
+        ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"]["SCRAM-SHA-512"].client
+    )
 
     # Rotate credentials
     new_private_key = generate_private_key().decode("utf-8")
@@ -174,8 +178,8 @@ async def test_mtls(ops_test: OpsTest):
     # getting kafka ca and address
     broker_ca = extract_ca(show_unit(f"{APP_NAME}/0", model_full_name=ops_test.model_full_name))
     address = await get_address(ops_test, app_name=APP_NAME)
-    ssl_port = SECURITY_PROTOCOL_PORTS["SSL"].client
-    sasl_port = SECURITY_PROTOCOL_PORTS["SASL_SSL"].client
+    ssl_port = SECURITY_PROTOCOL_PORTS["SSL"]["SSL"].client
+    sasl_port = SECURITY_PROTOCOL_PORTS["SASL_SSL"]["SCRAM-SHA-512"].client
     ssl_bootstrap_server = f"{address}:{ssl_port}"
     sasl_bootstrap_server = f"{address}:{sasl_port}"
 

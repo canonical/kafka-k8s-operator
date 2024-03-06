@@ -43,6 +43,7 @@ from literals import (
 from managers.auth import AuthManager
 from managers.config import KafkaConfigManager
 from managers.tls import TLSManager
+from oauth import OAuthHandler
 from workload import KafkaWorkload
 
 logger = logging.getLogger(__name__)
@@ -66,6 +67,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.zookeeper = ZooKeeperHandler(self)
         self.tls = TLSHandler(self)
         self.provider = KafkaProvider(self)
+        self.oauth = OAuthHandler(self)
         self.upgrade = KafkaUpgradeEvents(
             self,
             substrate=self.substrate,
