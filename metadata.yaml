@@ -22,7 +22,7 @@ resources:
   kafka-image:
     type: oci-image
     description: OCI Image for Apache Kafka
-    upstream-source: ghcr.io/canonical/charmed-kafka@sha256:4b349591ca84194dccd1c2d3f51337c0595fcdbcc133945a8f0a01fc737c6346
+    upstream-source: docker.io/gtato/charmed-kafka@sha256:285fa9cfc421496ffe57a856805246c02e7260cf282bfac260ef4b3b531267e4
 
 peers:
   cluster:
