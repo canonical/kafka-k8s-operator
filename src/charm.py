@@ -142,7 +142,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
                     "environment": {
                         "KAFKA_OPTS": " ".join(extra_opts),
                         # FIXME https://github.com/canonical/kafka-k8s-operator/issues/80
-                        "JAVA_HOME": "/usr/lib/jvm/java-17-openjdk-amd64",
+                        "JAVA_HOME": "/usr/lib/jvm/java-18-openjdk-amd64",
                         "LOG_DIR": self.workload.paths.logs_path,
                     },
                 }
