@@ -1,11 +1,11 @@
-# Integrate customer alerting rules and dashboards
+# Integrate custom alerting rules and dashboards
 
 This guide shows you how to integrate an existing set of rules and/or dashboards to your Charmed Kafka and Charmed Zookeeper deployment to be consumed with the [Canonical Observability Stack (COS)](https://charmhub.io/topics/canonical-observability-stack).
 To do so, we will sync resources stored in a git repo to COS Lite.
 
 ## Prerequisites
 
-Deploy the cos-lite bundle in a Kubernetes environment and relate Charmed Kafka and Charmed ZooKeeper to the COS offers, as shown in the [How to Enable Monitoring](/t/charmed-kafka-documentation-how-to-enable-monitoring/10283) guide.
+Deploy the cos-lite bundle in a Kubernetes environment and relate Charmed Kafka and Charmed ZooKeeper to the COS offers, as shown in the [How to Enable Monitoring](/t/charmed-kafka-k8s-how-to-enable-monitoring/10291) guide.
 The rest of this guide will refer to the models that charms are deployed into as `<cos-model>` for the one containing observabilities charms (and deployed on k8s), and `<apps-model>` for the one containing Charmed Kafka and Charmed ZooKeeper, along with other optional charms (e.g. tls-certificates operators, grafana-agent, data-integrator, etc.).
 
 ## Create a repository with a custom monitoring setup
