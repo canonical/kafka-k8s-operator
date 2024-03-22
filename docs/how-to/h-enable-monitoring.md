@@ -18,9 +18,9 @@ juju switch <k8s_cos_controller>:<cos_model_name>
 ```
 To offer the COS interfaces, run 
 ```shell
-juju offer grafana:grafana-dashboard
-juju offer loki:logging
-juju offer prometheus:receive-remote-write
+juju offer grafana:grafana-dashboard grafana-dashboards
+juju offer loki:logging loki-logging
+juju offer prometheus:receive-remote-write prometheus-receive-remote-write
 ```
 ## Consume offers via the Kafka model
 Next, we will switch to the Charmed Kafka K8s model, find offers, and consume them.
@@ -36,18 +36,18 @@ juju find-offers <k8s_cos_controller>:
 
 The output should be similar to the sample below, where `k8s` is the k8s controller name and `cos` is the model where `cos-lite` has been deployed:
 ```shell
-Store  URL                    Access  Interfaces
-k8s    admin/cos:grafana      admin   grafana:grafana-dashboard
-k8s    admin/cos.loki         admin   loki:logging
-k8s    admin/cos.prometheus   admin   prometheus:receive-remote-write
+Store     URL                                        Access  Interfaces
+k8s  admin/cos.grafana-dashboards               admin   grafana_dashboard:grafana-dashboard
+k8s  admin/cos.loki-logging                     admin   loki_push_api:logging
+k8s  admin/cos.prometheus-receive-remote-write  admin   prometheus_remote_write:receive-remote-write
 ...
 ```
 
 To consume offers to be reachable in the current model, run
 ```shell
-juju consume <k8s_cos_controller>:admin/<cos_model_name>.grafana
-juju consume <k8s_cos_controller>:admin/<cos_model_name>.loki
-juju consume <k8s_cos_controller>:admin/<cos_model_name>.prometheus
+juju consume <k8s_cos_controller>:admin/<cos_model_name>.grafana-dashboards
+juju consume <k8s_cos_controller>:admin/<cos_model_name>.loki-logging
+juju consume <k8s_cos_controller>:admin/<cos_model_name>.prometheus-receive-remote-write
 ```
 ## Deploy and integrate Grafana
 
@@ -58,9 +58,9 @@ juju deploy grafana-agent-k8s --trust
 Then, integrate `grafana-agent-k8s` with consumed COS offers:
 
 ```shell
-juju integrate grafana-agent-k8s grafana
-juju integrate grafana-agent-k8s loki
-juju integrate grafana-agent-k8s prometheus
+juju integrate grafana-agent-k8s grafana-dashboards
+juju integrate grafana-agent-k8s loki-logging
+juju integrate grafana-agent-k8s prometheus-receive-remote-write
 ```
 Finally, integrate (previously known as "[relate](https://juju.is/docs/juju/integration)") it with Charmed Kafka K8s
 
