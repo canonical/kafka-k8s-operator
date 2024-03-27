@@ -332,7 +332,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
     @property
     def version(self) -> str:
-        """Get workload (zookeeper) version."""
+        """Get workload (kafka) version."""
         return self.workload.get_version()
 
 
