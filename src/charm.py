@@ -196,7 +196,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             event.defer()
             return
 
-        self.unit.set_workload_version(self.version)
+        self.unit.set_workload_version(self.workload.get_version())
         self.config_manager.set_environment()
 
     def _on_config_changed(self, event: EventBase) -> None:
@@ -219,7 +219,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         # update environment
         self.config_manager.set_environment()
-        self.unit.set_workload_version(self.version)
+        self.unit.set_workload_version(self.workload.get_version())
 
         if zk_jaas_changed:
             clean_broker_jaas = [conf.strip() for conf in zk_jaas]
@@ -329,11 +329,6 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         getattr(logger, log_level.lower())(status.message)
         self.unit.status = status
-
-    @property
-    def version(self) -> str:
-        """Get workload (kafka) version."""
-        return self.workload.get_version()
 
 
 if __name__ == "__main__":

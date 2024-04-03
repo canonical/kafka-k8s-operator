@@ -117,6 +117,6 @@ class KafkaWorkload(WorkloadBase):
 
         try:
             version = re.split(r"[\s\-]", self.run_bin_command("topics", ["--version"]))[0]
-        except Exception:
+        except:  # noqa: E722
             version = ""
         return version
