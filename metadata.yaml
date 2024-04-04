@@ -1,15 +1,24 @@
-# Copyright 2023 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
-
 name: kafka-k8s
-display-name: Kafka K8s
-docs: https://discourse.charmhub.io/t/charmed-kafka-k8s-documentation/10296
+display-name: Charmed Kafka K8s
 description: |
-  Kafka is an event streaming platform. This charm deploys and operates Kafka.
-summary: The Charmed Kafka K8s Operator
+  Kafka is an event streaming platform. This charm deploys and operates Kafka on 
+  a K8s environment.
+summary: Charmed Kafka K8s Operator
+docs: https://discourse.charmhub.io/t/charmed-kafka-k8s-documentation/10296
+source: https://github.com/canonical/kafka-k8s-operator
+issues: https://github.com/canonical/kafka-k8s-operator/issues
+website:
+  - https://ubuntu.com/data/kafka
+  - https://canonical.com/data/docs/kafka/k8s
+  - https://charmhub.io/kafka-k8s
+  - https://github.com/canonical/kafka-k8s-operator
+  - https://matrix.to/#/#charmhub-data-platform:ubuntu.com
 maintainers:
-  - Marc Oppenheimer <marc.oppenheimer@canonical.com>
-  - Raul Zamora <raul.zamora@canonical.com>
+  - Canonical Data Platform <data-platform@lists.launchpad.net>
+assumes:
+  - k8s-api
 
 containers:
   kafka:
@@ -64,6 +73,3 @@ storage:
     description: Directories where the log data is stored
     minimum-size: 10G
     location: /var/lib/kafka/data
-
-assumes:
-  - k8s-api
