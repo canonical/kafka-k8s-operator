@@ -14,7 +14,7 @@ website:
   - https://canonical.com/data/docs/kafka/k8s
   - https://charmhub.io/kafka-k8s
   - https://github.com/canonical/kafka-k8s-operator
-  - https://matrix.to/#/#charmhub-data-platform:ubuntu.com
+  - "https://matrix.to/#/#charmhub-data-platform:ubuntu.com"
 maintainers:
   - Canonical Data Platform <data-platform@lists.launchpad.net>
 assumes:
