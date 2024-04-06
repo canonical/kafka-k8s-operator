@@ -5,6 +5,7 @@
 """KafkaSnap class and methods."""
 
 import logging
+import re
 
 from ops import Container
 from ops.pebble import ExecError, Layer
@@ -108,3 +109,14 @@ class KafkaWorkload(WorkloadBase):
     def install(self) -> None:
         """Loads the Kafka snap from LP."""
         raise NotImplementedError
+
+    @override
+    def get_version(self) -> str:
+        if not self.container.can_connect():
+            return ""
+
+        try:
+            version = re.split(r"[\s\-]", self.run_bin_command("topics", ["--version"]))[0]
+        except:  # noqa: E722
+            version = ""
+        return version
