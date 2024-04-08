@@ -9,7 +9,7 @@ import pytest
 import requests
 from pytest_operator.plugin import OpsTest
 
-from literals import REL_NAME, SECURITY_PROTOCOL_PORTS
+from literals import DEPENDENCIES, REL_NAME, SECURITY_PROTOCOL_PORTS
 
 from .helpers import (
     APP_NAME,
@@ -62,6 +62,12 @@ async def test_build_and_deploy(ops_test: OpsTest):
         await ops_test.model.wait_for_idle(
             apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=30, status="active"
         )
+
+
+@pytest.mark.abort_on_fail
+async def test_consistency_between_workload_and_metadata(ops_test: OpsTest):
+    application = ops_test.model.applications[APP_NAME]
+    assert application.data.get("workload-version", "") == DEPENDENCIES["kafka_service"]["version"]
 
 
 @pytest.mark.abort_on_fail
@@ -163,7 +169,6 @@ async def test_logs_write_to_storage(ops_test: OpsTest):
 
 @pytest.mark.abort_on_fail
 async def test_exporter_endpoints(ops_test: OpsTest):
-
     unit_address = await get_address(ops_test=ops_test)
     jmx_exporter_url = f"http://{unit_address}:9101/metrics"
     jmx_resp = requests.get(jmx_exporter_url)
