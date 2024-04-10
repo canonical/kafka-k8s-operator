@@ -1069,7 +1069,7 @@
         "defaults": {
           "custom": {},
           "decimals": 2,
-          "displayName": "Broker: $broker",
+          "displayName": "Broker: $juju_unit",
           "mappings": [
             {
               "$$hashKey": "object:230",
@@ -1162,7 +1162,7 @@
         "defaults": {
           "custom": {},
           "decimals": 2,
-          "displayName": "Broker: $broker",
+          "displayName": "Broker: $juju_unit",
           "mappings": [
             {
               "$$hashKey": "object:230",
