@@ -270,3 +270,13 @@ async def test_pod_reschedule_tls(ops_test: OpsTest):
             idle_period=30,
             timeout=2000,
         )
+
+
+async def test_tls_removed(ops_test: OpsTest):
+    await ops_test.model.remove_application(TLS_NAME, block_until_done=True)
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME], timeout=3600, idle_period=30, status="active"
+    )
+
+    kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME)
+    assert not check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].client)
