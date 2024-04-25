@@ -3,9 +3,8 @@
 # See LICENSE file for licensing details.
 
 """Supporting objects for Kafka charm state."""
-import os
+
 import secrets
-import shutil
 import string
 from abc import ABC, abstractmethod
 
@@ -147,23 +146,14 @@ class WorkloadBase(ABC):
         """
         ...
 
-    @staticmethod
-    def set_ownership(path: str) -> None:
-        """Sets a filepath `snap_daemon` ownership."""
-        shutil.chown(path, user="snap_daemon", group="root")
+    @abstractmethod
+    def get_version(self) -> str:
+        """Get the workload version.
 
-        for root, dirs, files in os.walk(path):
-            for fp in dirs + files:
-                shutil.chown(os.path.join(root, fp), user="snap_daemon", group="root")
-
-    @staticmethod
-    def set_mode_bits(path: str) -> None:
-        """Sets filepath mode bits."""
-        os.chmod(path, 0o770)  # nosec B103
-
-        for root, dirs, files in os.walk(path):
-            for fp in dirs + files:
-                os.chmod(os.path.join(root, fp), 0o770)  # nosec B103
+        Returns:
+            String of kafka version
+        """
+        ...
 
     @staticmethod
     def generate_password() -> str:
@@ -173,12 +163,3 @@ class WorkloadBase(ABC):
             String of 32 randomized letter+digit characters
         """
         return "".join([secrets.choice(string.ascii_letters + string.digits) for _ in range(32)])
-
-    @abstractmethod
-    def get_version(self) -> str:
-        """Get the workload version.
-
-        Returns:
-            String of kafka version
-        """
-        ...
