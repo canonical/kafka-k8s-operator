@@ -6,7 +6,7 @@
 
 import logging
 import re
-import subprocess  # nosec B404
+import subprocess
 from dataclasses import asdict, dataclass
 
 from ops.pebble import ExecError
@@ -34,12 +34,6 @@ class AuthManager:
         self.state = state
         self.workload = workload
         self.kafka_opts = kafka_opts
-
-        self.zookeeper_connect = self.state.zookeeper.connect
-        self.bootstrap_server = ",".join(self.state.bootstrap_server)
-        self.client_properties = self.workload.paths.client_properties
-        self.server_properties = self.workload.paths.server_properties
-
         self.new_user_acls: set[Acl] = set()
 
     @property
@@ -51,8 +45,8 @@ class AuthManager:
     def _get_acls_from_cluster(self) -> str:
         """Loads the currently active ACLs from the Kafka cluster."""
         command = [
-            f"--bootstrap-server={self.bootstrap_server}",
-            f"--command-config={self.client_properties}",
+            f"--bootstrap-server={self.state.bootstrap_server}",
+            f"--command-config={self.workload.paths.client_properties}",
             "--list",
         ]
         acls = self.workload.run_bin_command(bin_keyword="acls", bin_args=command)
@@ -160,14 +154,14 @@ class AuthManager:
         # instead must be authorized using ZooKeeper JAAS
         if zk_auth:
             command = base_command + [
-                f"--zookeeper={self.zookeeper_connect}",
-                f"--zk-tls-config-file={self.server_properties}",
+                f"--zookeeper={self.state.zookeeper.connect}",
+                f"--zk-tls-config-file={self.workload.paths.server_properties}",
             ]
             opts = [self.kafka_opts]
         else:
             command = base_command + [
-                f"--bootstrap-server={self.bootstrap_server}",
-                f"--command-config={self.client_properties}",
+                f"--bootstrap-server={self.state.bootstrap_server}",
+                f"--command-config={self.workload.paths.client_properties}",
             ]
             opts = []
 
@@ -183,15 +177,17 @@ class AuthManager:
             `(subprocess.CalledProcessError | ops.pebble.ExecError)`: if the error returned a non-zero exit code
         """
         command = [
-            f"--bootstrap-server={self.bootstrap_server}",
-            f"--command-config={self.client_properties}",
+            f"--bootstrap-server={self.state.bootstrap_server}",
+            f"--command-config={self.workload.paths.client_properties}",
             "--alter",
             "--entity-type=users",
             f"--entity-name={username}",
             "--delete-config=SCRAM-SHA-512",
         ]
+        logger.info(f"DELETING USER - {command=}")
         try:
-            self.workload.run_bin_command(bin_keyword="configs", bin_args=command)
+            result = self.workload.run_bin_command(bin_keyword="configs", bin_args=command)
+            logger.info(f"{result=}")
         except (subprocess.CalledProcessError, ExecError) as e:
             if e.stderr and "delete a user credential that does not exist" in e.stderr:
                 logger.warning(f"User: {username} can't be deleted, it does not exist")
@@ -218,8 +214,8 @@ class AuthManager:
             `(subprocess.CalledProcessError | ops.pebble.ExecError)`: if the error returned a non-zero exit code
         """
         command = [
-            f"--bootstrap-server={self.bootstrap_server}",
-            f"--command-config={self.client_properties}",
+            f"--bootstrap-server={self.state.bootstrap_server}",
+            f"--command-config={self.workload.paths.client_properties}",
             "--add",
             f"--allow-principal=User:{username}",
             f"--operation={operation}",
@@ -251,8 +247,8 @@ class AuthManager:
             `(subprocess.CalledProcessError | ops.pebble.ExecError)`: if the error returned a non-zero exit code
         """
         command = [
-            f"--bootstrap-server={self.bootstrap_server}",
-            f"--command-config={self.client_properties}",
+            f"--bootstrap-server={self.state.bootstrap_server}",
+            f"--command-config={self.workload.paths.client_properties}",
             "--remove",
             f"--allow-principal=User:{username}",
             f"--operation={operation}",
@@ -280,8 +276,10 @@ class AuthManager:
         """
         # getting subset of all cluster ACLs for only the provided user
         current_user_acls = {acl for acl in self.current_acls if acl.username == username}
+        logger.info(f"REMOVING ALL USER ACLS - {current_user_acls=}")
 
         for acl in current_user_acls:
+            logger.info(f"REMOVING ACL - {acl=}")
             self.remove_acl(**asdict(acl))
 
     def update_user_acls(
