@@ -56,7 +56,7 @@ def test_pre_upgrade_check_raises_not_stable(harness: Harness):
 def test_pre_upgrade_check_succeeds(harness: Harness):
     with (
         patch("charm.KafkaCharm.healthy", return_value=True),
-        patch("events.upgrade.KafkaUpgradeEvents._set_rolling_update_partition"),
+        patch("events.upgrade.KafkaUpgrade._set_rolling_update_partition"),
     ):
         harness.charm.upgrade.pre_upgrade_check()
 
@@ -131,7 +131,7 @@ def test_upgrade_granted_sets_failed_if_zookeeper_dependency_check_fails(harness
             return_value=True,
         ),
         patch(
-            "events.upgrade.KafkaUpgradeEvents.idle",
+            "events.upgrade.KafkaUpgrade.idle",
             new_callable=PropertyMock,
             return_value=False,
         ),
@@ -179,7 +179,7 @@ def test_upgrade_granted_sets_failed_if_failed_upgrade_check(harness: Harness):
             return_value=True,
         ),
         patch(
-            "events.upgrade.KafkaUpgradeEvents.idle",
+            "events.upgrade.KafkaUpgrade.idle",
             new_callable=PropertyMock,
             return_value=False,
         ),
@@ -211,7 +211,7 @@ def test_upgrade_granted_succeeds(harness: Harness):
             return_value=True,
         ),
         patch(
-            "events.upgrade.KafkaUpgradeEvents.idle",
+            "events.upgrade.KafkaUpgrade.idle",
             new_callable=PropertyMock,
             return_value=False,
         ),

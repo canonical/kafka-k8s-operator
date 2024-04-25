@@ -39,7 +39,7 @@ class KafkaDependencyModel(BaseModel):
     kafka_service: DependencyModel
 
 
-class KafkaUpgradeEvents(DataUpgrade):
+class KafkaUpgrade(DataUpgrade):
     """Implementation of :class:`DataUpgrade` overrides for in-place upgrades."""
 
     def __init__(self, charm: "KafkaCharm", **kwargs):
