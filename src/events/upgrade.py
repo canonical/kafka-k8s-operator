@@ -79,8 +79,8 @@ class KafkaUpgradeEvents(DataUpgrade):
         # need to manually add-back key/truststores
         if (
             self.charm.state.cluster.tls_enabled
-            and self.charm.state.broker.certificate
-            and self.charm.state.broker.ca
+            and self.charm.state.unit_broker.certificate
+            and self.charm.state.unit_broker.ca
         ):  # TLS is probably completed
             self.charm.tls_manager.set_server_key()
             self.charm.tls_manager.set_ca()
