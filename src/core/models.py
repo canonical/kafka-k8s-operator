@@ -5,7 +5,6 @@
 """Collection of state objects for the Kafka relations, apps and units."""
 
 import logging
-from typing import Literal, MutableMapping
 
 from charms.data_platform_libs.v0.data_interfaces import Data, DataPeerData, DataPeerUnitData
 from charms.zookeeper.v0.client import QuorumLeaderNotFoundError, ZooKeeperManager
@@ -17,11 +16,9 @@ from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_fixed
 from typing_extensions import override
 
-from literals import INTERNAL_USERS, SECRETS_APP
+from literals import INTERNAL_USERS, SECRETS_APP, Substrates
 
 logger = logging.getLogger(__name__)
-
-SUBSTRATES = Literal["vm", "k8s"]
 
 
 class RelationState:
@@ -32,7 +29,7 @@ class RelationState:
         relation: Relation | None,
         data_interface: Data,
         component: Unit | Application | None,
-        substrate: SUBSTRATES,
+        substrate: Substrates,
     ):
         self.relation = relation
         self.data_interface = data_interface
@@ -40,10 +37,12 @@ class RelationState:
         self.substrate = substrate
         self.relation_data = self.data_interface.as_dict(self.relation.id) if self.relation else {}
 
-    @property
-    def data(self) -> MutableMapping:
-        """Data representing the state."""
-        return self.relation_data
+    def __bool__(self) -> bool:
+        """Boolean evaluation based on the existence of self.relation."""
+        try:
+            return bool(self.relation)
+        except AttributeError:
+            return False
 
     def update(self, items: dict[str, str]) -> None:
         """Writes to relation_data."""
@@ -64,7 +63,7 @@ class KafkaCluster(RelationState):
         relation: Relation | None,
         data_interface: DataPeerData,
         component: Application,
-        substrate: SUBSTRATES,
+        substrate: Substrates,
     ):
         super().__init__(relation, data_interface, component, substrate)
         self.data_interface = data_interface
@@ -138,7 +137,7 @@ class KafkaBroker(RelationState):
         relation: Relation | None,
         data_interface: DataPeerUnitData,
         component: Unit,
-        substrate: SUBSTRATES,
+        substrate: Substrates,
     ):
         super().__init__(relation, data_interface, component, substrate)
         self.data_interface = data_interface
@@ -236,7 +235,7 @@ class ZooKeeper(RelationState):
         self,
         relation: Relation | None,
         data_interface: Data,
-        substrate: SUBSTRATES,
+        substrate: Substrates,
         local_app: Application | None = None,
     ):
         super().__init__(relation, data_interface, None, substrate)
@@ -373,7 +372,7 @@ class KafkaClient(RelationState):
         relation: Relation | None,
         data_interface: Data,
         component: Application,
-        substrate: SUBSTRATES,
+        substrate: Substrates,
         local_app: Application | None = None,
         bootstrap_server: str = "",
         password: str = "",

@@ -19,7 +19,6 @@ from ops.model import StatusBase
 from ops.pebble import Layer
 
 from core.cluster import ClusterState
-from core.models import SUBSTRATES
 from core.structured_config import CharmConfig
 from events.password_actions import PasswordActionEvents
 from events.provider import KafkaProvider
@@ -36,9 +35,11 @@ from literals import (
     METRICS_RULES_DIR,
     PEER,
     REL_NAME,
+    SUBSTRATE,
     USER,
     DebugLevel,
     Status,
+    Substrates,
 )
 from managers.auth import AuthManager
 from managers.config import KafkaConfigManager
@@ -56,7 +57,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
     def __init__(self, *args):
         super().__init__(*args)
         self.name = CHARM_KEY
-        self.substrate: SUBSTRATES = "k8s"
+        self.substrate: Substrates = SUBSTRATE
         self.workload = KafkaWorkload(container=self.unit.get_container(CONTAINER))
         self.state = ClusterState(self, substrate=self.substrate)
 
