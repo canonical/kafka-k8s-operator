@@ -62,6 +62,9 @@ class ApplicationCharm(CharmBase):
         # this action is needed because hostnames cannot be resolved outside K8s
         self.framework.observe(getattr(self.on, "produce_action"), self._produce)
 
+        # this action is needed to validate a consumer, which will raise if it can't read at least 3 messages
+        self.framework.observe(getattr(self.on, "consume_action"), self._consume)
+
     @property
     def peer_relation(self) -> Relation | None:
         return self.model.get_relation("cluster")
@@ -116,6 +119,32 @@ class ApplicationCharm(CharmBase):
 
         client.create_topic()
         client.run_producer()
+
+    def _consume(self, _) -> None:
+        uris = None
+        security_protocol = "SASL_PLAINTEXT"
+        for relation in self.model.relations[REL_NAME_ADMIN]:
+            if not relation.app:
+                continue
+
+            uris = relation.data[relation.app].get("endpoints", "").split(",")
+
+        username = self.peer_relation.data[self.app]["username"]
+        password = self.peer_relation.data[self.app]["password"]
+
+        if not (username and password and uris):
+            raise KeyError("missing relation data from app charm")
+
+        client = KafkaClient(
+            servers=uris,
+            username=username,
+            password=password,
+            topic="test-topic",
+            consumer_group_prefix=None,
+            security_protocol=security_protocol,
+        )
+
+        client.run_consumer()
 
 
 if __name__ == "__main__":

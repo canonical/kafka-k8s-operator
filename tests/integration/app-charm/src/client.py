@@ -75,8 +75,13 @@ class KafkaClient:
             consumer_timeout_ms=15000,
         )
 
+        messages = []
         for message in consumer:
             logger.info(str(message))
+            messages.append(message)
+
+        if not messages:
+            raise AssertionError("No messages consumed")
 
     def run_producer(self):
         producer = KafkaProducer(
