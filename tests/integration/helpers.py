@@ -65,7 +65,7 @@ def load_super_users(model_full_name: str | None) -> List[str]:
 
 
 def check_user(model_full_name: str | None, username: str) -> None:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-configs.sh --bootstrap-sever localhost:9092 --describe --entity-type users --entity-name {username} --command-config {PATHS['CONF']}/client.properties"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-configs.sh --bootstrap-sever localhost:19092 --describe --entity-type users --entity-name {username} --command-config {PATHS['CONF']}/client.properties"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -78,9 +78,8 @@ def check_user(model_full_name: str | None, username: str) -> None:
 
 def get_user(model_full_name: str | None, username: str = "sync") -> str:
     """Get information related to a user stored on zookeeper."""
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-configs.sh --bootstrap-server localhost:9092 --describe --entity-type users --entity-name {username} --command-config {PATHS['CONF']}/client.properties"
     result = check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
+        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {APP_NAME}/0 'cat {PATHS['CONF']}/server.properties'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
