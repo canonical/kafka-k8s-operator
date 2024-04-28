@@ -65,7 +65,7 @@ def load_super_users(model_full_name: str | None) -> List[str]:
 
 
 def check_user(model_full_name: str | None, username: str) -> None:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-configs.sh --bootstrap-sever localhost:19092 --describe --entity-type users --entity-name {username} --command-config {PATHS['CONF']}/client.properties"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-configs.sh --bootstrap-server localhost:19092 --describe --entity-type users --entity-name {username} --command-config {PATHS['CONF']}/client.properties"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -366,7 +366,7 @@ def get_client_usernames(ops_test: OpsTest, owner: str = APP_NAME) -> set[str]:
 
 # FIXME: will need updating after zookeeper_client is implemented in full
 def get_kafka_zk_relation_data(
-    ops_test: OpsTest, owner: str, unit_name: str, relation_name: str = ZK_NAME
+    ops_test: OpsTest, owner: str, unit_name: str, relation_name: str = "zookeeper"
 ) -> dict[str, str]:
     unit_data = show_unit(ops_test, unit_name)
 
