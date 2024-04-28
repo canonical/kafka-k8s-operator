@@ -14,7 +14,7 @@ from charms.data_platform_libs.v0.data_interfaces import KafkaRequires, TopicCre
 from client import KafkaClient
 from ops.charm import CharmBase
 from ops.main import main
-from ops.model import ActiveStatus
+from ops.model import ActiveStatus, Relation
 
 logger = logging.getLogger(__name__)
 
@@ -62,33 +62,45 @@ class ApplicationCharm(CharmBase):
         # this action is needed because hostnames cannot be resolved outside K8s
         self.framework.observe(getattr(self.on, "produce_action"), self._produce)
 
+    @property
+    def peer_relation(self) -> Relation | None:
+        return self.model.get_relation("cluster")
+
     def _on_start(self, _) -> None:
         self.unit.status = ActiveStatus()
 
     def on_topic_created_consumer(self, event: TopicCreatedEvent) -> None:
         logger.info(f"{event.username} {event.password} {event.bootstrap_server} {event.tls}")
+        peer_relation = self.model.get_relation("cluster")
+        peer_relation.data[self.app]["username"] = event.username or ""
+        peer_relation.data[self.app]["password"] = event.password or ""
+        return
         return
 
     def on_topic_created_producer(self, event: TopicCreatedEvent) -> None:
         logger.info(f"{event.username} {event.password} {event.bootstrap_server} {event.tls}")
+        self.peer_relation.data[self.app]["username"] = event.username or ""
+        self.peer_relation.data[self.app]["password"] = event.password or ""
+        return
         return
 
     def on_topic_created_admin(self, event: TopicCreatedEvent) -> None:
         logger.info(f"{event.username} {event.password} {event.bootstrap_server} {event.tls}")
+        self.peer_relation.data[self.app]["username"] = event.username or ""
+        self.peer_relation.data[self.app]["password"] = event.password or ""
         return
 
     def _produce(self, _) -> None:
-        username = None
-        password = None
         uris = None
         security_protocol = "SASL_PLAINTEXT"
         for relation in self.model.relations[REL_NAME_ADMIN]:
             if not relation.app:
                 continue
 
-            username = relation.data[relation.app].get("username", "")
-            password = relation.data[relation.app].get("password", "")
             uris = relation.data[relation.app].get("endpoints", "").split(",")
+
+        username = self.peer_relation.data[self.app]["username"]
+        password = self.peer_relation.data[self.app]["password"]
 
         if not (username and password and uris):
             raise KeyError("missing relation data from app charm")

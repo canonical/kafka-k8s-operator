@@ -221,6 +221,7 @@ def produce_and_check_logs(
         unit_name=provider_unit_name,
         owner=APP_NAME,
     )
+    logger.info(f"{relation_data=}")
     client = KafkaClient(
         servers=relation_data["endpoints"].split(","),
         username=relation_data["username"],
@@ -457,7 +458,7 @@ def get_active_brokers(config: Dict) -> Set[str]:
 async def get_address(ops_test: OpsTest, app_name=APP_NAME, unit_num=0) -> str:
     """Get the address for a unit."""
     status = await ops_test.model.get_status()  # noqa: F821
-    address = status["applications"][app_name]["units"][f"{app_name}/{unit_num}"]["public-address"]
+    address = status["applications"][app_name]["units"][f"{app_name}/{unit_num}"]["address"]
     return address
 
 
