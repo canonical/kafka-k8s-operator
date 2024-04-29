@@ -94,15 +94,16 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
     await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=2000)
 
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
+    async with ops_test.fast_forward(fast_interval="20s"):
+        await asyncio.sleep(90)
 
-    async with ops_test.fast_forward(fast_interval="60s"):
-        await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME],
-            idle_period=30,
-            status="active",
-            timeout=2000,
-            raise_on_error=False,
-        )
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME],
+        idle_period=30,
+        status="active",
+        timeout=2000,
+        raise_on_error=False,
+    )
 
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
@@ -110,10 +111,6 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
         await ops_test.model.wait_for_idle(
             apps=[APP_NAME, DUMMY_NAME, ZK_NAME], idle_period=30, status="active", timeout=2000
         )
-
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[ZK_NAME].status == "active"
-    assert ops_test.model.applications[DUMMY_NAME].status == "active"
 
 
 # run this test early, in case of resource limits on runners with too many units
@@ -157,7 +154,7 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
 
     # logs exist on first cluster
     check_logs(
-        model_full_name=ops_test.model_full_name,
+        ops_test=ops_test,
         kafka_unit_name=f"{APP_NAME}/0",
         topic="test-topic",
     )
@@ -165,7 +162,7 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
     # Check that logs are not found on the second cluster
     with pytest.raises(AssertionError):
         check_logs(
-            model_full_name=ops_test.model_full_name,
+            ops_test=ops_test,
             kafka_unit_name=f"{second_kafka_name}/0",
             topic="test-topic",
         )
@@ -183,9 +180,6 @@ async def test_scale_up_zk_kafka(ops_test: OpsTest):
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME, ZK_NAME], status="active", timeout=1000, idle_period=30
     )
-
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[ZK_NAME].status == "active"
 
 
 async def test_kill_broker_with_topic_leader(
