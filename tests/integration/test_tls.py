@@ -172,11 +172,11 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
     )
 
     # can't use *-endpoints address from outside of K8s cluster, need to patch
-    zookeeper_address = await get_address(ops_test, app_name=ZK_NAME)
-    logger.info(f"{zookeeper_address=}")
-    kafka_zk_relation_data["endpoints"] = zookeeper_address
-
-    logger.info(f"{kafka_zk_relation_data=}")
+    zookeeper_addresses = [
+        await get_address(ops_test, app_name=ZK_NAME, unit_num=unit.name.split("/")[0])
+        for unit in ops_test.model.applications[ZK_NAME].units
+    ]
+    kafka_zk_relation_data["endpoints"] = ",".join(zookeeper_addresses)
 
     active_brokers = get_active_brokers(config=kafka_zk_relation_data)
 
