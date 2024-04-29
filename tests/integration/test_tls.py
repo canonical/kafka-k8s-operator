@@ -173,9 +173,10 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
 
     # can't use *-endpoints address from outside of K8s cluster, need to patch
     zookeeper_address = await get_address(ops_test, app_name=ZK_NAME)
+    logger.info(f"{zookeeper_address=}")
+    kafka_zk_relation_data["endpoints"] = zookeeper_address
 
-    # need to use non-TLS port, as we don't have certs locally
-    kafka_zk_relation_data["endpoints"] = zookeeper_address.replace("2182", "2181")
+    logger.info(f"{kafka_zk_relation_data=}")
 
     active_brokers = get_active_brokers(config=kafka_zk_relation_data)
 
