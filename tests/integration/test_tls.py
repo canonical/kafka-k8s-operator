@@ -17,8 +17,11 @@ from .helpers import (
     REL_NAME_ADMIN,
     ZK_NAME,
     check_tls,
+    delete_pod,
     extract_private_key,
+    get_active_brokers,
     get_address,
+    get_kafka_zk_relation_data,
     set_tls_private_key,
 )
 
@@ -144,145 +147,73 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm):
     assert private_key_2 == new_private_key
 
 
-# # FIXME: Address on its own ticket
-# @pytest.mark.skip
-# @pytest.mark.abort_on_fail
-# async def test_mtls(ops_test: OpsTest):
-#     # creating the signed external cert on the unit
-#     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("create-certificate")
-#     response = await action.wait()
-#     client_certificate = response.results["client-certificate"]
-#     client_ca = response.results["client-ca"]
-#
-#     encoded_client_certificate = base64.b64encode(client_certificate.encode("utf-8")).decode(
-#         "utf-8"
-#     )
-#     encoded_client_ca = base64.b64encode(client_ca.encode("utf-8")).decode("utf-8")
-#
-#     # deploying mtls operator with certs
-#     tls_config = {
-#         "generate-self-signed-certificates": "false",
-#         "certificate": encoded_client_certificate,
-#         "ca-certificate": encoded_client_ca,
-#     }
-#     await ops_test.model.deploy(
-#         CERTS_NAME, channel="stable", config=tls_config, series="jammy", application_name=MTLS_NAME
-#     )
-#     await ops_test.model.wait_for_idle(apps=[MTLS_NAME], timeout=1000, idle_period=15)
-#     async with ops_test.fast_forward():
-#         await ops_test.model.add_relation(
-#             f"{APP_NAME}:{TRUSTED_CERTIFICATE_RELATION}", f"{MTLS_NAME}:{TLS_RELATION}"
-#         )
-#         await ops_test.model.wait_for_idle(
-#             apps=[APP_NAME, MTLS_NAME], idle_period=60, timeout=2000, status="active"
-#         )
-#
-#     # getting kafka ca and address
-#     broker_ca = extract_ca(show_unit(f"{APP_NAME}/0", model_full_name=ops_test.model_full_name))
-#     address = await get_address(ops_test, app_name=APP_NAME)
-#     ssl_port = SECURITY_PROTOCOL_PORTS["SSL"].client
-#     sasl_port = SECURITY_PROTOCOL_PORTS["SASL_SSL"].client
-#     ssl_bootstrap_server = f"{address}:{ssl_port}"
-#     sasl_bootstrap_server = f"{address}:{sasl_port}"
-#
-#     # setting ACLs using normal sasl port
-#     await set_mtls_client_acls(ops_test, bootstrap_server=sasl_bootstrap_server)
-#
-#     num_messages = 10
-#
-#     # running mtls producer
-#     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action(
-#         "run-mtls-producer",
-#         **{
-#             "bootstrap-server": ssl_bootstrap_server,
-#             "broker-ca": base64.b64encode(broker_ca.encode("utf-8")).decode("utf-8"),
-#             "num-messages": num_messages,
-#         },
-#     )
-#
-#     response = await action.wait()
-#
-#     assert response.results.get("success", None) == "TRUE"
-#
-#     offsets_action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action(
-#         "get-offsets",
-#         **{
-#             "bootstrap-server": ssl_bootstrap_server,
-#         },
-#     )
-#
-#     response = await offsets_action.wait()
-#
-#     topic_name, min_offset, max_offset = response.results["output"].strip().split(":")
-#
-#     assert topic_name == "TEST-TOPIC"
-#     assert min_offset == "0"
-#     assert max_offset == str(num_messages)
-#
-#
-# # FIXME: Address on its own ticket
-# @pytest.mark.skip
-# @pytest.mark.abort_on_fail
-# async def test_mtls_broken(ops_test: OpsTest):
-#     await ops_test.model.remove_application(MTLS_NAME, block_until_done=True)
-#     await ops_test.model.wait_for_idle(
-#         apps=[APP_NAME],
-#         status="active",
-#         idle_period=30,
-#         timeout=2000,
-#     )
-#
-#
-# async def test_kafka_tls_scaling(ops_test: OpsTest):
-#     """Scale the application while using TLS to check that new units will configure correctly."""
-#     await ops_test.model.applications[APP_NAME].scale(scale=3)
-#     logger.info("Scaling Kafka to 3 units")
-#     await ops_test.model.block_until(
-#         lambda: len(ops_test.model.applications[APP_NAME].units) == 3, timeout=2000
-#     )
-#     # Wait for model to settle
-#     await ops_test.model.wait_for_idle(
-#         apps=[APP_NAME],
-#         status="active",
-#         idle_period=40,
-#         timeout=2000,
-#     )
-#
-#     # TODO: Add this back once the scaling tests are addressed
-#     """
-#     kafka_zk_relation_data = get_kafka_zk_relation_data(
-#         unit_name=f"{APP_NAME}/2", model_full_name=ops_test.model_full_name
-#     )
-#     active_brokers = get_active_brokers(config=kafka_zk_relation_data)
-#     chroot = kafka_zk_relation_data.get("chroot", "")
-#     assert f"{chroot}/brokers/ids/0" in active_brokers
-#     assert f"{chroot}/brokers/ids/1" in active_brokers
-#     assert f"{chroot}/brokers/ids/2" in active_brokers
-#     """
-#
-#     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME, unit_num=2)
-#     assert check_tls(ip=kafka_address, port=19093)
-#
-#
-# async def test_pod_reschedule_tls(ops_test: OpsTest):
-#     delete_pod(ops_test, f"{APP_NAME}-0")
-#
-#     async with ops_test.fast_forward(
-#         fast_interval="60s"
-#     ):  # if kafka isn't connected, should be BlockedStatus from update-status
-#         await ops_test.model.wait_for_idle(
-#             apps=[APP_NAME],
-#             status="active",
-#             idle_period=30,
-#             timeout=2000,
-#         )
-#
-#
-# async def test_tls_removed(ops_test: OpsTest):
-#     await ops_test.model.remove_application(TLS_NAME, block_until_done=True)
-#     await ops_test.model.wait_for_idle(
-#         apps=[APP_NAME, ZK_NAME], timeout=3600, idle_period=30, status="active"
-#     )
-#
-#     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME)
-#     assert not check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].client)
+# TODO: Add mTLS tests
+
+
+async def test_kafka_tls_scaling(ops_test: OpsTest):
+    """Scale the application while using TLS to check that new units will configure correctly."""
+    await ops_test.model.applications[APP_NAME].scale(scale=3)
+    logger.info("Scaling Kafka to 3 units")
+    await ops_test.model.block_until(
+        lambda: len(ops_test.model.applications[APP_NAME].units) == 3, timeout=2000
+    )
+    # Wait for model to settle
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME],
+        status="active",
+        idle_period=40,
+        timeout=2000,
+    )
+
+    kafka_zk_relation_data = get_kafka_zk_relation_data(
+        ops_test=ops_test,
+        unit_name=f"{APP_NAME}/2",
+        owner=ZK_NAME,
+    )
+
+    # can't use *-endpoints address from outside of K8s cluster, need to patch
+    zookeeper_address = await get_address(ops_test, app_name=ZK_NAME)
+
+    # need to use non-TLS port, as we don't have certs locally
+    kafka_zk_relation_data["endpoints"] = zookeeper_address.replace("2182", "2181")
+
+    active_brokers = get_active_brokers(config=kafka_zk_relation_data)
+
+    chroot = kafka_zk_relation_data.get("chroot", "")
+    assert f"{chroot}/brokers/ids/0" in active_brokers
+    assert f"{chroot}/brokers/ids/1" in active_brokers
+    assert f"{chroot}/brokers/ids/2" in active_brokers
+
+    kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME, unit_num=2)
+    assert check_tls(ip=kafka_address, port=19093)
+
+    # remove relation and check connection again
+    await ops_test.model.applications[APP_NAME].remove_relation(
+        APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}"
+    )
+    await ops_test.model.wait_for_idle(apps=[APP_NAME])
+    assert not check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].client)
+
+
+async def test_pod_reschedule_tls(ops_test: OpsTest):
+    delete_pod(ops_test, f"{APP_NAME}-0")
+
+    async with ops_test.fast_forward(
+        fast_interval="60s"
+    ):  # if kafka isn't connected, should be BlockedStatus from update-status
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME],
+            status="active",
+            idle_period=30,
+            timeout=2000,
+        )
+
+
+async def test_tls_removed(ops_test: OpsTest):
+    await ops_test.model.remove_application(TLS_NAME, block_until_done=True)
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME], timeout=3600, idle_period=30, status="active"
+    )
+
+    kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME)
+    assert not check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].client)
