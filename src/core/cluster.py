@@ -232,6 +232,9 @@ class ClusterState(Object):
         if self.cluster.tls_enabled ^ self.zookeeper.tls:
             return Status.ZK_TLS_MISMATCH
 
+        if self.cluster.tls_enabled and not self.unit_broker.certificate:
+            return Status.NO_CERT
+
         if not self.cluster.internal_user_credentials:
             return Status.NO_BROKER_CREDS
 
