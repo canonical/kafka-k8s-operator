@@ -198,10 +198,10 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
     assert check_tls(ip=kafka_address, port=19093)
 
     # remove relation and check connection again
-    await ops_test.model.applications[APP_NAME].remove_relation(
-        APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}"
-    )
-    await ops_test.model.wait_for_idle(apps=[APP_NAME])
+    remove_relation_cmd = f"remove-relation {APP_NAME} {DUMMY_NAME}"
+    await ops_test.juju(*remove_relation_cmd.split(), check=True)
+
+    await ops_test.model.wait_for_idle(apps=[APP_NAME], idle_period=30)
     assert not check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].client)
 
 
