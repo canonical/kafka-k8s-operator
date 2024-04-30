@@ -157,6 +157,10 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
     await ops_test.model.block_until(
         lambda: len(ops_test.model.applications[APP_NAME].units) == 3, timeout=2000
     )
+
+    async with ops_test.fast_forward(fast_interval="20s"):
+        await asyncio.sleep(90)
+
     # Wait for model to settle
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME],
