@@ -52,6 +52,10 @@ class KafkaUpgrade(DataUpgrade):
 
     def _on_kafka_pebble_ready_upgrade(self, event: EventBase) -> None:
         """Handler for the `upgrade-charm` events handled during in-place upgrades."""
+        if not self.charm.workload.container.can_connect():
+            event.defer()
+            return
+
         # ensure pebble-ready only fires after normal peer-relation-driven server init
         if not self.charm.state.ready_to_start or self.idle:
             return
