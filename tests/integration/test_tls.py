@@ -212,6 +212,11 @@ async def test_pod_reschedule_tls(ops_test: OpsTest):
 
 async def test_tls_removed(ops_test: OpsTest):
     await ops_test.model.remove_application(TLS_NAME, block_until_done=True)
+
+    # ensuring enough update-status to unblock ZK
+    async with ops_test.fast_forward(fast_interval="20s"):
+        await asyncio.sleep(90)
+
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME, ZK_NAME], timeout=3600, idle_period=30, status="active"
     )
