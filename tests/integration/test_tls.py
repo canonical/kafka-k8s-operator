@@ -52,9 +52,14 @@ async def test_deploy_tls(ops_test: OpsTest, app_charm):
             },
         ),
     )
-    await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
+    async with ops_test.fast_forward(fast_interval="20s"):
+        await ops_test.model.block_until(
+            lambda: len(ops_test.model.applications[ZK_NAME].units) == 3
+        )
+        await asyncio.sleep(60)
+
     await ops_test.model.wait_for_idle(
-        apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=15, timeout=2000
+        apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=30, timeout=2000
     )
 
     assert ops_test.model.applications[APP_NAME].status == "blocked"
