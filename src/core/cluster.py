@@ -12,7 +12,7 @@ from charms.data_platform_libs.v0.data_interfaces import (
     DataPeerData,
     DataPeerOtherUnitData,
     DataPeerUnitData,
-    KafkaProvidesData,
+    KafkaProviderData,
 )
 from ops import Framework, Object, Relation
 from ops.model import Unit
@@ -44,7 +44,7 @@ class ClusterState(Object):
         self.zookeeper_requires_interface = DatabaseRequirerData(
             self.model, relation_name=ZK, database_name=f"/{self.model.app.name}"
         )
-        self.client_provider_interface = KafkaProvidesData(self.model, relation_name=REL_NAME)
+        self.client_provider_interface = KafkaProviderData(self.model, relation_name=REL_NAME)
 
     # --- RELATIONS ---
 
