@@ -148,7 +148,6 @@ def check_tls(ip: str, port: int) -> bool:
             shell=True,
             universal_newlines=True,
         )
-        logger.info(f"{result=}")
         # FIXME: The server cannot be validated, we would need to try to connect using the CA
         # from self-signed certificates. This is indication enough that the server is sending a
         # self-signed key.
@@ -221,7 +220,6 @@ def produce_and_check_logs(
         unit_name=provider_unit_name,
         owner=APP_NAME,
     )
-    logger.info(f"{relation_data=}")
     client = KafkaClient(
         servers=relation_data["endpoints"].split(","),
         username=relation_data["username"],
@@ -447,7 +445,6 @@ def get_active_brokers(config: Dict) -> Set[str]:
 
     try:
         brokers = zk.leader_znodes(path=path)
-        logger.info(f"{brokers=}")
     # auth might not be ready with ZK after relation yet
     except (NoNodeError, AuthFailedError, QuorumLeaderNotFoundError) as e:
         logger.warning(str(e))

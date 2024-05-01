@@ -185,9 +185,7 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
         await get_address(ops_test, app_name=ZK_NAME, unit_num=unit.name.split("/")[1])
         for unit in ops_test.model.applications[ZK_NAME].units
     ]
-    logger.info(f"{zookeeper_addresses}")
     kafka_zk_relation_data["endpoints"] = ",".join(zookeeper_addresses)
-    logger.info(f"{kafka_zk_relation_data=}")
 
     active_brokers = get_active_brokers(config=kafka_zk_relation_data)
 
