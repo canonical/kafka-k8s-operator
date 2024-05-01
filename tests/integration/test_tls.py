@@ -185,7 +185,9 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
         await get_address(ops_test, app_name=ZK_NAME, unit_num=unit.name.split("/")[1])
         for unit in ops_test.model.applications[ZK_NAME].units
     ]
+    logger.info(f"{zookeeper_addresses}")
     kafka_zk_relation_data["endpoints"] = ",".join(zookeeper_addresses)
+    logger.info(f"{kafka_zk_relation_data=}")
 
     active_brokers = get_active_brokers(config=kafka_zk_relation_data)
 
@@ -195,28 +197,26 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
     assert f"{chroot}/brokers/ids/2" in active_brokers
 
     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME, unit_num=2)
-    assert check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].internal)
+    assert check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].client)
 
     # remove relation and check connection again
     remove_relation_cmd = f"remove-relation {APP_NAME} {DUMMY_NAME}"
     await ops_test.juju(*remove_relation_cmd.split(), check=True)
 
-    await ops_test.model.wait_for_idle(apps=[APP_NAME], idle_period=30)
-    assert not check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].internal)
+    await ops_test.model.wait_for_idle(apps=[APP_NAME], idle_period=30, timeout=1000)
+    assert not check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].client)
 
 
 async def test_pod_reschedule_tls(ops_test: OpsTest):
     delete_pod(ops_test, f"{APP_NAME}-0")
 
-    async with ops_test.fast_forward(
-        fast_interval="20s"
-    ):  # if kafka isn't connected, should be BlockedStatus from update-status
+    async with ops_test.fast_forward(fast_interval="30s"):
         await asyncio.sleep(90)
 
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME],
         status="active",
-        idle_period=20,
+        idle_period=90,
         timeout=2000,
     )
 
