@@ -154,6 +154,7 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm):
 
 # TODO: Add mTLS tests
 
+
 @pytest.mark.abort_on_fail
 async def test_kafka_tls_scaling(ops_test: OpsTest):
     """Scale the application while using TLS to check that new units will configure correctly."""
