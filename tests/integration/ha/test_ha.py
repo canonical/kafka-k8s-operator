@@ -27,10 +27,8 @@ from integration.helpers import (
     APP_NAME,
     DUMMY_NAME,
     KAFKA_CONTAINER,
-    KAFKA_SERIES,
     REL_NAME_ADMIN,
     ZK_NAME,
-    ZK_SERIES,
     check_logs,
 )
 
@@ -85,11 +83,10 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
             kafka_charm,
             application_name=APP_NAME,
             num_units=1,
-            series=KAFKA_SERIES,
             resources={"kafka-image": KAFKA_CONTAINER},
         ),
-        ops_test.model.deploy(ZK_NAME, channel="edge", num_units=1, series=ZK_SERIES),
-        ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, series="jammy"),
+        ops_test.model.deploy(ZK_NAME, channel="3/edge", num_units=1),
+        ops_test.model.deploy(app_charm, application_name=DUMMY_NAME),
     )
     await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=2000)
 
@@ -123,12 +120,9 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
             kafka_charm,
             application_name=second_kafka_name,
             num_units=1,
-            series=KAFKA_SERIES,
             resources={"kafka-image": KAFKA_CONTAINER},
         ),
-        ops_test.model.deploy(
-            ZK_NAME, application_name=second_zk_name, channel="edge", series=ZK_SERIES
-        ),
+        ops_test.model.deploy(ZK_NAME, application_name=second_zk_name, channel="3/edge"),
     )
     await ops_test.model.add_relation(second_kafka_name, second_zk_name)
 
