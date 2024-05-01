@@ -154,7 +154,7 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm):
 
 # TODO: Add mTLS tests
 
-
+@pytest.mark.abort_on_fail
 async def test_kafka_tls_scaling(ops_test: OpsTest):
     """Scale the application while using TLS to check that new units will configure correctly."""
     await ops_test.model.applications[APP_NAME].scale(scale=3)
@@ -205,6 +205,8 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
     assert not check_tls(ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL"].client)
 
 
+@pytest.mark.abort_on_fail
+@pytest.mark.unstable
 async def test_pod_reschedule_tls(ops_test: OpsTest):
     delete_pod(ops_test, f"{APP_NAME}-0")
 
@@ -219,6 +221,7 @@ async def test_pod_reschedule_tls(ops_test: OpsTest):
     )
 
 
+@pytest.mark.abort_on_fail
 async def test_tls_removed(ops_test: OpsTest):
     await ops_test.model.remove_application(TLS_NAME, block_until_done=True)
 
