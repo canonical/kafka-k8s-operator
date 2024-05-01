@@ -68,7 +68,7 @@ class KafkaWorkload(WorkloadBase):
             output, _ = process.wait_output()
             return output
         except ExecError as e:
-            logger.error(str(e.stderr))
+            logger.debug(e)
             raise e
 
     @override
