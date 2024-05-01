@@ -399,6 +399,7 @@ async def test_pod_reschedule(
     assert_continuous_writes_consistency(result=result)
 
 
+@pytest.mark.unstable
 async def test_network_cut_without_ip_change(
     ops_test: OpsTest,
     c_writes: ContinuousWrites,
