@@ -78,13 +78,11 @@ class ApplicationCharm(CharmBase):
         peer_relation.data[self.app]["username"] = event.username or ""
         peer_relation.data[self.app]["password"] = event.password or ""
         return
-        return
 
     def on_topic_created_producer(self, event: TopicCreatedEvent) -> None:
         logger.info(f"{event.username} {event.password} {event.bootstrap_server} {event.tls}")
         self.peer_relation.data[self.app]["username"] = event.username or ""
         self.peer_relation.data[self.app]["password"] = event.password or ""
-        return
         return
 
     def on_topic_created_admin(self, event: TopicCreatedEvent) -> None:
