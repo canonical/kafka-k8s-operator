@@ -12,28 +12,42 @@ from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, StatusBase
 
 CHARM_KEY = "kafka-k8s"
 CONTAINER = "kafka"
+SUBSTRATE = "k8s"
 
+USER = "kafka"
+GROUP = "kafka"
+
+# FIXME: these need better names
 PEER = "cluster"
 ZK = "zookeeper"
 REL_NAME = "kafka-client"
+
 TLS_RELATION = "certificates"
 TRUSTED_CERTIFICATE_RELATION = "trusted-certificate"
 TRUSTED_CA_RELATION = "trusted-ca"
-JMX_EXPORTER_PORT = 9101
-
-SUBSTRATE = "k8s"
-USER = "kafka"
-GROUP = "kafka"
 
 INTER_BROKER_USER = "sync"
 ADMIN_USER = "admin"
 INTERNAL_USERS = [INTER_BROKER_USER, ADMIN_USER]
+SECRETS_APP = [f"{user}-password" for user in INTERNAL_USERS]
+SECRETS_UNIT = [
+    "ca-cert",
+    "csr",
+    "certificate",
+    "truststore-password",
+    "keystore-password",
+    "private-key",
+]
+
+JMX_EXPORTER_PORT = 9101
+METRICS_RULES_DIR = "./src/alert_rules/prometheus"
+LOGS_RULES_DIR = "./src/alert_rules/loki"
 
 AuthMechanism = Literal["SASL_PLAINTEXT", "SASL_SSL", "SSL"]
 Scope = Literal["INTERNAL", "CLIENT"]
 DebugLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR"]
-Substrate = Literal["vm", "k8s"]
 DatabagScope = Literal["unit", "app"]
+Substrates = Literal["vm", "k8s"]
 
 JVM_MEM_MIN_GB = 1
 JVM_MEM_MAX_GB = 6
@@ -44,23 +58,11 @@ OS_REQUIREMENTS = {
     "vm.dirty_background_ratio": "5",
 }
 
-METRICS_RULES_DIR = "./src/alert_rules/prometheus"
-LOGS_RULES_DIR = "./src/alert_rules/loki"
-
 PATHS = {
     "CONF": "/etc/kafka",
     "LOGS": "/var/log/kafka",
     "DATA": "/var/lib/kafka",
     "BIN": "/opt/kafka",
-}
-
-DEPENDENCIES = {
-    "kafka_service": {
-        "dependencies": {"zookeeper": ">3.6"},
-        "name": "kafka",
-        "upgrade_supported": "^3",  # zk support removed in 4.0
-        "version": "3.6.1",
-    },
 }
 
 
@@ -117,3 +119,13 @@ class Status(Enum):
         WaitingStatus("internal broker credentials not yet added"), "DEBUG"
     )
     NO_CERT = StatusLevel(WaitingStatus("unit waiting for signed certificates"), "INFO")
+
+
+DEPENDENCIES = {
+    "kafka_service": {
+        "dependencies": {"zookeeper": ">3.6"},
+        "name": "kafka",
+        "upgrade_supported": "^3",  # zk support removed in 4.0
+        "version": "3.6.1",
+    },
+}

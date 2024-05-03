@@ -2,4 +2,6 @@
 # See LICENSE file for licensing details.
 
 produce:
-  description: Produces messages to kafka topic
+  description: Produces messages to a test-topic
+consume:
+  description: Consumes messages from a test-topic

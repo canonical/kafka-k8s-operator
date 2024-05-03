@@ -326,7 +326,7 @@ def test_update_status_blocks_if_broker_not_active(harness: Harness, zk_data, pa
 
     with (
         patch("workload.KafkaWorkload.active", return_value=True),
-        # patch("events.upgrade.KafkaUpgrade.idle", return_value=True), TODO add with upgrade
+        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("core.cluster.ZooKeeper.broker_active", return_value=False) as patched_broker_active,
     ):
         harness.charm.on.update_status.emit()
@@ -346,7 +346,7 @@ def test_update_status_blocks_if_machine_not_configured(harness: Harness, zk_dat
         patch("health.KafkaHealth.machine_configured", side_effect=SnapError()),
         patch("charm.KafkaCharm.healthy", return_value=True),
         patch("core.cluster.ZooKeeper.broker_active", return_value=True),
-        # patch("events.upgrade.KafkaUpgrade.idle", return_value=True), TODO add with upgrade
+        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
     ):
         harness.charm.on.update_status.emit()
         assert harness.charm.unit.status == Status.SNAP_NOT_RUNNING.value.status
@@ -364,7 +364,7 @@ def test_update_status_sets_sysconf_warning(harness: Harness, zk_data, passwords
         patch("workload.KafkaWorkload.active", return_value=True),
         patch("core.cluster.ZooKeeper.broker_active", return_value=True),
         patch("health.KafkaHealth.machine_configured", return_value=False),
-        # patch("events.upgrade.KafkaUpgrade.idle", return_value=True), TODO add with upgrade
+        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
     ):
         harness.charm.on.update_status.emit()
         assert harness.charm.unit.status == Status.SYSCONF_NOT_OPTIMAL.value.status
@@ -382,7 +382,7 @@ def test_update_status_sets_active(
     with (
         patch("workload.KafkaWorkload.active", return_value=True),
         patch("core.cluster.ZooKeeper.broker_active", return_value=True),
-        # patch("events.upgrade.KafkaUpgrade.idle", return_value=True), TODO add with upgrade
+        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
     ):
         harness.charm.on.update_status.emit()
         assert harness.charm.unit.status == Status.ACTIVE.value.status
@@ -444,7 +444,7 @@ def test_storage_add_disableenables_and_starts(harness: Harness, zk_data, passwo
     with (
         patch("workload.KafkaWorkload.active", return_value=True),
         patch("charm.KafkaCharm.healthy", return_value=True),
-        # patch("events.upgrade.KafkaUpgrade.idle", return_value=True), TODO add with upgrade
+        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("managers.config.KafkaConfigManager.set_server_properties"),
         patch("managers.config.KafkaConfigManager.set_client_properties"),
         patch("managers.config.KafkaConfigManager.set_environment"),
@@ -455,36 +455,6 @@ def test_storage_add_disableenables_and_starts(harness: Harness, zk_data, passwo
     ):
         harness.add_storage(storage_name="data", count=2)
         harness.attach_storage(storage_id="data/1")
-
-        assert patched_disable_enable.call_count == 1
-        assert patched_start.call_count == 1
-        assert patched_defer.call_count == 0
-
-
-@pytest.mark.skipif(SUBSTRATE == "k8s", reason="multiple storage not supported in K8s")
-def test_storage_detaching_disableenables_and_starts(harness: Harness, zk_data, passwords_data):
-    with harness.hooks_disabled():
-        peer_rel_id = harness.add_relation(PEER, CHARM_KEY)
-        harness.add_relation_unit(peer_rel_id, f"{CHARM_KEY}/0")
-        harness.set_leader(True)
-        zk_rel_id = harness.add_relation(ZK, ZK)
-        harness.update_relation_data(zk_rel_id, ZK, zk_data)
-        harness.update_relation_data(peer_rel_id, CHARM_KEY, passwords_data)
-        harness.add_storage(storage_name="data", count=2)
-        harness.attach_storage(storage_id="data/1")
-
-    with (
-        patch("workload.KafkaWorkload.active", return_value=True),
-        patch("charm.KafkaCharm.healthy", return_value=True),
-        # patch("events.upgrade.KafkaUpgrade.idle", return_value=True), TODO add with upgrade
-        patch("managers.config.KafkaConfigManager.set_server_properties"),
-        patch("managers.config.KafkaConfigManager.set_client_properties"),
-        patch("workload.KafkaWorkload.read", return_value=["gandalf=grey"]),
-        patch("workload.KafkaWorkload.disable_enable") as patched_disable_enable,
-        patch("workload.KafkaWorkload.start") as patched_start,
-        patch("ops.framework.EventBase.defer") as patched_defer,
-    ):
-        harness.detach_storage(storage_id="data/1")
 
         assert patched_disable_enable.call_count == 1
         assert patched_start.call_count == 1
@@ -562,7 +532,7 @@ def test_zookeeper_broken_cleans_internal_user_credentials(harness: Harness):
     with (
         patch("workload.KafkaWorkload.stop"),
         patch("workload.KafkaWorkload.exec"),
-        patch("core.models.StateBase.update") as patched_update,
+        patch("core.models.KafkaCluster.update") as patched_update,
         patch(
             "core.models.KafkaCluster.internal_user_credentials",
             new_callable=PropertyMock,
@@ -590,7 +560,7 @@ def test_config_changed_updates_server_properties(harness: Harness, zk_data):
             return_value=["gandalf=white"],
         ),
         patch("charm.KafkaCharm.healthy", return_value=True),
-        # patch("events.upgrade.KafkaUpgrade.idle", return_value=True), TODO add with upgrade
+        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("workload.KafkaWorkload.read", return_value=["gandalf=grey"]),
         patch("managers.config.KafkaConfigManager.set_server_properties") as set_server_properties,
         patch("managers.config.KafkaConfigManager.set_client_properties"),
@@ -617,7 +587,7 @@ def test_config_changed_updates_client_properties(harness: Harness):
             return_value=["sauron=bad"],
         ),
         patch("charm.KafkaCharm.healthy", return_value=True),
-        # patch("events.upgrade.KafkaUpgrade.idle", return_value=True), TODO add with upgrade
+        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("workload.KafkaWorkload.read", return_value=["gandalf=grey"]),
         patch("managers.config.KafkaConfigManager.set_server_properties"),
         patch("managers.config.KafkaConfigManager.set_client_properties") as set_client_properties,
@@ -640,12 +610,10 @@ def test_config_changed_updates_client_data(harness: Harness):
             return_value=["gandalf=white"],
         ),
         patch("charm.KafkaCharm.healthy", return_value=True),
-        # patch("events.upgrade.KafkaUpgrade.idle", return_value=True), TODO add with upgrade
+        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("workload.KafkaWorkload.read", return_value=["gandalf=white"]),
         patch("managers.config.KafkaConfigManager.set_zk_jaas_config"),
-        patch(
-            "events.provider.KafkaProvider.update_connection_info"
-        ) as patched_update_connection_info,
+        patch("charm.KafkaCharm.update_client_data") as patched_update_client_data,
         patch(
             "managers.config.KafkaConfigManager.set_client_properties"
         ) as patched_set_client_properties,
@@ -654,7 +622,7 @@ def test_config_changed_updates_client_data(harness: Harness):
         harness.charm.on.config_changed.emit()
 
         patched_set_client_properties.assert_called_once()
-        patched_update_connection_info.assert_called_once()
+        patched_update_client_data.assert_called_once()
 
 
 def test_config_changed_restarts(harness: Harness):
@@ -673,7 +641,7 @@ def test_config_changed_restarts(harness: Harness):
         ),
         patch("charm.KafkaCharm.healthy", return_value=True),
         patch("workload.KafkaWorkload.read", return_value=["gandalf=white"]),
-        # patch("events.upgrade.KafkaUpgrade.idle", return_value=True), TODO add with upgrade
+        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("workload.KafkaWorkload.restart") as patched_restart_snap_service,
         patch("core.cluster.ZooKeeper.broker_active", return_value=True),
         patch("core.cluster.ZooKeeper.zookeeper_connected", return_value=True),
@@ -720,7 +688,7 @@ def test_workload_version_is_setted(harness, monkeypatch):
         ),
         patch("charm.KafkaCharm.healthy", return_value=True),
         patch("workload.KafkaWorkload.read", return_value=["gandalf=white"]),
-        # patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
+        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
     ):
 
         harness.charm.on.config_changed.emit()

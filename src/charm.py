@@ -12,7 +12,7 @@ from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from ops import ActiveStatus, InstallEvent, pebble
-from ops.charm import StorageAttachedEvent, StorageDetachingEvent
+from ops.charm import SecretChangedEvent, StorageAttachedEvent, StorageDetachingEvent
 from ops.framework import EventBase
 from ops.main import main
 from ops.model import StatusBase
@@ -23,7 +23,7 @@ from core.structured_config import CharmConfig
 from events.password_actions import PasswordActionEvents
 from events.provider import KafkaProvider
 from events.tls import TLSHandler
-from events.upgrade import KafkaDependencyModel, KafkaUpgradeEvents
+from events.upgrade import KafkaDependencyModel, KafkaUpgrade
 from events.zookeeper import ZooKeeperHandler
 from literals import (
     CHARM_KEY,
@@ -35,10 +35,11 @@ from literals import (
     METRICS_RULES_DIR,
     PEER,
     REL_NAME,
+    SUBSTRATE,
     USER,
     DebugLevel,
     Status,
-    Substrate,
+    Substrates,
 )
 from managers.auth import AuthManager
 from managers.config import KafkaConfigManager
@@ -56,7 +57,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
     def __init__(self, *args):
         super().__init__(*args)
         self.name = CHARM_KEY
-        self.substrate: Substrate = "k8s"
+        self.substrate: Substrates = SUBSTRATE
         self.workload = KafkaWorkload(container=self.unit.get_container(CONTAINER))
         self.state = ClusterState(self, substrate=self.substrate)
 
@@ -66,7 +67,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.zookeeper = ZooKeeperHandler(self)
         self.tls = TLSHandler(self)
         self.provider = KafkaProvider(self)
-        self.upgrade = KafkaUpgradeEvents(
+        self.upgrade = KafkaUpgrade(
             self,
             substrate=self.substrate,
             dependency_model=KafkaDependencyModel(
@@ -109,6 +110,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.framework.observe(getattr(self.on, "kafka_pebble_ready"), self._on_kafka_pebble_ready)
         self.framework.observe(getattr(self.on, "config_changed"), self._on_config_changed)
         self.framework.observe(getattr(self.on, "update_status"), self._on_update_status)
+        self.framework.observe(getattr(self.on, "secret_changed"), self._on_secret_changed)
 
         self.framework.observe(self.on[PEER].relation_changed, self._on_config_changed)
 
@@ -170,8 +172,8 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         # need to manually add-back key/truststores
         if (
             self.state.cluster.tls_enabled
-            and self.state.broker.certificate
-            and self.state.broker.ca
+            and self.state.unit_broker.certificate
+            and self.state.unit_broker.ca
         ):  # TLS is probably completed
             self.tls_manager.set_server_key()
             self.tls_manager.set_ca()
@@ -253,9 +255,9 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         # If Kafka is related to client charms, update their information.
         if self.model.relations.get(REL_NAME, None) and self.unit.is_leader():
-            self.provider.update_connection_info()
+            self.update_client_data()
 
-    def _on_update_status(self, event: EventBase) -> None:
+    def _on_update_status(self, _: EventBase) -> None:
         """Handler for `update-status` events."""
         if not self.upgrade.idle or not self.healthy:
             return
@@ -266,9 +268,22 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         # NOTE for situations like IP change and late integration with rack-awareness charm.
         # If properties have changed, the broker will restart.
-        self._on_config_changed(event)
+        self.on.config_changed.emit()
 
         self._set_status(Status.ACTIVE)
+
+    def _on_secret_changed(self, event: SecretChangedEvent) -> None:
+        """Handler for `secret_changed` events."""
+        if not event.secret.label or not self.state.cluster.relation:
+            return
+
+        if event.secret.label == self.state.cluster.data_interface._generate_secret_label(
+            PEER,
+            self.state.cluster.relation.id,
+            "extra",  # pyright: ignore[reportArgumentType] -- Changes with the https://github.com/canonical/data-platform-libs/issues/124
+        ):
+            # TODO: figure out why creating internal credentials setting doesn't trigger changed event here
+            self.on.config_changed.emit()
 
     def _on_storage_attached(self, event: StorageAttachedEvent) -> None:
         """Handler for `storage_attached` events."""
@@ -279,7 +294,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             self._set_status(Status.ADDED_STORAGE)
             self._on_config_changed(event)
 
-    def _on_storage_detaching(self, event: StorageDetachingEvent) -> None:
+    def _on_storage_detaching(self, _: StorageDetachingEvent) -> None:
         """Handler for `storage_detaching` events."""
         # in the case where there may be replication recovery may be possible
         if self.state.peer_relation and len(self.state.peer_relation.units):
@@ -287,7 +302,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         else:
             self._set_status(Status.REMOVED_STORAGE_NO_REPL)
 
-        self._on_config_changed(event)
+        self.on.config_changed.emit()
 
     def _restart(self, event: EventBase) -> None:
         """Handler for `rolling_ops` restart events."""
@@ -321,6 +336,31 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             return False
 
         return True
+
+    def update_client_data(self) -> None:
+        """Writes necessary relation data to all related client applications."""
+        if not self.unit.is_leader() or not self.healthy:
+            return
+
+        for client in self.state.clients:
+            if not client.password:
+                logger.debug(
+                    f"Skipping update of {client.app.name}, user has not yet been added..."
+                )
+                continue
+
+            client.update(
+                {
+                    "endpoints": client.bootstrap_server,
+                    "zookeeper-uris": client.zookeeper_uris,
+                    "consumer-group-prefix": client.consumer_group_prefix,
+                    "topic": client.topic,
+                    "username": client.username,
+                    "password": client.password,
+                    "tls": client.tls,
+                    "tls-ca": client.tls,  # TODO: fix tls-ca
+                }
+            )
 
     def _set_status(self, key: Status) -> None:
         """Sets charm status."""

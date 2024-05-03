@@ -24,9 +24,10 @@ from tenacity import (
     wait_random,
 )
 
-from integration.helpers import DUMMY_NAME, get_provider_data
+from integration.helpers import APP_NAME, DUMMY_NAME, get_provider_data
 
 logger = logging.getLogger(__name__)
+logging.getLogger("kafka.conn").disabled = True
 
 
 @dataclass
@@ -146,7 +147,7 @@ class ContinuousWrites:
         self._process = Process(
             target=ContinuousWrites._run_async,
             name="continuous_writes",
-            args=(self._event, self._queue, 0),
+            args=(self._event, self._queue, 0, self._ops_test),
         )
 
     def _stop_process(self):
@@ -158,31 +159,32 @@ class ContinuousWrites:
     def _client(self):
         """Build a Kafka client."""
         relation_data = get_provider_data(
+            ops_test=self._ops_test,
             unit_name=f"{DUMMY_NAME}/0",
-            model_full_name=self._ops_test.model.info.name,
-            endpoint="kafka-client-admin",
+            owner=APP_NAME,
         )
         return KafkaClient(
-            servers=relation_data["endpoints"],
+            servers=relation_data["endpoints"].split(","),
             username=relation_data["username"],
             password=relation_data["password"],
             security_protocol="SASL_PLAINTEXT",
         )
 
     @staticmethod
-    async def _run(event: Event, data_queue: Queue, starting_number: int) -> None:  # noqa: C901
+    async def _run(
+        event: Event, data_queue: Queue, starting_number: int, ops_test: OpsTest
+    ) -> None:  # noqa: C901
         """Continuous writing."""
-        initial_data = data_queue.get(True)
 
         def _client():
             """Build a Kafka client."""
             relation_data = get_provider_data(
+                ops_test=ops_test,
                 unit_name=f"{DUMMY_NAME}/0",
-                model_full_name=initial_data.model_full_name,
-                endpoint="kafka-client-admin",
+                owner=APP_NAME,
             )
             return KafkaClient(
-                servers=relation_data["endpoints"],
+                servers=relation_data["endpoints"].split(","),
                 username=relation_data["username"],
                 password=relation_data["password"],
                 security_protocol="SASL_PLAINTEXT",
@@ -232,6 +234,6 @@ class ContinuousWrites:
                 time.sleep(0.1)
 
     @staticmethod
-    def _run_async(event: Event, data_queue: Queue, starting_number: int):
+    def _run_async(event: Event, data_queue: Queue, starting_number: int, ops_test: OpsTest):
         """Run async code."""
-        asyncio.run(ContinuousWrites._run(event, data_queue, starting_number))
+        asyncio.run(ContinuousWrites._run(event, data_queue, starting_number, ops_test))

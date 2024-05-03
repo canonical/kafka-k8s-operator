@@ -39,7 +39,7 @@ class KafkaDependencyModel(BaseModel):
     kafka_service: DependencyModel
 
 
-class KafkaUpgradeEvents(DataUpgrade):
+class KafkaUpgrade(DataUpgrade):
     """Implementation of :class:`DataUpgrade` overrides for in-place upgrades."""
 
     def __init__(self, charm: "KafkaCharm", **kwargs):
@@ -52,6 +52,10 @@ class KafkaUpgradeEvents(DataUpgrade):
 
     def _on_kafka_pebble_ready_upgrade(self, event: EventBase) -> None:
         """Handler for the `upgrade-charm` events handled during in-place upgrades."""
+        if not self.charm.workload.container.can_connect():
+            event.defer()
+            return
+
         # ensure pebble-ready only fires after normal peer-relation-driven server init
         if not self.charm.state.ready_to_start or self.idle:
             return
@@ -79,8 +83,8 @@ class KafkaUpgradeEvents(DataUpgrade):
         # need to manually add-back key/truststores
         if (
             self.charm.state.cluster.tls_enabled
-            and self.charm.state.broker.certificate
-            and self.charm.state.broker.ca
+            and self.charm.state.unit_broker.certificate
+            and self.charm.state.unit_broker.ca
         ):  # TLS is probably completed
             self.charm.tls_manager.set_server_key()
             self.charm.tls_manager.set_ca()

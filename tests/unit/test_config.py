@@ -14,6 +14,7 @@ from literals import (
     ADMIN_USER,
     CHARM_KEY,
     CONTAINER,
+    DEPENDENCIES,
     INTER_BROKER_USER,
     INTERNAL_USERS,
     JMX_EXPORTER_PORT,
@@ -251,10 +252,7 @@ def test_heap_opts(harness: Harness, profile, expected):
     # self.config is not passed again to KafkaConfigManager
     harness.update_config({"profile": profile})
     conf_manager = KafkaConfigManager(
-        harness.charm.state,
-        harness.charm.workload,
-        harness.charm.config,
-        harness.charm.upgrade.current_version,
+        harness.charm.state, harness.charm.workload, harness.charm.config, "1"
     )
     args = conf_manager.heap_opts
 
@@ -298,8 +296,8 @@ def test_bootstrap_server(harness: Harness):
     )
     harness.update_relation_data(peer_relation_id, f"{CHARM_KEY}/1", {"private-address": "shelob"})
 
-    assert len(harness.charm.state.bootstrap_server) == 2
-    for server in harness.charm.state.bootstrap_server:
+    assert len(harness.charm.state.bootstrap_server.split(",")) == 2
+    for server in harness.charm.state.bootstrap_server.split(","):
         assert "9092" in server
 
 
@@ -358,10 +356,7 @@ def test_ssl_principal_mapping_rules(harness: Harness):
         # self.config is not passed again to KafkaConfigManager
         harness._update_config({"ssl_principal_mapping_rules": "RULE:^(erebor)$/$1,DEFAULT"})
         conf_manager = KafkaConfigManager(
-            harness.charm.state,
-            harness.charm.workload,
-            harness.charm.config,
-            harness.charm.upgrade.current_version,
+            harness.charm.state, harness.charm.workload, harness.charm.config, "1"
         )
 
         assert (
@@ -424,26 +419,25 @@ def test_rack_properties(harness: Harness):
         assert "broker.rack=gondor-west" in harness.charm.config_manager.server_properties
 
 
-# FIXME: Add with upgrade
-# def test_inter_broker_protocol_version(harness: Harness):
-#     """Checks that rack properties are added to server properties."""
-#     harness.add_relation(PEER, CHARM_KEY)
-#     zk_relation_id = harness.add_relation(ZK, CHARM_KEY)
-#     harness.update_relation_data(
-#         zk_relation_id,
-#         harness.charm.app.name,
-#         {
-#             "chroot": "/kafka",
-#             "username": "moria",
-#             "password": "mellon",
-#             "endpoints": "1.1.1.1,2.2.2.2",
-#             "uris": "1.1.1.1:2181/kafka,2.2.2.2:2181/kafka",
-#             "tls": "disabled",
-#         },
-#     )
-#     assert len(DEPENDENCIES["kafka_service"]["version"].split(".")) == 3
+def test_inter_broker_protocol_version(harness: Harness):
+    """Checks that rack properties are added to server properties."""
+    harness.add_relation(PEER, CHARM_KEY)
+    zk_relation_id = harness.add_relation(ZK, CHARM_KEY)
+    harness.update_relation_data(
+        zk_relation_id,
+        harness.charm.app.name,
+        {
+            "chroot": "/kafka",
+            "username": "moria",
+            "password": "mellon",
+            "endpoints": "1.1.1.1,2.2.2.2",
+            "uris": "1.1.1.1:2181/kafka,2.2.2.2:2181/kafka",
+            "tls": "disabled",
+        },
+    )
+    assert len(DEPENDENCIES["kafka_service"]["version"].split(".")) == 3
 
-#     assert "inter.broker.protocol.version=3.6" in harness.charm.config_manager.server_properties
+    assert "inter.broker.protocol.version=3.6" in harness.charm.config_manager.server_properties
 
 
 def test_super_users(harness: Harness):

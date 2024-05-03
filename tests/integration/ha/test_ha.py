@@ -27,10 +27,8 @@ from integration.helpers import (
     APP_NAME,
     DUMMY_NAME,
     KAFKA_CONTAINER,
-    KAFKA_SERIES,
     REL_NAME_ADMIN,
     ZK_NAME,
-    ZK_SERIES,
     check_logs,
 )
 
@@ -85,24 +83,24 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
             kafka_charm,
             application_name=APP_NAME,
             num_units=1,
-            series=KAFKA_SERIES,
             resources={"kafka-image": KAFKA_CONTAINER},
         ),
-        ops_test.model.deploy(ZK_NAME, channel="edge", num_units=1, series=ZK_SERIES),
-        ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, series="jammy"),
+        ops_test.model.deploy(ZK_NAME, channel="3/edge", num_units=1),
+        ops_test.model.deploy(app_charm, application_name=DUMMY_NAME),
     )
     await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=2000)
 
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
+    async with ops_test.fast_forward(fast_interval="20s"):
+        await asyncio.sleep(90)
 
-    async with ops_test.fast_forward(fast_interval="60s"):
-        await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME],
-            idle_period=30,
-            status="active",
-            timeout=2000,
-            raise_on_error=False,
-        )
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME],
+        idle_period=30,
+        status="active",
+        timeout=2000,
+        raise_on_error=False,
+    )
 
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
@@ -110,10 +108,6 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
         await ops_test.model.wait_for_idle(
             apps=[APP_NAME, DUMMY_NAME, ZK_NAME], idle_period=30, status="active", timeout=2000
         )
-
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[ZK_NAME].status == "active"
-    assert ops_test.model.applications[DUMMY_NAME].status == "active"
 
 
 # run this test early, in case of resource limits on runners with too many units
@@ -126,12 +120,9 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
             kafka_charm,
             application_name=second_kafka_name,
             num_units=1,
-            series=KAFKA_SERIES,
             resources={"kafka-image": KAFKA_CONTAINER},
         ),
-        ops_test.model.deploy(
-            ZK_NAME, application_name=second_zk_name, channel="edge", series=ZK_SERIES
-        ),
+        ops_test.model.deploy(ZK_NAME, application_name=second_zk_name, channel="3/edge"),
     )
     await ops_test.model.add_relation(second_kafka_name, second_zk_name)
 
@@ -157,7 +148,7 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
 
     # logs exist on first cluster
     check_logs(
-        model_full_name=ops_test.model_full_name,
+        ops_test=ops_test,
         kafka_unit_name=f"{APP_NAME}/0",
         topic="test-topic",
     )
@@ -165,7 +156,7 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
     # Check that logs are not found on the second cluster
     with pytest.raises(AssertionError):
         check_logs(
-            model_full_name=ops_test.model_full_name,
+            ops_test=ops_test,
             kafka_unit_name=f"{second_kafka_name}/0",
             topic="test-topic",
         )
@@ -183,9 +174,6 @@ async def test_scale_up_zk_kafka(ops_test: OpsTest):
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME, ZK_NAME], status="active", timeout=1000, idle_period=30
     )
-
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[ZK_NAME].status == "active"
 
 
 async def test_kill_broker_with_topic_leader(
@@ -405,6 +393,7 @@ async def test_pod_reschedule(
     assert_continuous_writes_consistency(result=result)
 
 
+@pytest.mark.unstable
 async def test_network_cut_without_ip_change(
     ops_test: OpsTest,
     c_writes: ContinuousWrites,

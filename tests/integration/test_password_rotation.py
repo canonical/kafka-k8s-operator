@@ -11,11 +11,7 @@ from pytest_operator.plugin import OpsTest
 from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
-    KAFKA_SERIES,
     ZK_NAME,
-    ZK_SERIES,
-    check_application_status,
-    get_kafka_zk_relation_data,
     get_user,
     set_password,
 )
@@ -29,20 +25,22 @@ async def test_build_and_deploy(ops_test: OpsTest):
     kafka_charm = await ops_test.build_charm(".")
     await asyncio.gather(
         ops_test.model.deploy(
-            ZK_NAME, channel="edge", application_name=ZK_NAME, num_units=3, series=ZK_SERIES
+            ZK_NAME,
+            channel="3/edge",
+            application_name=ZK_NAME,
+            num_units=3,
         ),
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
             resources={"kafka-image": KAFKA_CONTAINER},
             num_units=1,
-            series=KAFKA_SERIES,
         ),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
     await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=2000, idle_period=30)
 
-    assert check_application_status(ops_test, APP_NAME) == "waiting"
+    assert ops_test.model.applications[APP_NAME].status == "blocked"
     assert ops_test.model.applications[ZK_NAME].status == "active"
 
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
@@ -52,32 +50,21 @@ async def test_build_and_deploy(ops_test: OpsTest):
             apps=[APP_NAME, ZK_NAME], idle_period=30, status="active", timeout=2000
         )
 
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[ZK_NAME].status == "active"
-
 
 async def test_password_rotation(ops_test: OpsTest):
     """Check that password stored on ZK has changed after a password rotation."""
-    relation_data = get_kafka_zk_relation_data(
-        unit_name=f"{APP_NAME}/0", model_full_name=ops_test.model_full_name
-    )
-    uri = relation_data["uris"].split(",")[-1]
-
     initial_sync_user = get_user(
         username="sync",
-        zookeeper_uri=uri,
         model_full_name=ops_test.model_full_name,
     )
 
     result = await set_password(ops_test, username="sync", num_unit=0)
-    logger.info(f"result: {result}")
     assert "sync-password" in result.keys()
 
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME])
+    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], status="active", idle_period=30)
 
     new_sync_user = get_user(
         username="sync",
-        zookeeper_uri=uri,
         model_full_name=ops_test.model_full_name,
     )
 

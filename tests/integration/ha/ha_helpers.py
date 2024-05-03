@@ -246,7 +246,7 @@ def remove_instance_isolation(ops_test: OpsTest) -> None:
     )
 
 
-def add_k8s_hosts(ops_test=OpsTest):
+def add_k8s_hosts(ops_test: OpsTest):
     """Adds a the pod dns hostnames to the local /etc/hosts file."""
     address_map = get_unit_address_map(ops_test=ops_test)
     dns_pod_map = [

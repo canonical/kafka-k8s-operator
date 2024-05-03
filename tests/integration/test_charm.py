@@ -15,11 +15,8 @@ from .helpers import (
     APP_NAME,
     DUMMY_NAME,
     KAFKA_CONTAINER,
-    KAFKA_SERIES,
     REL_NAME_ADMIN,
     ZK_NAME,
-    ZK_SERIES,
-    check_application_status,
     check_logs,
     check_socket,
     count_lines_with,
@@ -36,24 +33,22 @@ async def test_build_and_deploy(ops_test: OpsTest):
     await asyncio.gather(
         ops_test.model.deploy(
             ZK_NAME,
-            channel="edge",
+            channel="3/edge",
             application_name=ZK_NAME,
             num_units=3,
-            series=ZK_SERIES,
         ),
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
-            series=KAFKA_SERIES,
         ),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
     async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=30)
 
-    assert check_application_status(ops_test, APP_NAME) == "waiting"
+    assert ops_test.model.applications[APP_NAME].status == "blocked"
     assert ops_test.model.applications[ZK_NAME].status == "active"
 
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
@@ -105,11 +100,10 @@ async def test_listeners(ops_test: OpsTest, app_charm):
         await ops_test.model.wait_for_idle(
             apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=800
         )
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[DUMMY_NAME].status == "active"
 
     # check that client listener is active
     assert check_socket(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT"].client)
+
     # remove relation and check that client listerner is not active
     await ops_test.model.applications[APP_NAME].remove_relation(
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME}:{REL_NAME_ADMIN}"
@@ -150,18 +144,16 @@ async def test_logs_write_to_storage(ops_test: OpsTest):
         await ops_test.model.wait_for_idle(
             apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=800
         )
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[DUMMY_NAME].status == "active"
 
     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("produce")
     await action.wait()
 
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30)
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[DUMMY_NAME].status == "active"
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30, status="active"
+    )
 
     check_logs(
-        model_full_name=ops_test.model_full_name,
+        ops_test=ops_test,
         kafka_unit_name=f"{APP_NAME}/0",
         topic="test-topic",
     )
@@ -181,7 +173,7 @@ async def test_exporter_endpoints(ops_test: OpsTest):
 async def test_log_level_change(ops_test: OpsTest):
     for unit in ops_test.model.applications[APP_NAME].units:
         total_lines = count_lines_with(
-            ops_test.model_full_name,
+            ops_test,
             unit.name,
             "/var/log/kafka/server.log",
             "DEBUG",
@@ -195,7 +187,7 @@ async def test_log_level_change(ops_test: OpsTest):
 
     for unit in ops_test.model.applications[APP_NAME].units:
         total_lines = count_lines_with(
-            ops_test.model_full_name,
+            ops_test,
             unit.name,
             "/var/log/kafka/server.log",
             "DEBUG",
