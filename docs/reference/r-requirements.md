@@ -16,8 +16,8 @@ For production environments, it is recommended to deploy at least 5 nodes for Zo
 - 64GB of RAM
 - 24 cores
 - At least 50GB of available storage
-- Access to the internet for downloading the required OCI/ROCKs and charms.
+- Access to the internet for downloading the required OCI/rocks and charms.
 
 ## Supported architectures
 
-The charm is based on [ROCK OCI](https://github.com/canonical/charmed-kafka-rock) named "[charmed-kafka](https://github.com/canonical/charmed-kafka-rock/pkgs/container/charmed-kafka)", which is recursively based on SNAP "[charmed-kafka](https://snapcraft.io/charmed-kafka)", which is currently available for `amd64` only! The architecture `arm64` support is planned. Please [contact us](/t/charmed-kafka-k8s-documentation-reference-contacts/13206) if you are interested in new architectures!
+The charm is based on [rock](https://github.com/canonical/charmed-kafka-rock) named "[charmed-kafka](https://github.com/canonical/charmed-kafka-rock/pkgs/container/charmed-kafka)", which is recursively based on SNAP "[charmed-kafka](https://snapcraft.io/charmed-kafka)", which is currently available for `amd64` only! The architecture `arm64` support is planned. Please [contact us](/t/charmed-kafka-k8s-documentation-reference-contacts/13206) if you are interested in new architectures!
