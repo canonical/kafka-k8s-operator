@@ -70,7 +70,7 @@ optional = true
 
 [tool.poetry.group.security.dependencies]
 bandit = "^1.7.4"
-safety = "^2.3.5"
+safety = "^3.0.0"
 
 
 [tool.poetry.group.integration]
