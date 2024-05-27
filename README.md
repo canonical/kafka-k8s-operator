@@ -9,7 +9,7 @@
 
 The Charmed Kafka K8s Operator delivers automated operations management from day 0 to day 2 on the [Apache Kafka](https://kafka.apache.org) event streaming platform deployed on top of a [Kubernetes cluster](https://kubernetes.io/). It is an open source, end-to-end, production ready data platform on top of cloud native technologies.
 
-This operator charm comes with features such as:
+The Kafka K8s Operator can be found on [Charmhub](https://charmhub.io/kafka-k8s) and it comes with features such as:
 - Fault-tolerance, replication, scalability and high-availability out-of-the-box.
 - SASL/SCRAM auth for Broker-Broker and Client-Broker authenticaion enabled by default.
 - Access control management supported with user-provided ACL lists.
