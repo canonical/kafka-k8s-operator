@@ -11,11 +11,19 @@ from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
-from ops import ActiveStatus, InstallEvent, pebble
-from ops.charm import SecretChangedEvent, StorageAttachedEvent, StorageDetachingEvent
-from ops.framework import EventBase
+from ops import (
+    ActiveStatus,
+    EventBase,
+    InstallEvent,
+    SecretChangedEvent,
+    StartEvent,
+    StatusBase,
+    StorageAttachedEvent,
+    StorageDetachingEvent,
+    UpdateStatusEvent,
+    pebble,
+)
 from ops.main import main
-from ops.model import StatusBase
 from ops.pebble import Layer
 
 from core.cluster import ClusterState
@@ -186,9 +194,9 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         logger.info("Kafka service started")
 
         # service_start might fail silently, confirm with ZK if kafka is actually connected
-        self._on_update_status(event)
+        self.on.update_status.emit()
 
-    def _on_start(self, event: EventBase) -> None:
+    def _on_start(self, event: StartEvent) -> None:
         """Wrapper for start event."""
         self._on_kafka_pebble_ready(event)
 
@@ -257,7 +265,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         if self.model.relations.get(REL_NAME, None) and self.unit.is_leader():
             self.update_client_data()
 
-    def _on_update_status(self, _: EventBase) -> None:
+    def _on_update_status(self, _: UpdateStatusEvent) -> None:
         """Handler for `update-status` events."""
         if not self.upgrade.idle or not self.healthy:
             return
