@@ -10,10 +10,7 @@ from charms.data_platform_libs.v0.data_interfaces import Data, DataPeerData, Dat
 from charms.zookeeper.v0.client import QuorumLeaderNotFoundError, ZooKeeperManager
 from kazoo.client import AuthFailedError, NoNodeError
 from ops.model import Application, Relation, Unit
-from tenacity import retry
-from tenacity.retry import retry_if_not_result
-from tenacity.stop import stop_after_attempt
-from tenacity.wait import wait_fixed
+from tenacity import retry, retry_if_result, stop_after_attempt, wait_fixed
 from typing_extensions import override
 
 from literals import INTERNAL_USERS, SECRETS_APP, Substrates
@@ -33,9 +30,13 @@ class RelationState:
     ):
         self.relation = relation
         self.data_interface = data_interface
-        self.component = component
+        self.component = (
+            component  # FIXME: remove, and use _fetch_my_relation_data defaults wheren needed
+        )
         self.substrate = substrate
-        self.relation_data = self.data_interface.as_dict(self.relation.id) if self.relation else {}
+        self.relation_data = (
+            self.data_interface.as_dict(self.relation.id) if self.relation else {}
+        )  # FIXME: mappingproxytype?
 
     def __bool__(self) -> bool:
         """Boolean evaluation based on the existence of self.relation."""
@@ -281,6 +282,19 @@ class ZooKeeper(RelationState):
         )
 
     @property
+    def database(self) -> str:
+        """Path allocated for Kafka on ZooKeeper."""
+        if not self.relation:
+            return ""
+
+        return (
+            self.data_interface.fetch_relation_field(
+                relation_id=self.relation.id, field="database"
+            )
+            or self.chroot
+        )
+
+    @property
     def chroot(self) -> str:
         """Path allocated for Kafka on ZooKeeper."""
         if not self.relation:
@@ -316,8 +330,8 @@ class ZooKeeper(RelationState):
     @property
     def connect(self) -> str:
         """Full connection string of sorted uris."""
-        sorted_uris = sorted(self.uris.replace(self.chroot, "").split(","))
-        sorted_uris[-1] = sorted_uris[-1] + self.chroot
+        sorted_uris = sorted(self.uris.replace(self.database, "").split(","))
+        sorted_uris[-1] = sorted_uris[-1] + self.database
         return ",".join(sorted_uris)
 
     @property
@@ -328,7 +342,7 @@ class ZooKeeper(RelationState):
             True if ZooKeeper is currently related with sufficient relation data
                 for a broker to connect with. Otherwise False
         """
-        if not all([self.username, self.password, self.endpoints, self.chroot, self.uris]):
+        if not all([self.username, self.password, self.endpoints, self.database, self.uris]):
             return False
 
         return True
@@ -341,18 +355,18 @@ class ZooKeeper(RelationState):
 
         return zk.get_version()
 
+    # retry to give ZK time to update its broker zNodes before failing
     @retry(
-        # retry to give ZK time to update its broker zNodes before failing
-        wait=wait_fixed(6),
+        wait=wait_fixed(5),
         stop=stop_after_attempt(10),
-        retry_error_callback=(lambda state: state.outcome.result()),  # type: ignore
-        retry=retry_if_not_result(lambda result: True if result else False),
+        retry=retry_if_result(lambda result: result is False),
+        retry_error_callback=lambda _: False,
     )
     def broker_active(self) -> bool:
         """Checks if broker id is recognised as active by ZooKeeper."""
         broker_id = self.data_interface.local_unit.name.split("/")[1]
         hosts = self.endpoints.split(",")
-        path = f"{self.chroot}/brokers/ids/"
+        path = f"{self.database}/brokers/ids/"
 
         zk = ZooKeeperManager(hosts=hosts, username=self.username, password=self.password)
         try:
