@@ -8,24 +8,12 @@ on:
       - main
 
 jobs:
-  lib-check:
-    name: Check libraries
-    runs-on: ubuntu-22.04
-    timeout-minutes: 5
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Check libs
-        uses: canonical/charming-actions/check-libraries@2.2.3
-        with:
-          credentials: "${{ secrets.CHARMHUB_TOKEN }}" # FIXME: current token will expire in 2023-07-04
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+  build:
+    name: Build charm
+    uses: canonical/data-platform-workflows/.github/workflows/build_charm_without_cache.yaml@v7
 
   ci-tests:
-    needs:
-      - lib-check
     uses: ./.github/workflows/ci.yaml
     secrets: inherit
     permissions:
@@ -33,14 +21,9 @@ jobs:
       pull-requests: write # Need to create PR
       actions: write
 
-  build:
-    name: Build charm
-    uses: canonical/data-platform-workflows/.github/workflows/build_charm_without_cache.yaml@v7
-
   release:
     name: Release to Charmhub
     needs:
-      - lib-check
       - ci-tests
       - build
     uses: canonical/data-platform-workflows/.github/workflows/release_charm.yaml@v7
