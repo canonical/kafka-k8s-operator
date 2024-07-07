@@ -20,7 +20,7 @@ As soon as new VM started, enter inside using:
 ```shell
 multipass shell my-vm
 ```
-*Note: if at any point you'd like to leave Multipass VM, enter `Ctrl+d` or type `exit`*.
+*Note: if at any point you'd like to leave Multipass VM, use `Ctrl+D` or type `exit`*.
 
 All the parts have been pre-installed inside VM already, like MicroK8s, LXD and Juju (the files '/var/log/cloud-init.log' and '/var/log/cloud-init-output.log' contain all low-level installation details). 
 Also, the image already comes with two Juju controllers already setup, one for LXD and one for MicroK8s
