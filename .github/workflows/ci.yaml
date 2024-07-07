@@ -40,6 +40,24 @@ jobs:
       - name: Run tests
         run: tox run -e unit
 
+  vale:
+    name: Style checker
+    runs-on: ubuntu-22.04
+    defaults:
+        run:
+            shell: bash
+            working-directory: .
+    steps:
+        - name: Checkout repo to runner
+          uses: actions/checkout@v3
+        - name: Install styles
+          uses: canonical/praecepta@main
+        - name: Run Vale tests
+          uses: errata-ai/vale-action@reviewdog
+          with:
+            files: ./docs
+            fail_on_error: true
+
   sync-docs:
     if: ${{ github.event_name != 'pull_request' || startsWith(github.event.pull_request.head.repo.full_name, 'canonical/') }}
     uses: ./.github/workflows/sync_docs.yaml
