@@ -9,7 +9,7 @@ to be optionally enabled based the relations created on particular
 charm endpoints. Each listener is characterized by a specific port, scope and protocol. 
 
 In the following table we summarize the protocols, the port and
-the relation that each listener is bound to. Nota that based on whether a `certificates`
+the relation that each listener is bound to. Note that based on whether a `certificates`
 relation is present, one of two mutually exclusive type of listener can be 
 opened. 
 

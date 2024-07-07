@@ -67,7 +67,7 @@ username: admin
 
 Providing you the `username` and `password` of the Kafka cluster admin user. 
 
-> **IMPORTANT** Note that when no other application is related to Kafka, the cluster is secured-by-default and external listeners (binded to port 9092) are disabled, thus preventing any external incoming connection. 
+> **IMPORTANT** Note that when no other application is related to Kafka, the cluster is secured-by-default and external listeners (bound to port 9092) are disabled, thus preventing any external incoming connection. 
 
 Nevertheless, it is still possible to run a command from within the Kafka cluster. To do so, log in into one of the Kafka container in one of the units
 

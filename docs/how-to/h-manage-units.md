@@ -17,13 +17,13 @@ It is important to note that when adding more units, the Kafka cluster will not
 *automatically* rebalance existing topics and partitions. New storage and new brokers
 will be used only when new topics and new partitions are created. 
 
-Partition reassigment can still be done manually by the admin user by using the 
+Partition reassignment can still be done manually by the admin user by using the 
 `/opt/kafka/bin/kafka-reassign-partitions.sh` Kafka bin utility script. Please refer to 
 its documentation for more information. 
 
 > **IMPORTANT** Scaling down is currently not supported in the charm automation.  
 > If partition reassignment is not manually performed before scaling down in order 
-> to makes sure the decommisioned units does not hold any data, **your cluster may 
+> to makes sure the decommissioned units does not hold any data, **your cluster may 
 > suffer to data loss**. 
 
 
