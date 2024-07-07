@@ -441,7 +441,7 @@ class ZooKeeperManager:
             keyfile_password=self.keyfile_password,
             certfile_path=self.certfile_path,
         ) as zk:
-            return zk.srvr["Zookeeper version"].split("-", maxsplit=1)[0]
+            return zk.srvr["ZooKeeper version"].split("-", maxsplit=1)[0]
 
 
 class ZooKeeperClient:

@@ -2,7 +2,7 @@ This is part of the [Charmed Kafka K8s Tutorial](/t/charmed-kafka-k8s-documentat
 
 ## Deploy Charmed Kafka K8s (and Charmed ZooKeeper K8s)
 
-To deploy Charmed Kafka K8s, all you need to do is run the following commands, which will automatically fetch [Kafka](https://charmhub.io/kafka-k8s?channel=3/stable) and [Zookeeper](https://charmhub.io/zookeeper-k8s?channel=3/stable) charms from [Charmhub](https://charmhub.io/) and deploy them to your model. For example, to deploy a 5 Zookeeper unit and 3 Kafka unit cluster, you can simply run
+To deploy Charmed Kafka K8s, all you need to do is run the following commands, which will automatically fetch [Kafka](https://charmhub.io/kafka-k8s?channel=3/stable) and [ZooKeeper](https://charmhub.io/zookeeper-k8s?channel=3/stable) charms from [Charmhub](https://charmhub.io/) and deploy them to your model. For example, to deploy a 5 ZooKeeper unit and 3 Kafka unit cluster, you can simply run
 
 ```shell
 $ juju deploy zookeeper-k8s -n 3 
@@ -15,13 +15,13 @@ After this, it is necessary to connect them:
 $ juju relate kafka-k8s zookeeper-k8s
 ```
 
-Juju will now fetch Charmed Kafka K8s and Charmed Zookeeper K8s and begin deploying it to the local MicroK8s. This process can take several minutes depending on how provisioned (RAM, CPU, etc) your machine is. You can track the progress by running:
+Juju will now fetch Charmed Kafka K8s and Charmed ZooKeeper K8s and begin deploying it to the local MicroK8s. This process can take several minutes depending on how provisioned (RAM, CPU, etc) your machine is. You can track the progress by running:
 ```shell
 juju status --watch 1s
 ```
 
-This command is useful for checking the status of Charmed Zookeeper K8s and Charmed Kafka K8s. Some of the helpful information it displays include IP pods addresses, ports, state, etc. 
-The command updates the status of the cluster every second and as the application starts you can watch the status and messages of Charmed Kafka K8s and Charmed Zookeeper K8s change. 
+This command is useful for checking the status of Charmed ZooKeeper K8s and Charmed Kafka K8s. Some of the helpful information it displays include IP pods addresses, ports, state, etc. 
+The command updates the status of the cluster every second and as the application starts you can watch the status and messages of Charmed Kafka K8s and Charmed ZooKeeper K8s change. 
 
 Wait until the application is ready - when it is ready, `juju status --watch 1s` will show:
 ```shell

@@ -2,7 +2,7 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Supporting objects for Kafka-Zookeeper relation."""
+"""Supporting objects for Kafka-ZooKeeper relation."""
 
 import logging
 import subprocess  # nosec B404

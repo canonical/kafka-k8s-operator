@@ -11,7 +11,7 @@ The minimum supported Juju versions are:
 
 ## Minimum requirements
 
-For production environments, it is recommended to deploy at least 5 nodes for Zookeeper and 3 for Kafka. While the following requirements are meant to be for production, the charm can be deployed in much smaller environments.
+For production environments, it is recommended to deploy at least 5 nodes for ZooKeeper and 3 for Kafka. While the following requirements are meant to be for production, the charm can be deployed in much smaller environments.
 
 - 64GB of RAM
 - 24 cores

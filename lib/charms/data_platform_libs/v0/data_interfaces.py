@@ -2988,7 +2988,7 @@ class KafkaRequiresEvent(RelationEvent):
 
     @property
     def zookeeper_uris(self) -> Optional[str]:
-        """Returns a comma separated list of Zookeeper uris."""
+        """Returns a comma separated list of ZooKeeper uris."""
         if not self.relation.app:
             return None
 
