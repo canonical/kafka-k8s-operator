@@ -1,8 +1,10 @@
 # How to enable encryption
 
+To enable encryption, you should first deploy a TLS certificates Provider charm.
+
 ## Deploy a TLS Provider charm
 
-To enable encryption, you should first deploy a TLS certificates Provider charm. The Kafka K8s and ZooKeeper K8s charms implements the Requirer side of the [`tls-certificates/v1`](https://github.com/canonical/charm-relation-interfaces/blob/main/interfaces/tls_certificates/v1/README.md) charm relation. 
+The Kafka K8s and ZooKeeper K8s charms implements the Requirer side of the [`tls-certificates/v1`](https://github.com/canonical/charm-relation-interfaces/blob/main/interfaces/tls_certificates/v1/README.md) charm relation. 
 Therefore, any charm implementing the Provider side could be used. 
 
 One possible option, suitable for testing, could be to use the `self-signed-certificates`, although this setup is however not recommended for production clusters. 

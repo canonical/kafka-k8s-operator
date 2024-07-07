@@ -50,7 +50,11 @@ ok: "True"
 
 ## Password rotation
 
+Password rotation can be performed in multiple ways, depending on the use case.
+
 ### External clients
+
+There are two ways to rotate credentials of an external client. One is simply to delete and re-create the relation, the other one can be performed without any downtime.
 
 #### With client application downtime
 
@@ -68,7 +72,7 @@ The successful credential rotation can be confirmed by retrieving the new passwo
 #### Without client application downtime
 
 In some use-cases credentials should be rotated with no or limited application downtime.
-If credentials should be rotated with no or limited downtine, you can deploy a new charm with the same permissions and resource definition, e.g. 
+If credentials should be rotated with no or limited downtime, you can deploy a new charm with the same permissions and resource definition, e.g. 
 
 ```shell
 juju deploy data-integrator rotated-user --channel stable \

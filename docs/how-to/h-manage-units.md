@@ -1,5 +1,7 @@
 # How to manage units
 
+Unit management guide for scaling and running admin utility scripts.
+
 ## Replication and Scaling
 
 Increasing the number of Kafka brokers can be achieved by adding more units
