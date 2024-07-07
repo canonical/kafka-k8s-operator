@@ -23,7 +23,7 @@ When performing an in-place upgrade process, the full process is composed by the
 
 ## Step 1: Collect
 
-The first step is to record the revisions of the running application, as a safety measure for a rollback action if needed. To accomplish this, simply run the `juju status` command and look for the revisions of the deployed Kafka and Zookeeper applications. You can also retrieve this with the following command (that requires [`yq`](https://snapcraft.io/install/yq/ubuntu) to be installed):
+The first step is to record the revisions of the running application, as a safety measure for a rollback action if needed. To accomplish this, simply run the `juju status` command and look for the revisions of the deployed Kafka and ZooKeeper applications. You can also retrieve this with the following command (that requires [`yq`](https://snapcraft.io/install/yq/ubuntu) to be installed):
 
 ```shell
 KAFKA_CHARM_REVISION=$(juju status --format json | yq .applications.<KAFKA_APP_NAME>.charm-rev)
@@ -105,7 +105,7 @@ kafka/2       active    idle   10.193.41.221        Upgrade completed
 
 Before upgrading the unit, the charm will check whether the upgrade can be performed, e.g. this may mean:
 1. Checking that the upgrade from the previous charm revision and Kafka version is allowed
-2. Checking that other external applications that Kafka depends on (e.g. Zookeeper) are running the correct version
+2. Checking that other external applications that Kafka depends on (e.g. ZooKeeper) are running the correct version
 
 Note that these checks are only possible after a refresh of the charm code, and therefore cannot be done upfront (e.g. during the `pre-upgrade-checks` action).
 If some of these checks fail, the upgrade will be aborted. When this happens, the workload may still be operating (as only the operator may have failed) but we recommend to rollback the upgrade as soon as possible. 
@@ -120,6 +120,6 @@ juju refresh kafka-k8s --revision=${KAFKA_CHARM_REVISION}
 
 We strongly recommend to also retrieve the full set of logs with `juju debug-log`, to extract insights on why the upgrade failed. 
 
-## Kafka and Zookeeper combined upgrades
+## Kafka and ZooKeeper combined upgrades
 
-Although the following guide will focus on upgrading Kafka, the same process can also be applied to Zookeeper, should you need to upgrade this component as well. If Kafka and Zookeeper charms need both to be upgraded, we recommend you to start the upgrade from the Zookeeper cluster. As outlined above, the two upgrades should **NEVER** be done concurrently.
+Although the following guide will focus on upgrading Kafka, the same process can also be applied to ZooKeeper, should you need to upgrade this component as well. If Kafka and ZooKeeper charms need both to be upgraded, we recommend you to start the upgrade from the ZooKeeper cluster. As outlined above, the two upgrades should **NEVER** be done concurrently.

@@ -505,7 +505,7 @@ class KafkaBroker(RelationState):
 
 
 class ZooKeeper(RelationState):
-    """State collection metadata for a the Zookeeper relation."""
+    """State collection metadata for a the ZooKeeper relation."""
 
     def __init__(
         self,

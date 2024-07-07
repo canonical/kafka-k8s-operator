@@ -13,7 +13,7 @@ In the following table, we summarize some of the most relevant file paths used i
 | /var/lib/kafka/     | Raw data stored persistently by Kafka during its operations. The files are written and managed by Kafka only.                                                                                         | (owned and managed by `kafka`)        |
 
 
-## Zookeeper 
+## ZooKeeper 
 
 | Path                     | Description                                                                                                                                                                                               | Permission                                |
 |--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|

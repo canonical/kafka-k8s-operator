@@ -20,7 +20,7 @@ As currently Kafka requires a paired ZooKeeper deployment in production, this op
 
 ## Requirements
 
-For production environments, it is recommended to deploy at least 5 nodes for Zookeeper and 3 for Kafka.
+For production environments, it is recommended to deploy at least 5 nodes for ZooKeeper and 3 for Kafka.
 While the following requirements are meant to be for production, the charm can be deployed in much smaller environments.
 
 - 64GB of RAM

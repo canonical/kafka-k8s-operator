@@ -1,6 +1,6 @@
 # Integrate custom alerting rules and dashboards
 
-This guide shows you how to integrate an existing set of rules and/or dashboards to your Charmed Kafka and Charmed Zookeeper deployment to be consumed with the [Canonical Observability Stack (COS)](https://charmhub.io/topics/canonical-observability-stack).
+This guide shows you how to integrate an existing set of rules and/or dashboards to your Charmed Kafka and Charmed ZooKeeper deployment to be consumed with the [Canonical Observability Stack (COS)](https://charmhub.io/topics/canonical-observability-stack).
 To do so, we will sync resources stored in a git repository to COS Lite.
 
 ## Prerequisites

@@ -68,7 +68,7 @@ async def test_deploy_tls(ops_test: OpsTest, app_charm):
 
     await ops_test.model.add_relation(TLS_NAME, ZK_NAME)
 
-    # Relate Zookeeper to TLS
+    # Relate ZooKeeper to TLS
     async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
             apps=[TLS_NAME, ZK_NAME], idle_period=30, status="active", timeout=2000
@@ -82,7 +82,7 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm):
     Relates Zookeper[TLS] with Kafka[Non-TLS]. This leads to a blocked status.
     Afterwards, relate Kafka to TLS operator, which unblocks the application.
     """
-    # Relate Zookeeper[TLS] to Kafka[Non-TLS]
+    # Relate ZooKeeper[TLS] to Kafka[Non-TLS]
     async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.add_relation(ZK_NAME, APP_NAME)
         await ops_test.model.wait_for_idle(

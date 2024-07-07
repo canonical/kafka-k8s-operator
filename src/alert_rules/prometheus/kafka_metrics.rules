@@ -27,7 +27,7 @@ groups:
     labels:
       severity: warning
     annotations:
-      summary: "Zookeeper JVM threads Deadlock occurred."
+      summary: "ZooKeeper JVM threads Deadlock occurred."
       description: |-
         JVM Thread Deadlock means a situation where two or more JVM threads are blocked forever, waiting for each other.
         Deadlock occurs when multiple threads need the same locks but obtain them in different order.
@@ -47,16 +47,16 @@ groups:
       summary: 'Broker {{ $labels.instance }} :: Broker State :: No Brokers alive.'
       description: 'Broker count is 0'
 
-  - alert: Zookeeper Session Connection
+  - alert: ZooKeeper Session Connection
     expr: avg(kafka_server_sessionexpirelistener_zookeepersyncconnectspersec{juju_charm!=".*"})by(instance) < 1
     for: 1m
     labels:
       severity: warning
     annotations:
-      summary: 'Broker {{ $labels.instance }} :: Broker State :: Zookeeper Sync Disconnected.'
-      description: 'Zookeeper Sync Disconnected.'
+      summary: 'Broker {{ $labels.instance }} :: Broker State :: ZooKeeper Sync Disconnected.'
+      description: 'ZooKeeper Sync Disconnected.'
 
-  - alert: Zookeeper Session Expiry
+  - alert: ZooKeeper Session Expiry
     expr: rate(kafka_server_sessionexpirelistener_zookeeperexpirespersec{juju_charm!=".*"}[5m]) != 0
     for: 1m
     labels:
