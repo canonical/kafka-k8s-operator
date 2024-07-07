@@ -9,7 +9,7 @@ Let's install Multipass from [Snap](https://snapcraft.io/multipass) and launch a
 sudo snap install multipass && \
 multipass launch --cpus 4 --memory 8G --disk 50G --name my-vm charm-dev
 ```
-*Note: all `multipass launch` params are [described here](https://multipass.run/docs/launch-command)*.
+*Note: See all `multipass launch` parameters in the [launch command documentation](https://multipass.run/docs/launch-command)*.
 
 Multipass [list of commands](https://multipass.run/docs/multipass-cli-commands) is short and self-explanatory, e.g. show all running VMs:
 ```shell
@@ -22,7 +22,7 @@ multipass shell my-vm
 ```
 *Note: if at any point you'd like to leave Multipass VM, use `Ctrl+D` or type `exit`*.
 
-All the parts have been pre-installed inside VM already, like MicroK8s, LXD and Juju (the files '/var/log/cloud-init.log' and '/var/log/cloud-init-output.log' contain all low-level installation details). 
+All the parts have been pre-installed inside VM already, like MicroK8s, LXD and Juju (the files `/var/log/cloud-init.log` and `/var/log/cloud-init-output.log` contain all low-level installation details). 
 Also, the image already comes with two Juju controllers already setup, one for LXD and one for MicroK8s
 
 ```shell
@@ -34,7 +34,7 @@ lxd*        tutorial  admin  superuser  localhost/localhost       2      1  none
 microk8s    -         admin  superuser  microk8s/localhost        1      1     -  3.1.5
 ```
 
-Make sure that you use the controller binded to the MicroK8s cluster, e.g. 
+Make sure that you use the controller bound to the MicroK8s cluster, e.g. 
 
 ```shell
 juju switch microk8s
