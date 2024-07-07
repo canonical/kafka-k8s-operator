@@ -134,7 +134,7 @@ To remove the user, remove the relation. Removing the relation automatically rem
 juju remove-relation kafka-k8s data-integrator
 ```
 
-The output of the juju model should be something like this:
+The output of the Juju model should be something like this:
 
 ```shell
 ...
