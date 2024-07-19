@@ -685,7 +685,7 @@ def test_workload_version_is_setted(harness: Harness[KafkaCharm], monkeypatch):
         "run_bin_command",
         Mock(side_effect=[output_install, output_changed]),
     )
-    monkeypatch.setattr(harness.charm.workload, "install", Mock(return_value=True))
+    monkeypatch.setattr(harness.charm.broker.workload, "install", Mock(return_value=True))
 
     harness.charm.on.install.emit()
     assert harness.get_workload_version() == "3.6.0"

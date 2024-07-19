@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from ops import (
     ActiveStatus,
     EventBase,
+    InstallEvent,
     Object,
     SecretChangedEvent,
     StartEvent,
@@ -183,8 +184,12 @@ class BrokerOperator(Object):
         """Wrapper for start event."""
         self._on_kafka_pebble_ready(event)
 
-    def _on_install(self, _) -> None:
+    def _on_install(self, event: InstallEvent) -> None:
         """Handler for `install` event."""
+        if not self.charm.unit.get_container(CONTAINER).can_connect():
+            event.defer()
+            return
+
         self.charm.unit.set_workload_version(self.workload.get_version())
         self.config_manager.set_environment()
 

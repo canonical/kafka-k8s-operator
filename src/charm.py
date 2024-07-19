@@ -13,7 +13,6 @@ from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from ops import (
     EventBase,
-    InstallEvent,
     StatusBase,
 )
 from ops.main import main
@@ -69,17 +68,9 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             container_name="kafka",
         )
 
-        self.framework.observe(getattr(self.on, "install"), self._on_install)
-
         # Register roles event handlers after global ones, so that they get the priority.
         self.broker = BrokerOperator(self)
         # self.balancer = BalancerOperator(self)
-
-    def _on_install(self, event: InstallEvent) -> None:
-        """Handler for `install` event."""
-        if not self.unit.get_container(CONTAINER).can_connect():
-            event.defer()
-            return
 
     def _restart(self, event: EventBase) -> None:
         """Handler for `rolling_ops` restart events."""

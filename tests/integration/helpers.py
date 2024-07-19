@@ -18,7 +18,7 @@ from kafka.admin import NewTopic
 from kazoo.exceptions import AuthFailedError, NoNodeError
 from pytest_operator.plugin import OpsTest
 
-from literals import PATHS, SECURITY_PROTOCOL_PORTS
+from literals import BROKER, SECURITY_PROTOCOL_PORTS
 from managers.auth import Acl, AuthManager
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ STORAGE = "data"
 
 
 def load_acls(model_full_name: str | None, zk_uris: str) -> Set[Acl]:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-acls.sh --authorizer-properties zookeeper.connect={zk_uris} --list"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={BROKER.paths['CONF']}/zookeeper-jaas.cfg {BROKER.paths['BIN']}/bin/kafka-acls.sh --authorizer-properties zookeeper.connect={zk_uris} --list"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -47,7 +47,7 @@ def load_acls(model_full_name: str | None, zk_uris: str) -> Set[Acl]:
 
 def load_super_users(model_full_name: str | None) -> List[str]:
     result = check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {APP_NAME}/0 'cat {PATHS['CONF']}/server.properties'",
+        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {APP_NAME}/0 'cat {BROKER.paths['CONF']}/server.properties'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -62,7 +62,7 @@ def load_super_users(model_full_name: str | None) -> List[str]:
 
 
 def check_user(model_full_name: str | None, username: str) -> None:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-configs.sh --bootstrap-server localhost:19092 --describe --entity-type users --entity-name {username} --command-config {PATHS['CONF']}/client.properties"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={BROKER.paths['CONF']}/zookeeper-jaas.cfg {BROKER.paths['BIN']}/bin/kafka-configs.sh --bootstrap-server localhost:19092 --describe --entity-type users --entity-name {username} --command-config {BROKER.paths['CONF']}/client.properties"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -76,7 +76,7 @@ def check_user(model_full_name: str | None, username: str) -> None:
 def get_user(model_full_name: str | None, username: str = "sync") -> str:
     """Get information related to a user stored on zookeeper."""
     result = check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {APP_NAME}/0 'cat {PATHS['CONF']}/server.properties'",
+        f"JUJU_MODEL={model_full_name} juju ssh --container kafka {APP_NAME}/0 'cat {BROKER.paths['CONF']}/server.properties'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -251,7 +251,7 @@ def check_logs(ops_test: OpsTest, kafka_unit_name: str, topic: str) -> None:
         AssertionError: if logs aren't found for desired topic
     """
     logs = check_output(
-        f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {kafka_unit_name} 'find {PATHS['DATA']}/{STORAGE}'",
+        f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {kafka_unit_name} 'find {BROKER.paths['DATA']}/{STORAGE}'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -273,7 +273,7 @@ async def run_client_properties(ops_test: OpsTest) -> str:
         + f":{SECURITY_PROTOCOL_PORTS['SASL_PLAINTEXT', 'SCRAM-SHA-512'].client}"
     )
 
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config {PATHS['CONF']}/client.properties --entity-type users"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={BROKER.paths['CONF']}/zookeeper-jaas.cfg {BROKER.paths['BIN']}/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config {BROKER.paths['CONF']}/client.properties --entity-type users"
 
     result = check_output(
         f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
@@ -287,7 +287,7 @@ async def run_client_properties(ops_test: OpsTest) -> str:
 
 async def set_mtls_client_acls(ops_test: OpsTest, bootstrap_server: str) -> str:
     """Adds ACLs for principal `User:client` and `TEST-TOPIC`."""
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-acls.sh --bootstrap-server {bootstrap_server} --add --allow-principal=User:client --operation READ --operation WRITE --operation CREATE --topic TEST-TOPIC --command-config {PATHS['CONF']}/client.properties"
+    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={BROKER.paths['CONF']}/zookeeper-jaas.cfg {BROKER.paths['BIN']}/bin/kafka-acls.sh --bootstrap-server {bootstrap_server} --add --allow-principal=User:client --operation READ --operation WRITE --operation CREATE --topic TEST-TOPIC --command-config {BROKER.paths['CONF']}/client.properties"
 
     result = check_output(
         f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
