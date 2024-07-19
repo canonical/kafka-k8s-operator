@@ -99,20 +99,12 @@ class Listener:
         return f"{self.name}://{self.host}:{self.port}"
 
 
-class KafkaConfigManager:
-    """Manager for handling Kafka configuration."""
+class CommonConfigManager:
+    """Common options for managing Kafka configuration."""
 
-    def __init__(
-        self,
-        state: ClusterState,
-        workload: WorkloadBase,
-        config: CharmConfig,
-        current_version: str,
-    ):
-        self.state = state
-        self.workload = workload
-        self.config = config
-        self.current_version = current_version
+    config: CharmConfig
+    workload: WorkloadBase
+    state: ClusterState
 
     @property
     def log_level(self) -> str:
@@ -552,3 +544,19 @@ Client {{
             String with Kafka configuration name to be placed in the server.properties file
         """
         return key.replace("_", ".") if key not in SERVER_PROPERTIES_BLACKLIST else f"# {key}"
+
+
+class ConfigManager(CommonConfigManager):
+    """Manager for handling Kafka configuration."""
+
+    def __init__(
+        self,
+        state: ClusterState,
+        workload: WorkloadBase,
+        config: CharmConfig,
+        current_version: str,
+    ):
+        self.state = state
+        self.workload = workload
+        self.config = config
+        self.current_version = current_version

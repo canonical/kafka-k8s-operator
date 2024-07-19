@@ -24,6 +24,7 @@ from literals import Status
 
 if TYPE_CHECKING:
     from charm import KafkaCharm
+    from events.broker import BrokerOperator
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +43,10 @@ class KafkaDependencyModel(BaseModel):
 class KafkaUpgrade(DataUpgrade):
     """Implementation of :class:`DataUpgrade` overrides for in-place upgrades."""
 
-    def __init__(self, charm: "KafkaCharm", **kwargs):
-        super().__init__(charm, **kwargs)
-        self.charm = charm
+    def __init__(self, dependent: "BrokerOperator", **kwargs) -> None:
+        super().__init__(dependent.charm, **kwargs)
+        self.dependent = dependent
+        self.charm: "KafkaCharm" = dependent.charm
 
         self.framework.observe(
             getattr(self.charm.on, "upgrade_charm"), self._on_kafka_pebble_ready_upgrade
@@ -74,10 +76,10 @@ class KafkaUpgrade(DataUpgrade):
             return
 
         # required settings given zookeeper connection config has been created
-        self.charm.config_manager.set_environment()
-        self.charm.config_manager.set_server_properties()
-        self.charm.config_manager.set_zk_jaas_config()
-        self.charm.config_manager.set_client_properties()
+        self.dependent.config_manager.set_environment()
+        self.dependent.config_manager.set_server_properties()
+        self.dependent.config_manager.set_zk_jaas_config()
+        self.dependent.config_manager.set_client_properties()
 
         # during pod-reschedules (e.g upgrades or otherwise) we lose all files
         # need to manually add-back key/truststores
@@ -86,14 +88,14 @@ class KafkaUpgrade(DataUpgrade):
             and self.charm.state.unit_broker.certificate
             and self.charm.state.unit_broker.ca
         ):  # TLS is probably completed
-            self.charm.tls_manager.set_server_key()
-            self.charm.tls_manager.set_ca()
-            self.charm.tls_manager.set_certificate()
-            self.charm.tls_manager.set_truststore()
-            self.charm.tls_manager.set_keystore()
+            self.dependent.tls_manager.set_server_key()
+            self.dependent.tls_manager.set_ca()
+            self.dependent.tls_manager.set_certificate()
+            self.dependent.tls_manager.set_truststore()
+            self.dependent.tls_manager.set_keystore()
 
         # start kafka service
-        self.charm.workload.start(layer=self.charm._kafka_layer)
+        self.charm.workload.start(layer=self.dependent._kafka_layer)
 
         try:
             self.post_upgrade_check()
@@ -127,7 +129,7 @@ class KafkaUpgrade(DataUpgrade):
     @override
     def pre_upgrade_check(self) -> None:
         default_message = "Pre-upgrade check failed and cannot safely upgrade"
-        if not self.charm.healthy:
+        if not self.dependent.healthy:
             raise ClusterNotReadyError(message=default_message, cause="Cluster is not healthy")
 
         if self.idle:

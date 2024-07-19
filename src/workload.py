@@ -11,34 +11,34 @@ from ops import Container
 from ops.pebble import ExecError, Layer
 from typing_extensions import override
 
-from core.workload import KafkaPaths, WorkloadBase
+from core.workload import CharmedKafkaPaths, WorkloadBase
+from literals import BALANCER, BROKER
 
 logger = logging.getLogger(__name__)
 
 
-class KafkaWorkload(WorkloadBase):
+class Workload(WorkloadBase):
     """Wrapper for performing common operations specific to the Kafka container."""
 
-    paths = KafkaPaths()
-    CONTAINER_SERVICE = "kafka"
+    paths: CharmedKafkaPaths
+    service: str
 
     def __init__(self, container: Container) -> None:
-        self.paths = KafkaPaths()
         self.container = container
 
     @override
     def start(self, layer: Layer) -> None:
         # start kafka service
-        self.container.add_layer(self.CONTAINER_SERVICE, layer, combine=True)
+        self.container.add_layer(self.service, layer, combine=True)
         self.container.replan()
 
     @override
     def stop(self) -> None:
-        self.container.stop(self.CONTAINER_SERVICE)
+        self.container.stop(self.service)
 
     @override
     def restart(self) -> None:
-        self.container.restart(self.CONTAINER_SERVICE)
+        self.container.restart(self.service)
 
     @override
     def read(self, path: str) -> list[str]:
@@ -76,7 +76,7 @@ class KafkaWorkload(WorkloadBase):
         if not self.container.can_connect():
             return False
 
-        return self.container.get_service(self.CONTAINER_SERVICE).is_running()
+        return self.container.get_service(self.service).is_running()
 
     @override
     def run_bin_command(
@@ -120,3 +120,35 @@ class KafkaWorkload(WorkloadBase):
         except:  # noqa: E722
             version = ""
         return version
+
+
+class KafkaWorkload(Workload):
+    """Broker specific wrapper."""
+
+    def __init__(self, container: Container) -> None:
+        super().__init__(container)
+        self.paths = CharmedKafkaPaths(BROKER)
+        self.service = BROKER.service
+
+    @override
+    def get_version(self) -> str:
+        if not self.active:
+            return ""
+        try:
+            version = re.split(r"[\s\-]", self.run_bin_command("topics", ["--version"]))[0]
+        except:  # noqa: E722
+            version = ""
+        return version
+
+
+class BalancerWorkload(Workload):
+    """Balancer specific wrapper."""
+
+    def __init__(self, container: Container) -> None:
+        super().__init__(container)
+        self.paths = CharmedKafkaPaths(BALANCER)
+        self.service = BALANCER.service
+
+    @override
+    def get_version(self) -> str:
+        raise NotImplementedError
