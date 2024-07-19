@@ -383,17 +383,6 @@ class CommonConfigManager:
         return [self.internal_listener] + self.client_listeners
 
     @property
-    def inter_broker_protocol_version(self) -> str:
-        """Creates the protocol version from the kafka version.
-
-        Returns:
-            String with the `major.minor` version
-        """
-        # Remove patch number from full version.
-        major_minor = self.current_version.split(".", maxsplit=2)
-        return ".".join(major_minor[:2])
-
-    @property
     def rack_properties(self) -> list[str]:
         """Builds all properties related to rack awareness configuration.
 
@@ -430,46 +419,6 @@ class CommonConfigManager:
         return client_properties
 
     @property
-    def server_properties(self) -> list[str]:
-        """Builds all properties necessary for starting Kafka service.
-
-        This includes charm config, replication, SASL/SCRAM auth and default properties.
-
-        Returns:
-            List of properties to be set
-
-        Raises:
-            KeyError if inter-broker username and password not set to relation data
-        """
-        protocol_map = [listener.protocol_map for listener in self.all_listeners]
-        listeners_repr = [listener.listener for listener in self.all_listeners]
-        advertised_listeners = [listener.advertised_listener for listener in self.all_listeners]
-
-        properties = (
-            [
-                f"super.users={self.state.super_users}",
-                f"log.dirs={self.state.log_dirs}",
-                f"listener.security.protocol.map={','.join(protocol_map)}",
-                f"listeners={','.join(listeners_repr)}",
-                f"advertised.listeners={','.join(advertised_listeners)}",
-                f"inter.broker.listener.name={self.internal_listener.name}",
-                f"inter.broker.protocol.version={self.inter_broker_protocol_version}",
-            ]
-            + self.scram_properties
-            + self.oauth_properties
-            + self.config_properties
-            + self.default_replication_properties
-            + self.auth_properties
-            + self.rack_properties
-            + DEFAULT_CONFIG_OPTIONS.split("\n")
-        )
-
-        if self.state.cluster.tls_enabled and self.state.unit_broker.certificate:
-            properties += self.tls_properties + self.zookeeper_tls_properties
-
-        return properties
-
-    @property
     def config_properties(self) -> list[str]:
         """Configure server properties from config."""
         return [
@@ -497,12 +446,6 @@ Client {{
     def set_zk_jaas_config(self) -> None:
         """Writes the ZooKeeper JAAS config using ZooKeeper relation data."""
         self.workload.write(content=self.zk_jaas_config, path=self.workload.paths.zk_jaas)
-
-    def set_server_properties(self) -> None:
-        """Writes all Kafka config properties to the `server.properties` path."""
-        self.workload.write(
-            content="\n".join(self.server_properties), path=self.workload.paths.server_properties
-        )
 
     def set_client_properties(self) -> None:
         """Writes all client config properties to the `client.properties` path."""
@@ -560,3 +503,60 @@ class ConfigManager(CommonConfigManager):
         self.workload = workload
         self.config = config
         self.current_version = current_version
+
+    @property
+    def inter_broker_protocol_version(self) -> str:
+        """Creates the protocol version from the kafka version.
+
+        Returns:
+            String with the `major.minor` version
+        """
+        # Remove patch number from full version.
+        major_minor = self.current_version.split(".", maxsplit=2)
+        return ".".join(major_minor[:2])
+
+    @property
+    def server_properties(self) -> list[str]:
+        """Builds all properties necessary for starting Kafka service.
+
+        This includes charm config, replication, SASL/SCRAM auth and default properties.
+
+        Returns:
+            List of properties to be set
+
+        Raises:
+            KeyError if inter-broker username and password not set to relation data
+        """
+        protocol_map = [listener.protocol_map for listener in self.all_listeners]
+        listeners_repr = [listener.listener for listener in self.all_listeners]
+        advertised_listeners = [listener.advertised_listener for listener in self.all_listeners]
+
+        properties = (
+            [
+                f"super.users={self.state.super_users}",
+                f"log.dirs={self.state.log_dirs}",
+                f"listener.security.protocol.map={','.join(protocol_map)}",
+                f"listeners={','.join(listeners_repr)}",
+                f"advertised.listeners={','.join(advertised_listeners)}",
+                f"inter.broker.listener.name={self.internal_listener.name}",
+                f"inter.broker.protocol.version={self.inter_broker_protocol_version}",
+            ]
+            + self.scram_properties
+            + self.oauth_properties
+            + self.config_properties
+            + self.default_replication_properties
+            + self.auth_properties
+            + self.rack_properties
+            + DEFAULT_CONFIG_OPTIONS.split("\n")
+        )
+
+        if self.state.cluster.tls_enabled and self.state.unit_broker.certificate:
+            properties += self.tls_properties + self.zookeeper_tls_properties
+
+        return properties
+
+    def set_server_properties(self) -> None:
+        """Writes all Kafka config properties to the `server.properties` path."""
+        self.workload.write(
+            content="\n".join(self.server_properties), path=self.workload.paths.server_properties
+        )
