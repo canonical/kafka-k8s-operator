@@ -1,6 +1,6 @@
 This is part of the [Charmed Kafka K8s Tutorial](/t/charmed-kafka-k8s-documentation-tutorial-overview/11945). Please refer to this page for more information and the overview of the content.
 
-## Manage Passwords
+## Manage passwords
 
 Passwords help to secure our cluster and are essential for security. Over time it is a good practice to change the password frequently. Here we will go through setting and changing the password both for the admin user and external Kafka users managed by the data-integrator.
 
@@ -125,7 +125,7 @@ kafka:
 ok: "True"
 ```
 
-In order to rotate external password with no or limited downtime, please refer to the how-to guide on [app management](/t/charmed-kafka-k8s-how-to-manage-app/10293).
+To rotate external password with no or limited downtime, please refer to the how-to guide on [app management](/t/charmed-kafka-k8s-how-to-manage-app/10293).
 
 #### Remove the user
 
@@ -156,7 +156,7 @@ zookeeper-k8s/1*    active    idle   10.1.36.86
 zookeeper-k8s/2     active    idle   10.1.36.85
 ```
 
-> **Note** The operations above would also apply to charmed applications that implement  the `kafka_client` relation, for which password rotation and user deletion can be achieved in the same consistent way.
+> **Note** The operations above would also apply to Charmed applications that implement the `kafka_client` relation, for which password rotation and user deletion can be achieved in the same consistent way.
 
 ## What's next?
 
