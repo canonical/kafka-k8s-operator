@@ -95,12 +95,12 @@ class Status(Enum):
     ACTIVE = StatusLevel(ActiveStatus(), "DEBUG")
     SERVICE_NOT_RUNNING = StatusLevel(BlockedStatus("service not running"), "WARNING")
     NO_PEER_RELATION = StatusLevel(MaintenanceStatus("no peer relation yet"), "DEBUG")
-    ZK_NOT_RELATED = StatusLevel(BlockedStatus("missing required zookeeper relation"), "DEBUG")
-    ZK_NOT_CONNECTED = StatusLevel(BlockedStatus("unit not connected to zookeeper"), "ERROR")
+    ZK_NOT_RELATED = StatusLevel(BlockedStatus("missing required ZooKeeper relation"), "DEBUG")
+    ZK_NOT_CONNECTED = StatusLevel(BlockedStatus("unit not connected to ZooKeeper"), "ERROR")
     ZK_TLS_MISMATCH = StatusLevel(
-        BlockedStatus("tls must be enabled on both kafka and zookeeper"), "ERROR"
+        BlockedStatus("TLS must be enabled on both Kafka and ZooKeeper"), "ERROR"
     )
-    ZK_NO_DATA = StatusLevel(WaitingStatus("zookeeper credentials not created yet"), "DEBUG")
+    ZK_NO_DATA = StatusLevel(WaitingStatus("ZooKeeper credentials not created yet"), "DEBUG")
     ADDED_STORAGE = StatusLevel(
         ActiveStatus("manual partition reassignment may be needed to utilize new storage volumes"),
         "WARNING",
