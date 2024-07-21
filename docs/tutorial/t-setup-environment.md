@@ -7,7 +7,7 @@ This is part of the [Charmed Kafka Tutorial](/t/charmed-kafka-k8s-documentation-
 Let's install Multipass from [Snap](https://snapcraft.io/multipass) and launch a new VM using "[charm-dev](https://github.com/canonical/multipass-blueprints/blob/main/v1/charm-dev.yaml)" cloud-init config:
 ```shell
 sudo snap install multipass && \
-multipass launch --cpus 4 --memory 8G --disk 30G --name my-vm charm-dev # tune CPU/RAM/HDD accordingly to your needs
+multipass launch --cpus 4 --memory 8G --disk 30G --name my-vm charm-dev
 ```
 *Note: See all `multipass launch` parameters in the [launch command documentation](https://multipass.run/docs/launch-command)*.
 

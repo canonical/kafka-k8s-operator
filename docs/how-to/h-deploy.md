@@ -10,7 +10,7 @@ In the next subsections we will cover these steps separately by referring to
 relevant Juju documentation and providing details on the Charmed Kafka K8s specifics.
 If you already have a Juju controller and/or a Juju model, you can skip the associated steps.
 
-## Juju Controller setup
+## Juju controller setup
 
 Before deploying Kafka, make sure you have a Juju controller accessible from 
 your local environment using the [Juju client snap](https://snapcraft.io/juju). 
@@ -29,7 +29,7 @@ You can find more information on how to bootstrap and configure a controller for
 clouds [here](https://juju.is/docs/juju/manage-controllers#heading--bootstrap-a-controller). 
 Make sure you bootstrap a `k8s` Juju controller. 
 
-## Juju Model setup
+## Juju model setup
 
 You can create a new Juju model using 
 

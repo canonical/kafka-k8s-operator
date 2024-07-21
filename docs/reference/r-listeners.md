@@ -1,6 +1,6 @@
-# Kafka Listeners
+# Kafka listeners
 
-Charmed Kafka comes with a set of listeners that can be enabled to allow for
+Charmed Kafka comes with a set of listeners that can be enabled for
 inter- and intra-cluster communication. 
 
 *Internal listeners* are used for internal traffic and exchange of information 
@@ -15,8 +15,8 @@ opened.
 
 | Listener name | Driving endpoints                      | Protocol       | Port  | Scope    |
 |---------------|----------------------------------------|----------------|-------|----------|
-| SASL_INTERNAL | `cluster`                              | SASL_PLAINTEXT | 19092 | internal |
-| SASL_INTERNAL | `cluster` + `certificates`             | SASL_SSL       | 19093 | internal |
+| SASL_INTERNAL | `cluster`                              | SASL_PLAINTEXT | `19092` | internal |
+| SASL_INTERNAL | `cluster` + `certificates`             | SASL_SSL       | `19093` | internal |
 | SASL_EXTERNAL | `kafka-client`                         | SASL_PLAINTEXT | 9092  | external |
 | SASL_EXTERNAL | `kafka-client` + `certificates`        | SASL_SSL       | 9093  | external |
 | SSL_EXTERNAL  | `trusted-certificate` + `certificates` | SSL            | 9094  | external |
