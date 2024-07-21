@@ -2,7 +2,7 @@
 
 Unit management guide for scaling and running admin utility scripts.
 
-## Replication and Scaling
+## Replication and scaling
 
 Increasing the number of Kafka brokers can be achieved by adding more units
 to the Charmed Kafka K8s application, e.g. 
@@ -77,14 +77,14 @@ Commands can be run within a Kafka broker, since both the authentication
 file (along with the truststore if needed) and the Charmed Kafka binaries are 
 already present. 
 
-#### Example (Listing topics)
+#### Example (listing topics)
 
-For instance, in order to list the current topics on the Kafka cluster, you can run:
+For instance, to list the current topics on the Kafka cluster, you can run:
 ```
 juju ssh kafka-k8s/leader '/opt/kafka/bin/kafka-topics.sh --bootstrap-server $BOOTSTRAP_SERVERS --list --command-config /etc/kafka/client.properties'
 ```
 
-### Juju External users
+### Juju external users
 
 For external users managed by the  [Data Integrator Charm](https://charmhub.io/data-integrator), 
 the endpoints and credentials can be fetched using the dedicated action

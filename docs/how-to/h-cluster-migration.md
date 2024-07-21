@@ -1,15 +1,15 @@
-# Cluster Migration using MirrorMaker 2.0
+# Cluster migration using MirrorMaker 2.0
 
 This How-To guide covers executing a cluster migration to a Charmed Kafka K8s deployment using MirrorMaker2.0, running as a process on each of the Juju units in an active/passive setup, where MirrorMaker will act as a consumer from an existing cluster, and a producer to the Charmed Kafka K8s cluster. In parallel (one process on each unit), data and consumer offsets for all existing topics will be synced one-way until both clusters are in-sync, with all data replicated across both in real-time.
 
-## MirrorMaker2 Overview
+## MirrorMaker2 overview
 
 Under the hood, MirrorMaker uses Kafka Connect source connectors to replicate data, those being the following:
 - **MirrorSourceConnector** - replicates topics from an original cluster to a new cluster. It also replicates ACLs and is necessary for the MirrorCheckpointConnector to run
 - **MirrorCheckpointConnector** - periodically tracks offsets. If enabled, it also synchronizes consumer group offsets between the original and new clusters
 - **MirrorHeartbeatConnector** - periodically checks connectivity between the original and new clusters
 
-Together, these allow for cluster->cluster replication of topics, consumer groups, topic configuration and ACLs, preserving partitioning and consumer offsets. For more detail on MirrorMaker internals, consult the [MirrorMaker README.md](https://github.com/apache/kafka/blob/trunk/connect/mirror/README.md) and the [MirrorMaker 2.0 KIP](https://cwiki.apache.org/confluence/display/KAFKA/KIP-382%3A+MirrorMaker+2.0). In practice, it allows one to sync data one-way between two live Kafka clusters with minimal impact on the ongoing production service.
+Together, they are used for cluster->cluster replication of topics, consumer groups, topic configuration and ACLs, preserving partitioning and consumer offsets. For more detail on MirrorMaker internals, consult the [MirrorMaker README.md](https://github.com/apache/kafka/blob/trunk/connect/mirror/README.md) and the [MirrorMaker 2.0 KIP](https://cwiki.apache.org/confluence/display/KAFKA/KIP-382%3A+MirrorMaker+2.0). In practice, one can sync data one-way between two live Kafka clusters with minimal impact on the ongoing production service.
 
 In short, MirrorMaker runs as a distributed service on the new cluster, and consumes all topics, groups and offsets from the still-active original cluster in production, before producing them one-way to the new cluster that may not yet be serving traffic to external clients. The original, in-production cluster is referred to as an ‘active’ cluster, and the new cluster still waiting to serve external clients is ‘passive’. The MirrorMaker service can be configured using much the same configuration as available for Kafka Connect.
 
@@ -47,7 +47,7 @@ export NEW_SASL_JAAS_CONFIG="org.apache.kafka.common.security.scram.ScramLoginMo
 
 ## Required source cluster credentials
 
-In order to authenticate MirrorMaker to both clusters, it will need full `super.user` permissions on **BOTH** clusters. MirrorMaker supports every possible `security.protocol` supported by Apache Kafka. In this guide, we will make the assumption that the original cluster is using `SASL_PLAINTEXT` authentication, as such, the required information is as follows:
+To authenticate MirrorMaker to both clusters, it will need full `super.user` permissions on **BOTH** clusters. MirrorMaker supports every possible `security.protocol` supported by Apache Kafka. In this guide, we will make the assumption that the original cluster is using `SASL_PLAINTEXT` authentication, as such, the required information is as follows:
 
 ```bash
 # comma-separated list of kafka server IPs and ports to connect to

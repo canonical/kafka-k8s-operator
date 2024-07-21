@@ -2,7 +2,7 @@ This is part of the [Charmed Kafka K8s Tutorial](/t/charmed-kafka-k8s-documentat
 
 ## Deploy Charmed Kafka K8s (and Charmed ZooKeeper K8s)
 
-To deploy Charmed Kafka K8s, all you need to do is run the following commands, which will automatically fetch [Kafka](https://charmhub.io/kafka-k8s?channel=3/stable) and [ZooKeeper](https://charmhub.io/zookeeper-k8s?channel=3/stable) charms from [Charmhub](https://charmhub.io/) and deploy them to your model. For example, to deploy a 5 ZooKeeper unit and 3 Kafka unit cluster, you can simply run
+To deploy Charmed Kafka K8s, all you need to do is run the following commands, which will automatically fetch [Kafka](https://charmhub.io/kafka-k8s?channel=3/stable) and [ZooKeeper](https://charmhub.io/zookeeper-k8s?channel=3/stable) charms from [Charmhub](https://charmhub.io/) and deploy them to your model. For example, to deploy a five ZooKeeper unit and three Kafka unit cluster, you can simply run
 
 ```shell
 $ juju deploy zookeeper-k8s -n 3 
@@ -76,19 +76,19 @@ juju ssh --container kafka kafka-k8s/leader /bin/bash
 ```
 
 The Charmed Kafka K8s image ships with the Apache Kafka `bin/*.sh` commands, that can be found under `/opt/kafka/bin/`.
-These allow admin to do various administrative tasks, e.g `bin/kafka-config.sh` to update cluster configuration, `bin/kafka-topics.sh` for topic management, and many more! 
+They can be used to do various administrative tasks, e.g `bin/kafka-config.sh` to update cluster configuration, `bin/kafka-topics.sh` for topic management, and many more! 
 Within the image you can also find a `client.properties` file that already provides the relevant settings to connect to the cluster using the CLI:
 
 ```shell
 export CLIENT_PROPERTIES=/etc/kafka/client.properties
 ```
 
-Since we don't have any client applications related yet and therefore external listeners are initially closed, if you wish to run a command from the cluster you ought to use the internal listeners exposed at ports 19092.  
+Since we don't have any client applications related yet and therefore external listeners are initially closed, if you wish to run a command from the cluster you ought to use the internal listeners exposed at ports `19092`.  
 ```shell
 export INTERNAL_LISTENERS=kafka-k8s-1.kafka-k8s-endpoints:19092,kafka-k8s-2.kafka-k8s-endpoints:19092,kafka-k8s-0.kafka-k8s-endpoints:19092
 ```
 
-We are now ready to perform some administrative tasks. For example, in order to create a topic, you can run:
+We are now ready to perform some administrative tasks. For example, to create a topic, you can run:
 ```shell
 /opt/kafka/bin/kafka-topics.sh \
     --create --topic test_topic \

@@ -34,7 +34,7 @@ To find offers, run the following command (make sure not to miss the ":" at the 
 juju find-offers <k8s_cos_controller>: 
 ```
 
-The output should be similar to the sample below, where `k8s` is the k8s controller name and `cos` is the model where `cos-lite` has been deployed:
+The output should be similar to the sample below, where `k8s` is the K8s controller name and `cos` is the model where `cos-lite` has been deployed:
 ```shell
 Store     URL                                        Access  Interfaces
 k8s  admin/cos.grafana-dashboards               admin   grafana_dashboard:grafana-dashboard
@@ -91,7 +91,7 @@ juju run grafana/leader get-admin-password --model <k8s_cos_controller>:<cos_mod
 
 ## Tune server logging level
 
-In order to tune the level of the server logs for Kafka and ZooKeeper, configure the `log-level` and `log_level` properties accordingly
+To tune the level of the server logs for Kafka and ZooKeeper, configure the `log-level` and `log_level` properties accordingly.
 
 ### Kafka 
 

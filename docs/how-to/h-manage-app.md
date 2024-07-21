@@ -18,7 +18,7 @@ juju remove-relation kafka application
 
 ## Outside Juju or for charms not implementing `kafka_client`
 
-The `kafka_client` interface is used with the `data-integrator` charm. This charm allows to automatically create and manage product credentials needed to authenticate with different kinds of data platform charmed products:
+The `kafka_client` interface is used with the `data-integrator` charm. This charm can automatically create and manage product credentials needed to authenticate with different kinds of data platform Charmed products.
 
 Deploy the data-integrator charm with the desired `topic-name` and user roles:
 ```shell
@@ -50,7 +50,7 @@ ok: "True"
 
 ## Password rotation
 
-Password rotation can be performed in multiple ways, depending on the use case.
+Password rotation can be performed in multiple ways, depending on the requirements.
 
 ### External clients
 
@@ -84,7 +84,7 @@ The `data-integrator` charm can then be related to the `kafka-k8s` charm to crea
 juju relate kafka-k8s rotated-user
 ```
 
-At this point, we effectively have two overlapping users, therefore allowing applications to swap the password
+At this point, we effectively have two overlapping users, so that applications can swap the password
 from one to another. 
 If the applications consist of fleets of independent producers and consumers, user credentials can be rotated
 progressively across fleets, such that no effective downtime is achieved. 
@@ -95,7 +95,7 @@ Once all applications have rotated their credentials, it is then safe to remove 
 juju remove-application data-integrator
 ```
 
-### Internal Password rotation
+### Internal password rotation
 
 The operator user is used internally by the Charmed Kafka Operator, the `set-password` action can be used to rotate its password.
 ```shell
