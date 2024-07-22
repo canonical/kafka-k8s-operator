@@ -28,6 +28,7 @@ from ops.pebble import Layer
 
 from core.cluster import ClusterState
 from core.structured_config import CharmConfig
+from events.oauth import OAuthHandler
 from events.password_actions import PasswordActionEvents
 from events.provider import KafkaProvider
 from events.tls import TLSHandler
@@ -74,6 +75,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.password_action_events = PasswordActionEvents(self)
         self.zookeeper = ZooKeeperHandler(self)
         self.tls = TLSHandler(self)
+        self.oauth = OAuthHandler(self)
         self.provider = KafkaProvider(self)
         self.upgrade = KafkaUpgrade(
             self,
