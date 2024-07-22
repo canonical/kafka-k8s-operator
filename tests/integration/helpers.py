@@ -270,7 +270,7 @@ async def run_client_properties(ops_test: OpsTest) -> str:
     """Runs command requiring admin permissions, authenticated with bootstrap-server."""
     bootstrap_server = (
         await get_address(ops_test=ops_test)
-        + f":{SECURITY_PROTOCOL_PORTS['SASL_PLAINTEXT'].client}"
+        + f":{SECURITY_PROTOCOL_PORTS['SASL_PLAINTEXT', 'SCRAM-SHA-512'].client}"
     )
 
     container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={PATHS['CONF']}/zookeeper-jaas.cfg {PATHS['BIN']}/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config {PATHS['CONF']}/client.properties --entity-type users"
