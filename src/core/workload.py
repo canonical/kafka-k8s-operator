@@ -46,6 +46,11 @@ class CharmedKafkaPaths:
         return f"{self.conf_path}/zookeeper-jaas.cfg"
 
     @property
+    def balancer_jaas(self):
+        """The cruise_control_jaas.conf filepath."""
+        return f"{self.conf_path}/cruise_control_jaas.conf"
+
+    @property
     def keystore(self):
         """The Java Keystore containing service private-key and signed certificates."""
         return f"{self.conf_path}/keystore.p12"
@@ -64,6 +69,14 @@ class CharmedKafkaPaths:
         return f"{self.conf_path}/log4j.properties"
 
     @property
+    def tools_log4j_properties(self):
+        """The tooling Log4j properties filepath.
+
+        Contains the Log4j configuration options primarily for the bin commands.
+        """
+        return f"{self.conf_path}/tools-log4j.properties"
+
+    @property
     def jmx_prometheus_javaagent(self):
         """The JMX exporter JAR filepath.
 
@@ -75,6 +88,21 @@ class CharmedKafkaPaths:
     def jmx_prometheus_config(self):
         """The configuration for the JMX exporter."""
         return f"{self.conf_path}/jmx_prometheus.yaml"
+
+    @property
+    def cruise_control_properties(self):
+        """The cruisecontrol.properties filepath."""
+        return f"{self.conf_path}/cruisecontrol.properties"
+
+    @property
+    def capacity_jbod_json(self):
+        """The JBOD capacity JSON."""
+        return f"{self.conf_path}/capacityJBOD.json"
+
+    @property
+    def cruise_control_auth(self):
+        """The credentials file."""
+        return f"{self.conf_path}/cruisecontrol.credentials"
 
 
 class WorkloadBase(ABC):

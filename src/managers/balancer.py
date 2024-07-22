@@ -12,11 +12,8 @@ from literals import BALANCER, BALANCER_TOPICS, STORAGE
 
 if TYPE_CHECKING:
     from charm import KafkaCharm
-
-    # from events.balancer import BalancerOperator
+    from events.balancer import BalancerOperator
     from events.broker import BrokerOperator
-
-    BalancerOperator = BrokerOperator
 
 
 logger = logging.getLogger(__name__)
@@ -56,9 +53,7 @@ class BalancerManager:
         #     property_file = f'{BROKER.paths["CONF"]}/client.properties'
         #     bootstrap_servers = self.charm.state.internal_bootstrap_server
         # else:
-
-        # bootstrap_servers = self.charm.state.balancer.broker_uris
-        bootstrap_servers = self.charm.state.bootstrap_server
+        bootstrap_servers = self.charm.state.balancer.broker_uris
         property_file = f'{BALANCER.paths["CONF"]}/cruisecontrol.properties'
 
         for topic in BALANCER_TOPICS:

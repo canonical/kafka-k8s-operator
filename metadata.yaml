@@ -41,6 +41,17 @@ peers:
   upgrade:
     interface: upgrade
 
+provides:
+  kafka-client:
+    interface: kafka_client
+  metrics-endpoint:
+    interface: prometheus_scrape
+  grafana-dashboard:
+    interface: grafana_dashboard
+  peer-cluster-orchestrator:
+    interface: peer_cluster
+    limit: 1
+
 requires:
   zookeeper:
     interface: zookeeper
@@ -58,22 +69,18 @@ requires:
   logging:
     interface: loki_push_api
     optional: true
+  peer-cluster:
+    interface: peer_cluster
+    optional: true
   oauth:
     interface: oauth
     limit: 1
     optional: true
 
-provides:
-  kafka-client:
-    interface: kafka_client
-  metrics-endpoint:
-    interface: prometheus_scrape
-  grafana-dashboard:
-    interface: grafana_dashboard
-
 storage:
   data:
     type: filesystem
     description: Directories where the log data is stored
-    minimum-size: 10G
+    minimum-size: 1G
     location: /var/lib/kafka/data
+
