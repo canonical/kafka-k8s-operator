@@ -75,7 +75,7 @@ class BalancerOperator(Object):
             "description": "Pebble config layer for kafka",
             "services": {
                 BALANCER.service: {
-                    "override": "replace",
+                    "override": "merge",
                     "summary": "balancer",
                     "command": command,
                     "startup": "enabled",
