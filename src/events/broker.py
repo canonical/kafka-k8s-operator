@@ -284,7 +284,10 @@ class BrokerOperator(Object):
 
     def _on_storage_attached(self, event: StorageAttachedEvent) -> None:
         """Handler for `storage_attached` events."""
-        if not self.charm.state.peer_relation:
+        if (
+            not self.charm.unit.get_container(CONTAINER).can_connect()
+            or not self.charm.state.peer_relation
+        ):
             event.defer()
             return
 
