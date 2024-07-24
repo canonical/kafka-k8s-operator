@@ -18,7 +18,7 @@ from kafka.admin import NewTopic
 from kazoo.exceptions import AuthFailedError, NoNodeError
 from pytest_operator.plugin import OpsTest
 
-from literals import BROKER, SECURITY_PROTOCOL_PORTS
+from literals import BALANCER_USER, BROKER, PEER, SECURITY_PROTOCOL_PORTS
 from managers.auth import Acl, AuthManager
 
 logger = logging.getLogger(__name__)
@@ -521,3 +521,36 @@ def get_k8s_host_from_unit(unit_name: str, app_name: str = APP_NAME) -> str:
     broker_id = unit_name.split("/")[1]
 
     return f"{app_name}-{broker_id}.{app_name}-endpoints"
+
+
+def balancer_is_running(model_full_name: str | None, app_name: str) -> bool:
+    check_output(
+        f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:9090/kafkacruisecontrol/state'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+    return True
+
+
+def balancer_is_secure(ops_test: OpsTest, app_name: str) -> bool:
+    model_full_name = ops_test.model_full_name
+    err_401 = "Error 401 Unauthorized"
+    unauthorized_ok = err_401 in check_output(
+        f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:9090/kafkacruisecontrol/state'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+
+    pwd = get_secret_by_label(ops_test=ops_test, label=f"{PEER}.{app_name}.app", owner=app_name)[
+        "balancer-password"
+    ]
+    authorized_ok = err_401 not in check_output(
+        f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:9090/kafkacruisecontrol/state'"
+        f" -u {BALANCER_USER}:{pwd}",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+    return all((unauthorized_ok, authorized_ok))
