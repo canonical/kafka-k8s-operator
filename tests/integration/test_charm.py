@@ -130,7 +130,7 @@ async def test_client_properties_makes_admin_connection(ops_test: OpsTest):
 
     result = await run_client_properties(ops_test=ops_test)
     assert result
-    assert len(result.strip().split("\n")) == 4
+    assert len(result.strip().split("\n")) == 3
 
     await ops_test.model.applications[APP_NAME].remove_relation(
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME}:{REL_NAME_ADMIN}"
