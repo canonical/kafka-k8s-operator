@@ -128,7 +128,7 @@ class BrokerOperator(Object):
             "description": "Pebble config layer for kafka",
             "services": {
                 BROKER.service: {
-                    "override": "merge",
+                    "override": "replace",
                     "summary": "kafka",
                     "command": command,
                     "startup": "enabled",
