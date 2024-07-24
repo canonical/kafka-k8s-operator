@@ -19,7 +19,9 @@ from ops.main import main
 
 from core.cluster import ClusterState
 from core.structured_config import CharmConfig
+from events.balancer import BalancerOperator
 from events.broker import BrokerOperator
+from events.peer_cluster import PeerClusterEventsHandler
 from literals import (
     CHARM_KEY,
     CONTAINER,
@@ -52,7 +54,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.workload = KafkaWorkload(
             container=self.unit.get_container(CONTAINER)
         )  # Will be re-instantiated for each role.
-        self.restart = RollingOpsManager(self, relation="restart", callback=self._restart)
+        self.restart = RollingOpsManager(self, relation="restart", callback=self._restart_broker)
 
         self.metrics_endpoint = MetricsEndpointProvider(
             self,
@@ -68,18 +70,39 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             container_name="kafka",
         )
 
+        self.framework.observe(getattr(self.on, "config_changed"), self._on_roles_changed)
+
+        # peer-cluster events are shared between all roles, so necessary to init here to avoid instantiating multiple times
+        self.peer_cluster = PeerClusterEventsHandler(self)
+
         # Register roles event handlers after global ones, so that they get the priority.
         self.broker = BrokerOperator(self)
-        # self.balancer = BalancerOperator(self)
+        self.balancer = BalancerOperator(self)
 
-    def _restart(self, event: EventBase) -> None:
+    def _on_roles_changed(self, _):
+        """Handler for `config_changed` events.
+
+        This handler is in charge of stopping the workloads, since the sub-operators would not
+        be instantiated if roles are changed.
+        """
+        if not self.state.runs_broker and self.broker.workload.active():
+            self.broker.workload.stop()
+
+        if (
+            not self.state.runs_balancer
+            and self.unit.is_leader()
+            and self.balancer.workload.active()
+        ):
+            self.balancer.workload.stop()
+
+    def _restart_broker(self, event: EventBase) -> None:
         """Handler for `rolling_ops` restart events."""
         # only attempt restart if service is already active
         if not self.broker.healthy:
             event.defer()
             return
 
-        self.workload.restart()
+        self.broker.workload.restart()
 
         if self.broker.healthy:
             logger.info(f'Broker {self.unit.name.split("/")[1]} restarted')

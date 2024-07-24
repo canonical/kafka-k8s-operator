@@ -127,7 +127,7 @@ class BrokerOperator(Object):
             "summary": "kafka layer",
             "description": "Pebble config layer for kafka",
             "services": {
-                CONTAINER: {
+                BROKER.service: {
                     "override": "replace",
                     "summary": "kafka",
                     "command": command,
@@ -183,6 +183,10 @@ class BrokerOperator(Object):
 
     def _on_start(self, event: StartEvent) -> None:
         """Wrapper for start event."""
+        if self.charm.state.peer_relation:
+            self.charm.state.unit_broker.update(
+                {"cores": str(self.balancer_manager.cores), "rack": self.config_manager.rack}
+            )
         self._on_kafka_pebble_ready(event)
 
     def _on_install(self, event: InstallEvent) -> None:
@@ -280,6 +284,11 @@ class BrokerOperator(Object):
 
     def _on_storage_attached(self, event: StorageAttachedEvent) -> None:
         """Handler for `storage_attached` events."""
+        if not self.charm.state.peer_relation:
+            event.defer()
+            return
+
+        self.charm.state.unit_broker.update({"storages": self.balancer_manager.storages})
         # checks first whether the broker is active before warning
         if self.workload.active():
             # new dirs won't be used until topic partitions are assigned to it

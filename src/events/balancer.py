@@ -7,14 +7,22 @@ from typing import TYPE_CHECKING
 from ops import (
     ActiveStatus,
     EventBase,
+    InstallEvent,
     Object,
+    pebble,
 )
+from ops.pebble import Layer
 
+from core.workload import CharmedKafkaPaths
 from literals import (
     BALANCER,
+    BALANCER_USER,
     BALANCER_WEBSERVER_PORT,
-    BALANCER_WEBSERVER_USER,
+    BROKER,
     CONTAINER,
+    GROUP,
+    JMX_EXPORTER_PORT,
+    USER,
     Status,
 )
 from managers.balancer import BalancerManager
@@ -47,17 +55,59 @@ class BalancerOperator(Object):
 
         self.framework.observe(self.charm.on.install, self._on_install)
         self.framework.observe(self.charm.on.start, self._on_start)
+        self.framework.observe(
+            getattr(self.charm.on, "kafka_pebble_ready"), self._on_kafka_pebble_ready
+        )
         self.framework.observe(self.charm.on.leader_elected, self._on_start)
 
         # ensures data updates, eventually
         self.framework.observe(getattr(self.charm.on, "update_status"), self._on_config_changed)
 
-    def _on_install(self, _) -> None:
+    @property
+    def _balancer_layer(self) -> Layer:
+        """Returns a Pebble configuration layer for CruiseControl."""
+        extra_opts = [
+            # FIXME: Port already in use by the broker. To be fixed once we have CC_JMX_OPTS
+            # f"-javaagent:{CharmedKafkaPaths(BROKER).jmx_prometheus_javaagent}={JMX_EXPORTER_PORT}:{CharmedKafkaPaths(BROKER).jmx_prometheus_config}",
+            f"-Djava.security.auth.login.config={self.workload.paths.balancer_jaas}",
+        ]
+        command = f"{self.workload.paths.binaries_path}/bin/kafka-cruise-control-start.sh {self.workload.paths.cruise_control_properties}"
+
+        layer_config: pebble.LayerDict = {
+            "summary": "kafka layer",
+            "description": "Pebble config layer for kafka",
+            "services": {
+                BALANCER.service: {
+                    "override": "replace",
+                    "summary": "balancer",
+                    "command": command,
+                    "startup": "enabled",
+                    "user": USER,
+                    "group": GROUP,
+                    "environment": {
+                        "KAFKA_OPTS": " ".join(extra_opts),
+                        # FIXME https://github.com/canonical/kafka-k8s-operator/issues/80
+                        "JAVA_HOME": "/usr/lib/jvm/java-18-openjdk-amd64",
+                        "LOG_DIR": self.workload.paths.logs_path,
+                    },
+                }
+            },
+        }
+        return Layer(layer_config)
+
+    def _on_install(self, event: InstallEvent) -> None:
         """Handler for `install` event."""
+        if not self.charm.unit.get_container(CONTAINER).can_connect():
+            event.defer()
+            return
+
         self.config_manager.set_environment()
 
     def _on_start(self, event: EventBase) -> None:
         """Handler for `start` event."""
+        self._on_kafka_pebble_ready(event)
+
+    def _on_kafka_pebble_ready(self, event):
         self.charm._set_status(self.charm.state.ready_to_start)
         if not isinstance(self.charm.unit.status, ActiveStatus):
             event.defer()
@@ -66,7 +116,7 @@ class BalancerOperator(Object):
         if not self.charm.state.cluster.balancer_username:
             external_cluster = next(iter(self.charm.state.peer_clusters), None)
             payload = {
-                "balancer-username": BALANCER_WEBSERVER_USER,
+                "balancer-username": BALANCER_USER,
                 "balancer-password": self.charm.workload.generate_password(),
                 "balancer-uris": f"{self.charm.state.unit_broker.host}:{BALANCER_WEBSERVER_PORT}",
             }
@@ -87,9 +137,8 @@ class BalancerOperator(Object):
             event.defer()
             return
 
-        self.workload.restart()
-
-        logger.info("Cruise-control started")
+        self.workload.start(layer=self._balancer_layer)
+        logger.info("CruiseControl service started")
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for 'something changed' events."""

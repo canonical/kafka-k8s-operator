@@ -39,11 +39,10 @@ MIN_REPLICAS = 3
 
 INTER_BROKER_USER = "sync"
 ADMIN_USER = "admin"
+INTERNAL_USERS = [INTER_BROKER_USER, ADMIN_USER]
 BALANCER_USER = "balancer"
-INTERNAL_USERS = [INTER_BROKER_USER, ADMIN_USER, BALANCER_USER]
-BALANCER_WEBSERVER_USER = "admin"
 BALANCER_WEBSERVER_PORT = 9090
-SECRETS_APP = [f"{user}-password" for user in INTERNAL_USERS]
+SECRETS_APP = [f"{user}-password" for user in INTERNAL_USERS + [f"{BALANCER_USER}-password"]]
 SECRETS_UNIT = [
     "ca-cert",
     "csr",
@@ -82,10 +81,10 @@ PATHS = {
         "BIN": "/opt/kafka",
     },
     "cruise-control": {
-        "CONF": "/etc/cruisecontrol",
-        "LOGS": "/var/log/cruisecontrol",
-        "DATA": "/var/lib/cruisecontrol",
-        "BIN": "/opt/cruisecontrol",
+        "CONF": "/etc/cruise-control",
+        "LOGS": "/var/log/cruise-control",
+        "DATA": "/var/lib/cruise-control",
+        "BIN": "/opt/cruise-control",
     },
 }
 
@@ -133,7 +132,7 @@ BROKER = Role(
 )
 BALANCER = Role(
     value="balancer",
-    service="cruise-control",
+    service="balancer",
     paths=PATHS["cruise-control"],
     relation=PEER_CLUSTER_ORCHESTRATOR_RELATION,
     requested_secrets=[

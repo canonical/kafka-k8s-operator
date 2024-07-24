@@ -28,7 +28,9 @@ class BalancerManager:
 
     def _get_storage_size(self, path: str) -> int:
         """Gets the total storage volume of a mounted filepath, in KB."""
-        return int(self.dependent.workload.exec(f"df --output=size {path} | sed 1d"))
+        return int(
+            self.dependent.workload.exec(f"df --output=size {path}").strip().splitlines()[1]
+        )
 
     @property
     def cores(self) -> int:
@@ -49,10 +51,6 @@ class BalancerManager:
 
     def create_internal_topics(self) -> None:
         """Create Cruise Control topics."""
-        # if self.charm.state.runs_broker:
-        #     property_file = f'{BROKER.paths["CONF"]}/client.properties'
-        #     bootstrap_servers = self.charm.state.internal_bootstrap_server
-        # else:
         bootstrap_servers = self.charm.state.balancer.broker_uris
         property_file = f'{BALANCER.paths["CONF"]}/cruisecontrol.properties'
 
