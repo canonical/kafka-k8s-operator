@@ -18,18 +18,12 @@ pytestmark = pytest.mark.balancer
 
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test: OpsTest, kafka_charm):
-    await ops_test.model.add_machine(series="jammy")
-    machine_ids = await ops_test.model.get_machines()
-    await ops_test.model.create_storage_pool("test_pool", "lxd")
-
     await asyncio.gather(
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
             num_units=2,
             series="jammy",
-            to=machine_ids[0],
-            storage={"data": {"pool": "test_pool", "size": 1024}},
             config={"roles": "broker,balancer"},
         ),
         ops_test.model.deploy(
