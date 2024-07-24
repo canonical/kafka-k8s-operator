@@ -13,15 +13,12 @@ from ops import (
 )
 from ops.pebble import Layer
 
-from core.workload import CharmedKafkaPaths
 from literals import (
     BALANCER,
     BALANCER_USER,
     BALANCER_WEBSERVER_PORT,
-    BROKER,
     CONTAINER,
     GROUP,
-    JMX_EXPORTER_PORT,
     USER,
     Status,
 )
