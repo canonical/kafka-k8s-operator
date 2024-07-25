@@ -42,7 +42,7 @@ ADMIN_USER = "admin"
 INTERNAL_USERS = [INTER_BROKER_USER, ADMIN_USER]
 BALANCER_USER = "balancer"
 BALANCER_WEBSERVER_PORT = 9090
-SECRETS_APP = [f"{user}-password" for user in INTERNAL_USERS + [f"{BALANCER_USER}-password"]]
+SECRETS_APP = [f"{user}-password" for user in INTERNAL_USERS + [BALANCER_USER]]
 SECRETS_UNIT = [
     "ca-cert",
     "csr",

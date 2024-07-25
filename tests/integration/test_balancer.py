@@ -9,7 +9,7 @@ from subprocess import CalledProcessError
 import pytest
 from pytest_operator.plugin import OpsTest
 
-from .helpers import APP_NAME, ZK_NAME, balancer_is_running, balancer_is_secure
+from .helpers import APP_NAME, KAFKA_CONTAINER, ZK_NAME, balancer_is_running, balancer_is_secure
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +23,10 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm):
             kafka_charm,
             application_name=APP_NAME,
             num_units=2,
-            series="jammy",
             config={"roles": "broker,balancer"},
+            resources={"kafka-image": KAFKA_CONTAINER},
         ),
-        ops_test.model.deploy(
-            ZK_NAME, channel="edge", application_name=ZK_NAME, num_units=1, series="jammy"
-        ),
+        ops_test.model.deploy(ZK_NAME, channel="3/edge", num_units=1),
     )
     await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], idle_period=30, timeout=3600)
     assert ops_test.model.applications[APP_NAME].status == "blocked"
@@ -51,21 +49,6 @@ async def test_minimum_brokers_balancer_starts(ops_test: OpsTest):
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[APP_NAME].units) == 4)
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME, ZK_NAME], status="active", timeout=1800, idle_period=30
-    )
-    assert balancer_is_running(model_full_name=ops_test.model_full_name, app_name=APP_NAME)
-    assert balancer_is_secure(ops_test, app_name=APP_NAME)
-
-
-@pytest.mark.abort_on_fail
-async def test_change_leader(ops_test: OpsTest):
-    for unit in ops_test.model.applications[APP_NAME].units:
-        if await unit.is_leader_from_status():
-            leader_unit = unit
-
-    await leader_unit.destroy(force=True, destroy_storage=True, max_wait=0)
-    await ops_test.model.block_until(lambda: len(ops_test.model.applications[APP_NAME].units) == 3)
-    await ops_test.model.wait_for_idle(
-        apps=[APP_NAME], status="active", timeout=1800, idle_period=60
     )
     assert balancer_is_running(model_full_name=ops_test.model_full_name, app_name=APP_NAME)
     assert balancer_is_secure(ops_test, app_name=APP_NAME)

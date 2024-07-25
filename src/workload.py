@@ -12,7 +12,7 @@ from ops.pebble import ExecError, Layer
 from typing_extensions import override
 
 from core.workload import CharmedKafkaPaths, WorkloadBase
-from literals import BALANCER, BROKER
+from literals import BALANCER, BROKER, CHARM_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +28,8 @@ class Workload(WorkloadBase):
 
     @override
     def start(self, layer: Layer) -> None:
-        # start kafka service
-        self.container.add_layer(self.service, layer, combine=True)
-        self.container.replan()
+        self.container.add_layer(CHARM_KEY, layer, combine=True)
+        self.container.restart(self.service)
 
     @override
     def stop(self) -> None:
