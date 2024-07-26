@@ -18,7 +18,7 @@ from kafka.admin import NewTopic
 from kazoo.exceptions import AuthFailedError, NoNodeError
 from pytest_operator.plugin import OpsTest
 
-from literals import BALANCER_USER, BROKER, PEER, SECURITY_PROTOCOL_PORTS
+from literals import BALANCER_WEBSERVER_USER, BROKER, PEER, SECURITY_PROTOCOL_PORTS
 from managers.auth import Acl, AuthManager
 
 logger = logging.getLogger(__name__)
@@ -548,7 +548,7 @@ def balancer_is_secure(ops_test: OpsTest, app_name: str) -> bool:
     ]
     authorized_ok = err_401 not in check_output(
         f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:9090/kafkacruisecontrol/state'"
-        f" -u {BALANCER_USER}:{pwd}",
+        f" -u {BALANCER_WEBSERVER_USER}:{pwd}",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
