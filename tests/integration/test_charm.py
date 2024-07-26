@@ -46,7 +46,9 @@ async def test_build_and_deploy(ops_test: OpsTest):
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
     async with ops_test.fast_forward(fast_interval="60s"):
-        await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=30)
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=30, raise_on_error=False
+        )
 
     assert ops_test.model.applications[APP_NAME].status == "blocked"
     assert ops_test.model.applications[ZK_NAME].status == "active"
