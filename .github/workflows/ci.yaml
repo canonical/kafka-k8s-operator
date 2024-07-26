@@ -55,7 +55,6 @@ jobs:
   integration-test:
     strategy:
       fail-fast: false
-      max-parallel: 2
       matrix:
         tox-environments:
           - integration-charm
