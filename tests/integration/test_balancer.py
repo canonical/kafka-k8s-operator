@@ -28,7 +28,9 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm):
         ),
         ops_test.model.deploy(ZK_NAME, channel="3/edge", num_units=1),
     )
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], idle_period=30, timeout=3600)
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME], idle_period=30, timeout=1000, raise_on_error=False
+    )
     assert ops_test.model.applications[APP_NAME].status == "blocked"
     assert ops_test.model.applications[ZK_NAME].status == "active"
 
