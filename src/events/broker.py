@@ -183,6 +183,10 @@ class BrokerOperator(Object):
 
     def _on_start(self, event: StartEvent) -> None:
         """Wrapper for start event."""
+        if not self.charm.unit.get_container(CONTAINER).can_connect():
+            event.defer()
+            return
+
         if self.charm.state.peer_relation:
             self.charm.state.unit_broker.update(
                 {"cores": str(self.balancer_manager.cores), "rack": self.config_manager.rack}
