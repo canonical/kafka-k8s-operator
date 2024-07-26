@@ -14,7 +14,15 @@ from ops import ActiveStatus
 from scenario import Container, Context, PeerRelation, Relation, State
 
 from charm import KafkaCharm
-from literals import BALANCER_USER, CONTAINER, INTERNAL_USERS, PEER, SUBSTRATE, ZK, Status
+from literals import (
+    BALANCER_WEBSERVER_USER,
+    CONTAINER,
+    INTERNAL_USERS,
+    PEER,
+    SUBSTRATE,
+    ZK,
+    Status,
+)
 
 pytestmark = pytest.mark.balancer
 
@@ -238,5 +246,6 @@ def test_ready_to_start_ok(charm_configuration, base_state: State, zk_data):
     assert state_out.unit_status == ActiveStatus()
     # Credentials written to file
     assert re.match(
-        rf"{BALANCER_USER}: \w+,ADMIN", patched_writer.call_args_list[-1].kwargs["content"]
+        rf"{BALANCER_WEBSERVER_USER}: \w+,ADMIN",
+        patched_writer.call_args_list[-1].kwargs["content"],
     )

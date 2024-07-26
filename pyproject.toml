@@ -36,7 +36,7 @@ tenacity = ">=8.0.1"
 pure-sasl = ">=0.6.2"
 jsonschema = ">=4.10"
 cryptography = ">42.0.0"
-pydantic ="^1.10.7"
+pydantic = "^1.10.7"
 pyyaml = "^6.0.1"
 lightkube = "^0.15.0"
 # FIXME: Unpin once rustc 1.76 is available at build time
@@ -63,7 +63,7 @@ optional = true
 
 [tool.poetry.group.unit.dependencies]
 pytest = ">=7.2"
-coverage = {extras = ["toml"], version = ">7.0"}
+coverage = { extras = ["toml"], version = ">7.0" }
 pytest-mock = "^3.11.1"
 packaging = "^23.1"
 ops-scenario = "^6.0.0"
@@ -75,14 +75,13 @@ optional = true
 bandit = "^1.7.4"
 safety = "^3.0.0"
 
-
 [tool.poetry.group.integration]
 optional = true
 
 [tool.poetry.group.integration.dependencies]
 pytest = ">=7.2"
 juju = "^3.2.0"
-coverage = {extras = ["toml"], version = ">7.0"}
+coverage = { extras = ["toml"], version = ">7.0" }
 pytest-operator = ">0.20"
 kazoo = ">=2.8"
 tenacity = ">=7.0"
@@ -94,23 +93,23 @@ requests = ">2.25"
 line-length = 99
 lint.select = ["E", "W", "F", "C", "N", "D", "I001"]
 lint.extend-ignore = [
-    "D203",
-    "D204",
-    "D213",
-    "D215",
-    "D400",
-    "D401",
-    "D404",
-    "D406",
-    "D407",
-    "D408",
-    "D409",
-    "D413",
+  "D203",
+  "D204",
+  "D213",
+  "D215",
+  "D400",
+  "D401",
+  "D404",
+  "D406",
+  "D407",
+  "D408",
+  "D409",
+  "D413",
 ]
 lint.ignore = ["E501", "D107"]
 extend-exclude = ["__pycache__", "*.egg_info"]
-lint.per-file-ignores = {"tests/*" = ["D100","D101","D102","D103","D104", "E999"], "src/literals.py" = ["D101"]}
-target-version="py310"
+lint.per-file-ignores = { "tests/*" = ["D100", "D101", "D102", "D103", "D104", "E999"], "src/literals.py" = ["D101"] }
+target-version = "py310"
 src = ["src", "tests"]
 
 [tool.ruff.lint.mccabe]

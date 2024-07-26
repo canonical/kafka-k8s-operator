@@ -15,8 +15,8 @@ from ops.pebble import Layer
 
 from literals import (
     BALANCER,
-    BALANCER_USER,
     BALANCER_WEBSERVER_PORT,
+    BALANCER_WEBSERVER_USER,
     CONTAINER,
     GROUP,
     USER,
@@ -110,10 +110,10 @@ class BalancerOperator(Object):
             event.defer()
             return
 
-        if not self.charm.state.cluster.balancer_username:
+        if not self.charm.state.cluster.balancer_password:
             external_cluster = next(iter(self.charm.state.peer_clusters), None)
             payload = {
-                "balancer-username": BALANCER_USER,
+                "balancer-username": BALANCER_WEBSERVER_USER,
                 "balancer-password": self.charm.workload.generate_password(),
                 "balancer-uris": f"{self.charm.state.unit_broker.host}:{BALANCER_WEBSERVER_PORT}",
             }
@@ -166,6 +166,9 @@ class BalancerOperator(Object):
         Returns:
             True if service is alive and active. Otherwise False
         """
+        if not self.charm.state.runs_balancer:
+            return True
+
         self.charm._set_status(self.charm.state.ready_to_start)
         if not isinstance(self.charm.unit.status, ActiveStatus):
             return False
