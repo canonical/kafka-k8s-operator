@@ -119,7 +119,7 @@ class TLSManager:
         """Cleans up all keys/certs/stores on a unit."""
         try:
             self.workload.exec(
-                command="rm -rf *.pem *.key *.p12 *.jks".split(),
+                command=["rm", "-rf", "*.pem", "*.key", "*.p12", "*.jks"],
                 working_dir=self.workload.paths.conf_path,
             )
         except (subprocess.CalledProcessError, ExecError) as e:
