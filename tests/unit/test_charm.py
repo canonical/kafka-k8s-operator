@@ -248,7 +248,7 @@ def test_start_sets_pebble_layer(harness: Harness[KafkaCharm], zk_data, password
         expected_plan = {
             "services": {
                 CONTAINER: {
-                    "override": "replace",
+                    "override": "merge",
                     "summary": "kafka",
                     "command": command,
                     "startup": "enabled",
