@@ -46,6 +46,7 @@ metric.reporter.topic=__CruiseControlMetrics
 sample.store.class=com.linkedin.kafka.cruisecontrol.monitor.sampling.KafkaSampleStore
 partition.metric.sample.store.topic=__KafkaCruiseControlPartitionMetricSamples
 broker.metric.sample.store.topic=__KafkaCruiseControlModelTrainingSamples
+max.active.user.tasks=10
 """
 SERVER_PROPERTIES_BLACKLIST = ["profile", "log_level", "certificate_extra_sans"]
 
@@ -692,13 +693,14 @@ class BalancerConfigManager(CommonConfigManager):
         """
         goals = DEFAULT_BALANCER_GOALS
 
-        if self.state.balancer.racks and (
-            min([3, len(self.state.balancer.broker_capacities["brokerCapacities"])])
-            > self.state.balancer.racks
-        ):  # replication-factor > racks is not ideal
-            goals = goals + ["RackAwareDistribution"]
-        else:
-            goals = goals + ["RackAware"]
+        if self.state.balancer.racks:
+            if (
+                min([3, len(self.state.balancer.broker_capacities["brokerCapacities"])])
+                > self.state.balancer.racks
+            ):  # replication-factor > racks is not ideal
+                goals = goals + ["RackAwareDistribution"]
+            else:
+                goals = goals + ["RackAware"]
 
         default_goals = [
             f"com.linkedin.kafka.cruisecontrol.analyzer.goals.{goal}Goal" for goal in goals
