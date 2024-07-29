@@ -178,7 +178,7 @@ async def test_scale_up_zk_kafka(ops_test: OpsTest):
 
 async def test_kill_broker_with_topic_leader(
     ops_test: OpsTest,
-    # restart_delay,
+    restart_delay,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):

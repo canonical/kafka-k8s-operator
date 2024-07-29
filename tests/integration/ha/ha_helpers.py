@@ -20,10 +20,9 @@ from integration.helpers import (
     get_k8s_host_from_unit,
     get_unit_address_map,
 )
-from literals import BROKER
+from literals import BROKER, CONTAINER
 
 PROCESS = "kafka.Kafka"
-CONTAINER = "kafka"
 SERVICE = "kafka"
 
 
@@ -122,7 +121,7 @@ def modify_pebble_restart_delay(
     policy: Literal["extend", "restore"],
     app_name: str = APP_NAME,
     container_name: str = CONTAINER,
-    service_name: str = SERVICE,
+    service_name: str = BROKER.service,
 ) -> None:
     f"""Modify the pebble restart delay of the underlying process.
 
@@ -160,7 +159,7 @@ def modify_pebble_restart_delay(
 
         logger.info(f"Replanning {service_name} service...")
         check_output(
-            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble replan",
+            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble restart kafka",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,
