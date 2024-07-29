@@ -293,7 +293,7 @@ async def test_freeze_broker_with_topic_leader(
 
 async def test_full_cluster_crash(
     ops_test: OpsTest,
-    restart_delay,
+    # restart_delay,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):
