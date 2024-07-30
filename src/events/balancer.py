@@ -4,8 +4,15 @@ import logging
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
-from ops import ActionEvent, ActiveStatus, EventBase, InstallEvent, Object, pebble
-from ops.pebble import Layer
+from ops import (
+    ActionEvent,
+    ActiveStatus,
+    EventBase,
+    InstallEvent,
+    Object,
+    pebble,
+)
+from ops.pebble import ExecError, Layer
 
 from literals import (
     BALANCER,
@@ -125,7 +132,7 @@ class BalancerOperator(Object):
 
         try:
             self.balancer_manager.create_internal_topics()
-        except CalledProcessError as e:
+        except (CalledProcessError, ExecError) as e:
             logger.warning(e.stdout)
             event.defer()
             return
