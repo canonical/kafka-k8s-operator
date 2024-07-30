@@ -11,7 +11,7 @@ from ops import (
     Object,
     pebble,
 )
-from ops.pebble import Layer
+from ops.pebble import ExecError, Layer
 
 from literals import (
     BALANCER,
@@ -129,7 +129,7 @@ class BalancerOperator(Object):
 
         try:
             self.balancer_manager.create_internal_topics()
-        except CalledProcessError as e:
+        except (CalledProcessError, ExecError) as e:
             logger.warning(e.stdout)
             event.defer()
             return
