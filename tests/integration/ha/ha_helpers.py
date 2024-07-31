@@ -6,6 +6,7 @@ import os
 import re
 import string
 import tempfile
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from subprocess import PIPE, check_output
@@ -151,7 +152,7 @@ def modify_pebble_restart_delay(
 
         logger.info(f"Adding {policy} policy to {container_name} pebble plan...")
         check_output(
-            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble add --combine {service_name} {pebble_patch_path}",
+            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble add --combine {service_name}-{uuid.uuid4().hex} {pebble_patch_path}",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,
