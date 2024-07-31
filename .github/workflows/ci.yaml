@@ -142,7 +142,10 @@ jobs:
             echo Skipping unstable tests
             echo "mark_expression=not unstable" >> $GITHUB_OUTPUT
           fi
+
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       - name: Run integration tests
-        run: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}'
+        run: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}' -x
         env:
           CI_PACKED_CHARMS: ${{ needs.build.outputs.charms }}

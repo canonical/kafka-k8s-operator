@@ -150,13 +150,24 @@ def modify_pebble_restart_delay(
         )
 
         logger.info(f"Adding {policy} policy to {container_name} pebble plan...")
-        check_output(
-            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble add --combine {service_name} {pebble_patch_path}",
-            stderr=PIPE,
-            shell=True,
-            universal_newlines=True,
-        )
+        try:
+            check_output(
+                f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble add --combine {service_name} {pebble_patch_path}",
+                stderr=PIPE,
+                shell=True,
+                universal_newlines=True,
+            )
+        except Exception as e:
+            logger.error(vars(e))
+            logger.info("TIME TO MANUALLY HACK")
+            logger.error(
+                f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble add --combine {service_name} {pebble_patch_path}"
+            )
+            import time
 
+            time.sleep(100_000)
+
+            raise e
         logger.info(f"Replanning {service_name} service...")
         check_output(
             f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble restart kafka",
