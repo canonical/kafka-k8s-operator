@@ -1,104 +1,111 @@
 # How to deploy Charmed Kafka K8s
 
-To deploy a Charmed Kafka K8s cluster on a bare environment, it is necessary to:
+> **IMPORTANT** For non-K8s Charmed Kafka, see the [Charmed Kafka documentation](/t/charmed-kafka-documentation/13261) instead.
+
+To deploy a Charmed Kafka K8s cluster:
 1. Set up a Juju Controller
 2. Set up a Juju Model
-3. Deploy Charmed Kafka K8s and Charmed ZooKeeper K8s
+3. Deploy and relate Kafka K8s and ZooKeeper K8s charms.
 4. (Optionally) Create an external admin user
-
-In the next subsections we will cover these steps separately by referring to 
-relevant Juju documentation and providing details on the Charmed Kafka K8s specifics.
-If you already have a Juju controller and/or a Juju model, you can skip the associated steps.
 
 ## Juju Controller setup
 
-Before deploying Kafka, make sure you have a Juju controller accessible from 
+Make sure you have a Juju controller accessible from 
 your local environment using the [Juju client snap](https://snapcraft.io/juju). 
 
-The properties of your current controller can be listed using `juju show-controller`. 
-Make sure that the controller's backend cloud **is** K8s. 
-The cloud information can be retrieved with the following command
+List available controllers:
 
 ```commandline
-juju show-controller | yq '.[].details.cloud'
+juju list-controllers
 ```
 
-> **IMPORTANT** If the cloud is **not** `k8s`, please refer to the [Charmed Kafka documentation](/t/charmed-kafka-documentation/10288) instead.
+Switch to another controller if needed:
 
-You can find more information on how to bootstrap and configure a controller for different 
-clouds [here](https://juju.is/docs/juju/manage-controllers#heading--bootstrap-a-controller). 
-Make sure you bootstrap a `k8s` Juju controller. 
+```commandline
+juju switch <controller>
+```
+
+If there are no suitable controllers, create a new one:
+
+```commandline
+juju bootstrap <cloud> <controller>
+```
+
+where `<cloud>` -- the cloud to deploy controller to, e.g., `localhost`. For more information on how to setup a new cloud, see the [How to manage clouds](https:///t/1100) guide in Juju documentation.
+
+> **Note** See the [How to manage controllers](/t/1111) guide in Juju documentation for more options.
 
 ## Juju Model setup
 
 You can create a new Juju model using 
 
-```
+```commandline
 juju add-model <model>
 ```
 
-Alternatively, you can use a pre-existing Juju model and switch to it by running the following command: 
+Alternatively, you can switch to any existing Juju model: 
 
-```
-juju switch <model-name>
+```commandline
+juju switch <model>
 ```
 
-Make sure that the model is **not** a `k8s` type. The type of the model 
-can be obtained by 
+Make sure that the model is of a correct type (`k8s`):
 
-```
+```commandline
 juju show-model | yq '.[].type'
 ```
 
-> **IMPORTANT** If the model is **not** `k8s`, please refer to the [Charmed Kafka documentation](/t/charmed-kafka-documentation/10288) instead.
-
-
-## Deploy Charmed Kafka K8s and Charmed ZooKeeper
+## Deploy and relate Kafka K8s and ZooKeeper charms
 
 The Kafka and ZooKeeper charms can both be deployed as follows:
 
-```shell
-$ juju deploy zookeeper-k8s --channel 3/edge -n <zookeeper-units>
-$ juju deploy kafka-k8s --channel 3/edge -n <kafka-units>
+```commandline
+juju deploy kafka-k8s --channel 3/edge -n <kafka-units>
+juju deploy zookeeper-k8s --channel 3/edge -n <zookeeper-units>
 ```
 
-After this, it is necessary to connect them:
-```shell
-$ juju relate kafka-k8s zookeeper-k8s
+where `<kafka-units>` and `<zookeeper-units>` -- the number of units to deploy for Kafka and ZooKeeper. We recommend values of at least `3` and `5` respectively.
+
+Connect ZooKeeper and Kafka by relating/integrating the charms:
+
+```commandline
+juju relate kafka-k8s zookeeper-k8s
 ```
 
-> We recommend values for `<kafka-units>` of at least 3 and for `<zookeeper-units>` of 5, to 
-ensure reasonable high-availability margins.
+Check the status of the deployment:
 
-Once all the units show as `active|idle` in the `juju status` output, the deployment 
-should be ready to be used. 
+```commandline
+juju status
+```
+
+Once all the units show `active` or `idle` status, the deployment should be complete. 
 
 ## (Optional) Create an external admin users
 
 Charmed Kafka aims to follow the _secure by default_ paradigm. As a consequence, after being deployed the Kafka cluster
 won't expose any external listener. 
 In fact, ports are only opened when client applications are related, also 
-depending on the protocols to be used. Please refer to [this table](TODO) for 
-more information about the available listeners and protocols. 
+depending on the protocols to be used. 
+> **NOTE** For more information about the available listeners and protocols please refer to [this table](/t/13270). 
 
-It is however generally useful for most of the use-cases to create a first admin user
+It is however generally useful for most situations to create a first admin user
 to be used to manage the Kafka cluster (either internally or externally). 
 
 To create an admin user, deploy the [Data Integrator Charm](https://charmhub.io/data-integrator) with 
-`extra-user-roles` set to `admin`
+`extra-user-roles` set to `admin`:
 
-```shell
+```commandline
 juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=admin
 ```
 
-and relate to the Kafka charm
+... and relate it to the Kafka charm:
 
-```shell
+```commandline
 juju relate data-integrator kafka-k8s
 ```
 
-To retrieve authentication information such as the username, password, etc. use
+To retrieve authentication information, such as the username and password, use:
 
-```shell
+```commandline
 juju run data-integrator/leader get-credentials
 ```
