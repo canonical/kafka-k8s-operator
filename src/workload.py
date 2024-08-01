@@ -55,11 +55,11 @@ class Workload(WorkloadBase):
 
     @override
     def exec(
-        self, command: str, env: dict[str, str] | None = None, working_dir: str | None = None
+        self, command: list[str], env: dict[str, str] | None = None, working_dir: str | None = None
     ) -> str:
         try:
             process = self.container.exec(
-                command=command.split(),
+                command=command,
                 environment=env,
                 working_dir=working_dir,
                 combine_stderr=True,
@@ -104,7 +104,7 @@ class Workload(WorkloadBase):
             parsed_opts[k] = v.replace("'", "")
 
         command = f"{self.paths.binaries_path}/bin/kafka-{bin_keyword}.sh {' '.join(bin_args)}"
-        return self.exec(command=command, env=parsed_opts or None)
+        return self.exec(command=command.split(), env=parsed_opts or None)
 
     # ------- Kafka vm specific -------
 
@@ -175,7 +175,7 @@ class BalancerWorkload(Workload):
             parsed_opts[k] = v.replace("'", "")
 
         command = f"{BROKER.paths['BIN']}/bin/kafka-{bin_keyword}.sh {' '.join(bin_args)}"
-        return self.exec(command=command, env=parsed_opts or None)
+        return self.exec(command=command.split(), env=parsed_opts or None)
 
     @override
     def get_version(self) -> str:

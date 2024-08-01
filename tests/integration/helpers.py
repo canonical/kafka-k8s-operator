@@ -17,7 +17,9 @@ from charms.zookeeper.v0.client import QuorumLeaderNotFoundError, ZooKeeperManag
 from kafka.admin import NewTopic
 from kazoo.exceptions import AuthFailedError, NoNodeError
 from pytest_operator.plugin import OpsTest
+from tenacity import retry, retry_if_result, stop_after_attempt, wait_fixed
 
+from core.models import JSON
 from literals import BALANCER_WEBSERVER_USER, BROKER, PEER, SECURITY_PROTOCOL_PORTS
 from managers.auth import Acl, AuthManager
 
@@ -554,3 +556,70 @@ def balancer_is_secure(ops_test: OpsTest, app_name: str) -> bool:
         universal_newlines=True,
     )
     return all((unauthorized_ok, authorized_ok))
+
+
+@retry(
+    wait=wait_fixed(20),  # long enough to not overwhelm the API
+    stop=stop_after_attempt(180),  # give it 60 minutes to load
+    retry=retry_if_result(lambda result: result is False),
+    retry_error_callback=lambda _: False,
+)
+def balancer_is_ready(ops_test: OpsTest, app_name: str) -> bool:
+    pwd = get_secret_by_label(ops_test=ops_test, label=f"{PEER}.{app_name}.app", owner=app_name)[
+        "balancer-password"
+    ]
+    monitor_state = check_output(
+        f"JUJU_MODEL={ops_test.model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:9090/kafkacruisecontrol/state?json=True'"
+        f" -u {BALANCER_WEBSERVER_USER}:{pwd}",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+
+    try:
+        monitor_state_json = json.loads(monitor_state).get("MonitorState", {})
+    except json.JSONDecodeError as e:
+        logger.error(e)
+        return False
+
+    print(f"{monitor_state_json=}")
+
+    return all(
+        [
+            monitor_state_json.get("numMonitoredWindows", 0),
+            monitor_state_json.get("numValidPartitions", 0),
+        ]
+    )
+
+
+@retry(
+    wait=wait_fixed(20),  # long enough to not overwhelm the API
+    stop=stop_after_attempt(6),
+    reraise=True,
+)
+def get_kafka_broker_state(ops_test: OpsTest, app_name: str) -> JSON:
+    pwd = get_secret_by_label(ops_test=ops_test, label=f"{PEER}.{app_name}.app", owner=app_name)[
+        "balancer-password"
+    ]
+    broker_state = check_output(
+        f"JUJU_MODEL={ops_test.model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:9090/kafkacruisecontrol/kafka_cluster_state?json=True'"
+        f" -u {BALANCER_WEBSERVER_USER}:{pwd}",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+
+    try:
+        broker_state_json = json.loads(broker_state).get("KafkaBrokerState", {})
+    except json.JSONDecodeError as e:
+        logger.error(e)
+        return False
+
+    print(f"{broker_state_json=}")
+
+    return broker_state_json
+
+
+def get_replica_count_by_broker_id(ops_test: OpsTest, app_name: str) -> dict[str, Any]:
+    broker_state_json = get_kafka_broker_state(ops_test, app_name)
+    return broker_state_json.get("ReplicaCountByBrokerId", {})

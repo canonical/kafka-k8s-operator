@@ -186,9 +186,10 @@ class Status(Enum):
     ACTIVE = StatusLevel(ActiveStatus(), "DEBUG")
     NO_PEER_RELATION = StatusLevel(MaintenanceStatus("no peer relation yet"), "DEBUG")
     NO_PEER_CLUSTER_RELATION = StatusLevel(
-        MaintenanceStatus("no peer cluster relation yet"), "DEBUG"
+        BlockedStatus("missing required peer-cluster relation"), "DEBUG"
     )
     BROKER_NOT_RUNNING = StatusLevel(BlockedStatus("Broker not running"), "WARNING")
+    NOT_ALL_RELATED = StatusLevel(MaintenanceStatus("not all units related"), "DEBUG")
     CC_NOT_RUNNING = StatusLevel(BlockedStatus("Cruise Control not running"), "WARNING")
     ZK_NOT_RELATED = StatusLevel(BlockedStatus("missing required zookeeper relation"), "DEBUG")
     ZK_NOT_CONNECTED = StatusLevel(BlockedStatus("unit not connected to zookeeper"), "ERROR")
@@ -222,6 +223,9 @@ class Status(Enum):
     NO_BROKER_DATA = StatusLevel(MaintenanceStatus("missing broker data"), "DEBUG")
     NOT_ENOUGH_BROKERS = StatusLevel(
         WaitingStatus(f"waiting for {MIN_REPLICAS} online brokers"), "DEBUG"
+    )
+    WAITING_FOR_REBALANCE = StatusLevel(
+        WaitingStatus("awaiting completion of rebalance task"), "DEBUG"
     )
 
 
