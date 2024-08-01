@@ -57,6 +57,15 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         )  # Will be re-instantiated for each role.
         self.restart = RollingOpsManager(self, relation="restart", callback=self._restart_broker)
 
+        self.framework.observe(getattr(self.on, "config_changed"), self._on_roles_changed)
+
+        # peer-cluster events are shared between all roles, so necessary to init here to avoid instantiating multiple times
+        self.peer_cluster = PeerClusterEventsHandler(self)
+
+        # Register roles event handlers after global ones, so that they get the priority.
+        self.broker = BrokerOperator(self)
+        self.balancer = BalancerOperator(self)
+
         self.metrics_endpoint = MetricsEndpointProvider(
             self,
             jobs=[
@@ -67,20 +76,14 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.grafana_dashboards = GrafanaDashboardProvider(self)
         self.loki_push = LogProxyConsumer(
             self,
-            log_files=[f"{self.workload.paths.logs_path}/server.log"],
+            log_files=[
+                f"{self.broker.workload.paths.logs_path}/server.log",
+                f"{self.balancer.workload.paths.logs_path}/kafkacruisecontrol.log",
+            ],
             alert_rules_path=LOGS_RULES_DIR,
             relation_name="logging",
             container_name="kafka",
         )
-
-        self.framework.observe(getattr(self.on, "config_changed"), self._on_roles_changed)
-
-        # peer-cluster events are shared between all roles, so necessary to init here to avoid instantiating multiple times
-        self.peer_cluster = PeerClusterEventsHandler(self)
-
-        # Register roles event handlers after global ones, so that they get the priority.
-        self.broker = BrokerOperator(self)
-        self.balancer = BalancerOperator(self)
 
     def _on_roles_changed(self, _):
         """Handler for `config_changed` events.
