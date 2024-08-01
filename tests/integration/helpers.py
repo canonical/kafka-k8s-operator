@@ -20,7 +20,7 @@ from pytest_operator.plugin import OpsTest
 from tenacity import retry, retry_if_result, stop_after_attempt, wait_fixed
 
 from core.models import JSON
-from literals import BALANCER_WEBSERVER_USER, BROKER, PEER, SECURITY_PROTOCOL_PORTS
+from literals import BALANCER_WEBSERVER_USER, BROKER, JMX_CC_PORT, PEER, SECURITY_PROTOCOL_PORTS
 from managers.auth import Acl, AuthManager
 
 logger = logging.getLogger(__name__)
@@ -623,3 +623,13 @@ def get_kafka_broker_state(ops_test: OpsTest, app_name: str) -> JSON:
 def get_replica_count_by_broker_id(ops_test: OpsTest, app_name: str) -> dict[str, Any]:
     broker_state_json = get_kafka_broker_state(ops_test, app_name)
     return broker_state_json.get("ReplicaCountByBrokerId", {})
+
+
+def balancer_exporter_is_up(model_full_name: str | None, app_name: str) -> bool:
+    check_output(
+        f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:{JMX_CC_PORT}/metrics'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+    return True

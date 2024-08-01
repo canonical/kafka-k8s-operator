@@ -25,6 +25,7 @@ from events.peer_cluster import PeerClusterEventsHandler
 from literals import (
     CHARM_KEY,
     CONTAINER,
+    JMX_CC_PORT,
     JMX_EXPORTER_PORT,
     LOGS_RULES_DIR,
     METRICS_RULES_DIR,
@@ -58,7 +59,9 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         self.metrics_endpoint = MetricsEndpointProvider(
             self,
-            jobs=[{"static_configs": [{"targets": [f"*:{JMX_EXPORTER_PORT}"]}]}],
+            jobs=[
+                {"static_configs": [{"targets": [f"*:{JMX_EXPORTER_PORT}", f"*:{JMX_CC_PORT}"]}]}
+            ],
             alert_rules_path=METRICS_RULES_DIR,
         )
         self.grafana_dashboards = GrafanaDashboardProvider(self)
