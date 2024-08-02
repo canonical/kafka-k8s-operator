@@ -6,6 +6,7 @@ import os
 import re
 import string
 import tempfile
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from subprocess import PIPE, check_output
@@ -20,10 +21,9 @@ from integration.helpers import (
     get_k8s_host_from_unit,
     get_unit_address_map,
 )
-from literals import PATHS
+from literals import BROKER, CONTAINER
 
 PROCESS = "kafka.Kafka"
-CONTAINER = "kafka"
 SERVICE = "kafka"
 
 
@@ -58,7 +58,7 @@ def get_topic_description(
     unit_name = unit_name or ops_test.model.applications[APP_NAME].units[0].name
 
     output = check_output(
-        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {PATHS['BIN']}/bin/kafka-topics.sh --describe --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {PATHS['CONF']}/client.properties",
+        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {BROKER.paths['BIN']}/bin/kafka-topics.sh --describe --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {BROKER.paths['CONF']}/client.properties",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -83,7 +83,7 @@ def get_topic_offsets(ops_test: OpsTest, topic: str, unit_name: Optional[str] = 
 
     # example of topic offset output: 'test-topic:0:10'
     result = check_output(
-        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {PATHS['BIN']}/bin/kafka-get-offsets.sh --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {PATHS['CONF']}/client.properties",
+        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {BROKER.paths['BIN']}/bin/kafka-get-offsets.sh --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {BROKER.paths['CONF']}/client.properties",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -122,7 +122,7 @@ def modify_pebble_restart_delay(
     policy: Literal["extend", "restore"],
     app_name: str = APP_NAME,
     container_name: str = CONTAINER,
-    service_name: str = SERVICE,
+    service_name: str = BROKER.service,
 ) -> None:
     f"""Modify the pebble restart delay of the underlying process.
 
@@ -152,7 +152,7 @@ def modify_pebble_restart_delay(
 
         logger.info(f"Adding {policy} policy to {container_name} pebble plan...")
         check_output(
-            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble add --combine {service_name} {pebble_patch_path}",
+            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble add --combine {service_name}-{uuid.uuid4().hex} {pebble_patch_path}",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,
@@ -160,7 +160,7 @@ def modify_pebble_restart_delay(
 
         logger.info(f"Replanning {service_name} service...")
         check_output(
-            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble replan",
+            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble restart kafka",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,

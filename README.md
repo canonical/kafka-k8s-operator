@@ -11,7 +11,7 @@ The Charmed Kafka K8s Operator delivers automated operations management from day
 
 The Kafka K8s Operator can be found on [Charmhub](https://charmhub.io/kafka-k8s) and it comes with features such as:
 - Fault-tolerance, replication, scalability and high-availability out-of-the-box.
-- SASL/SCRAM auth for Broker-Broker and Client-Broker authenticaion enabled by default.
+- SASL/SCRAM auth for Broker-Broker and Client-Broker authentication enabled by default.
 - Access control management supported with user-provided ACL lists.
 
 The Kafka K8s Operator uses the latest upstream Kafka binaries released by the The Apache Software Foundation that comes with Kafka, made available using the [`ubuntu/kafka` OCI image](https://registry.hub.docker.com/r/ubuntu/kafka) distributed by Canonical.

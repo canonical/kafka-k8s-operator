@@ -3,7 +3,7 @@
 name: kafka-k8s
 display-name: Charmed Kafka K8s
 description: |
-  Kafka is an event streaming platform. This charm deploys and operates Kafka on 
+  Kafka is an event streaming platform. This charm deploys and operates Kafka on
   a K8s environment.
 summary: Charmed Kafka K8s Operator
 docs: https://discourse.charmhub.io/t/charmed-kafka-k8s-documentation/10296
@@ -31,7 +31,7 @@ resources:
   kafka-image:
     type: oci-image
     description: OCI Image for Apache Kafka
-    upstream-source: ghcr.io/canonical/charmed-kafka@sha256:5f46302c78330fee18f43bc2b5f2999efcb57d46dea66a9182e8ceb7ae317abe
+    upstream-source: ghcr.io/canonical/charmed-kafka@sha256:67d2729ca6c4f158682c481a512c37e555bae6edc30e8f0acdb0460fcbeffe88
 
 peers:
   cluster:
@@ -40,6 +40,17 @@ peers:
     interface: rolling_op
   upgrade:
     interface: upgrade
+
+provides:
+  kafka-client:
+    interface: kafka_client
+  metrics-endpoint:
+    interface: prometheus_scrape
+  grafana-dashboard:
+    interface: grafana_dashboard
+  peer-cluster-orchestrator:
+    interface: peer_cluster
+    limit: 1
 
 requires:
   zookeeper:
@@ -58,18 +69,13 @@ requires:
   logging:
     interface: loki_push_api
     optional: true
+  peer-cluster:
+    interface: peer_cluster
+    optional: true
   oauth:
     interface: oauth
     limit: 1
     optional: true
-
-provides:
-  kafka-client:
-    interface: kafka_client
-  metrics-endpoint:
-    interface: prometheus_scrape
-  grafana-dashboard:
-    interface: grafana_dashboard
 
 storage:
   data:

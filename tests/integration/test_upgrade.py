@@ -45,7 +45,11 @@ async def test_in_place_upgrade(ops_test: OpsTest, kafka_charm, app_charm):
 
     async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME, DUMMY_NAME], idle_period=30, timeout=1800, status="active"
+            apps=[APP_NAME, ZK_NAME, DUMMY_NAME],
+            idle_period=30,
+            timeout=1800,
+            status="active",
+            raise_on_error=False,
         )
 
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
@@ -93,7 +97,9 @@ async def test_in_place_upgrade(ops_test: OpsTest, kafka_charm, app_charm):
     async with ops_test.fast_forward(fast_interval="20s"):
         await asyncio.sleep(90)
 
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=180)
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=180, raise_on_error=False
+    )
 
     action = await leader_unit.run_action("resume-upgrade")
     await action.wait()
