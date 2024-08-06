@@ -30,7 +30,7 @@ Charmed Kafka K8s is a distribution of Apache Kafka. It’s an open-source proje
 - [Join the Discourse forum](/tag/kafka-k8s)
 - [Contribute](https://github.com/canonical/kafka-k8s-operator/blob/main/CONTRIBUTING.md) and report [issues](https://github.com/canonical/kafka-k8s-operator/issues/new)
 - Explore [Canonical Data Fabric solutions](https://canonical.com/data)
-- [Contact us](/t/charmed-kafka-k8s-documentation-reference-contacts/13206) for all further questions
+- [Contact us](https://discourse.charmhub.io//t/charmed-kafka-k8s-documentation-reference-contacts/13206) for all further questions
 
 ## License
 
