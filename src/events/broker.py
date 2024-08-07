@@ -167,7 +167,6 @@ class BrokerOperator(Object):
             event.defer()
             return
 
-        # any external services must be created before setting of properties
         self.update_external_services()
 
         # required settings given zookeeper connection config has been created
@@ -216,6 +215,9 @@ class BrokerOperator(Object):
 
         self.charm.unit.set_workload_version(self.workload.get_version())
         self.config_manager.set_environment()
+
+        # any external services must be created before setting of properties
+        self.update_external_services()
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
