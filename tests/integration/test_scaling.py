@@ -25,12 +25,15 @@ async def test_kafka_simple_scale_up(ops_test: OpsTest):
     kafka_charm = await ops_test.build_charm(".")
 
     await asyncio.gather(
-        ops_test.model.deploy(ZK_NAME, channel="3/edge", application_name=ZK_NAME, num_units=1),
+        ops_test.model.deploy(
+            ZK_NAME, channel="3/edge", application_name=ZK_NAME, num_units=1, trust=True
+        ),
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
+            trust=True,
         ),
     )
     await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME])
