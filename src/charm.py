@@ -22,6 +22,7 @@ from core.structured_config import CharmConfig
 from events.balancer import BalancerOperator
 from events.broker import BrokerOperator
 from events.peer_cluster import PeerClusterEventsHandler
+from events.tls import TLSHandler
 from literals import (
     CHARM_KEY,
     CONTAINER,
@@ -65,6 +66,8 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         # Register roles event handlers after global ones, so that they get the priority.
         self.broker = BrokerOperator(self)
         self.balancer = BalancerOperator(self)
+
+        self.tls = TLSHandler(self)
 
         self.metrics_endpoint = MetricsEndpointProvider(
             self,
