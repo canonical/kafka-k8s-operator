@@ -30,6 +30,7 @@ async def test_in_place_upgrade(ops_test: OpsTest, kafka_charm, app_charm):
             channel=CHANNEL,
             application_name=ZK_NAME,
             num_units=1,
+            trust=True,
         ),
         ops_test.model.deploy(
             APP_NAME,
@@ -38,7 +39,9 @@ async def test_in_place_upgrade(ops_test: OpsTest, kafka_charm, app_charm):
             channel=CHANNEL,
             trust=True,
         ),
-        ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, num_units=1, series="jammy"),
+        ops_test.model.deploy(
+            app_charm, application_name=DUMMY_NAME, num_units=1, series="jammy", trust=True
+        ),
     )
 
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)

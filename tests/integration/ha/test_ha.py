@@ -84,9 +84,10 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
             application_name=APP_NAME,
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
+            trust=True,
         ),
-        ops_test.model.deploy(ZK_NAME, channel="3/edge", num_units=1),
-        ops_test.model.deploy(app_charm, application_name=DUMMY_NAME),
+        ops_test.model.deploy(ZK_NAME, channel="3/edge", num_units=1, trust=True),
+        ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, trust=True),
     )
     await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=2000)
 
@@ -121,8 +122,11 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
             application_name=second_kafka_name,
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
+            trust=True,
         ),
-        ops_test.model.deploy(ZK_NAME, application_name=second_zk_name, channel="3/edge"),
+        ops_test.model.deploy(
+            ZK_NAME, application_name=second_zk_name, channel="3/edge", trust=True
+        ),
     )
     await ops_test.model.add_relation(second_kafka_name, second_zk_name)
 
