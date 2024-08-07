@@ -6,7 +6,7 @@ This is part of the [Charmed Kafka K8s Tutorial](/t/charmed-kafka-k8s-documentat
 
 Again, relations come in handy here as TLS is enabled via relations; i.e. by relating Charmed Kafka to the [Self-signed Certificates Charm](https://charmhub.io/self-signed-certificates) via the [`tls-certificates`](https://github.com/canonical/charm-relation-interfaces/blob/main/interfaces/tls_certificates/v1/README.md) charm relations. The `tls-certificates` relation centralises TLS certificate management in a consistent manner and handles providing, requesting, and renewing TLS certificates, making it possible to use different providers, like the self-signed certificates but also other services, e.g. Let's Encrypt. 
 
-> *Note: In this tutorial, we will distribute [self-signed certificates](https://en.wikipedia.org/wiki/Self-signed_certificate) to all charms (Kafka, Zookeeper and client applications) that are signed using a root self-signed CA
+> *Note: In this tutorial, we will distribute [self-signed certificates](https://en.wikipedia.org/wiki/Self-signed_certificate) to all charms (Kafka, ZooKeeper and client applications) that are signed using a root self-signed CA
 that is also trusted by all applications. This setup is only for show-casing purposes and self-signed certificates should **never** be used in a production cluster. For more information about which charm may better suit your use-case, please refer to [this post](https://charmhub.io/topics/security-with-x-509-certificates).* 
 
 ### Configure TLS

@@ -14,7 +14,7 @@ Canonical has also developed the [Charmed Kafka operator](/t/charmed-kafka-docum
 
 Charmed Kafka K8s is developed and supported by [Canonical](https://canonical.com/), as part of its commitment to 
 provide open-source, self-driving solutions, seamlessly integrated using the Operator Framework Juju. Please 
-refer to [Charmhub.io](https://charmhub.io/), for more Charmed operators that can be integrated by Juju.
+refer to [Charmhub.io](https://charmhub.io/), for more Charmed operators that can be integrated by [Juju](https://juju.is/).
 
 ## In this documentation
 
