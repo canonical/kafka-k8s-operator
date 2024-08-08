@@ -195,11 +195,11 @@ class BalancerOperator(Object):
                 not self.balancer_manager.cruise_control.ready,
                 "CruiseControl balancer service has not yet collected enough data to provide a partition reallocation proposal",
             ),
-            (
-                not event.params["brokerid"]
+            [
+                event.params.get("brokerid", None) is None
                 and event.params["mode"] != get_args(RebalanceMode)[0],
-                "'add' and 'remove' rebalance action require at least one broker id",
-            ),
+                "'add' and 'remove' rebalance action require passing the 'brokerid' parameter",
+            ],
         ]
 
         for check, msg in failure_conditions:

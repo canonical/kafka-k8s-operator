@@ -51,8 +51,7 @@ rebalance:
       type: boolean
       default: true
     brokerid:
-      description: List of ids of broker newly added to the cluster or to be removed
-      type: array
-      items:
-        type: integer
-      default: []
+      description: Broker ID newly added to the cluster or to be removed
+      type: integer
+      minimum: 0
+  required: [mode, dryrun]

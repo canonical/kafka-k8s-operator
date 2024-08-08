@@ -197,12 +197,14 @@ def test_balancer_manager_rebalance_full(
 
 
 @pytest.mark.parametrize("mode", ["add", "remove"])
-@pytest.mark.parametrize("brokerid", [[], [1, 2]])
+@pytest.mark.parametrize("brokerid", [None, 1])
 def test_rebalance_add_remove_broker_id_length(
-    harness: Harness[KafkaCharm], proposal: dict, mode: str, brokerid: list[int]
+    harness: Harness[KafkaCharm], proposal: dict, mode: str, brokerid: int | None
 ):
     mock_event = MagicMock()
-    mock_event.params = {"mode": mode, "dryrun": True, "brokerid": brokerid}
+    payload = {"mode": mode, "dryrun": True}
+    payload = payload | {"brokerid": brokerid} if brokerid is not None else payload
+    mock_event.params = payload
 
     with (
         harness.hooks_disabled(),
