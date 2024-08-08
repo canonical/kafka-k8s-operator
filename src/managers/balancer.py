@@ -7,7 +7,7 @@
 import json
 import logging
 import time
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, get_args
 
 import requests
 
@@ -60,10 +60,14 @@ class CruiseControlClient:
             dryrun: flag to decide whether to return only proposals (True), or execute (False)
             **kwargs: any REST API query parameters provided by that endpoint
         """
+        payload = {"dryrun": str(dryrun)}
+        if brokerid := kwargs.get("brokerid", []):
+            payload |= {"brokerid": brokerid}
+
         r = requests.post(
             url=f"{self.address}/{endpoint}",
             auth=(self.username, self.password),
-            params=kwargs | {"dryrun": str(dryrun)} | self.default_params,
+            params=kwargs | payload | self.default_params,
         )
         logger.debug(f"POST {endpoint} - {vars(r)}")
 
@@ -178,15 +182,18 @@ class BalancerManager:
                 )
                 logger.info(f"Created topic {topic}")
 
-    def rebalance(self, mode: str, dryrun: bool = True) -> tuple[requests.Response, str]:
+    def rebalance(
+        self, mode: str, brokerid: list[int], dryrun: bool = True
+    ) -> tuple[requests.Response, str]:
         """Triggers a full Kafka cluster partition rebalance.
 
         Returns:
             Tuple of requests.Response and string of the CruiseControl User-Task-ID for the rebalance
         """
+        mode = f"{mode}_broker" if mode in get_args(RebalanceMode)[1:] else mode
         rebalance_request = self.cruise_control.post(
-            endpoint=mode, dryrun=dryrun
-        )  # FIXME: will need updating to include add/remove_broker when it works
+            endpoint=mode, dryrun=dryrun, brokerid=brokerid
+        )
 
         return (rebalance_request, rebalance_request.headers.get("User-Task-ID", ""))
 

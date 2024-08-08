@@ -2,7 +2,7 @@
 
 import logging
 from subprocess import CalledProcessError
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, get_args
 
 from ops import (
     ActionEvent,
@@ -23,7 +23,7 @@ from literals import (
     USER,
     Status,
 )
-from managers.balancer import BalancerManager
+from managers.balancer import BalancerManager, RebalanceMode
 from managers.config import BalancerConfigManager
 from workload import BalancerWorkload
 
@@ -195,6 +195,11 @@ class BalancerOperator(Object):
                 not self.balancer_manager.cruise_control.ready,
                 "CruiseControl balancer service has not yet collected enough data to provide a partition reallocation proposal",
             ),
+            (
+                not event.params["brokerid"]
+                and event.params["mode"] != get_args(RebalanceMode)[0],
+                "'add' and 'remove' rebalance action require at least one broker id",
+            ),
         ]
 
         for check, msg in failure_conditions:
@@ -202,9 +207,7 @@ class BalancerOperator(Object):
                 event.fail(msg)
                 return
 
-        response, user_task_id = self.balancer_manager.rebalance(
-            mode=event.params["mode"], dryrun=event.params["dryrun"]
-        )
+        response, user_task_id = self.balancer_manager.rebalance(**event.params)
         logger.debug(f"rebalance - {vars(response)=}")
 
         if response.status_code != 200:

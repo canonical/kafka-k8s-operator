@@ -50,3 +50,9 @@ rebalance:
       description: Only generate the partition rebalance proposals and estimated result, without executing
       type: boolean
       default: true
+    brokerid:
+      description: List of ids of broker newly added to the cluster or to be removed
+      type: array
+      items:
+        type: integer
+      default: []
