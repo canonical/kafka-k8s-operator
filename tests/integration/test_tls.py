@@ -41,7 +41,7 @@ async def test_deploy_tls(ops_test: OpsTest, app_charm):
     tls_config = {"ca-common-name": "kafka"}
 
     await asyncio.gather(
-        ops_test.model.deploy(TLS_NAME, channel="edge", config=tls_config),
+        ops_test.model.deploy(TLS_NAME, channel="edge", config=tls_config, revision=163),
         ops_test.model.deploy(ZK_NAME, channel="3/edge", num_units=3),
         ops_test.model.deploy(
             kafka_charm,
