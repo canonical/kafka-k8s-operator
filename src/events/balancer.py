@@ -20,8 +20,9 @@ from literals import (
     BALANCER_WEBSERVER_USER,
     CONTAINER,
     GROUP,
+    MODE_ADD,
+    MODE_REMOVE,
     USER,
-    RebalanceMode,
     Status,
 )
 from managers.balancer import BalancerManager
@@ -198,7 +199,7 @@ class BalancerOperator(Object):
             ),
             (
                 event.params.get("brokerid", None) is None
-                and event.params["mode"] in [RebalanceMode.ADD, RebalanceMode.REMOVE],
+                and event.params["mode"] in (MODE_ADD, MODE_REMOVE),
                 "'add' and 'remove' rebalance action require passing the 'brokerid' parameter",
             ),
         ]
