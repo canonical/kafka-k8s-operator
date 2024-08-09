@@ -260,6 +260,9 @@ class TestBalancer:
         # verify CC can find the new broker_id 3, with no replica partitions allocated
         broker_replica_count = get_replica_count_by_broker_id(ops_test, balancer_app)
         new_broker_id = max(map(int, broker_replica_count.keys()))
+        pre_rebalance_replica_counts = {
+            key: value for key, value in broker_replica_count.items() if key != str(new_broker_id)
+        }
         new_broker_replica_count = int(broker_replica_count.get(str(new_broker_id), 0))
 
         assert not new_broker_replica_count
@@ -269,7 +272,7 @@ class TestBalancer:
                 leader_unit = unit
 
         rebalance_action_dry_run = await leader_unit.run_action(
-            "rebalance", mode="add", brokerid=[new_broker_id], dryrun=True, timeout=600, block=True
+            "rebalance", mode="add", brokerid=new_broker_id, dryrun=True, timeout=600, block=True
         )
         response = await rebalance_action_dry_run.wait()
         assert response.results
@@ -285,14 +288,35 @@ class TestBalancer:
         response = await rebalance_action.wait()
         assert response.results
 
+        post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, balancer_app)
+
+        # Partition only were moved from existing brokers to the new one
+        for existing_broker, previous_replica_count in pre_rebalance_replica_counts.items():
+            assert previous_replica_count >= post_rebalance_replica_counts.get(
+                str(existing_broker)
+            )
+
+        # New broker has partition(s)
         assert int(
             get_replica_count_by_broker_id(ops_test, balancer_app).get(str(new_broker_id), 0)
         )  # replicas were successfully moved
+
+        # Total sum of partition conserved
+        assert sum(pre_rebalance_replica_counts.values()) == sum(
+            post_rebalance_replica_counts.values()
+        )
 
     @pytest.mark.abort_on_fail
     async def test_balancer_prepare_unit_removal(self, ops_test: OpsTest, balancer_app):
         broker_replica_count = get_replica_count_by_broker_id(ops_test, balancer_app)
         new_broker_id = max(map(int, broker_replica_count.keys()))
+
+        # storing the current replica counts of 0, 1, 2 - they will persist
+        pre_rebalance_replica_counts = {
+            key: value
+            for key, value in get_replica_count_by_broker_id(ops_test, balancer_app).items()
+            if key != str(new_broker_id)
+        }
 
         for unit in ops_test.model.applications[balancer_app].units:
             if await unit.is_leader_from_status():
@@ -320,10 +344,23 @@ class TestBalancer:
         response = await rebalance_action.wait()
         assert response.results
 
-        broker_replica_count = get_replica_count_by_broker_id(ops_test, balancer_app)
-        new_broker_replica_count = int(broker_replica_count.get(str(new_broker_id), 0))
+        post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, balancer_app)
 
-        assert not new_broker_replica_count
+        # Partition only were moved from the removed broker to the other ones
+        for existing_broker, previous_replica_count in pre_rebalance_replica_counts.items():
+            assert previous_replica_count <= post_rebalance_replica_counts.get(
+                str(existing_broker)
+            )
+
+        # Replicas were successfully moved
+        assert not int(
+            get_replica_count_by_broker_id(ops_test, balancer_app).get(str(new_broker_id), 0)
+        )
+
+        # Total sum of partition conserved
+        assert sum(pre_rebalance_replica_counts.values()) == sum(
+            post_rebalance_replica_counts.values()
+        )
 
     @pytest.mark.abort_on_fail
     async def test_cleanup(self, ops_test: OpsTest, balancer_app):
