@@ -173,6 +173,11 @@ HARD_BALANCER_GOALS = [
 ]
 
 
+MODE_FULL = "full"
+MODE_ADD = "add"
+MODE_REMOVE = "remove"
+
+
 @dataclass
 class StatusLevel:
     """Status object helper."""
