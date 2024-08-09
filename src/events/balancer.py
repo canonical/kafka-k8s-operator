@@ -198,7 +198,7 @@ class BalancerOperator(Object):
             ),
             (
                 event.params.get("brokerid", None) is None
-                and event.params["mode"] != RebalanceMode.FULL,
+                and event.params["mode"] in [RebalanceMode.ADD, RebalanceMode.REMOVE],
                 "'add' and 'remove' rebalance action require passing the 'brokerid' parameter",
             ),
         ]
