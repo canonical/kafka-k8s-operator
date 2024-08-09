@@ -157,7 +157,7 @@ def test_balancer_manager_rebalance_full(
     status: int,
 ):
     mock_event = MagicMock()
-    mock_event.params = {"mode": "full", "dryrun": True, "brokerid": []}
+    mock_event.params = {"mode": "full", "dryrun": True}
 
     with (
         harness.hooks_disabled(),
