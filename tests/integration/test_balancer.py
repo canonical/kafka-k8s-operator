@@ -30,7 +30,7 @@ BALANCER_APP = "balancer"
 PRODUCER_APP = "producer"
 
 
-@pytest.fixture(params=[APP_NAME], scope="module")
+@pytest.fixture(params=[APP_NAME, BALANCER_APP], scope="module")
 async def balancer_app(ops_test: OpsTest, request):
     yield request.param
 
