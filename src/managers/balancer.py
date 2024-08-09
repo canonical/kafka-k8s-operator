@@ -7,12 +7,12 @@
 import json
 import logging
 import time
-from typing import TYPE_CHECKING, Any, Literal, get_args
+from typing import TYPE_CHECKING, Any
 
 import requests
 
 from core.models import JSON
-from literals import BALANCER, BALANCER_TOPICS, STORAGE
+from literals import BALANCER, BALANCER_TOPICS, STORAGE, RebalanceMode
 
 if TYPE_CHECKING:
     from charm import KafkaCharm
@@ -21,8 +21,6 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-
-RebalanceMode = Literal["full", "add", "remove"]
 
 
 class CruiseControlClient:
@@ -61,7 +59,7 @@ class CruiseControlClient:
             **kwargs: any REST API query parameters provided by that endpoint
         """
         payload = {"dryrun": str(dryrun)}
-        if brokerid := kwargs.get("brokerid", []):
+        if brokerid := kwargs.get("brokerid", None) is not None:
             payload |= {"brokerid": brokerid}
 
         r = requests.post(
@@ -183,14 +181,14 @@ class BalancerManager:
                 logger.info(f"Created topic {topic}")
 
     def rebalance(
-        self, mode: str, brokerid: list[int], dryrun: bool = True
+        self, mode: str, dryrun: bool = True, brokerid: int | None = None
     ) -> tuple[requests.Response, str]:
         """Triggers a full Kafka cluster partition rebalance.
 
         Returns:
             Tuple of requests.Response and string of the CruiseControl User-Task-ID for the rebalance
         """
-        mode = f"{mode}_broker" if mode in get_args(RebalanceMode)[1:] else mode
+        mode = f"{mode}_broker" if mode != RebalanceMode.FULL else mode
         rebalance_request = self.cruise_control.post(
             endpoint=mode, dryrun=dryrun, brokerid=brokerid
         )

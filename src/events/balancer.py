@@ -2,7 +2,7 @@
 
 import logging
 from subprocess import CalledProcessError
-from typing import TYPE_CHECKING, get_args
+from typing import TYPE_CHECKING
 
 from ops import (
     ActionEvent,
@@ -21,9 +21,10 @@ from literals import (
     CONTAINER,
     GROUP,
     USER,
+    RebalanceMode,
     Status,
 )
-from managers.balancer import BalancerManager, RebalanceMode
+from managers.balancer import BalancerManager
 from managers.config import BalancerConfigManager
 from workload import BalancerWorkload
 
@@ -195,11 +196,11 @@ class BalancerOperator(Object):
                 not self.balancer_manager.cruise_control.ready,
                 "CruiseControl balancer service has not yet collected enough data to provide a partition reallocation proposal",
             ),
-            [
+            (
                 event.params.get("brokerid", None) is None
-                and event.params["mode"] != get_args(RebalanceMode)[0],
+                and event.params["mode"] != RebalanceMode.FULL,
                 "'add' and 'remove' rebalance action require passing the 'brokerid' parameter",
-            ],
+            ),
         ]
 
         for check, msg in failure_conditions:
