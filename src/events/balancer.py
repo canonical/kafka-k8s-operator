@@ -202,6 +202,12 @@ class BalancerOperator(Object):
                 and event.params["mode"] in (MODE_ADD, MODE_REMOVE),
                 "'add' and 'remove' rebalance action require passing the 'brokerid' parameter",
             ),
+            (
+                event.params["mode"] in (MODE_ADD, MODE_REMOVE)
+                and event.params.get("brokerid")
+                not in [broker.unit_id for broker in self.charm.state.brokers],
+                "invalid brokerid",
+            ),
         ]
 
         for check, msg in failure_conditions:
