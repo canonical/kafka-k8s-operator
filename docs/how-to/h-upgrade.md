@@ -2,7 +2,7 @@
 
 > **Note** This feature is available on Charmed Kafka K8s and Charmed ZooKeeper K8s from revisions 53 and 49, respectively. Upgrade from previous versions is **not supported**.
 
-Charm upgrades can include both upgrades to operator code (e.g. the revision used by the charm) and/or the workload version. Note that since the charm code pins a particular version of the workload, a charm upgrade may or may not involve also a workload version upgrade. In general, the following guide only applies for in-place upgrades that involve (at most) minor version upgrade of Kafka workload, e.g. between Kafka 3.4.x to 3.5.x. Major workload upgrades are generally **NOT SUPPORTED**, and they should be carried out using full cluster-to-cluster migrations. Please refer to the how-to guide about cluster migration [here](TODO) for more information on how this can be achieved.
+Charm upgrades can include both upgrades of operator code (e.g. the revision used by the charm) and/or the workload version. Note that since the charm code pins a particular version of the workload, a charm upgrade may or may not involve also a workload version upgrade. In general, the following guide only applies for in-place upgrades that involve (at most) minor version upgrade of Kafka workload, e.g. between Kafka 3.4.x to 3.5.x. Major workload upgrades are generally **NOT SUPPORTED**, and they should be carried out using full cluster-to-cluster migrations. Please refer to the [how-to guide about cluster migration](/t/charmed-kafka-k8s-documentation-how-to-migrate-a-cluster/13268) for more information on how this can be achieved.
 
 Perform other extraordinary operations on the Kafka cluster while upgrading is not supported. As an example, these may be (but not limited to) the following:
 1. Adding or removing units
@@ -81,7 +81,7 @@ juju run kafka-k8s/leader resume-upgrade --format yaml  --wait=1m
 
 > **Note** Even though the process will not stop anymore on each upgrade, 
 > the charm will take care of coordinating the pod updates by restarting one unit at the time to not lose high-availability. 
-> This generally lets the Kafka service to continuously be up and running during an upgrade, although downtime should 
+> This generally keeps Kafka service up and running during an upgrade, although downtime should 
 > be tolerated during upgrades. 
 
 The upgrade process can be monitored using `juju status` command, where the message of the units will provide information about which units have been upgraded already, which unit is currently upgrading and which units are waiting for the upgrade to be triggered, as shown below: 
@@ -110,7 +110,7 @@ Before upgrading the unit, the charm will check whether the upgrade can be perfo
 Note that these checks are only possible after a refresh of the charm code, and therefore cannot be done upfront (e.g. during the `pre-upgrade-checks` action).
 If some of these checks fail, the upgrade will be aborted. When this happens, the workload may still be operating (as only the operator may have failed) but we recommend to rollback the upgrade as soon as possible. 
 
-To roll back the upgrade, re-run steps two and three, using the revision taken in step one, i.e.:
+To roll back the upgrade, re-run steps #2 and #3, using the revision taken in step #1, i.e.:
 
 ```shell
 juju run kafka-k8s/leader pre-upgrade-check
