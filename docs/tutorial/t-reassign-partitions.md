@@ -102,7 +102,7 @@ summary:
 If we are happy with this proposal, we can re-run the action, but this time instructing to actually execute the proposal
 
 ```shell
-juju run cruise-control/0 rebalance mode=add dryrun=false --brokerid=3 --wait=10m
+juju run cruise-control/0 rebalance mode=add dryrun=false brokerid=3 --wait=10m
 ```
 
 Partition rebalances can take quite some time. To monitor the progress, in a separate terminal session, you can check the Juju debug logs to see it in progress
@@ -154,7 +154,7 @@ In practice, this means running a `rebalance` Juju action as seen above, **BEFOR
 To remove the most recent broker unit 3 from the previous example, re-run the action with a new parameter value of `--mode=remove`
 
 ```shell
-juju run cruise-control/0 rebalance mode=remove dryrun=false --brokerid=3 --wait=10m
+juju run cruise-control/0 rebalance mode=remove dryrun=false brokerid=3 --wait=10m
 ```
 
 This does not remove the unit, but moves the partitions from the current broker unit to other brokers within the cluster.
