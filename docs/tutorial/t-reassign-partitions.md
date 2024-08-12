@@ -72,7 +72,7 @@ This should result something similar to the result seen below, with no partition
 Now, to rebalance some existing partitions from brokers 0,1,2, and allocate them to broker 3, run
 
 ```shell
-juju run cruise-control/0 rebalance mode=add --wait=2m
+juju run cruise-control/0 rebalance mode=add brokerid=3 --wait=2m
 ```
 
 > **NOTE** - If this action fails with a message similar to `CruiseControl balancer service has not yet collected enough data to provide a partition reallocation proposal`, wait 20 minutes or so and try again. CruiseControl takes a while to collect sufficient metrics from the Kafka cluster during a cold deployment
