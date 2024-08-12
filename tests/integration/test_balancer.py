@@ -45,7 +45,10 @@ class TestBalancer:
                 kafka_charm,
                 application_name=APP_NAME,
                 num_units=1,
-                config={"roles": "broker,balancer" if balancer_app == APP_NAME else "broker"},
+                config={
+                    "roles": "broker,balancer" if balancer_app == APP_NAME else "broker",
+                    "profile": "testing",
+                },
                 resources={"kafka-image": KAFKA_CONTAINER},
             ),
             ops_test.model.deploy(
@@ -71,7 +74,10 @@ class TestBalancer:
                 kafka_charm,
                 application_name=balancer_app,
                 num_units=1,
-                config={"roles": balancer_app},
+                config={
+                    "roles": balancer_app,
+                    "profile": "testing",
+                },
                 resources={"kafka-image": KAFKA_CONTAINER},
             )
 

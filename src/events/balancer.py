@@ -1,5 +1,6 @@
 """Balancer role core charm logic."""
 
+import inspect
 import logging
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
@@ -22,11 +23,12 @@ from literals import (
     GROUP,
     MODE_ADD,
     MODE_REMOVE,
+    PROFILE_TESTING,
     USER,
     Status,
 )
 from managers.balancer import BalancerManager
-from managers.config import BalancerConfigManager
+from managers.config import CRUISE_CONTROL_TESTING_OPTIONS, BalancerConfigManager
 from managers.tls import TLSManager
 from workload import BalancerWorkload
 
@@ -109,6 +111,17 @@ class BalancerOperator(Object):
             return
 
         self.config_manager.set_environment()
+
+        if self.charm.config.profile == PROFILE_TESTING:
+            logger.info(
+                inspect.cleandoc(
+                    f"""
+                    Charmed Kafka is deployed with the 'testing' profile.
+                    The following CruiseControl properties will be set:
+                    {CRUISE_CONTROL_TESTING_OPTIONS}
+                    """
+                )
+            )
 
     def _on_start(self, event: EventBase) -> None:
         """Handler for `start` event."""

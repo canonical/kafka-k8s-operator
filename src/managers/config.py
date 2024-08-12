@@ -27,6 +27,7 @@ from literals import (
     JMX_EXPORTER_PORT,
     JVM_MEM_MAX_GB,
     JVM_MEM_MIN_GB,
+    PROFILE_TESTING,
     SECURITY_PROTOCOL_PORTS,
     AuthMechanism,
     AuthProtocol,
@@ -48,6 +49,15 @@ sample.store.class=com.linkedin.kafka.cruisecontrol.monitor.sampling.KafkaSample
 partition.metric.sample.store.topic=__KafkaCruiseControlPartitionMetricSamples
 broker.metric.sample.store.topic=__KafkaCruiseControlModelTrainingSamples
 max.active.user.tasks=10
+"""
+CRUISE_CONTROL_TESTING_OPTIONS = """
+metric.sampling.interval.ms=4000
+partition.metrics.window.ms=10000
+num.partition.metrics.windows=3
+min.samples.per.partition.metrics.window=1
+broker.metrics.window.ms=10000
+num.broker.metrics.windows=20
+min.samples.per.broker.metrics.window=1
 """
 SERVER_PROPERTIES_BLACKLIST = ["profile", "log_level", "certificate_extra_sans"]
 
@@ -782,6 +792,9 @@ class BalancerConfigManager(CommonConfigManager):
 
         if self.state.cluster.tls_enabled and self.state.unit_broker.certificate:
             properties += self.cc_tls_properties + self.cc_zookeeper_tls_properties
+
+        if self.config.profile == PROFILE_TESTING:
+            properties += CRUISE_CONTROL_TESTING_OPTIONS.split("\n")
 
         return properties
 
