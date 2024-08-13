@@ -212,7 +212,7 @@ class TestBalancer:
                 f"{APP_NAME}/{new_broker_id}"
             )
         else:
-            await ops_test.model.application[APP_NAME].scale(scale_change=-1)
+            await ops_test.model.applications[APP_NAME].scale(scale_change=-1)
 
         await ops_test.model.block_until(
             lambda: len(ops_test.model.applications[APP_NAME].units) == 3
