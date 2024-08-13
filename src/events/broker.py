@@ -1,7 +1,12 @@
+#!/usr/bin/env python3
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 """Broker role core charm logic."""
 
 import json
 import logging
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from ops import (
@@ -39,6 +44,7 @@ from literals import (
 from managers.auth import AuthManager
 from managers.balancer import BalancerManager
 from managers.config import ConfigManager
+from managers.k8s import K8sManager
 from managers.tls import TLSManager
 from workload import KafkaWorkload
 
@@ -58,8 +64,12 @@ class BrokerOperator(Object):
         self.workload = KafkaWorkload(container=self.charm.unit.get_container(CONTAINER))
 
         self.tls_manager = TLSManager(
-            state=self.charm.state, workload=self.workload, substrate=self.charm.substrate
+            state=self.charm.state,
+            workload=self.workload,
+            substrate=self.charm.substrate,
+            config=self.charm.config,
         )
+
         # Fast exit after workload instantiation, but before any event observer
         if BROKER.value not in self.charm.config.roles:
             return
@@ -90,7 +100,9 @@ class BrokerOperator(Object):
             kafka_opts=self.config_manager.kafka_opts,
             log4j_opts=self.config_manager.tools_log4j_opts,
         )
-
+        self.k8s_manager = K8sManager(
+            pod_name=self.charm.state.unit_broker.pod_name, namespace=self.charm.model.name
+        )
         self.balancer_manager = BalancerManager(self)
 
         # ---
@@ -155,6 +167,8 @@ class BrokerOperator(Object):
             event.defer()
             return
 
+        self.update_external_services()
+
         # required settings given zookeeper connection config has been created
         self.config_manager.set_server_properties()
         self.config_manager.set_zk_jaas_config()
@@ -190,6 +204,7 @@ class BrokerOperator(Object):
             self.charm.state.unit_broker.update(
                 {"cores": str(self.balancer_manager.cores), "rack": self.config_manager.rack}
             )
+
         self._on_kafka_pebble_ready(event)
 
     def _on_install(self, event: InstallEvent) -> None:
@@ -200,6 +215,9 @@ class BrokerOperator(Object):
 
         self.charm.unit.set_workload_version(self.workload.get_version())
         self.config_manager.set_environment()
+
+        # any external services must be created before setting of properties
+        self.update_external_services()
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
@@ -214,14 +232,37 @@ class BrokerOperator(Object):
         zk_jaas = self.workload.read(self.workload.paths.zk_jaas)
         zk_jaas_changed = set(zk_jaas) ^ set(self.config_manager.jaas_config.splitlines())
 
-        if not properties or not zk_jaas:
+        current_sans = self.tls_manager.get_current_sans()
+
+        if not (properties and zk_jaas):
             # Event fired before charm has properly started
             event.defer()
             return
 
+        current_sans_ip = set(current_sans["sans_ip"]) if current_sans else set()
+        expected_sans_ip = set(self.tls_manager.build_sans()["sans_ip"]) if current_sans else set()
+        sans_ip_changed = current_sans_ip ^ expected_sans_ip
+
         # update environment
         self.config_manager.set_environment()
         self.charm.unit.set_workload_version(self.workload.get_version())
+
+        if sans_ip_changed:
+            logger.info(
+                (
+                    f'Broker {self.charm.unit.name.split("/")[1]} updating certificate SANs - '
+                    f"OLD SANs = {current_sans_ip - expected_sans_ip}, "
+                    f"NEW SANs = {expected_sans_ip - current_sans_ip}"
+                )
+            )
+            self.charm.tls.certificates.on.certificate_expiring.emit(
+                certificate=self.charm.state.unit_broker.certificate,
+                expiry=datetime.now().isoformat(),
+            )  # new cert will eventually be dynamically loaded by the broker
+            self.charm.state.unit_broker.update(
+                {"certificate": ""}
+            )  # ensures only single requested new certs, will be replaced on new certificate-available event
+            return  # early return here to ensure new node cert arrives before updating advertised.listeners
 
         if zk_jaas_changed:
             clean_broker_jaas = [conf.strip() for conf in zk_jaas]
@@ -250,8 +291,9 @@ class BrokerOperator(Object):
         if zk_jaas_changed or properties_changed:
             self.charm.on[f"{self.charm.restart.name}"].acquire_lock.emit()
 
-        # update client_properties whenever possible
+        # update these whenever possible
         self.config_manager.set_client_properties()
+        self.update_external_services()
 
         # If Kafka is related to client charms, update their information.
         if self.model.relations.get(REL_NAME, None) and self.charm.unit.is_leader():
@@ -347,6 +389,18 @@ class BrokerOperator(Object):
             return False
 
         return True
+
+    def update_external_services(self) -> None:
+        """Attempts to update any external Kubernetes services."""
+        if self.charm.config.expose_external:
+            # every unit attempts to create a bootstrap service
+            # if exists, will silently continue
+            self.k8s_manager.apply_service(service=self.k8s_manager.build_bootstrap_services())
+
+            # creating the per-broker listener services
+            for auth in self.charm.state.enabled_auth:
+                listener_service = self.k8s_manager.build_listener_service(auth)
+                self.k8s_manager.apply_service(service=listener_service)
 
     def update_client_data(self) -> None:
         """Writes necessary relation data to all related client applications."""

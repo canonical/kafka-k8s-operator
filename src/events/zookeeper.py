@@ -36,6 +36,9 @@ class ZooKeeperHandler(Object):
         self.framework.observe(self.charm.on[ZK].relation_created, self._on_zookeeper_created)
         self.framework.observe(self.charm.on[ZK].relation_joined, self._on_zookeeper_changed)
         self.framework.observe(self.charm.on[ZK].relation_changed, self._on_zookeeper_changed)
+        self.framework.observe(
+            getattr(self.zookeeper_requires.on, "database_created"), self._on_zookeeper_changed
+        )
         self.framework.observe(self.charm.on[ZK].relation_broken, self._on_zookeeper_broken)
 
     def _on_zookeeper_created(self, _) -> None:
@@ -86,7 +89,7 @@ class ZooKeeperHandler(Object):
 
         # attempt re-start of Kafka for all units on zookeeper-changed
         # avoids relying on deferred events elsewhere that may not exist after cluster init
-        if not self.dependent.healthy and self.charm.state.cluster.internal_user_credentials:
+        if not self.dependent.healthy:
             self.charm.on.start.emit()
 
         self.charm.on.config_changed.emit()
@@ -94,6 +97,7 @@ class ZooKeeperHandler(Object):
     def _on_zookeeper_broken(self, _: RelationEvent) -> None:
         """Handler for `zookeeper_relation_broken` event, ensuring charm blocks."""
         self.charm.workload.stop()
+        self.charm.workload.exec(["rm", self.charm.workload.paths.zk_jaas])
 
         logger.info(f'Broker {self.model.unit.name.split("/")[1]} disconnected')
         self.charm._set_status(Status.ZK_NOT_RELATED)

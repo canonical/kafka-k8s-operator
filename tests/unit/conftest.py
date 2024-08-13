@@ -113,3 +113,8 @@ def user_tasks() -> dict:
         content = f.read()
 
     return json.loads(content)
+
+
+@pytest.fixture(autouse=True)
+def patched_node_ip(mocker):
+    mocker.patch("core.models.KafkaBroker.node_ip", new_callable=PropertyMock, return_value="1234")

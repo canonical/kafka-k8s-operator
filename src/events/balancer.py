@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 """Balancer role core charm logic."""
 
 import logging
@@ -46,8 +50,12 @@ class BalancerOperator(Object):
         self.workload = BalancerWorkload(container=self.charm.unit.get_container(CONTAINER))
 
         self.tls_manager = TLSManager(
-            state=self.charm.state, workload=self.workload, substrate=self.charm.substrate
+            state=self.charm.state,
+            workload=self.workload,
+            substrate=self.charm.substrate,
+            config=self.charm.config,
         )
+
         # Fast exit after workload instantiation, but before any event observer
         if BALANCER.value not in self.charm.config.roles or not self.charm.unit.is_leader():
             return

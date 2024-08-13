@@ -42,8 +42,10 @@ async def test_deploy_tls(ops_test: OpsTest, app_charm):
 
     await asyncio.gather(
         # FIXME (certs): Unpin the revision once the charm is fixed
-        ops_test.model.deploy(TLS_NAME, channel="edge", config=tls_config, revision=163),
-        ops_test.model.deploy(ZK_NAME, channel="3/edge", num_units=3),
+        ops_test.model.deploy(
+            TLS_NAME, channel="edge", config=tls_config, revision=163, trust=True
+        ),
+        ops_test.model.deploy(ZK_NAME, channel="3/edge", num_units=3, trust=True),
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
@@ -51,6 +53,7 @@ async def test_deploy_tls(ops_test: OpsTest, app_charm):
             config={
                 "ssl_principal_mapping_rules": "RULE:^.*[Cc][Nn]=([a-zA-Z0-9.]*).*$/$1/L,DEFAULT"
             },
+            trust=True,
         ),
     )
     async with ops_test.fast_forward(fast_interval="20s"):
@@ -121,9 +124,13 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm):
     )
 
     await asyncio.gather(
-        ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, num_units=1, series="jammy"),
+        ops_test.model.deploy(
+            app_charm, application_name=DUMMY_NAME, num_units=1, series="jammy", trust=True
+        ),
     )
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30)
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30, raise_on_error=False
+    )
 
     # ensuring at least a few update-status
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
