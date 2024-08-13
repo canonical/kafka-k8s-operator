@@ -7,12 +7,12 @@
 import logging
 import re
 
-from ops import Container
-from ops.pebble import ExecError, Layer
+from ops import Container, pebble
+from ops.pebble import ExecError
 from typing_extensions import override
 
 from core.workload import CharmedKafkaPaths, WorkloadBase
-from literals import BALANCER, BROKER, CHARM_KEY
+from literals import BALANCER, BROKER, CHARM_KEY, GROUP, JMX_EXPORTER_PORT, USER
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +23,15 @@ class Workload(WorkloadBase):
     paths: CharmedKafkaPaths
     service: str
 
-    def __init__(self, container: Container) -> None:
+    def __init__(self, container: Container | None) -> None:
+        if not container:
+            raise AttributeError("Container is required.")
+
         self.container = container
 
     @override
-    def start(self, layer: Layer) -> None:
-        self.container.add_layer(CHARM_KEY, layer, combine=True)
+    def start(self) -> None:
+        self.container.add_layer(CHARM_KEY, self.layer, combine=True)
         self.container.restart(self.service)
 
     @override
@@ -109,26 +112,31 @@ class Workload(WorkloadBase):
     # ------- Kafka vm specific -------
 
     def install(self) -> None:
-        """Loads the Kafka snap from LP."""
+        """Loads the Kafka snap from LP.
+
+        Returns:
+            True if successfully installed. False otherwise.
+        """
         raise NotImplementedError
 
-    @override
-    def get_version(self) -> str:
-        if not self.container.can_connect():
-            return ""
+    def get_service_pid(self) -> int:
+        """Gets pid of a currently active snap service.
 
-        try:
-            version = re.split(r"[\s\-]", self.run_bin_command("topics", ["--version"]))[0]
-        except:  # noqa: E722
-            version = ""
-        return version
+        Returns:
+            Integer of pid
+
+        Raises:
+            SnapError if error occurs or if no pid string found in most recent log
+        """
+        raise NotImplementedError
 
 
 class KafkaWorkload(Workload):
     """Broker specific wrapper."""
 
-    def __init__(self, container: Container) -> None:
+    def __init__(self, container: Container | None) -> None:
         super().__init__(container)
+
         self.paths = CharmedKafkaPaths(BROKER)
         self.service = BROKER.service
 
@@ -142,11 +150,45 @@ class KafkaWorkload(Workload):
             version = ""
         return version
 
+    @property
+    @override
+    def layer(self) -> pebble.Layer:
+        """Returns a Pebble configuration layer for Kafka."""
+        extra_opts = [
+            f"-javaagent:{self.paths.jmx_prometheus_javaagent}={JMX_EXPORTER_PORT}:{self.paths.jmx_prometheus_config}",
+            f"-Djava.security.auth.login.config={self.paths.zk_jaas}",
+        ]
+        command = (
+            f"{self.paths.binaries_path}/bin/kafka-server-start.sh {self.paths.server_properties}"
+        )
+
+        layer_config: pebble.LayerDict = {
+            "summary": "kafka layer",
+            "description": "Pebble config layer for kafka",
+            "services": {
+                BROKER.service: {
+                    "override": "merge",
+                    "summary": "kafka",
+                    "command": command,
+                    "startup": "enabled",
+                    "user": str(USER),
+                    "group": GROUP,
+                    "environment": {
+                        "KAFKA_OPTS": " ".join(extra_opts),
+                        # FIXME https://github.com/canonical/kafka-k8s-operator/issues/80
+                        "JAVA_HOME": "/usr/lib/jvm/java-18-openjdk-amd64",
+                        "LOG_DIR": self.paths.logs_path,
+                    },
+                }
+            },
+        }
+        return pebble.Layer(layer_config)
+
 
 class BalancerWorkload(Workload):
     """Balancer specific wrapper."""
 
-    def __init__(self, container: Container) -> None:
+    def __init__(self, container: Container | None) -> None:
         super().__init__(container)
         self.paths = CharmedKafkaPaths(BALANCER)
         self.service = BALANCER.service
@@ -180,3 +222,36 @@ class BalancerWorkload(Workload):
     @override
     def get_version(self) -> str:
         raise NotImplementedError
+
+    @property
+    @override
+    def layer(self) -> pebble.Layer:
+        """Returns a Pebble configuration layer for CruiseControl."""
+        extra_opts = [
+            # FIXME: Port already in use by the broker. To be fixed once we have CC_JMX_OPTS
+            # f"-javaagent:{CharmedKafkaPaths(BROKER).jmx_prometheus_javaagent}={JMX_EXPORTER_PORT}:{CharmedKafkaPaths(BROKER).jmx_prometheus_config}",
+            f"-Djava.security.auth.login.config={self.paths.balancer_jaas}",
+        ]
+        command = f"{self.paths.binaries_path}/bin/kafka-cruise-control-start.sh {self.paths.cruise_control_properties}"
+
+        layer_config: pebble.LayerDict = {
+            "summary": "kafka layer",
+            "description": "Pebble config layer for kafka",
+            "services": {
+                BALANCER.service: {
+                    "override": "merge",
+                    "summary": "balancer",
+                    "command": command,
+                    "startup": "enabled",
+                    "user": str(USER),
+                    "group": GROUP,
+                    "environment": {
+                        "KAFKA_OPTS": " ".join(extra_opts),
+                        # FIXME https://github.com/canonical/kafka-k8s-operator/issues/80
+                        "JAVA_HOME": "/usr/lib/jvm/java-18-openjdk-amd64",
+                        "LOG_DIR": self.paths.logs_path,
+                    },
+                }
+            },
+        }
+        return pebble.Layer(layer_config)

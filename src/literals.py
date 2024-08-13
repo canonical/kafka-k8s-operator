@@ -2,7 +2,7 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Collection of globals common to the Kafka K8s Charm."""
+"""Collection of globals common to the KafkaCharm."""
 
 from dataclasses import dataclass
 from enum import Enum
@@ -11,6 +11,7 @@ from typing import Literal, NamedTuple
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, StatusBase, WaitingStatus
 
 CHARM_KEY = "kafka-k8s"
+SNAP_NAME = "charmed-kafka"
 CONTAINER = "kafka"
 SUBSTRATE = "k8s"
 STORAGE = "data"
@@ -197,6 +198,7 @@ class Status(Enum):
     NO_PEER_CLUSTER_RELATION = StatusLevel(
         BlockedStatus("missing required peer-cluster relation"), "DEBUG"
     )
+    SNAP_NOT_INSTALLED = StatusLevel(BlockedStatus(f"unable to install {SNAP_NAME} snap"), "ERROR")
     BROKER_NOT_RUNNING = StatusLevel(BlockedStatus("Broker not running"), "WARNING")
     NOT_ALL_RELATED = StatusLevel(MaintenanceStatus("not all units related"), "DEBUG")
     CC_NOT_RUNNING = StatusLevel(BlockedStatus("Cruise Control not running"), "WARNING")
@@ -224,6 +226,14 @@ class Status(Enum):
         WaitingStatus("internal broker credentials not yet added"), "DEBUG"
     )
     NO_CERT = StatusLevel(WaitingStatus("unit waiting for signed certificates"), "INFO")
+    SYSCONF_NOT_OPTIMAL = StatusLevel(
+        ActiveStatus("machine system settings are not optimal - see logs for info"),
+        "WARNING",
+    )
+    SYSCONF_NOT_POSSIBLE = StatusLevel(
+        BlockedStatus("sysctl params cannot be set. Is the machine running on a container?"),
+        "WARNING",
+    )
     NOT_IMPLEMENTED = StatusLevel(
         BlockedStatus("feature not yet implemented"),
         "WARNING",

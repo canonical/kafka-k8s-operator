@@ -170,9 +170,10 @@ def test_upgrade_granted_sets_failed_if_failed_snap(harness: Harness[KafkaCharm]
         patch(
             "events.upgrade.KafkaUpgrade.zookeeper_current_version",
             new_callable=PropertyMock,
-            return_value="3.6",
+            return_value="3.6.2",
         ),
         patch("workload.KafkaWorkload.stop") as patched_stop,
+        patch("workload.BalancerWorkload.stop"),
         patch("workload.KafkaWorkload.install", return_value=False),
     ):
         mock_event = MagicMock()
@@ -200,6 +201,7 @@ def test_upgrade_sets_failed_if_failed_upgrade_check(
         patch("workload.KafkaWorkload.start") as patched_start,
         patch("workload.KafkaWorkload.stop"),
         patch("workload.KafkaWorkload.install"),
+        patch("workload.BalancerWorkload.stop"),
         patch(
             "events.broker.BrokerOperator.healthy", new_callable=PropertyMock, return_value=False
         ),
@@ -238,6 +240,7 @@ def test_upgrade_succeeds(harness: Harness[KafkaCharm], upgrade_func: str):
         patch("workload.KafkaWorkload.stop"),
         patch("workload.KafkaWorkload.install"),
         patch("workload.KafkaWorkload.active", new_callable=PropertyMock, return_value=True),
+        patch("workload.BalancerWorkload.stop"),
         patch(
             "events.broker.BrokerOperator.healthy", new_callable=PropertyMock, return_value=True
         ),
@@ -272,7 +275,7 @@ def test_upgrade_granted_recurses_upgrade_changed_on_leader(harness: Harness[Kaf
         patch(
             "events.upgrade.KafkaUpgrade.zookeeper_current_version",
             new_callable=PropertyMock,
-            return_value="3.6",
+            return_value="3.6.2",
         ),
         patch("time.sleep"),
         patch("workload.KafkaWorkload.stop"),
@@ -281,6 +284,7 @@ def test_upgrade_granted_recurses_upgrade_changed_on_leader(harness: Harness[Kaf
         patch(
             "events.broker.BrokerOperator.healthy", new_callable=PropertyMock, return_value=True
         ),
+        patch("workload.BalancerWorkload.stop"),
         patch("events.upgrade.KafkaUpgrade.on_upgrade_changed") as patched_upgrade,
     ):
         mock_event = MagicMock()

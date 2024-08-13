@@ -353,7 +353,7 @@ def test_update_status_blocks_if_machine_not_configured(
         patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
     ):
         harness.charm.on.update_status.emit()
-        assert harness.charm.unit.status == Status.SNAP_NOT_RUNNING.value.status
+        assert harness.charm.unit.status == Status.BROKER_NOT_RUNNING.value.status
 
 
 @pytest.mark.skipif(SUBSTRATE == "k8s", reason="sysctl config not used on K8s")

@@ -121,7 +121,7 @@ def test_extra_sans_config(harness: Harness[KafkaCharm]):
     assert "0.example" in "".join(manager._build_extra_sans())
 
 
-def test_sans(harness: Harness[KafkaCharm]):
+def test_sans(harness: Harness[KafkaCharm], patched_node_ip):
     # Create peer relation
     peer_relation_id = harness.add_relation(PEER, CHARM_KEY)
     harness.add_relation_unit(peer_relation_id, f"{CHARM_KEY}/0")

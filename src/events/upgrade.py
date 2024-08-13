@@ -100,7 +100,7 @@ class KafkaUpgrade(DataUpgrade):
             self.dependent.tls_manager.set_keystore()
 
         # start kafka service
-        self.charm.workload.start(layer=self.dependent._kafka_layer)
+        self.dependent.workload.start()
 
         try:
             self.post_upgrade_check()
