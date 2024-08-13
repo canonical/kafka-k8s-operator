@@ -2,24 +2,27 @@ This is part of the [Charmed Kafka K8s Tutorial](/t/charmed-kafka-k8s-documentat
 
 ## Integrate with client applications
 
-As mentioned in the previous section of the Tutorial, the recommended way to create and manage users is by means of another charm: the [Data Integrator Charm](https://charmhub.io/data-integrator). This will allow us to encode users directly in the Juju model, and - as shown in the following - to rotate user credentials rotations with and without application downtime using Relations.
+As mentioned in the previous section of the Tutorial, the recommended way to create and manage users is by means of another charm: the [Data Integrator Charm](https://charmhub.io/data-integrator). This will let us encode users directly in the Juju model, and - as shown in the following - rotate user credentials rotations with and without application downtime using Relations.
 
-> Relations, or what Juju documentation describes also as [Integration](https://juju.is/docs/sdk/integration), allow two charms to exchange information and interact with one another. Creating a relation between Kafka and the Data Integrator will allow us to automatically create a username, password, and topic for the desired user/application, and this is indeed the easiest way to create and manage users for Kafka in Charmed Kafka.
+> Relations, or what Juju documentation describes also as [Integrations](https://juju.is/docs/sdk/integration), let two charms to exchange information and interact with one another. Creating a relation between Kafka and the Data Integrator will automatically generate a username, password, and assign read/write permissions on a given topic. This is the simplest method to create and manage users in Charmed Kafka.
 
 ### Data Integrator Charm
 
-The [Data Integrator Charm](https://charmhub.io/data-integrator) is a bare-bones charm that allows for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Kafka, OpenSearch, etc) with a consistent, opinionated and robust user experience. In order to deploy the Data Integrator Charm we can use the command `juju deploy` we have learned above:
+The [Data Integrator Charm](https://charmhub.io/data-integrator) is a bare-bones charm that can be used for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Kafka, OpenSearch, etc) with a consistent, opinionated and robust user experience. To deploy the Data Integrator Charm we can use the command `juju deploy` we have learned above:
 
 ```shell
 juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=admin
 ```
 
 ### Relate to Kafka
+
 Now that the Database Integrator Charm has been set up, we can relate it to Kafka. This will automatically create a username, password, and database for the Database Integrator Charm. Relate the two applications with:
+
 ```shell
 juju relate data-integrator kafka-k8s
 ```
 Wait for `juju status --watch 1s` to show:
+
 ```shell
 Model     Controller  Cloud/Region        Version  SLA          Timestamp
 tutorial  microk8s    microk8s/localhost  3.1.5    unsupported  18:18:16+02:00
@@ -38,11 +41,15 @@ zookeeper-k8s/0     active    idle   10.1.36.84
 zookeeper-k8s/1*    active    idle   10.1.36.86
 zookeeper-k8s/2     active    idle   10.1.36.85
 ```
-To retrieve information such as the username, password, and topic. Enter:
+
+To retrieve information such as the username, password, and topic:
+
 ```shell
 juju run data-integrator/leader get-credentials 
 ```
+
 This should output something like:
+
 ```shell
 Running operation 5 with 1 task
   - task 6 on unit-data-integrator-0
@@ -60,7 +67,7 @@ ok: "True"
 
 Save the value listed under `endpoints`, `username` and `password`. *(Note: your hostnames, usernames, and passwords will likely be different.)*
 
-### Produce/Consume messages
+### Produce/consume messages
 
 We will now use the username and password to produce some messages to Kafka. To do so, we will first deploy the Kafka Test App (available [here](https://charmhub.io/kafka-test-app)): a test charm that also bundles some python scripts to push data to Kafka, e.g.
 
@@ -80,8 +87,8 @@ and make sure that the Python virtual environment libraries are visible:
 export PYTHONPATH="/var/lib/juju/agents/unit-kafka-test-app-0/charm/venv:/var/lib/juju/agents/unit-kafka-test-app-0/charm/lib"
 ```
 
-Once this is setup, you should be able to use the `client.py` script that exposes some functionality to produce and consume messages. 
-You can explore the usage of the script
+Once this is set up, you can use the `client.py` script that exposes some functionality to produce and consume messages. 
+You can explore the usage of the script:
 
 ```shell
 python3 -m charms.kafka.v0.client --help
@@ -120,7 +127,7 @@ options:
   --origin ORIGIN
 ```
 
-Using this script, you can therefore start producing messages
+Using this script, you can therefore start producing messages:
 
 ```shell
 python3 -m charms.kafka.v0.client \
@@ -142,21 +149,21 @@ python3 -m charms.kafka.v0.client \
   -c "cg"
 ```
 
-### Charm Client Applications
+### Charm client applications
 
-Actually, the Data Integrator is only a very special client charm,  that implements the `kafka_client` relation for exchanging data with the Kafka charm and allowing user management via relations. 
+Actually, the Data Integrator is only a very special client charm,  that implements the `kafka_client` relation for exchanging data with the Kafka charm for user management via relations. 
 
-For example,  the steps above for producing and consuming messages to Kafka have also been implemented in the `kafka-test-app` charm (that also implement the `kafka_client` relation) providing a fully integrated charmed user-experience, where producing/consuming messages can simply be achieved using relations.  
+For example, the steps above for producing and consuming messages to Kafka have also been implemented in the `kafka-test-app` charm (that also implement the `kafka_client` relation) providing a fully integrated charmed user experience, where producing/consuming messages can simply be achieved using relations.  
 
 #### Producing messages
 
-To produce messages to Kafka, we need to configure the kafka-test-app to act as producer, publishing messages to a specific topic
+To produce messages to Kafka, we need to configure the `kafka-test-app` to act as producer, publishing messages to a specific topic:
 
 ```shell
 juju config kafka-test-app topic_name=test_kafka_app_topic role=producer num_messages=20
 ```
 
-In order to start to produce messages to Kafka, we **JUST** simply relate the Kafka Test App with Kafka
+To start to produce messages to Kafka, we **JUST** simply relate the Kafka Test App with Kafka:
 
 ```shell
 juju relate kafka-test-app kafka-k8s
@@ -164,7 +171,7 @@ juju relate kafka-test-app kafka-k8s
 
 > **Note** This will both take care of creating a dedicated user (as much as done for the data-integrator) as well as start a producer process publishing messages to the `test_kafka_app_topic` topic. 
 
-After some time, the `juju status` output should show
+After some time, the `juju status` output should show:
 
 ```shell
 Model     Controller  Cloud/Region        Version  SLA          Timestamp

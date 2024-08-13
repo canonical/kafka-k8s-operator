@@ -8,7 +8,11 @@ To deploy a Charmed Kafka K8s cluster:
 3. Deploy and relate Kafka K8s and ZooKeeper K8s charms.
 4. (Optionally) Create an external admin user
 
-## Juju Controller setup
+In the next subsections, we will cover these steps separately by referring to 
+relevant Juju documentation and providing details on the Charmed Kafka K8s specifics.
+If you already have a Juju controller and/or a Juju model, you can skip the associated steps.
+
+## Juju controller setup
 
 Make sure you have a Juju controller accessible from 
 your local environment using the [Juju client snap](https://snapcraft.io/juju). 
@@ -35,7 +39,7 @@ where `<cloud>` -- the cloud to deploy controller to, e.g., `localhost`. For mor
 
 > **Note** See the [How to manage controllers](/t/1111) guide in Juju documentation for more options.
 
-## Juju Model setup
+## Juju model setup
 
 You can create a new Juju model using 
 
