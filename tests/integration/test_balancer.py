@@ -4,12 +4,18 @@
 
 import asyncio
 import logging
+import os
 from subprocess import CalledProcessError
 
 import pytest
 from pytest_operator.plugin import OpsTest
 
-from literals import PEER_CLUSTER_ORCHESTRATOR_RELATION, PEER_CLUSTER_RELATION, TLS_RELATION
+from literals import (
+    PEER_CLUSTER_ORCHESTRATOR_RELATION,
+    PEER_CLUSTER_RELATION,
+    SUBSTRATE,
+    TLS_RELATION,
+)
 
 from .helpers import (
     APP_NAME,
@@ -31,14 +37,13 @@ PRODUCER_APP = "producer"
 TLS_NAME = "self-signed-certificates"
 
 
-@pytest.fixture(params=[APP_NAME, BALANCER_APP], scope="module")
-async def balancer_app(ops_test: OpsTest, request):
-    yield request.param
-
-
 class TestBalancer:
+
+    deployment_strat: str = os.environ.get("DEPLOYMENT", "multi")
+    balancer_app: str = {"single": APP_NAME, "multi": "balancer"}[deployment_strat]
+
     @pytest.mark.abort_on_fail
-    async def test_build_and_deploy(self, ops_test: OpsTest, kafka_charm, balancer_app):
+    async def test_build_and_deploy(self, ops_test: OpsTest, kafka_charm):
 
         await asyncio.gather(
             ops_test.model.deploy(
@@ -46,7 +51,7 @@ class TestBalancer:
                 application_name=APP_NAME,
                 num_units=1,
                 config={
-                    "roles": "broker,balancer" if balancer_app == APP_NAME else "broker",
+                    "roles": "broker,balancer" if self.balancer_app == APP_NAME else "broker",
                     "profile": "testing",
                 },
                 resources={"kafka-image": KAFKA_CONTAINER},
@@ -69,78 +74,81 @@ class TestBalancer:
             ),
         )
 
-        if balancer_app != APP_NAME:
+        if self.balancer_app != APP_NAME:
             await ops_test.model.deploy(
                 kafka_charm,
-                application_name=balancer_app,
+                application_name=self.balancer_app,
                 num_units=1,
                 config={
-                    "roles": balancer_app,
+                    "roles": self.balancer_app,
                     "profile": "testing",
                 },
                 resources={"kafka-image": KAFKA_CONTAINER},
             )
 
         await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, ZK_NAME, balancer_app}),
+            apps=list({APP_NAME, ZK_NAME, self.balancer_app}),
             idle_period=30,
-            timeout=3600,
+            timeout=1800,
             raise_on_error=False,
         )
         assert ops_test.model.applications[APP_NAME].status == "blocked"
         assert ops_test.model.applications[ZK_NAME].status == "active"
-        assert ops_test.model.applications[balancer_app].status == "blocked"
+        assert ops_test.model.applications[self.balancer_app].status == "blocked"
 
     @pytest.mark.abort_on_fail
-    async def test_relate_not_enough_brokers(self, ops_test: OpsTest, balancer_app):
+    async def test_relate_not_enough_brokers(self, ops_test: OpsTest):
         await ops_test.model.add_relation(APP_NAME, ZK_NAME)
         await ops_test.model.add_relation(PRODUCER_APP, APP_NAME)
-        if balancer_app != APP_NAME:
+        if self.balancer_app != APP_NAME:
             await ops_test.model.add_relation(
                 f"{APP_NAME}:{PEER_CLUSTER_RELATION}",
                 f"{BALANCER_APP}:{PEER_CLUSTER_ORCHESTRATOR_RELATION}",
             )
 
         await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, ZK_NAME, balancer_app}), idle_period=30
+            apps=list({APP_NAME, ZK_NAME, self.balancer_app}), idle_period=30
         )
 
         async with ops_test.fast_forward(fast_interval="20s"):
             await asyncio.sleep(60)  # ensure update-status adds broker-capacities if missed
 
-        assert ops_test.model.applications[balancer_app].status == "waiting"
+        assert ops_test.model.applications[self.balancer_app].status == "waiting"
 
         with pytest.raises(CalledProcessError):
             assert balancer_is_running(
-                model_full_name=ops_test.model_full_name, app_name=balancer_app
+                model_full_name=ops_test.model_full_name, app_name=self.balancer_app
             )
 
     @pytest.mark.abort_on_fail
-    async def test_minimum_brokers_balancer_starts(self, ops_test: OpsTest, balancer_app):
+    async def test_minimum_brokers_balancer_starts(self, ops_test: OpsTest):
         await ops_test.model.applications[APP_NAME].add_units(count=2)
         await ops_test.model.block_until(
             lambda: len(ops_test.model.applications[APP_NAME].units) == 3
         )
         await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, ZK_NAME, balancer_app, PRODUCER_APP}),
+            apps=list({APP_NAME, ZK_NAME, self.balancer_app, PRODUCER_APP}),
             status="active",
             timeout=1800,
-            idle_period=30,
+            idle_period=60,
         )
 
-        assert balancer_is_running(model_full_name=ops_test.model_full_name, app_name=balancer_app)
-        assert balancer_is_secure(ops_test, app_name=balancer_app)
+        assert balancer_is_running(
+            model_full_name=ops_test.model_full_name, app_name=self.balancer_app
+        )
+        await asyncio.sleep(10)
+        assert balancer_is_secure(ops_test, app_name=self.balancer_app)
 
     @pytest.mark.abort_on_fail
-    async def test_balancer_exporter_endpoints(self, ops_test: OpsTest, balancer_app):
-        assert balancer_exporter_is_up(ops_test.model_full_name, balancer_app)
+    async def test_balancer_exporter_endpoints(self, ops_test: OpsTest):
+        assert balancer_exporter_is_up(ops_test.model_full_name, self.balancer_app)
 
     @pytest.mark.abort_on_fail
-    async def test_balancer_monitor_state(self, ops_test: OpsTest, balancer_app):
-        assert balancer_is_ready(ops_test=ops_test, app_name=balancer_app)
+    async def test_balancer_monitor_state(self, ops_test: OpsTest):
+        assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
 
     @pytest.mark.abort_on_fail
-    async def test_add_unit_full_rebalance(self, ops_test: OpsTest, balancer_app):
+    async def test_add_unit_full_rebalance(self, ops_test: OpsTest):
         await ops_test.model.applications[APP_NAME].add_units(
             count=1  # up to 4, new unit won't have any partitions
         )
@@ -148,7 +156,7 @@ class TestBalancer:
             lambda: len(ops_test.model.applications[APP_NAME].units) == 4
         )
         await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, ZK_NAME, PRODUCER_APP, balancer_app}),
+            apps=list({APP_NAME, ZK_NAME, PRODUCER_APP, self.balancer_app}),
             status="active",
             timeout=1800,
             idle_period=30,
@@ -156,57 +164,61 @@ class TestBalancer:
         async with ops_test.fast_forward(fast_interval="20s"):
             await asyncio.sleep(120)  # ensure update-status adds broker-capacities if missed
 
-        assert balancer_is_ready(ops_test=ops_test, app_name=balancer_app)
+        assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
 
         await asyncio.sleep(30)  # let the API breathe after so many requests
 
         # verify CC can find the new broker_id 3, with no replica partitions allocated
-        broker_replica_count = get_replica_count_by_broker_id(ops_test, balancer_app)
+        broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
         new_broker_id = max(map(int, broker_replica_count.keys()))
         new_broker_replica_count = int(broker_replica_count.get(str(new_broker_id), 0))
 
         assert not new_broker_replica_count
 
-        for unit in ops_test.model.applications[balancer_app].units:
+        for unit in ops_test.model.applications[self.balancer_app].units:
             if await unit.is_leader_from_status():
                 leader_unit = unit
 
         rebalance_action_dry_run = await leader_unit.run_action(
-            "rebalance", mode="full", dryrun=True, timeout=600, block=True
+            "rebalance", mode="full", dryrun=True
         )
         response = await rebalance_action_dry_run.wait()
         assert response.results
 
-        rebalance_action = await leader_unit.run_action(
-            "rebalance", mode="full", dryrun=False, timeout=600, block=True
-        )
+        rebalance_action = await leader_unit.run_action("rebalance", mode="full", dryrun=False)
         response = await rebalance_action.wait()
         assert response.results
 
         assert int(
-            get_replica_count_by_broker_id(ops_test, balancer_app).get(str(new_broker_id), 0)
+            get_replica_count_by_broker_id(ops_test, self.balancer_app).get(str(new_broker_id), 0)
         )  # replicas were successfully moved
 
     @pytest.mark.abort_on_fail
-    async def test_remove_unit_full_rebalance(self, ops_test: OpsTest, balancer_app):
+    async def test_remove_unit_full_rebalance(self, ops_test: OpsTest):
         # verify CC can find the new broker_id 3, with no replica partitions allocated
-        broker_replica_count = get_replica_count_by_broker_id(ops_test, balancer_app)
+        broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
         new_broker_id = max(map(int, broker_replica_count.keys()))
 
         # storing the current replica counts of 0, 1, 2 - they will persist
         pre_rebalance_replica_counts = {
             key: value
-            for key, value in get_replica_count_by_broker_id(ops_test, balancer_app).items()
+            for key, value in get_replica_count_by_broker_id(ops_test, self.balancer_app).items()
             if key != str(new_broker_id)
         }
 
-        # removing broker ungracefully
-        await ops_test.model.applications[APP_NAME].destroy_units(f"{APP_NAME}/{new_broker_id}")
+        if SUBSTRATE == "vm":
+            # removing broker ungracefully
+            await ops_test.model.applications[APP_NAME].destroy_units(
+                f"{APP_NAME}/{new_broker_id}"
+            )
+        else:
+            await ops_test.model.application[APP_NAME].scale(scale_change=-1)
+
         await ops_test.model.block_until(
             lambda: len(ops_test.model.applications[APP_NAME].units) == 3
         )
         await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, ZK_NAME, PRODUCER_APP, balancer_app}),
+            apps=list({APP_NAME, ZK_NAME, PRODUCER_APP, self.balancer_app}),
             status="active",
             timeout=1800,
             idle_period=30,
@@ -214,27 +226,25 @@ class TestBalancer:
         async with ops_test.fast_forward(fast_interval="20s"):
             await asyncio.sleep(180)  # ensure update-status adds broker-capacities if missed
 
-        assert balancer_is_ready(ops_test=ops_test, app_name=balancer_app)
+        assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
 
         await asyncio.sleep(10)  # let the API breathe after so many requests
 
-        for unit in ops_test.model.applications[balancer_app].units:
+        for unit in ops_test.model.applications[self.balancer_app].units:
             if await unit.is_leader_from_status():
                 leader_unit = unit
 
         rebalance_action_dry_run = await leader_unit.run_action(
-            "rebalance", mode="full", dryrun=True, timeout=600, block=True
+            "rebalance", mode="full", dryrun=True
         )
         response = await rebalance_action_dry_run.wait()
         assert response.results
 
-        rebalance_action = await leader_unit.run_action(
-            "rebalance", mode="full", dryrun=False, timeout=600, block=True
-        )
+        rebalance_action = await leader_unit.run_action("rebalance", mode="full", dryrun=False)
         response = await rebalance_action.wait()
         assert response.results
 
-        post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, balancer_app)
+        post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, self.balancer_app)
 
         assert not int(post_rebalance_replica_counts.get(str(new_broker_id), 0))
 
@@ -244,7 +254,7 @@ class TestBalancer:
             assert int(value) < int(post_rebalance_replica_counts.get(key, 0))
 
     @pytest.mark.abort_on_fail
-    async def test_add_unit_targeted_rebalance(self, ops_test: OpsTest, balancer_app):
+    async def test_add_unit_targeted_rebalance(self, ops_test: OpsTest):
         await ops_test.model.applications[APP_NAME].add_units(
             count=1  # up to 4, new unit won't have any partitions
         )
@@ -252,7 +262,7 @@ class TestBalancer:
             lambda: len(ops_test.model.applications[APP_NAME].units) == 4
         )
         await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, ZK_NAME, PRODUCER_APP, balancer_app}),
+            apps=list({APP_NAME, ZK_NAME, PRODUCER_APP, self.balancer_app}),
             status="active",
             timeout=1800,
             idle_period=30,
@@ -260,12 +270,12 @@ class TestBalancer:
         async with ops_test.fast_forward(fast_interval="20s"):
             await asyncio.sleep(120)  # ensure update-status adds broker-capacities if missed
 
-        assert balancer_is_ready(ops_test=ops_test, app_name=balancer_app)
+        assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
 
         await asyncio.sleep(30)  # let the API breathe after so many requests
 
         # verify CC can find the new broker_id 3, with no replica partitions allocated
-        broker_replica_count = get_replica_count_by_broker_id(ops_test, balancer_app)
+        broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
         new_broker_id = max(map(int, broker_replica_count.keys()))
         pre_rebalance_replica_counts = {
             key: value for key, value in broker_replica_count.items() if key != str(new_broker_id)
@@ -274,12 +284,12 @@ class TestBalancer:
 
         assert not new_broker_replica_count
 
-        for unit in ops_test.model.applications[balancer_app].units:
+        for unit in ops_test.model.applications[self.balancer_app].units:
             if await unit.is_leader_from_status():
                 leader_unit = unit
 
         rebalance_action_dry_run = await leader_unit.run_action(
-            "rebalance", mode="add", brokerid=new_broker_id, dryrun=True, timeout=600, block=True
+            "rebalance", mode="add", brokerid=new_broker_id, dryrun=True
         )
         response = await rebalance_action_dry_run.wait()
         assert response.results
@@ -289,13 +299,11 @@ class TestBalancer:
             mode="add",
             brokerid=new_broker_id,
             dryrun=False,
-            timeout=600,
-            block=True,
         )
         response = await rebalance_action.wait()
         assert response.results
 
-        post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, balancer_app)
+        post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, self.balancer_app)
 
         # Partition only were moved from existing brokers to the new one
         for existing_broker, previous_replica_count in pre_rebalance_replica_counts.items():
@@ -305,7 +313,7 @@ class TestBalancer:
 
         # New broker has partition(s)
         assert int(
-            get_replica_count_by_broker_id(ops_test, balancer_app).get(str(new_broker_id), 0)
+            get_replica_count_by_broker_id(ops_test, self.balancer_app).get(str(new_broker_id), 0)
         )  # replicas were successfully moved
 
         # Total sum of partition conserved
@@ -314,18 +322,18 @@ class TestBalancer:
         )
 
     @pytest.mark.abort_on_fail
-    async def test_balancer_prepare_unit_removal(self, ops_test: OpsTest, balancer_app):
-        broker_replica_count = get_replica_count_by_broker_id(ops_test, balancer_app)
+    async def test_balancer_prepare_unit_removal(self, ops_test: OpsTest):
+        broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
         new_broker_id = max(map(int, broker_replica_count.keys()))
 
         # storing the current replica counts of 0, 1, 2 - they will persist
         pre_rebalance_replica_counts = {
             key: value
-            for key, value in get_replica_count_by_broker_id(ops_test, balancer_app).items()
+            for key, value in get_replica_count_by_broker_id(ops_test, self.balancer_app).items()
             if key != str(new_broker_id)
         }
 
-        for unit in ops_test.model.applications[balancer_app].units:
+        for unit in ops_test.model.applications[self.balancer_app].units:
             if await unit.is_leader_from_status():
                 leader_unit = unit
 
@@ -334,8 +342,6 @@ class TestBalancer:
             mode="remove",
             brokerid=new_broker_id,
             dryrun=True,
-            timeout=600,
-            block=True,
         )
         response = await rebalance_action_dry_run.wait()
         assert response.results
@@ -343,15 +349,13 @@ class TestBalancer:
         rebalance_action = await leader_unit.run_action(
             "rebalance",
             mode="remove",
-            brokerid=[new_broker_id],
+            brokerid=new_broker_id,
             dryrun=False,
-            timeout=600,
-            block=True,
         )
         response = await rebalance_action.wait()
         assert response.results
 
-        post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, balancer_app)
+        post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, self.balancer_app)
 
         # Partition only were moved from the removed broker to the other ones
         for existing_broker, previous_replica_count in pre_rebalance_replica_counts.items():
@@ -361,7 +365,7 @@ class TestBalancer:
 
         # Replicas were successfully moved
         assert not int(
-            get_replica_count_by_broker_id(ops_test, balancer_app).get(str(new_broker_id), 0)
+            get_replica_count_by_broker_id(ops_test, self.balancer_app).get(str(new_broker_id), 0)
         )
 
         # Total sum of partition conserved
@@ -370,7 +374,7 @@ class TestBalancer:
         )
 
     @pytest.mark.abort_on_fail
-    async def test_tls(self, ops_test: OpsTest, balancer_app):
+    async def test_tls(self, ops_test: OpsTest):
         # deploy and integrate tls
         tls_config = {"ca-common-name": "kafka"}
 
@@ -381,17 +385,19 @@ class TestBalancer:
         await ops_test.model.add_relation(TLS_NAME, ZK_NAME)
         await ops_test.model.add_relation(TLS_NAME, f"{APP_NAME}:{TLS_RELATION}")
 
-        if balancer_app != APP_NAME:
+        if self.balancer_app != APP_NAME:
             await ops_test.model.add_relation(TLS_NAME, f"{BALANCER_APP}:{TLS_RELATION}")
 
         await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, ZK_NAME, balancer_app}), idle_period=30
+            apps=list({APP_NAME, ZK_NAME, self.balancer_app}), idle_period=30
         )
         async with ops_test.fast_forward(fast_interval="20s"):
             await asyncio.sleep(60)  # ensure update-status adds broker-capacities if missed
 
         # Assert that balancer is running and using certificates
-        assert balancer_is_running(model_full_name=ops_test.model_full_name, app_name=balancer_app)
+        assert balancer_is_running(
+            model_full_name=ops_test.model_full_name, app_name=self.balancer_app
+        )
 
     @pytest.mark.abort_on_fail
     async def test_cleanup(self, ops_test: OpsTest, balancer_app):
