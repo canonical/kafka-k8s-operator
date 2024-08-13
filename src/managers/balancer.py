@@ -58,8 +58,8 @@ class CruiseControlClient:
             dryrun: flag to decide whether to return only proposals (True), or execute (False)
             **kwargs: any REST API query parameters provided by that endpoint
         """
-        payload = {"dryrun": str(dryrun)}
-        if brokerid := kwargs.get("brokerid", None) is not None:
+        payload = {"dryrun": str(dryrun).lower()}
+        if (brokerid := kwargs.get("brokerid", None)) is not None:
             payload |= {"brokerid": brokerid}
 
         r = requests.post(
@@ -188,7 +188,7 @@ class BalancerManager:
         Returns:
             Tuple of requests.Response and string of the CruiseControl User-Task-ID for the rebalance
         """
-        mode = f"{mode}_broker" if mode != MODE_FULL else mode
+        mode = f"{mode}_broker" if mode != MODE_FULL else "rebalance"
         rebalance_request = self.cruise_control.post(
             endpoint=mode, dryrun=dryrun, brokerid=brokerid
         )
