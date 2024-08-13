@@ -167,7 +167,7 @@ class BalancerOperator(Object):
                 self.config_manager.cruise_control_properties,
             ),
             (
-                "jass",
+                "jaas",
                 self.workload.paths.balancer_jaas,
                 self.config_manager.jaas_config.splitlines(),
             ),
