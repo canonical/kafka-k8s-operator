@@ -58,7 +58,7 @@ class CruiseControlClient:
             dryrun: flag to decide whether to return only proposals (True), or execute (False)
             **kwargs: any REST API query parameters provided by that endpoint
         """
-        payload = {"dryrun": str(dryrun).lower()}
+        payload = {"dryrun": str(dryrun)}
         if (brokerid := kwargs.get("brokerid", None)) is not None:
             payload |= {"brokerid": brokerid}
 
