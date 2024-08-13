@@ -1,6 +1,5 @@
 """Balancer role core charm logic."""
 
-import inspect
 import logging
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
@@ -15,12 +14,15 @@ from ops import (
 )
 from ops.pebble import ExecError, Layer
 
+from core.workload import CharmedKafkaPaths
 from literals import (
     BALANCER,
     BALANCER_WEBSERVER_PORT,
     BALANCER_WEBSERVER_USER,
+    BROKER,
     CONTAINER,
     GROUP,
+    JMX_CC_PORT,
     MODE_ADD,
     MODE_REMOVE,
     PROFILE_TESTING,
@@ -78,6 +80,7 @@ class BalancerOperator(Object):
         extra_opts = [
             # FIXME: Port already in use by the broker. To be fixed once we have CC_JMX_OPTS
             # f"-javaagent:{CharmedKafkaPaths(BROKER).jmx_prometheus_javaagent}={JMX_EXPORTER_PORT}:{CharmedKafkaPaths(BROKER).jmx_prometheus_config}",
+            f"-javaagent:{CharmedKafkaPaths(BROKER).jmx_prometheus_javaagent}={JMX_CC_PORT}:{self.workload.paths.jmx_cc_config}",
             f"-Djava.security.auth.login.config={self.workload.paths.balancer_jaas}",
         ]
         command = f"{self.workload.paths.binaries_path}/bin/kafka-cruise-control-start.sh {self.workload.paths.cruise_control_properties}"
@@ -114,13 +117,9 @@ class BalancerOperator(Object):
 
         if self.charm.config.profile == PROFILE_TESTING:
             logger.info(
-                inspect.cleandoc(
-                    f"""
-                    Charmed Kafka is deployed with the 'testing' profile.
-                    The following CruiseControl properties will be set:
-                    {CRUISE_CONTROL_TESTING_OPTIONS}
-                    """
-                )
+                "CruiseControl is deployed with the 'testing' profile."
+                "The following properties will be set:\n"
+                f"{CRUISE_CONTROL_TESTING_OPTIONS}"
             )
 
     def _on_start(self, event: EventBase) -> None:
