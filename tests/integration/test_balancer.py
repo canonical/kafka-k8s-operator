@@ -387,10 +387,3 @@ class TestBalancer:
         assert balancer_is_running(
             model_full_name=ops_test.model_full_name, app_name=self.balancer_app
         )
-
-    @pytest.mark.abort_on_fail
-    async def test_cleanup(self, ops_test: OpsTest):
-        for app in list({APP_NAME, ZK_NAME, self.balancer_app, PRODUCER_APP}):
-            await ops_test.model.remove_application(
-                app, block_until_done=True, force=True, no_wait=True, destroy_storage=True
-            )
