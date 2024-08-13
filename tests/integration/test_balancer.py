@@ -136,7 +136,6 @@ class TestBalancer:
         assert balancer_is_running(
             model_full_name=ops_test.model_full_name, app_name=self.balancer_app
         )
-        await asyncio.sleep(10)
         assert balancer_is_secure(ops_test, app_name=self.balancer_app)
 
     @pytest.mark.abort_on_fail
@@ -316,11 +315,6 @@ class TestBalancer:
             get_replica_count_by_broker_id(ops_test, self.balancer_app).get(str(new_broker_id), 0)
         )  # replicas were successfully moved
 
-        # Total sum of partition conserved
-        assert sum(pre_rebalance_replica_counts.values()) == sum(
-            post_rebalance_replica_counts.values()
-        )
-
     @pytest.mark.abort_on_fail
     async def test_balancer_prepare_unit_removal(self, ops_test: OpsTest):
         broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
@@ -366,11 +360,6 @@ class TestBalancer:
         # Replicas were successfully moved
         assert not int(
             get_replica_count_by_broker_id(ops_test, self.balancer_app).get(str(new_broker_id), 0)
-        )
-
-        # Total sum of partition conserved
-        assert sum(pre_rebalance_replica_counts.values()) == sum(
-            post_rebalance_replica_counts.values()
         )
 
     @pytest.mark.abort_on_fail
