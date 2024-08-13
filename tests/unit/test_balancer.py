@@ -12,6 +12,7 @@ from ops.testing import Harness
 
 from charm import KafkaCharm
 from literals import BALANCER_TOPICS, CHARM_KEY, CONTAINER, SUBSTRATE
+from managers.balancer import CruiseControlClient
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ def harness():
     return harness
 
 
-def test_client_get_args(client):
+def test_client_get_args(client: CruiseControlClient):
     with patch("managers.balancer.requests.get") as patched_get:
         client.get("silmaril")
 
@@ -67,7 +68,7 @@ def test_client_get_args(client):
         assert kwargs["auth"] == ("Beren", "Luthien")
 
 
-def test_client_post_args(client):
+def test_client_post_args(client: CruiseControlClient):
     with patch("managers.balancer.requests.post") as patched_post:
         client.post("silmaril")
 
@@ -82,7 +83,7 @@ def test_client_post_args(client):
         assert kwargs["auth"] == ("Beren", "Luthien")
 
 
-def test_client_get_task_status(client, user_tasks):
+def test_client_get_task_status(client: CruiseControlClient, user_tasks: dict):
     with patch("managers.balancer.requests.get", return_value=MockResponse(user_tasks)):
         assert (
             client.get_task_status(user_task_id="e4256bcb-93f7-4290-ab11-804a665bf011")
@@ -90,17 +91,17 @@ def test_client_get_task_status(client, user_tasks):
         )
 
 
-def test_client_monitoring(client, state):
+def test_client_monitoring(client: CruiseControlClient, state: dict):
     with patch("managers.balancer.requests.get", return_value=MockResponse(state)):
         assert client.monitoring
 
 
-def test_client_executing(client, state):
+def test_client_executing(client: CruiseControlClient, state: dict):
     with patch("managers.balancer.requests.get", return_value=MockResponse(state)):
         assert not client.executing
 
 
-def test_client_ready(client, state):
+def test_client_ready(client: CruiseControlClient, state: dict):
     with patch("managers.balancer.requests.get", return_value=MockResponse(state)):
         assert client.ready
 
@@ -111,7 +112,7 @@ def test_client_ready(client, state):
         assert not client.ready
 
 
-def test_balancer_manager_create_internal_topics(harness):
+def test_balancer_manager_create_internal_topics(harness: Harness[KafkaCharm]):
     with (
         patch("core.models.PeerCluster.broker_uris", new_callable=PropertyMock, return_value=""),
         patch(
@@ -146,8 +147,14 @@ def test_balancer_manager_create_internal_topics(harness):
 @pytest.mark.parametrize("executing", [True, False])
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("status", [200, 404])
-def test_balancer_manager_rebalance(
-    harness, proposal, leader, monitoring, executing, ready, status
+def test_balancer_manager_rebalance_full(
+    harness: Harness[KafkaCharm],
+    proposal: dict,
+    leader: bool,
+    monitoring: bool,
+    executing: bool,
+    ready: bool,
+    status: int,
 ):
     mock_event = MagicMock()
     mock_event.params = {"mode": "full", "dryrun": True}
@@ -189,7 +196,89 @@ def test_balancer_manager_rebalance(
             assert mock_event._mock_children.get("set_results")  # event.set_results was called
 
 
-def test_balancer_manager_clean_results(harness, proposal):
+@pytest.mark.parametrize("mode", ["add", "remove"])
+@pytest.mark.parametrize("brokerid", [None, 0])
+def test_rebalance_add_remove_broker_id_length(
+    harness: Harness[KafkaCharm], proposal: dict, mode: str, brokerid: int | None
+):
+    mock_event = MagicMock()
+    payload = {"mode": mode, "dryrun": True}
+    payload = payload | {"brokerid": brokerid} if brokerid is not None else payload
+    mock_event.params = payload
+
+    with (
+        harness.hooks_disabled(),
+        patch(
+            "managers.balancer.CruiseControlClient.monitoring",
+            new_callable=PropertyMock,
+            return_value=True,
+        ),
+        patch(
+            "managers.balancer.CruiseControlClient.executing",
+            new_callable=PropertyMock,
+            return_value=not True,
+        ),
+        patch(
+            "managers.balancer.CruiseControlClient.ready",
+            new_callable=PropertyMock,
+            return_value=True,
+        ),
+        patch(
+            "managers.balancer.BalancerManager.rebalance",
+            new_callable=None,
+            return_value=(MockResponse(content=proposal, status_code=200), "foo"),
+        ),
+        patch(
+            "managers.balancer.BalancerManager.wait_for_task",
+            new_callable=None,
+        ) as patched_wait_for_task,
+    ):
+        harness.set_leader(True)
+
+        # When
+        harness.charm.balancer.rebalance(mock_event)
+
+        # Then
+        if brokerid is None:
+            assert mock_event._mock_children.get("fail")  # event.fail was called
+        else:
+            assert patched_wait_for_task.call_count
+            assert mock_event._mock_children.get("set_results")  # event.set_results was called
+
+
+def test_rebalance_broker_id_not_found(harness: Harness[KafkaCharm]):
+    mock_event = MagicMock()
+    payload = {"mode": "add", "dryrun": True, "brokerid": 999}
+    mock_event.params = payload
+
+    with (
+        harness.hooks_disabled(),
+        patch(
+            "managers.balancer.CruiseControlClient.monitoring",
+            new_callable=PropertyMock,
+            return_value=True,
+        ),
+        patch(
+            "managers.balancer.CruiseControlClient.executing",
+            new_callable=PropertyMock,
+            return_value=not True,
+        ),
+        patch(
+            "managers.balancer.CruiseControlClient.ready",
+            new_callable=PropertyMock,
+            return_value=True,
+        ),
+    ):
+        harness.set_leader(True)
+
+        # When
+        harness.charm.balancer.rebalance(mock_event)
+
+        # Then
+        assert mock_event._mock_children.get("fail")  # event.fail was called
+
+
+def test_balancer_manager_clean_results(harness: Harness[KafkaCharm], proposal: dict):
     cleaned_results = harness.charm.balancer.balancer_manager.clean_results(value=proposal)
 
     def _check_cleaned_results(value) -> bool:
