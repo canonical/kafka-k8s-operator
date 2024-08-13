@@ -31,6 +31,7 @@ from literals import (
     GROUP,
     JMX_EXPORTER_PORT,
     PEER,
+    PROFILE_TESTING,
     REL_NAME,
     USER,
     DebugLevel,
@@ -38,7 +39,7 @@ from literals import (
 )
 from managers.auth import AuthManager
 from managers.balancer import BalancerManager
-from managers.config import ConfigManager
+from managers.config import TESTING_OPTIONS, ConfigManager
 from managers.tls import TLSManager
 from workload import KafkaWorkload
 
@@ -200,6 +201,13 @@ class BrokerOperator(Object):
 
         self.charm.unit.set_workload_version(self.workload.get_version())
         self.config_manager.set_environment()
+
+        if self.charm.config.profile == PROFILE_TESTING:
+            logger.info(
+                "Kafka is deployed with the 'testing' profile."
+                "The following properties will be set:\n"
+                f"{TESTING_OPTIONS}"
+            )
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
