@@ -200,6 +200,12 @@ class BalancerOperator(Object):
 
     def rebalance(self, event: ActionEvent) -> None:
         """Handles the `rebalance` Juju Action."""
+        if self.charm.state.runs_broker:
+            available_brokers = [broker.unit_id for broker in self.charm.state.brokers]
+        else:
+            brokers: list = self.charm.state.balancer.broker_capacities.get("brokerCapacities", [])
+            available_brokers = [int(broker["brokerId"]) for broker in brokers]
+
         failure_conditions = [
             (not self.charm.unit.is_leader(), "Action must be ran on the application leader"),
             (
@@ -221,8 +227,7 @@ class BalancerOperator(Object):
             ),
             (
                 event.params["mode"] in (MODE_ADD, MODE_REMOVE)
-                and event.params.get("brokerid")
-                not in [broker.unit_id for broker in self.charm.state.brokers],
+                and event.params.get("brokerid") not in available_brokers,
                 "invalid brokerid",
             ),
         ]
