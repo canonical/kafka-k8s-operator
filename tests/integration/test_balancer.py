@@ -317,11 +317,6 @@ class TestBalancer:
 
     @pytest.mark.abort_on_fail
     async def test_balancer_prepare_unit_removal(self, ops_test: OpsTest):
-        await ops_test.model.applications[APP_NAME].remove_relation(
-            f"{APP_NAME}:kafka-client", f"{PRODUCER_APP}:kafka-client"
-        )
-        await asyncio.sleep(30)  # Make sure we get the last writes
-
         broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
         new_broker_id = max(map(int, broker_replica_count.keys()))
 
