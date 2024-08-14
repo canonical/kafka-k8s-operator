@@ -111,7 +111,7 @@ class TestBalancer:
         )
 
         async with ops_test.fast_forward(fast_interval="20s"):
-            await asyncio.sleep(60)  # ensure update-status adds broker-capacities if missed
+            await asyncio.sleep(120)  # ensure update-status adds broker-capacities if missed
 
         assert ops_test.model.applications[self.balancer_app].status == "waiting"
 
@@ -161,7 +161,7 @@ class TestBalancer:
             idle_period=30,
         )
         async with ops_test.fast_forward(fast_interval="20s"):
-            await asyncio.sleep(60)  # ensure update-status adds broker-capacities if missed
+            await asyncio.sleep(120)  # ensure update-status adds broker-capacities if missed
 
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
 
@@ -223,7 +223,7 @@ class TestBalancer:
             idle_period=30,
         )
         async with ops_test.fast_forward(fast_interval="20s"):
-            await asyncio.sleep(60)  # ensure update-status adds broker-capacities if missed
+            await asyncio.sleep(120)  # ensure update-status adds broker-capacities if missed
 
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
 
@@ -267,7 +267,7 @@ class TestBalancer:
             idle_period=30,
         )
         async with ops_test.fast_forward(fast_interval="20s"):
-            await asyncio.sleep(60)  # ensure update-status adds broker-capacities if missed
+            await asyncio.sleep(120)  # ensure update-status adds broker-capacities if missed
 
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
 
@@ -380,7 +380,7 @@ class TestBalancer:
             apps=list({APP_NAME, ZK_NAME, self.balancer_app}), idle_period=30
         )
         async with ops_test.fast_forward(fast_interval="20s"):
-            await asyncio.sleep(60)  # ensure update-status adds broker-capacities if missed
+            await asyncio.sleep(120)  # ensure update-status adds broker-capacities if missed
 
         # Assert that balancer is running and using certificates
         assert balancer_is_running(
