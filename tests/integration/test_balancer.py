@@ -366,7 +366,10 @@ class TestBalancer:
         # deploy and integrate tls
         tls_config = {"ca-common-name": "kafka"}
 
-        await ops_test.model.deploy(TLS_NAME, channel="edge", config=tls_config, series="jammy")
+        # FIXME (certs): Unpin the revision once the charm is fixed
+        await ops_test.model.deploy(
+            TLS_NAME, channel="edge", config=tls_config, series="jammy", revision=163
+        )
         await ops_test.model.wait_for_idle(apps=[TLS_NAME], idle_period=15, timeout=1800)
         assert ops_test.model.applications[TLS_NAME].status == "active"
 
