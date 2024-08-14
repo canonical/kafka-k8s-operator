@@ -2,9 +2,9 @@
 
 > **Note** This feature is available on Charmed Kafka K8s and Charmed ZooKeeper K8s from revisions 53 and 49, respectively. Upgrade from previous versions is **not supported**.
 
-Charm upgrades allow admins to upgrade both operator code (e.g. the revision used by the charm) and/or the workload version. Note that since the charm code pins a particular version of the workload, a charm upgrade may or may not involve also a workload version upgrade. In general, the following guide only applies for in-place upgrades that involve (at most) minor version upgrade of Kafka workload, e.g. between Kafka 3.4.x to 3.5.x. Major workload upgrades are generally **NOT SUPPORTED**, and they should be carried out using full cluster to cluster migrations. Please refer to the how-to guide about cluster migration [here](TODO) for more information on how this can be achieved.
+Charm upgrades can include both upgrades of operator code (e.g. the revision used by the charm) and/or the workload version. Note that since the charm code pins a particular version of the workload, a charm upgrade may or may not involve also a workload version upgrade. In general, the following guide only applies for in-place upgrades that involve (at most) minor version upgrade of Kafka workload, e.g. between Kafka 3.4.x to 3.5.x. Major workload upgrades are generally **NOT SUPPORTED**, and they should be carried out using full cluster-to-cluster migrations. Please refer to the [how-to guide about cluster migration](/t/charmed-kafka-k8s-documentation-how-to-migrate-a-cluster/13268) for more information on how this can be achieved.
 
-Perform other extraordinary operations on the Kafka cluster while upgrading is not supported. As an examples, these may be (but not limited to) the following:
+Perform other extraordinary operations on the Kafka cluster while upgrading is not supported. As an example, these may be (but not limited to) the following:
 1. Adding or removing units
 2. Creating or destroying new relations
 3. Changes in workload configuration
@@ -23,7 +23,7 @@ When performing an in-place upgrade process, the full process is composed by the
 
 ## Step 1: Collect
 
-The first step is to record the revisions of the running application, as a safety measure for a rollback action if needed. To accomplish this, simply run the `juju status` command and look for the revisions of the deployed Kafka and Zookeeper applications. You can also retrieve this with the following command (that requires [`yq`](https://snapcraft.io/install/yq/ubuntu) to be installed):
+The first step is to record the revisions of the running application, as a safety measure for a rollback action if needed. To accomplish this, simply run the `juju status` command and look for the revisions of the deployed Kafka and ZooKeeper applications. You can also retrieve this with the following command (that requires [`yq`](https://snapcraft.io/install/yq/ubuntu) to be installed):
 
 ```shell
 KAFKA_CHARM_REVISION=$(juju status --format json | yq .applications.<KAFKA_APP_NAME>.charm-rev)
@@ -43,7 +43,7 @@ juju run kafka/leader pre-upgrade-check --format yaml
 
 Make sure that the output of the action is successful.
 
-> Note that you won't be able to upgrade successfully unless you complete successfully this action. 
+> Note that to upgrade successfully you need to complete successfully this action. 
 The action will also configure the charm to minimize high-availability reduction and ensure a safe upgrade process. After successful execution, the charm is ready to be upgraded.
 
 ## Step 3: Upgrade
@@ -52,17 +52,17 @@ Use the [`juju refresh`](https://juju.is/docs/juju/juju-refresh) command to trig
 Note that the upgrade can be performed against:
 
 * selected channel/track, therefore upgrading to the latest revision published on that track
-```shell
-juju refresh kafka-k8s --channel 3/edge
-```
+  ```shell
+  juju refresh kafka-k8s --channel 3/edge
+  ```
 * selected revision
-```shell
-juju refresh kafka-k8s --revision=<REVISION>
-```
+  ```shell
+  juju refresh kafka-k8s --revision=<REVISION>
+  ```
 * a local charm file
-```shell
-juju refresh kafka-k8s --path ./kafka_ubuntu-22.04-amd64.charm
-```
+  ```shell
+  juju refresh kafka-k8s --path ./kafka_ubuntu-22.04-amd64.charm
+  ```
 
 When issuing the commands, only the unit with the largest ordinal number will refresh (i.e. receive new charm content).
 A new pod will be rescheduled with the new image and/or the new charm revision.
@@ -81,7 +81,7 @@ juju run kafka-k8s/leader resume-upgrade --format yaml  --wait=1m
 
 > **Note** Even though the process will not stop anymore on each upgrade, 
 > the charm will take care of coordinating the pod updates by restarting one unit at the time to not lose high-availability. 
-> This generally allow the Kafka service to continuously be up and running also during upgrade, although downtime should 
+> This generally keeps Kafka service up and running during an upgrade, although downtime should 
 > be tolerated during upgrades. 
 
 The upgrade process can be monitored using `juju status` command, where the message of the units will provide information about which units have been upgraded already, which unit is currently upgrading and which units are waiting for the upgrade to be triggered, as shown below: 
@@ -104,13 +104,13 @@ kafka/2       active    idle   10.193.41.221        Upgrade completed
 ### Failing upgrade
 
 Before upgrading the unit, the charm will check whether the upgrade can be performed, e.g. this may mean:
-1. Checking that the upgrade from the previous charm revision and Kafka version is allowed
-2. Checking that other external applications that Kafka depends on (e.g. Zookeeper) are running the correct version
+1. Checking that the upgrade from the previous charm revision and Kafka version is allowed.
+2. Checking that other external applications that Kafka depends on (e.g. ZooKeeper) are running the correct version.
 
 Note that these checks are only possible after a refresh of the charm code, and therefore cannot be done upfront (e.g. during the `pre-upgrade-checks` action).
 If some of these checks fail, the upgrade will be aborted. When this happens, the workload may still be operating (as only the operator may have failed) but we recommend to rollback the upgrade as soon as possible. 
 
-In order to roll back the upgrade, re-run steps 2 and 3, using the revision taken in step 1, i.e.
+To roll back the upgrade, re-run steps #2 and #3, using the revision taken in step #1, i.e.:
 
 ```shell
 juju run kafka-k8s/leader pre-upgrade-check
@@ -120,6 +120,6 @@ juju refresh kafka-k8s --revision=${KAFKA_CHARM_REVISION}
 
 We strongly recommend to also retrieve the full set of logs with `juju debug-log`, to extract insights on why the upgrade failed. 
 
-## Kafka and Zookeeper combined upgrades
+## Kafka and ZooKeeper combined upgrades
 
-Although the following guide will focus on upgrading Kafka, the same process can also be applied to Zookeeper, should you need to upgrade this component as well. If Kafka and Zookeeper charms need both to be upgraded, we recommend you to start the upgrade from the Zookeeper cluster. As outlined above, the two upgrades should **NEVER** be done concurrently.
+Although the following guide will focus on upgrading Kafka, the same process can also be applied to ZooKeeper, should you need to upgrade this component as well. If Kafka and ZooKeeper charms need both to be upgraded, we recommend you to start the upgrade from the ZooKeeper cluster. As outlined above, the two upgrades should **NEVER** be done concurrently.

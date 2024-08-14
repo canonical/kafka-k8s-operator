@@ -1,21 +1,20 @@
 # Integrate custom alerting rules and dashboards
 
-This guide shows you how to integrate an existing set of rules and/or dashboards to your Charmed Kafka and Charmed Zookeeper deployment to be consumed with the [Canonical Observability Stack (COS)](https://charmhub.io/topics/canonical-observability-stack).
-To do so, we will sync resources stored in a git repo to COS Lite.
+This guide shows you how to integrate an existing set of rules and/or dashboards to your Charmed Kafka and Charmed ZooKeeper deployment to be consumed with the [Canonical Observability Stack (COS)](https://charmhub.io/topics/canonical-observability-stack).
+To do so, we will sync resources stored in a git repository to COS Lite.
 
 ## Prerequisites
 
-Deploy the cos-lite bundle in a Kubernetes environment and integrate Charmed Kafka and Charmed ZooKeeper to the COS offers, as shown in the [How to Enable Monitoring](/t/charmed-kafka-k8s-how-to-enable-monitoring/10291) guide.
+Deploy the `cos-lite` bundle in a Kubernetes environment and integrate Charmed Kafka and Charmed ZooKeeper to the COS offers, as shown in the [How to Enable Monitoring](/t/charmed-kafka-k8s-how-to-enable-monitoring/10291) guide.
 This guide will refer to the models that charms are deployed into as:
 
-* `<cos-model>` for the model containing observabilities charms (and deployed on k8s)
+* `<cos-model>` for the model containing observability charms (and deployed on K8s)
 
 * `<apps-model>` for the model containing Charmed Kafka and Charmed ZooKeeper
 
-* `<apps-model>` for other optional charms (e.g. tls-certificates operators, `grafana-agent`, `data-integrator`, etc.).
+* `<apps-model>` for other optional charms (e.g. TLS-certificates operators, `grafana-agent`, `data-integrator`, etc.).
 
 ## Create a repository with a custom monitoring setup
-
 
 Create an empty git repository, or in an existing one, save your alert rules and dashboard models under the `<path_to_prom_rules>`, `<path_to_loki_rules>` and `<path_to_models>` folders.
 
@@ -23,7 +22,6 @@ If you want a primer to rule writing, refer to the [Prometheus documentation](ht
 You may also find an example in the [kafka-test-app repository](https://github.com/canonical/kafka-test-app).
 
 Then, push your changes to the remote repository.
-
 
 ## Deploy the COS configuration charm
 
@@ -42,7 +40,6 @@ Adding, updating or deleting an alert rule or a dashboard in the repository will
 [Note]
 You need to manually refresh `cos-config`'s local repository with the *sync-now* action if you do not want to wait for the next [update-status event](/t/event-update-status/6484) to pull the latest changes.
 [/Note]
-
 
 ## Forward the rules and dashboards
 
