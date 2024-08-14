@@ -181,7 +181,7 @@ class BalancerManager:
                 logger.info(f"Created topic {topic}")
 
     def rebalance(
-        self, mode: str, dryrun: bool = True, brokerid: int | None = None
+        self, mode: str, dryrun: bool = True, brokerid: int | None = None, **kwargs
     ) -> tuple[requests.Response, str]:
         """Triggers a full Kafka cluster partition rebalance.
 

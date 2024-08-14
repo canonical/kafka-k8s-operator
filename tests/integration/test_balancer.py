@@ -57,7 +57,7 @@ class TestBalancer:
                 resources={"kafka-image": KAFKA_CONTAINER},
             ),
             ops_test.model.deploy(
-                ZK_NAME, channel="3/edge", application_name=ZK_NAME, num_units=3, series="jammy"
+                ZK_NAME, channel="3/edge", application_name=ZK_NAME, num_units=1, series="jammy"
             ),
             ops_test.model.deploy(
                 "kafka-test-app",
@@ -161,11 +161,9 @@ class TestBalancer:
             idle_period=30,
         )
         async with ops_test.fast_forward(fast_interval="20s"):
-            await asyncio.sleep(120)  # ensure update-status adds broker-capacities if missed
+            await asyncio.sleep(60)  # ensure update-status adds broker-capacities if missed
 
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
-
-        await asyncio.sleep(30)  # let the API breathe after so many requests
 
         # verify CC can find the new broker_id 3, with no replica partitions allocated
         broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
@@ -179,12 +177,14 @@ class TestBalancer:
                 leader_unit = unit
 
         rebalance_action_dry_run = await leader_unit.run_action(
-            "rebalance", mode="full", dryrun=True
+            "rebalance", mode="full", dryrun=True, block=True, timeout=1200
         )
         response = await rebalance_action_dry_run.wait()
         assert response.results
 
-        rebalance_action = await leader_unit.run_action("rebalance", mode="full", dryrun=False)
+        rebalance_action = await leader_unit.run_action(
+            "rebalance", mode="full", dryrun=False, block=True, timeout=1200
+        )
         response = await rebalance_action.wait()
         assert response.results
 
@@ -223,23 +223,23 @@ class TestBalancer:
             idle_period=30,
         )
         async with ops_test.fast_forward(fast_interval="20s"):
-            await asyncio.sleep(180)  # ensure update-status adds broker-capacities if missed
+            await asyncio.sleep(60)  # ensure update-status adds broker-capacities if missed
 
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
-
-        await asyncio.sleep(10)  # let the API breathe after so many requests
 
         for unit in ops_test.model.applications[self.balancer_app].units:
             if await unit.is_leader_from_status():
                 leader_unit = unit
 
         rebalance_action_dry_run = await leader_unit.run_action(
-            "rebalance", mode="full", dryrun=True
+            "rebalance", mode="full", dryrun=True, block=True, timeout=1200
         )
         response = await rebalance_action_dry_run.wait()
         assert response.results
 
-        rebalance_action = await leader_unit.run_action("rebalance", mode="full", dryrun=False)
+        rebalance_action = await leader_unit.run_action(
+            "rebalance", mode="full", dryrun=False, block=True, timeout=1200
+        )
         response = await rebalance_action.wait()
         assert response.results
 
@@ -267,11 +267,9 @@ class TestBalancer:
             idle_period=30,
         )
         async with ops_test.fast_forward(fast_interval="20s"):
-            await asyncio.sleep(120)  # ensure update-status adds broker-capacities if missed
+            await asyncio.sleep(60)  # ensure update-status adds broker-capacities if missed
 
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
-
-        await asyncio.sleep(30)  # let the API breathe after so many requests
 
         # verify CC can find the new broker_id 3, with no replica partitions allocated
         broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
@@ -288,16 +286,13 @@ class TestBalancer:
                 leader_unit = unit
 
         rebalance_action_dry_run = await leader_unit.run_action(
-            "rebalance", mode="add", brokerid=new_broker_id, dryrun=True
+            "rebalance", mode="add", brokerid=new_broker_id, dryrun=True, block=True, timeout=1200
         )
         response = await rebalance_action_dry_run.wait()
         assert response.results
 
         rebalance_action = await leader_unit.run_action(
-            "rebalance",
-            mode="add",
-            brokerid=new_broker_id,
-            dryrun=False,
+            "rebalance", mode="add", brokerid=new_broker_id, dryrun=False, block=True, timeout=1200
         )
         response = await rebalance_action.wait()
         assert response.results
@@ -336,6 +331,8 @@ class TestBalancer:
             mode="remove",
             brokerid=new_broker_id,
             dryrun=True,
+            block=True,
+            timeout=1200,
         )
         response = await rebalance_action_dry_run.wait()
         assert response.results
@@ -345,6 +342,8 @@ class TestBalancer:
             mode="remove",
             brokerid=new_broker_id,
             dryrun=False,
+            block=True,
+            timeout=1200,
         )
         response = await rebalance_action.wait()
         assert response.results
