@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2023 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """KafkaSnap class and methods."""
@@ -28,6 +28,11 @@ class Workload(WorkloadBase):
             raise AttributeError("Container is required.")
 
         self.container = container
+
+    @property
+    @override
+    def container_can_connect(self) -> bool:
+        return self.container.can_connect()
 
     @override
     def start(self) -> None:

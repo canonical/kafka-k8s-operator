@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2023 Canonical Ltd.
+# Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Broker role core charm logic."""
@@ -130,10 +130,7 @@ class BrokerOperator(Object):
 
     def _on_install(self, event: InstallEvent) -> None:
         """Handler for `install` event."""
-        if (
-            self.charm.substrate == "k8s"
-            and not self.charm.unit.get_container(CONTAINER).can_connect()
-        ):
+        if not self.workload.container_can_connect:
             event.defer()
             return
 
@@ -145,10 +142,7 @@ class BrokerOperator(Object):
 
     def _on_start(self, event: StartEvent | PebbleReadyEvent) -> None:
         """Handler for `start` or `pebble-ready` events."""
-        if (
-            self.charm.substrate == "k8s"
-            and not self.charm.unit.get_container(CONTAINER).can_connect()
-        ):
+        if not self.workload.container_can_connect:
             event.defer()
             return
 
@@ -326,10 +320,7 @@ class BrokerOperator(Object):
 
     def _on_storage_attached(self, event: StorageAttachedEvent) -> None:
         """Handler for `storage_attached` events."""
-        if (
-            self.charm.substrate == "k8s"
-            and not self.charm.unit.get_container(CONTAINER).can_connect()
-        ) or not self.charm.state.peer_relation:
+        if not self.workload.container_can_connect or not self.charm.state.peer_relation:
             event.defer()
             return
 
