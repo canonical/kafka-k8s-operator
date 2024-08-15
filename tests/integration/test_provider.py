@@ -20,9 +20,11 @@ from .helpers import (
     check_user,
     get_client_usernames,
     get_kafka_zk_relation_data,
+    get_node_port,
     get_provider_data,
     load_acls,
     load_super_users,
+    netcat,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,14 +43,17 @@ async def test_deploy_charms_relate_active(
     """Test deploy and relate operations."""
     charm = await ops_test.build_charm(".")
     await asyncio.gather(
-        ops_test.model.deploy(ZK_NAME, channel="3/edge", application_name=ZK_NAME, num_units=3),
+        ops_test.model.deploy(
+            ZK_NAME, channel="3/edge", application_name=ZK_NAME, num_units=3, trust=True
+        ),
         ops_test.model.deploy(
             charm,
             application_name=APP_NAME,
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
+            trust=True,
         ),
-        ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_1, num_units=1),
+        ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_1, num_units=1, trust=True),
     )
     await ops_test.model.add_relation(APP_NAME, ZK_NAME)
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_1}:{REL_NAME_CONSUMER}")
@@ -90,7 +95,7 @@ async def test_deploy_multiple_charms_same_topic_relate_active(
     ops_test: OpsTest, app_charm: PosixPath, usernames: Set[str]
 ):
     """Test relation with multiple applications."""
-    await ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_2, num_units=1)
+    await ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_2, num_units=1, trust=True)
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_2}:{REL_NAME_CONSUMER}")
 
     async with ops_test.fast_forward(fast_interval="60s"):
@@ -157,7 +162,11 @@ async def test_deploy_producer_same_topic(
     """Test the correct deployment and relation with role producer."""
     await asyncio.gather(
         ops_test.model.deploy(
-            app_charm, application_name=DUMMY_NAME_1, num_units=1, series="jammy"
+            app_charm,
+            application_name=DUMMY_NAME_1,
+            num_units=1,
+            series="jammy",
+            trust=True,
         )
     )
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_1}:{REL_NAME_PRODUCER}")
@@ -201,7 +210,11 @@ async def test_admin_added_to_super_users(ops_test: OpsTest):
 
     await asyncio.gather(
         ops_test.model.deploy(
-            app_charm, application_name=DUMMY_NAME_1, num_units=1, series="jammy"
+            app_charm,
+            application_name=DUMMY_NAME_1,
+            num_units=1,
+            series="jammy",
+            trust=True,
         )
     )
     await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1, ZK_NAME])
@@ -236,7 +249,7 @@ async def test_admin_removed_from_super_users(ops_test: OpsTest):
 async def test_connection_updated_on_tls_enabled(ops_test: OpsTest, app_charm: PosixPath):
     """Test relation when TLS is enabled."""
     # adding new app unit to validate
-    await ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_1, num_units=1)
+    await ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_1, num_units=1, trust=True)
     await ops_test.model.wait_for_idle(apps=[DUMMY_NAME_1])
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME_1}:{REL_NAME_CONSUMER}")
     await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME_1])
@@ -244,7 +257,9 @@ async def test_connection_updated_on_tls_enabled(ops_test: OpsTest, app_charm: P
     # deploying tls
     tls_config = {"ca-common-name": "kafka"}
     # FIXME (certs): Unpin the revision once the charm is fixed
-    await ops_test.model.deploy(TLS_NAME, channel="edge", config=tls_config, revision=163)
+    await ops_test.model.deploy(
+        TLS_NAME, channel="edge", config=tls_config, revision=163, trust=True
+    )
     await ops_test.model.wait_for_idle(
         apps=[TLS_NAME], idle_period=30, timeout=1800, status="active"
     )
@@ -276,8 +291,15 @@ async def test_connection_updated_on_tls_enabled(ops_test: OpsTest, app_charm: P
         owner=APP_NAME,
     )
 
+    tls_bootstrap_port = str(get_node_port(ops_test, APP_NAME, "sasl-ssl-scram-bootstrap-port"))
+
     assert provider_data["tls"] == "enabled"
-    assert "9093" in provider_data["endpoints"]
+    assert tls_bootstrap_port in provider_data["endpoints"]
     assert "2182" in provider_data["zookeeper-uris"]
     assert "test-prefix" in provider_data["consumer-group-prefix"]
     assert "test-topic" in provider_data["topic"]
+    assert len(provider_data["endpoints"].split(",")) == 1  # aka single bootstrap service returned
+
+    provided_host, provided_port = provider_data["endpoints"].split(":")
+
+    assert netcat(provided_host, int(provided_port))

@@ -4,6 +4,7 @@
 """Manager for handling Kafka in-place upgrades."""
 
 import logging
+import subprocess
 from typing import TYPE_CHECKING
 
 from charms.data_platform_libs.v0.upgrade import (
@@ -17,6 +18,7 @@ from charms.data_platform_libs.v0.upgrade import (
 from lightkube.core.client import Client
 from lightkube.core.exceptions import ApiError
 from lightkube.resources.apps_v1 import StatefulSet
+from ops.pebble import ExecError
 from pydantic import BaseModel
 from typing_extensions import override
 
@@ -75,6 +77,9 @@ class KafkaUpgrade(DataUpgrade):
             self.set_unit_failed()
             return
 
+        # needed to run before setting config
+        self.apply_backwards_compatibility_fixes(event)
+
         # required settings given zookeeper connection config has been created
         self.dependent.config_manager.set_environment()
         self.dependent.config_manager.set_server_properties()
@@ -95,7 +100,7 @@ class KafkaUpgrade(DataUpgrade):
             self.dependent.tls_manager.set_keystore()
 
         # start kafka service
-        self.charm.workload.start(layer=self.dependent._kafka_layer)
+        self.dependent.workload.start()
 
         try:
             self.post_upgrade_check()
@@ -167,3 +172,25 @@ class KafkaUpgrade(DataUpgrade):
             else:
                 cause = str(e)
             raise KubernetesClientError("Kubernetes StatefulSet patch failed", cause)
+
+    def apply_backwards_compatibility_fixes(self, event) -> None:
+        """A range of functions needed for backwards compatibility."""
+        logger.info("Applying upgrade fixes")
+        # Rev.38 (VM) - Create credentials for missing internal user, to reconcile state during upgrades
+        if (
+            not self.charm.state.cluster.internal_user_credentials
+            and self.charm.state.zookeeper.zookeeper_connected
+        ):
+            try:
+                internal_user_credentials = self.dependent.zookeeper._create_internal_credentials()
+            except (KeyError, RuntimeError, subprocess.CalledProcessError, ExecError) as e:
+                logger.warning(str(e))
+                event.defer()
+                return
+
+            # only set to relation data when all set
+            for username, password in internal_user_credentials:
+                self.charm.state.cluster.update({f"{username}-password": password})
+
+        # Rev.65 - Creation of external K8s services
+        self.dependent.update_external_services()

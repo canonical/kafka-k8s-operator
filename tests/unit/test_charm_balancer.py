@@ -6,7 +6,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 import pytest
 import yaml
@@ -158,6 +158,7 @@ def test_ready_to_start_no_peer_cluster(charm_configuration):
 def test_ready_to_start_no_zk_data(charm_configuration, base_state: State):
     # Given
     charm_configuration["options"]["roles"]["default"] = "balancer,broker"
+    charm_configuration["options"]["expose-external"]["default"] = "none"
     ctx = Context(
         KafkaCharm,
         meta=METADATA,
@@ -182,6 +183,7 @@ def test_ready_to_start_no_zk_data(charm_configuration, base_state: State):
 def test_ready_to_start_no_broker_data(charm_configuration, base_state: State, zk_data):
     # Given
     charm_configuration["options"]["roles"]["default"] = "balancer,broker"
+    charm_configuration["options"]["expose-external"]["default"] = "none"
     ctx = Context(
         KafkaCharm,
         meta=METADATA,
@@ -204,9 +206,11 @@ def test_ready_to_start_no_broker_data(charm_configuration, base_state: State, z
 def test_ready_to_start_ok(charm_configuration, base_state: State, zk_data):
     # Given
     charm_configuration["options"]["roles"]["default"] = "balancer,broker"
+    charm_configuration["options"]["expose-external"]["default"] = "none"
     ctx = Context(
         KafkaCharm, meta=METADATA, config=charm_configuration, actions=ACTIONS, unit_id=0
     )
+    restart_peer = PeerRelation("restart", "restart")
     cluster_peer = PeerRelation(
         PEER,
         local_app_data={f"{user}-password": "pwd" for user in INTERNAL_USERS},
@@ -227,18 +231,51 @@ def test_ready_to_start_ok(charm_configuration, base_state: State, zk_data):
         },
     )
 
-    relation = Relation(interface=ZK, endpoint=ZK, remote_app_name=ZK, remote_app_data=zk_data)
-    state_in = base_state.replace(relations=[cluster_peer, relation], planned_units=3)
+    relation = Relation(interface=ZK, endpoint=ZK, remote_app_name=ZK)
+    state_in = base_state.replace(
+        relations=[cluster_peer, relation, restart_peer], planned_units=3
+    )
 
     # When
     with (
         patch("workload.BalancerWorkload.write") as patched_writer,
         patch("workload.BalancerWorkload.read"),
+        patch("workload.KafkaWorkload.read"),
         patch("workload.BalancerWorkload.exec"),
         patch("workload.BalancerWorkload.restart"),
         patch("workload.KafkaWorkload.start"),
         patch("workload.BalancerWorkload.active", return_value=True),
+        patch("workload.KafkaWorkload.active", return_value=True),
         patch("core.models.ZooKeeper.broker_active", return_value=True),
+        patch(
+            "core.models.ZooKeeper.zookeeper_connected",
+            new_callable=PropertyMock,
+            return_value=True,
+        ),
+        patch(
+            "core.models.PeerCluster.broker_connected",
+            new_callable=PropertyMock,
+            return_value=True,
+        ),
+        patch(
+            "managers.config.ConfigManager.server_properties",
+            new_callable=PropertyMock,
+            return_value=[],
+        ),
+        patch(
+            "managers.config.BalancerConfigManager.cruise_control_properties",
+            new_callable=PropertyMock,
+            return_value=[],
+        ),
+        patch(
+            "managers.config.ConfigManager.jaas_config", new_callable=PropertyMock, return_value=""
+        ),
+        patch(
+            "managers.config.BalancerConfigManager.jaas_config",
+            new_callable=PropertyMock,
+            return_value="",
+        ),
+        patch("health.KafkaHealth.machine_configured", return_value=True),
     ):
         state_out = ctx.run("start", state_in)
 
