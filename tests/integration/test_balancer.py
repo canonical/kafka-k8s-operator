@@ -243,6 +243,8 @@ class TestBalancer:
         response = await rebalance_action.wait()
         assert response.results
 
+        await asyncio.sleep(30)  # give cruise control some time to cleanup everything
+
         post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, self.balancer_app)
 
         assert not int(post_rebalance_replica_counts.get(str(new_broker_id), 0))
