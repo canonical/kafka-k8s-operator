@@ -55,9 +55,15 @@ class TestBalancer:
                     "profile": "testing",
                 },
                 resources={"kafka-image": KAFKA_CONTAINER},
+                trust=True,
             ),
             ops_test.model.deploy(
-                ZK_NAME, channel="3/edge", application_name=ZK_NAME, num_units=1, series="jammy"
+                ZK_NAME,
+                channel="3/edge",
+                application_name=ZK_NAME,
+                num_units=1,
+                series="jammy",
+                trust=True,
             ),
             ops_test.model.deploy(
                 "kafka-test-app",
@@ -71,6 +77,7 @@ class TestBalancer:
                     "partitions": 100,
                     "replication_factor": "3",
                 },
+                trust=True,
             ),
         )
 
@@ -84,6 +91,7 @@ class TestBalancer:
                     "profile": "testing",
                 },
                 resources={"kafka-image": KAFKA_CONTAINER},
+                trust=True,
             )
 
         await ops_test.model.wait_for_idle(
