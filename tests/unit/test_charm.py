@@ -52,6 +52,7 @@ def harness() -> Harness:
         {
             "log_retention_ms": "-1",
             "compression_type": "producer",
+            "expose-external": "none",
         }
     )
     harness.begin()
@@ -352,7 +353,7 @@ def test_update_status_blocks_if_machine_not_configured(
         patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
     ):
         harness.charm.on.update_status.emit()
-        assert harness.charm.unit.status == Status.SNAP_NOT_RUNNING.value.status
+        assert harness.charm.unit.status == Status.BROKER_NOT_RUNNING.value.status
 
 
 @pytest.mark.skipif(SUBSTRATE == "k8s", reason="sysctl config not used on K8s")
@@ -528,7 +529,7 @@ def test_zookeeper_broken_stops_service_and_removes_meta_properties(harness: Har
         harness.remove_relation(zk_rel_id)
 
         patched_stop_snap_service.assert_called_once()
-        assert re.match(r"rm .*/meta.properties", " ".join(patched_exec.call_args_list[0].args[0]))
+        assert re.match(r"rm .*/meta.properties", " ".join(patched_exec.call_args_list[1].args[0]))
         assert isinstance(harness.charm.unit.status, BlockedStatus)
 
 

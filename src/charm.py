@@ -56,6 +56,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.workload = KafkaWorkload(
             container=self.unit.get_container(CONTAINER)
         )  # Will be re-instantiated for each role.
+
         self.restart = RollingOpsManager(self, relation="restart", callback=self._restart_broker)
 
         self.framework.observe(getattr(self.on, "config_changed"), self._on_roles_changed)

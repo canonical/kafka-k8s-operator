@@ -4,9 +4,8 @@
 
 import json
 import logging
-import socket
+import re
 import subprocess
-from contextlib import closing
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
 from typing import Any, Dict, List, Optional, Set
@@ -134,9 +133,18 @@ def extract_ca(ops_test: OpsTest, unit_name: str) -> str | None:
     return user_secret.get("ca-cert") or user_secret.get("ca")
 
 
-def check_socket(host: str, port: int) -> bool:
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
-        return sock.connect_ex((host, port)) == 0
+def netcat(host: str, port: int) -> bool:
+    try:
+        check_output(
+            f"nc -zv {host} {port}",
+            stderr=PIPE,
+            shell=True,
+            universal_newlines=True,
+        )
+        return True
+    except CalledProcessError as e:
+        logger.error(e)
+        return False
 
 
 def check_tls(ip: str, port: int) -> bool:
@@ -558,6 +566,24 @@ def balancer_is_secure(ops_test: OpsTest, app_name: str) -> bool:
     return all((unauthorized_ok, authorized_ok))
 
 
+def get_node_port(ops_test: OpsTest, app_name: str, service_name: str):
+    namespace = ops_test.model.info.name
+    bootstrap_service = check_output(
+        f"kubectl describe svc -n {namespace} {app_name}-bootstrap",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+
+    bootstrap_node_port = 0
+    for line in bootstrap_service.splitlines():
+        logger.error(f"{line}")
+        if "NodePort" in line and service_name in line:
+            bootstrap_node_port = int(line.split()[-1].split("/")[0])
+
+    return bootstrap_node_port
+
+
 @retry(
     wait=wait_fixed(20),  # long enough to not overwhelm the API
     stop=stop_after_attempt(180),  # give it 60 minutes to load
@@ -618,6 +644,64 @@ def get_kafka_broker_state(ops_test: OpsTest, app_name: str) -> JSON:
     print(f"{broker_state_json=}")
 
     return broker_state_json
+
+
+def check_external_access_non_tls(ops_test: OpsTest, unit_name: str):
+    try:
+        node_ip = check_output(
+            "kubectl get nodes -o wide | awk -v OFS='\t\t' '{print $6}' | sed 1D",
+            stderr=PIPE,
+            shell=True,
+            universal_newlines=True,
+        ).strip()
+
+        # grabbing the helpful client.properties for later
+        client_properties = check_output(
+            f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} 'cat /etc/kafka/client.properties'",
+            stderr=PIPE,
+            shell=True,
+            universal_newlines=True,
+        ).splitlines()
+
+        bootstrap_node_port = get_node_port(
+            ops_test, unit_name.split("/")[0], "sasl-plaintext-scram-bootstrap-port"
+        )
+
+    except CalledProcessError as e:
+        logger.error(vars(e))
+        raise e
+
+    admin_password = ""
+    for line in client_properties:
+        if match := re.search(r"password\=\"(.*)\"", line):
+            admin_password = match.group(1)
+            break
+
+    admin_username = "admin"
+    bootstrap_server = f"{node_ip}:{bootstrap_node_port}"
+
+    client = KafkaClient(
+        servers=[bootstrap_server],
+        username=admin_username,
+        password=admin_password,
+        security_protocol="SASL_PLAINTEXT",
+    )
+
+    topic_config = NewTopic(
+        name="HOT-TOPIC",
+        num_partitions=100,
+        replication_factor=1,
+    )
+    client.create_topic(topic=topic_config)
+
+    topics_list = check_output(
+        f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} '/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --command-config /etc/kafka/client.properties --list'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+
+    assert "HOT-TOPIC" in topics_list
 
 
 def get_replica_count_by_broker_id(ops_test: OpsTest, app_name: str) -> dict[str, Any]:

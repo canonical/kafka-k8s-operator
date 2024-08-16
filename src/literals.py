@@ -2,15 +2,16 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Collection of globals common to the Kafka K8s Charm."""
+"""Collection of globals common to the KafkaCharm."""
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Literal
+from typing import Literal, NamedTuple
 
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, StatusBase, WaitingStatus
 
 CHARM_KEY = "kafka-k8s"
+SNAP_NAME = "charmed-kafka"
 CONTAINER = "kafka"
 SUBSTRATE = "k8s"
 STORAGE = "data"
@@ -57,9 +58,29 @@ JMX_CC_PORT = 9102
 METRICS_RULES_DIR = "./src/alert_rules/prometheus"
 LOGS_RULES_DIR = "./src/alert_rules/loki"
 
+
+@dataclass
+class Ports:
+    """Types of ports for a Kafka broker."""
+
+    client: int
+    internal: int
+    external: int
+
+
 AuthProtocol = Literal["SASL_PLAINTEXT", "SASL_SSL", "SSL"]
 AuthMechanism = Literal["SCRAM-SHA-512", "OAUTHBEARER", "SSL"]
-Scope = Literal["INTERNAL", "CLIENT"]
+Scope = Literal["INTERNAL", "CLIENT", "EXTERNAL"]
+AuthMap = NamedTuple("AuthMap", protocol=AuthProtocol, mechanism=AuthMechanism)
+
+SECURITY_PROTOCOL_PORTS: dict[AuthMap, Ports] = {
+    AuthMap("SASL_PLAINTEXT", "SCRAM-SHA-512"): Ports(9092, 19092, 29092),
+    AuthMap("SASL_SSL", "SCRAM-SHA-512"): Ports(9093, 19093, 29093),
+    AuthMap("SSL", "SSL"): Ports(9094, 19094, 29094),
+    AuthMap("SASL_PLAINTEXT", "OAUTHBEARER"): Ports(9095, 19095, 29095),
+    AuthMap("SASL_SSL", "OAUTHBEARER"): Ports(9096, 19096, 29096),
+}
+
 DebugLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR"]
 DatabagScope = Literal["unit", "app"]
 Substrates = Literal["vm", "k8s"]
@@ -87,23 +108,6 @@ PATHS = {
         "DATA": "/var/lib/cruise-control",
         "BIN": "/opt/cruise-control",
     },
-}
-
-
-@dataclass
-class Ports:
-    """Types of ports for a Kafka broker."""
-
-    client: int
-    internal: int
-
-
-SECURITY_PROTOCOL_PORTS: dict[tuple[AuthProtocol, AuthMechanism], Ports] = {
-    ("SASL_PLAINTEXT", "SCRAM-SHA-512"): Ports(9092, 19092),
-    ("SASL_PLAINTEXT", "OAUTHBEARER"): Ports(9095, 19095),
-    ("SASL_SSL", "SCRAM-SHA-512"): Ports(9093, 19093),
-    ("SASL_SSL", "OAUTHBEARER"): Ports(9096, 19096),
-    ("SSL", "SSL"): Ports(9094, 19094),
 }
 
 
@@ -196,6 +200,7 @@ class Status(Enum):
     NO_PEER_CLUSTER_RELATION = StatusLevel(
         BlockedStatus("missing required peer-cluster relation"), "DEBUG"
     )
+    SNAP_NOT_INSTALLED = StatusLevel(BlockedStatus(f"unable to install {SNAP_NAME} snap"), "ERROR")
     BROKER_NOT_RUNNING = StatusLevel(BlockedStatus("Broker not running"), "WARNING")
     NOT_ALL_RELATED = StatusLevel(MaintenanceStatus("not all units related"), "DEBUG")
     CC_NOT_RUNNING = StatusLevel(BlockedStatus("Cruise Control not running"), "WARNING")
@@ -223,6 +228,14 @@ class Status(Enum):
         WaitingStatus("internal broker credentials not yet added"), "DEBUG"
     )
     NO_CERT = StatusLevel(WaitingStatus("unit waiting for signed certificates"), "INFO")
+    SYSCONF_NOT_OPTIMAL = StatusLevel(
+        ActiveStatus("machine system settings are not optimal - see logs for info"),
+        "WARNING",
+    )
+    SYSCONF_NOT_POSSIBLE = StatusLevel(
+        BlockedStatus("sysctl params cannot be set. Is the machine running on a container?"),
+        "WARNING",
+    )
     NOT_IMPLEMENTED = StatusLevel(
         BlockedStatus("feature not yet implemented"),
         "WARNING",

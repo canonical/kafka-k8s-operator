@@ -17,10 +17,11 @@ from .helpers import (
     KAFKA_CONTAINER,
     REL_NAME_ADMIN,
     ZK_NAME,
+    check_external_access_non_tls,
     check_logs,
-    check_socket,
     count_lines_with,
     get_address,
+    netcat,
     run_client_properties,
 )
 
@@ -36,12 +37,14 @@ async def test_build_and_deploy(ops_test: OpsTest):
             channel="3/edge",
             application_name=ZK_NAME,
             num_units=3,
+            trust=True,
         ),
         ops_test.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
+            trust=True,
         ),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
@@ -86,29 +89,29 @@ async def test_remove_zk_relation_relate(ops_test: OpsTest):
 @pytest.mark.abort_on_fail
 async def test_listeners(ops_test: OpsTest, app_charm):
     address = await get_address(ops_test=ops_test)
-    assert check_socket(
+    assert netcat(
         address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].internal
     )  # Internal listener
     # Client listener should not be enable if there is no relations
-    assert not check_socket(
-        address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client
-    )
+    assert not netcat(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client)
 
     # Add relation with dummy app
     await asyncio.gather(
-        ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, num_units=1, series="jammy"),
+        ops_test.model.deploy(
+            app_charm, application_name=DUMMY_NAME, num_units=1, series="jammy", trust=True
+        ),
     )
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
     async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=800
+            apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=2000
         )
 
     # check that client listener is active
-    assert check_socket(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client)
+    assert netcat(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client)
 
-    # remove relation and check that client listerner is not active
+    # remove relation and check that client listener is not active
     await ops_test.model.applications[APP_NAME].remove_relation(
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME}:{REL_NAME_ADMIN}"
     )
@@ -116,9 +119,7 @@ async def test_listeners(ops_test: OpsTest, app_charm):
         apps=[APP_NAME], idle_period=30, status="active", timeout=600
     )
 
-    assert not check_socket(
-        address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client
-    )
+    assert not netcat(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client)
 
 
 @pytest.mark.abort_on_fail
@@ -163,6 +164,11 @@ async def test_logs_write_to_storage(ops_test: OpsTest):
         kafka_unit_name=f"{APP_NAME}/0",
         topic="test-topic",
     )
+
+
+@pytest.mark.abort_on_fail
+async def test_external_listeners_bootstrap(ops_test: OpsTest):
+    check_external_access_non_tls(ops_test, f"{APP_NAME}/0")
 
 
 @pytest.mark.abort_on_fail

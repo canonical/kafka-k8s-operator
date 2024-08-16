@@ -113,3 +113,14 @@ def user_tasks() -> dict:
         content = f.read()
 
     return json.loads(content)
+
+
+@pytest.fixture(autouse=True)
+def patched_node_ip():
+    if SUBSTRATE == "k8s":
+        with patch(
+            "core.models.KafkaBroker.node_ip", new_callable=PropertyMock, return_value="1234"
+        ) as patched_node_ip:
+            yield patched_node_ip
+    else:
+        yield
