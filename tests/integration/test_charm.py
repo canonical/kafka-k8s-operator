@@ -29,8 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.abort_on_fail
-async def test_build_and_deploy(ops_test: OpsTest):
-    kafka_charm = await ops_test.build_charm(".")
+async def test_build_and_deploy(ops_test: OpsTest, kafka_charm):
     await asyncio.gather(
         ops_test.model.deploy(
             ZK_NAME,

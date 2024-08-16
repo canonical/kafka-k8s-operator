@@ -36,8 +36,7 @@ DUMMY_NAME = "app"
 
 @pytest.mark.abort_on_fail
 @pytest.mark.skip_if_deployed
-async def test_deploy_tls(ops_test: OpsTest, app_charm):
-    kafka_charm = await ops_test.build_charm(".")
+async def test_deploy_tls(ops_test: OpsTest, kafka_charm, app_charm):
     tls_config = {"ca-common-name": "kafka"}
 
     await asyncio.gather(
