@@ -265,10 +265,10 @@ class TestBalancer:
     @pytest.mark.abort_on_fail
     async def test_add_unit_targeted_rebalance(self, ops_test: OpsTest):
         await ops_test.model.applications[APP_NAME].add_units(
-            count=1  # up to 4, new unit won't have any partitions
+            count=2  # up to 5, new unit won't have any partitions
         )
         await ops_test.model.block_until(
-            lambda: len(ops_test.model.applications[APP_NAME].units) == 4
+            lambda: len(ops_test.model.applications[APP_NAME].units) == 5
         )
         await ops_test.model.wait_for_idle(
             apps=list({APP_NAME, ZK_NAME, PRODUCER_APP, self.balancer_app}),
