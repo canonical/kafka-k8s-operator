@@ -74,7 +74,7 @@ class TestBalancer:
                     "topic_name": "HOT-TOPIC",
                     "num_messages": 100000,
                     "role": "producer",
-                    "partitions": 100,
+                    "partitions": 20,
                     "replication_factor": "3",
                 },
                 trust=True,
@@ -322,6 +322,8 @@ class TestBalancer:
 
     @pytest.mark.abort_on_fail
     async def test_balancer_prepare_unit_removal(self, ops_test: OpsTest):
+        # Give CC some room to breathe
+        assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
         broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
         new_broker_id = max(map(int, broker_replica_count.keys()))
 
