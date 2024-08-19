@@ -6,7 +6,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from unittest.mock import Mock, PropertyMock, patch
+from unittest.mock import PropertyMock, patch
 
 import pytest
 import yaml
