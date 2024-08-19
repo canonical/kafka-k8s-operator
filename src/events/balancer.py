@@ -4,6 +4,7 @@
 
 """Balancer role core charm logic."""
 
+import json
 import logging
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
@@ -166,6 +167,16 @@ class BalancerOperator(Object):
                     )
                 )
                 content_changed = True
+
+        broker_capacities = self.charm.state.balancer.broker_capacities
+        if (
+            file_content := json.loads(
+                "".join(self.workload.read(self.workload.paths.capacity_jbod_json))
+            )
+        ) != broker_capacities:
+            logger.info(f"Balancer {self.charm.unit.name.split('/')[1]} updating capacity config")
+
+            content_changed = True
 
         if content_changed:
             # safe to update everything even if it hasn't changed, service will restart anyway

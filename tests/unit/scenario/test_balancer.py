@@ -6,7 +6,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from unittest.mock import PropertyMock, patch
+from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
 import yaml
@@ -240,6 +240,15 @@ def test_ready_to_start_ok(charm_configuration, base_state: State, zk_data):
     with (
         patch("workload.BalancerWorkload.write") as patched_writer,
         patch("workload.BalancerWorkload.read"),
+        patch(
+            "json.loads",
+            return_value={"brokerCapacities": [{}, {}, {}]},
+        ),
+        patch(
+            "core.cluster.ClusterState.broker_capacities",
+            new_callable=PropertyMock,
+            return_value={"brokerCapacities": [{}, {}, {}]},
+        ),
         patch("workload.KafkaWorkload.read"),
         patch("workload.BalancerWorkload.exec"),
         patch("workload.BalancerWorkload.restart"),
