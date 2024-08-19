@@ -193,9 +193,9 @@ class TestBalancer:
         rebalance_action = await leader_unit.run_action("rebalance", mode="full", dryrun=False)
         response = await rebalance_action.wait()
         assert response.results
+        logging.warning(response.results)
 
-        async with ops_test.fast_forward(fast_interval="20s"):
-            await asyncio.sleep(120)  # ensure update-status adds broker-capacities if missed
+        await asyncio.sleep(180)
 
         assert int(
             get_replica_count_by_broker_id(ops_test, self.balancer_app).get(str(new_broker_id), 0)
@@ -250,8 +250,9 @@ class TestBalancer:
         response = await rebalance_action.wait()
         assert response.results
 
-        async with ops_test.fast_forward(fast_interval="20s"):
-            await asyncio.sleep(120)  # ensure update-status adds broker-capacities if missed
+        logging.warning(response.results)
+
+        await asyncio.sleep(180)
 
         post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, self.balancer_app)
 
@@ -307,6 +308,10 @@ class TestBalancer:
         response = await rebalance_action.wait()
         assert response.results
 
+        logging.warning(response.results)
+
+        await asyncio.sleep(180)
+
         post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, self.balancer_app)
 
         # Partition only were moved from existing brokers to the new one
@@ -322,7 +327,6 @@ class TestBalancer:
 
     @pytest.mark.abort_on_fail
     async def test_balancer_prepare_unit_removal(self, ops_test: OpsTest):
-        # Give CC some room to breathe
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
         broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
         new_broker_id = max(map(int, broker_replica_count.keys()))
@@ -355,6 +359,10 @@ class TestBalancer:
         )
         response = await rebalance_action.wait()
         assert response.results
+
+        logging.warning(response.results)
+
+        await asyncio.sleep(180)
 
         post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, self.balancer_app)
 
