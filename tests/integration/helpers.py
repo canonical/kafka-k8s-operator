@@ -610,6 +610,7 @@ def balancer_is_ready(ops_test: OpsTest, app_name: str) -> bool:
         return False
 
     print(f"{monitor_state_json=}")
+    print(f"{executor_state_json=}")
 
     return all(
         [
