@@ -155,6 +155,9 @@ class TestBalancer:
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
 
     @pytest.mark.abort_on_fail
+    @pytest.mark.skipif(
+        deployment_strat == "single", reason="Testing full rebalance on large deployment"
+    )
     async def test_add_unit_full_rebalance(self, ops_test: OpsTest):
         await ops_test.model.applications[APP_NAME].add_units(
             count=1  # up to 4, new unit won't have any partitions
@@ -200,6 +203,9 @@ class TestBalancer:
         )  # replicas were successfully moved
 
     @pytest.mark.abort_on_fail
+    @pytest.mark.skipif(
+        deployment_strat == "single", reason="Testing full rebalance on large deployment"
+    )
     async def test_remove_unit_full_rebalance(self, ops_test: OpsTest):
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
         # verify CC can find the new broker_id 3, with no replica partitions allocated
@@ -260,6 +266,9 @@ class TestBalancer:
             assert int(value) < int(post_rebalance_replica_counts.get(key, 0))
 
     @pytest.mark.abort_on_fail
+    @pytest.mark.skipif(
+        deployment_strat == "multi", reason="Testing full rebalance on single-app deployment"
+    )
     async def test_add_unit_targeted_rebalance(self, ops_test: OpsTest):
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
         await ops_test.model.applications[APP_NAME].add_units(
@@ -320,6 +329,9 @@ class TestBalancer:
         )  # replicas were successfully moved
 
     @pytest.mark.abort_on_fail
+    @pytest.mark.skipif(
+        deployment_strat == "multi", reason="Testing full rebalance on single-app deployment"
+    )
     async def test_balancer_prepare_unit_removal(self, ops_test: OpsTest):
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
         broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
@@ -377,7 +389,7 @@ class TestBalancer:
         await ops_test.model.deploy(
             TLS_NAME, channel="edge", config=tls_config, series="jammy", revision=163
         )
-        await ops_test.model.wait_for_idle(apps=[TLS_NAME], idle_period=15, timeout=1800)
+        await ops_test.model.wait_for_idle(apps=[TLS_NAME], idle_period=15)
         assert ops_test.model.applications[TLS_NAME].status == "active"
 
         await ops_test.model.add_relation(TLS_NAME, ZK_NAME)
@@ -387,7 +399,7 @@ class TestBalancer:
             await ops_test.model.add_relation(TLS_NAME, f"{BALANCER_APP}:{TLS_RELATION}")
 
         await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, ZK_NAME, self.balancer_app}), idle_period=30
+            apps=list({APP_NAME, ZK_NAME, self.balancer_app}), idle_period=30, timeout=1800
         )
         async with ops_test.fast_forward(fast_interval="20s"):
             await asyncio.sleep(120)  # ensure update-status adds broker-capacities if missed
