@@ -28,6 +28,7 @@ from literals import (
     MODE_ADD,
     MODE_REMOVE,
     PROFILE_TESTING,
+    SUBSTRATE,
     Status,
 )
 from managers.balancer import BalancerManager
@@ -168,12 +169,17 @@ class BalancerOperator(Object):
                 )
                 content_changed = True
 
+        # On k8s, adding/removing a broker does not change the bootstrap server property if exposed by nodeport
         broker_capacities = self.charm.state.balancer.broker_capacities
         if (
-            file_content := json.loads(
-                "".join(self.workload.read(self.workload.paths.capacity_jbod_json))
+            SUBSTRATE == "k8s"
+            and (
+                file_content := json.loads(
+                    "".join(self.workload.read(self.workload.paths.capacity_jbod_json))
+                )
             )
-        ) != broker_capacities:
+            != broker_capacities
+        ):
             logger.info(f"Balancer {self.charm.unit.name.split('/')[1]} updating capacity config")
 
             content_changed = True
