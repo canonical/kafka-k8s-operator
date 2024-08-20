@@ -194,6 +194,7 @@ class TestBalancer:
         response = await rebalance_action.wait()
         assert response.results
 
+        assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
         assert int(
             get_replica_count_by_broker_id(ops_test, self.balancer_app).get(str(new_broker_id), 0)
         )  # replicas were successfully moved
@@ -248,6 +249,7 @@ class TestBalancer:
         response = await rebalance_action.wait()
         assert response.results
 
+        assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
         post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, self.balancer_app)
 
         assert not int(post_rebalance_replica_counts.get(str(new_broker_id), 0))
@@ -303,6 +305,7 @@ class TestBalancer:
         response = await rebalance_action.wait()
         assert response.results
 
+        assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
         post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, self.balancer_app)
 
         # Partition only were moved from existing brokers to the new one
@@ -351,6 +354,7 @@ class TestBalancer:
         response = await rebalance_action.wait()
         assert response.results
 
+        assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
         post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, self.balancer_app)
 
         # Partition only were moved from the removed broker to the other ones
