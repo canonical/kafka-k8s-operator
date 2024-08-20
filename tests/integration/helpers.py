@@ -604,6 +604,7 @@ def balancer_is_ready(ops_test: OpsTest, app_name: str) -> bool:
 
     try:
         monitor_state_json = json.loads(monitor_state).get("MonitorState", {})
+        executor_state_json = json.loads(monitor_state).get("ExecutorState", {})
     except json.JSONDecodeError as e:
         logger.error(e)
         return False
@@ -614,6 +615,7 @@ def balancer_is_ready(ops_test: OpsTest, app_name: str) -> bool:
         [
             monitor_state_json.get("numMonitoredWindows", 0),
             monitor_state_json.get("numValidPartitions", 0),
+            executor_state_json.get("state", "") == "NO_TASK_IN_PROGRESS",
         ]
     )
 
