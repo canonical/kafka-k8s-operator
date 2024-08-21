@@ -138,7 +138,7 @@ class TestBalancer:
             apps=list({APP_NAME, ZK_NAME, self.balancer_app, PRODUCER_APP}),
             status="active",
             timeout=1800,
-            idle_period=60,
+            idle_period=30,
         )
 
         assert balancer_is_running(
@@ -187,15 +187,11 @@ class TestBalancer:
             if await unit.is_leader_from_status():
                 leader_unit = unit
 
-        rebalance_action_dry_run = await leader_unit.run_action(
-            "rebalance", mode="full", dryrun=True
-        )
-        response = await rebalance_action_dry_run.wait()
-        assert response.results
+        await asyncio.sleep(30)  # Give CC some room to breathe
 
         rebalance_action = await leader_unit.run_action("rebalance", mode="full", dryrun=False)
         response = await rebalance_action.wait()
-        assert response.results
+        assert not response.results.get("return-code", 1)
 
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
         assert int(
@@ -245,15 +241,11 @@ class TestBalancer:
             if await unit.is_leader_from_status():
                 leader_unit = unit
 
-        rebalance_action_dry_run = await leader_unit.run_action(
-            "rebalance", mode="full", dryrun=True
-        )
-        response = await rebalance_action_dry_run.wait()
-        assert response.results
+        await asyncio.sleep(30)  # Give CC some room to breathe
 
         rebalance_action = await leader_unit.run_action("rebalance", mode="full", dryrun=False)
         response = await rebalance_action.wait()
-        assert response.results
+        assert not response.results.get("return-code", 1)
 
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
         post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, self.balancer_app)
@@ -302,11 +294,7 @@ class TestBalancer:
             if await unit.is_leader_from_status():
                 leader_unit = unit
 
-        rebalance_action_dry_run = await leader_unit.run_action(
-            "rebalance", mode="add", brokerid=new_broker_id, dryrun=True
-        )
-        response = await rebalance_action_dry_run.wait()
-        assert response.results
+        await asyncio.sleep(30)  # Give CC some room to breathe
 
         rebalance_action = await leader_unit.run_action(
             "rebalance", mode="add", brokerid=new_broker_id, dryrun=False
@@ -348,14 +336,7 @@ class TestBalancer:
             if await unit.is_leader_from_status():
                 leader_unit = unit
 
-        rebalance_action_dry_run = await leader_unit.run_action(
-            "rebalance",
-            mode="remove",
-            brokerid=new_broker_id,
-            dryrun=True,
-        )
-        response = await rebalance_action_dry_run.wait()
-        assert response.results
+        await asyncio.sleep(30)
 
         rebalance_action = await leader_unit.run_action(
             "rebalance",

@@ -63,7 +63,7 @@ metadata.max.age.ms=10000
 metric.sampling.interval.ms=12000
 min.samples.per.broker.metrics.window=1
 min.samples.per.partition.metrics.window=1
-num.partition.metrics.windows=1
+num.partition.metrics.windows=3
 num.broker.metrics.windows=10
 """
 SERVER_PROPERTIES_BLACKLIST = ["profile", "log_level", "certificate_extra_sans"]

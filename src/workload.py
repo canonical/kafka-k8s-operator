@@ -243,7 +243,7 @@ class BalancerWorkload(Workload):
             "description": "Pebble config layer for kafka",
             "services": {
                 BALANCER.service: {
-                    "override": "merge",
+                    "override": "replace",
                     "summary": "balancer",
                     "command": command,
                     "startup": "enabled",
