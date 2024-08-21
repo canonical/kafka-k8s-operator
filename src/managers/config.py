@@ -45,7 +45,7 @@ auto.create.topics.enable=false
 metric.reporters=com.linkedin.kafka.cruisecontrol.metricsreporter.CruiseControlMetricsReporter
 """
 TESTING_OPTIONS = """
-cruise.control.metrics.reporter.metrics.reporting.interval.ms=12000
+cruise.control.metrics.reporter.metrics.reporting.interval.ms=6000
 """
 CRUISE_CONTROL_CONFIG_OPTIONS = """
 metric.reporter.topic=__CruiseControlMetrics

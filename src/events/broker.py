@@ -62,9 +62,9 @@ class BrokerOperator(Object):
         self.charm: "KafkaCharm" = charm
 
         self.workload = KafkaWorkload(
-            container=self.charm.unit.get_container(CONTAINER)
-            if self.charm.substrate == "k8s"
-            else None
+            container=(
+                self.charm.unit.get_container(CONTAINER) if self.charm.substrate == "k8s" else None
+            )
         )
 
         self.tls_manager = TLSManager(
@@ -141,6 +141,13 @@ class BrokerOperator(Object):
         # any external services must be created before setting of properties
         self.update_external_services()
 
+        if self.charm.config.profile == PROFILE_TESTING:
+            logger.info(
+                "Kafka is deployed with the 'testing' profile."
+                "The following properties will be set:\n"
+                f"{TESTING_OPTIONS}"
+            )
+
     def _on_start(self, event: StartEvent | PebbleReadyEvent) -> None:
         """Handler for `start` or `pebble-ready` events."""
         if not self.workload.container_can_connect:
@@ -191,13 +198,6 @@ class BrokerOperator(Object):
         # only log once on successful 'on-start' run
         if isinstance(self.charm.unit.status, ActiveStatus):
             logger.info(f'Broker {self.charm.unit.name.split("/")[1]} connected')
-
-        if self.charm.config.profile == PROFILE_TESTING:
-            logger.info(
-                "Kafka is deployed with the 'testing' profile."
-                "The following properties will be set:\n"
-                f"{TESTING_OPTIONS}"
-            )
 
     def _on_config_changed(self, event: EventBase) -> None:
         """Generic handler for most `config_changed` events across relations."""
