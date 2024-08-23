@@ -13,7 +13,6 @@ from pytest_operator.plugin import OpsTest
 from literals import (
     PEER_CLUSTER_ORCHESTRATOR_RELATION,
     PEER_CLUSTER_RELATION,
-    SUBSTRATE,
     TLS_RELATION,
 )
 
