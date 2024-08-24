@@ -231,6 +231,7 @@ class TestBalancer:
             if await unit.is_leader_from_status():
                 leader_unit = unit
 
+        assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
         rebalance_action = await leader_unit.run_action(
             "rebalance", mode="add", brokerid=new_broker_id, dryrun=False
         )
