@@ -115,8 +115,7 @@ class CruiseControlClient:
     def ready(self) -> bool:
         """Flag to confirm that the CruiseControl Analyzer is ready to generate proposals."""
         monitor_state = self.get(endpoint="state", verbose="True").json().get("MonitorState", "")
-        logging.error(monitor_state)
-        raise RuntimeError("DEBUG HERE", monitor_state)
+        logging.warning(monitor_state)
         return all(
             [
                 monitor_state.get("numMonitoredWindows", 0),

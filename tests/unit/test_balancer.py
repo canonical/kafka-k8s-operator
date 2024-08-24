@@ -101,15 +101,15 @@ def test_client_executing(client: CruiseControlClient, state: dict):
         assert not client.executing
 
 
-# def test_client_ready(client: CruiseControlClient, state: dict):
-#     with patch("managers.balancer.requests.get", return_value=MockResponse(state)):
-#         assert client.ready
+def test_client_ready(client: CruiseControlClient, state: dict):
+    with patch("managers.balancer.requests.get", return_value=MockResponse(state)):
+        assert client.ready
 
-#     not_ready_state = state
-#     not_ready_state["MonitorState"]["numMonitoredWindows"] = 0  # aka not ready
+    not_ready_state = state
+    not_ready_state["MonitorState"]["numMonitoredWindows"] = 0  # aka not ready
 
-#     with patch("managers.balancer.requests.get", return_value=MockResponse(not_ready_state)):
-#         assert not client.ready
+    with patch("managers.balancer.requests.get", return_value=MockResponse(not_ready_state)):
+        assert not client.ready
 
 
 def test_balancer_manager_create_internal_topics(harness: Harness[KafkaCharm]):
