@@ -112,9 +112,6 @@ class CruiseControlClient:
         )
 
     @property
-    @retry(
-        wait=wait_fixed(5), stop=stop_after_attempt(3), retry=retry_if_result(lambda res: not res)
-    )
     def ready(self) -> bool:
         """Flag to confirm that the CruiseControl Analyzer is ready to generate proposals."""
         monitor_state = self.get(endpoint="state", verbose="True").json().get("MonitorState", "")
