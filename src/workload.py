@@ -45,7 +45,7 @@ class Workload(WorkloadBase):
 
     @override
     def restart(self) -> None:
-        self.container.restart(self.service)
+        self.start()
 
     @override
     def read(self, path: str) -> list[str]:
