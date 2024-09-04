@@ -38,16 +38,15 @@ REL_NAME_PRODUCER = "kafka-client-producer"
 
 @pytest.mark.abort_on_fail
 async def test_deploy_charms_relate_active(
-    ops_test: OpsTest, app_charm: PosixPath, usernames: Set[str]
+    ops_test: OpsTest, kafka_charm, app_charm: PosixPath, usernames: Set[str]
 ):
     """Test deploy and relate operations."""
-    charm = await ops_test.build_charm(".")
     await asyncio.gather(
         ops_test.model.deploy(
             ZK_NAME, channel="3/edge", application_name=ZK_NAME, num_units=3, trust=True
         ),
         ops_test.model.deploy(
-            charm,
+            kafka_charm,
             application_name=APP_NAME,
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},

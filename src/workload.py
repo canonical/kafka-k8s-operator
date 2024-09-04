@@ -12,7 +12,7 @@ from ops.pebble import ExecError
 from typing_extensions import override
 
 from core.workload import CharmedKafkaPaths, WorkloadBase
-from literals import BALANCER, BROKER, CHARM_KEY, GROUP, JMX_EXPORTER_PORT, USER
+from literals import BALANCER, BROKER, CHARM_KEY, GROUP, JMX_CC_PORT, JMX_EXPORTER_PORT, USER
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class Workload(WorkloadBase):
 
     @override
     def restart(self) -> None:
-        self.container.restart(self.service)
+        self.start()
 
     @override
     def read(self, path: str) -> list[str]:
@@ -233,8 +233,7 @@ class BalancerWorkload(Workload):
     def layer(self) -> pebble.Layer:
         """Returns a Pebble configuration layer for CruiseControl."""
         extra_opts = [
-            # FIXME: Port already in use by the broker. To be fixed once we have CC_JMX_OPTS
-            # f"-javaagent:{CharmedKafkaPaths(BROKER).jmx_prometheus_javaagent}={JMX_EXPORTER_PORT}:{CharmedKafkaPaths(BROKER).jmx_prometheus_config}",
+            f"-javaagent:{CharmedKafkaPaths(BROKER).jmx_prometheus_javaagent}={JMX_CC_PORT}:{self.paths.jmx_cc_config}",
             f"-Djava.security.auth.login.config={self.paths.balancer_jaas}",
         ]
         command = f"{self.paths.binaries_path}/bin/kafka-cruise-control-start.sh {self.paths.cruise_control_properties}"
@@ -244,7 +243,7 @@ class BalancerWorkload(Workload):
             "description": "Pebble config layer for kafka",
             "services": {
                 BALANCER.service: {
-                    "override": "merge",
+                    "override": "replace",
                     "summary": "balancer",
                     "command": command,
                     "startup": "enabled",

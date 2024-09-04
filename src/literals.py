@@ -176,10 +176,16 @@ HARD_BALANCER_GOALS = [
     "ReplicaDistribution",
 ]
 
+BALANCER_GOALS_TESTING = [
+    "ReplicaDistribution",
+]
+
 
 MODE_FULL = "full"
 MODE_ADD = "add"
 MODE_REMOVE = "remove"
+
+PROFILE_TESTING = "testing"
 
 
 @dataclass
