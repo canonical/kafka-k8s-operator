@@ -109,6 +109,6 @@ options:
     type: float
     default: 0.8
   expose-external:
-    description: "String to determine how to expose the Kafka cluster externally from the Kubernetes cluster. Possible values: 'nodeport', 'none'"
+    description: "String to determine how to expose the Kafka cluster externally from the Kubernetes cluster. Possible values: 'nodeport', 'false'"
     type: string
-    default: "nodeport"
+    default: "false"

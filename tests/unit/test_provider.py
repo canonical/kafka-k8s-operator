@@ -34,7 +34,6 @@ def harness():
         {
             "log_retention_ms": "-1",
             "compression_type": "producer",
-            "expose-external": "none",
         }
     )
 

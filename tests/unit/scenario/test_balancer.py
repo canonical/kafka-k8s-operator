@@ -158,7 +158,6 @@ def test_ready_to_start_no_peer_cluster(charm_configuration):
 def test_ready_to_start_no_zk_data(charm_configuration, base_state: State):
     # Given
     charm_configuration["options"]["roles"]["default"] = "balancer,broker"
-    charm_configuration["options"]["expose-external"]["default"] = "none"
     ctx = Context(
         KafkaCharm,
         meta=METADATA,
@@ -183,7 +182,6 @@ def test_ready_to_start_no_zk_data(charm_configuration, base_state: State):
 def test_ready_to_start_no_broker_data(charm_configuration, base_state: State, zk_data):
     # Given
     charm_configuration["options"]["roles"]["default"] = "balancer,broker"
-    charm_configuration["options"]["expose-external"]["default"] = "none"
     ctx = Context(
         KafkaCharm,
         meta=METADATA,
@@ -206,7 +204,6 @@ def test_ready_to_start_no_broker_data(charm_configuration, base_state: State, z
 def test_ready_to_start_ok(charm_configuration, base_state: State, zk_data):
     # Given
     charm_configuration["options"]["roles"]["default"] = "balancer,broker"
-    charm_configuration["options"]["expose-external"]["default"] = "none"
     ctx = Context(
         KafkaCharm, meta=METADATA, config=charm_configuration, actions=ACTIONS, unit_id=0
     )

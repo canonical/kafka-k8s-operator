@@ -51,6 +51,7 @@ async def test_deploy_charms_relate_active(
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
             trust=True,
+            config={"expose-external": "nodeport"},
         ),
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_1, num_units=1, trust=True),
     )
