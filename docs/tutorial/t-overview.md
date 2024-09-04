@@ -36,4 +36,5 @@ Here’s an overview of the steps required with links to our separate tutorials 
 * [Integrate with client applications](/t/charmed-kafka-k8s-documentation-tutorial-relate-applications/11949)
 * [Manage passwords](/t/charmed-kafka-k8s-documentation-tutorial-manage-passwords/11948)
 * [Enable encryption](/t/charmed-kafka-k8s-documentation-tutorial-enable-encryption/11950)
+* [Reassign partitions](/t/charmed-kafka-k8s-documentation-tutorial-reassigning-partitions/15402)
 * [Cleanup your environment](/t/charmed-kafka-k8s-documentation-tutorial-cleanup-environment/11951)
