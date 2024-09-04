@@ -19,7 +19,14 @@ from pytest_operator.plugin import OpsTest
 from tenacity import retry, retry_if_result, stop_after_attempt, wait_fixed
 
 from core.models import JSON
-from literals import BALANCER_WEBSERVER_USER, BROKER, JMX_CC_PORT, PEER, SECURITY_PROTOCOL_PORTS
+from literals import (
+    BALANCER_WEBSERVER_USER,
+    BROKER,
+    JMX_CC_PORT,
+    PATHS,
+    PEER,
+    SECURITY_PROTOCOL_PORTS,
+)
 from managers.auth import Acl, AuthManager
 
 logger = logging.getLogger(__name__)
