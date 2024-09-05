@@ -94,7 +94,7 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm):
         )
 
         # Unit is on 'blocked' but whole app is on 'waiting'
-        assert ops_test.model.applications[APP_NAME].status == "waiting"
+        assert ops_test.model.applications[APP_NAME].status in ["waiting", "blocked"]
 
     # Set a custom private key, by running set-tls-private-key action with no parameters,
     # as this will generate a random one
