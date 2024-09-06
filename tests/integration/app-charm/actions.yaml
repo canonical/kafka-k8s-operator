@@ -1,6 +1,12 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+produce:
+  description: Produces messages to a test-topic
+
+consume:
+  description: Consumes messages from a test-topic
+
 create-certificate:
   description: Creates JKS keystore and signed certificate on unit
 
