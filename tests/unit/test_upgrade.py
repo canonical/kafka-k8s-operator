@@ -48,7 +48,6 @@ def harness(zk_data):
         {
             "log_retention_ms": "-1",
             "compression_type": "producer",
-            "expose-external": "none",
         }
     )
     harness.begin()

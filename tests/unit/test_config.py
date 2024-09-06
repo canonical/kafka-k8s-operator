@@ -5,7 +5,7 @@
 import logging
 import os
 from pathlib import Path
-from unittest.mock import PropertyMock, mock_open, patch
+from unittest.mock import Mock, PropertyMock, mock_open, patch
 
 import pytest
 import yaml
@@ -25,6 +25,7 @@ from literals import (
     JVM_MEM_MIN_GB,
     OAUTH_REL_NAME,
     PEER,
+    REL_NAME,
     SUBSTRATE,
     ZK,
 )
@@ -52,7 +53,6 @@ def harness():
         {
             "log_retention_ms": "-1",
             "compression_type": "producer",
-            "expose-external": "none",
         }
     )
     harness.begin()
@@ -121,8 +121,8 @@ def test_log_dirs_in_server_properties(harness: Harness[KafkaCharm]):
         assert found_log_dirs
 
 
-def test_listeners_in_server_properties(harness: Harness[KafkaCharm]):
-    """Checks that listeners are split into INTERNAL and EXTERNAL."""
+def test_listeners_in_server_properties(harness: Harness[KafkaCharm], monkeypatch):
+    """Checks that listeners are split into INTERNAL, CLIENT and EXTERNAL."""
     zk_relation_id = harness.add_relation(ZK, CHARM_KEY)
     harness.update_relation_data(
         zk_relation_id,
@@ -142,21 +142,49 @@ def test_listeners_in_server_properties(harness: Harness[KafkaCharm]):
     harness.update_relation_data(
         peer_relation_id, f"{CHARM_KEY}/0", {"private-address": "treebeard"}
     )
+    harness.add_relation(REL_NAME, "app")
 
     host = "treebeard" if SUBSTRATE == "vm" else "kafka-k8s-0.kafka-k8s-endpoints"
     sasl_pm = "SASL_PLAINTEXT_SCRAM_SHA_512"
-    expected_listeners = f"listeners=INTERNAL_{sasl_pm}://0.0.0.0:19092"
-    expected_advertised_listeners = f"advertised.listeners=INTERNAL_{sasl_pm}://{host}:19092"
+
+    expected_listeners = [
+        f"INTERNAL_{sasl_pm}://0.0.0.0:19092",
+        f"CLIENT_{sasl_pm}://0.0.0.0:9092",
+        f"EXTERNAL_{sasl_pm}://0.0.0.0:29092",
+    ]
+    expected_advertised_listeners = [
+        f"INTERNAL_{sasl_pm}://{host}:19092",
+        f"CLIENT_{sasl_pm}://{host}:9092",
+        f"EXTERNAL_{sasl_pm}://1234:20000",  # values for nodeip:nodeport in conftest
+    ]
 
     with patch(
         "core.models.KafkaCluster.internal_user_credentials",
         new_callable=PropertyMock,
         return_value={INTER_BROKER_USER: "fangorn", ADMIN_USER: "forest"},
     ):
-        assert expected_listeners in harness.charm.broker.config_manager.server_properties
-        assert (
-            expected_advertised_listeners in harness.charm.broker.config_manager.server_properties
+        # Harness doesn't reinitialize KafkaCharm when calling update_config, which means that
+        # self.config is not passed again to ConfigManager
+        monkeypatch.setattr(
+            harness.charm.broker.config_manager.config, "expose_external", Mock(return_value=True)
         )
+
+        listeners = [
+            prop
+            for prop in harness.charm.broker.config_manager.server_properties
+            if prop.startswith("listeners=")
+        ][0]
+        advertised_listeners = [
+            prop
+            for prop in harness.charm.broker.config_manager.server_properties
+            if prop.startswith("advertised.listeners=")
+        ][0]
+
+    for listener in expected_listeners:
+        assert listener in listeners
+
+    for listener in expected_advertised_listeners:
+        assert listener in advertised_listeners
 
 
 def test_oauth_client_listeners_in_server_properties(harness: Harness[KafkaCharm]):

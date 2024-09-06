@@ -52,6 +52,7 @@ class TestBalancer:
                 config={
                     "roles": "broker,balancer" if self.balancer_app == APP_NAME else "broker",
                     "profile": "testing",
+                    "expose-external": "nodeport",
                 },
                 resources={"kafka-image": KAFKA_CONTAINER},
                 trust=True,
@@ -88,6 +89,7 @@ class TestBalancer:
                 config={
                     "roles": self.balancer_app,
                     "profile": "testing",
+                    "expose-external": "nodeport",
                 },
                 resources={"kafka-image": KAFKA_CONTAINER},
                 trust=True,
