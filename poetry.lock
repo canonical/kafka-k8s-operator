@@ -1194,21 +1194,21 @@ docs = ["canonical-sphinx-extensions", "furo", "linkify-it-py", "myst-parser", "
 
 [[package]]
 name = "ops-scenario"
-version = "6.1.6"
+version = "7.0.0"
 description = "Python library providing a state-transition testing API for Operator Framework charms."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "ops_scenario-6.1.6-py3-none-any.whl", hash = "sha256:f853ebc6c6b6abd5f887e01ecca833e47fe15ad0680f8fbace79032f921a3880"},
-    {file = "ops_scenario-6.1.6.tar.gz", hash = "sha256:3937d63e31d101cb9bd6f44ba98927eac67b1e5d6b0e3fe13905a32306b129dd"},
+    {file = "ops_scenario-7.0.0-py3-none-any.whl", hash = "sha256:1e705f915596705eb31f58c3773b5c1fc75ee4310ff8e5e6e79eb5a19c7c0063"},
+    {file = "ops_scenario-7.0.0.tar.gz", hash = "sha256:48a3428871c99e264d0e758f1ed4716c09f6f00ee96aef8a4d409912779f42bc"},
 ]
 
 [package.dependencies]
-ops = ">=2.12"
+ops = ">=2.15,<3.0"
 PyYAML = ">=6.0.1"
 
 [package.extras]
-docs = ["canonical-sphinx-extensions", "furo", "linkify-it-py", "myst-parser", "pyspelling", "sphinx (==6.2.1)", "sphinx-autobuild", "sphinx-copybutton", "sphinx-design", "sphinx-notfound-page", "sphinx-tabs", "sphinxcontrib-jquery", "sphinxext-opengraph"]
+docs = ["canonical-sphinx-extensions", "furo", "linkify-it-py", "myst-parser", "pyspelling", "sphinx (>=8.0.0,<8.1.0)", "sphinx-autobuild", "sphinx-copybutton", "sphinx-design", "sphinx-notfound-page", "sphinx-tabs", "sphinxcontrib-jquery", "sphinxext-opengraph"]
 
 [[package]]
 name = "packaging"
@@ -2464,4 +2464,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "9c18eee9e04748e5cf01a9f22fc6bf5156ef7c013789b64fa2d5dfb7e71d12cc"
+content-hash = "d7bc92691e21c7615a2acda5fba81ea93f7984b2013cbc602c386e74619eb10c"
