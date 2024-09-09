@@ -1194,13 +1194,13 @@ docs = ["canonical-sphinx-extensions", "furo", "linkify-it-py", "myst-parser", "
 
 [[package]]
 name = "ops-scenario"
-version = "7.0.0"
+version = "7.0.1"
 description = "Python library providing a state-transition testing API for Operator Framework charms."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "ops_scenario-7.0.0-py3-none-any.whl", hash = "sha256:1e705f915596705eb31f58c3773b5c1fc75ee4310ff8e5e6e79eb5a19c7c0063"},
-    {file = "ops_scenario-7.0.0.tar.gz", hash = "sha256:48a3428871c99e264d0e758f1ed4716c09f6f00ee96aef8a4d409912779f42bc"},
+    {file = "ops_scenario-7.0.1-py3-none-any.whl", hash = "sha256:c642724fd89175a8c9ad82a8a750ada212333ce686bc9a9752c974026a7079d3"},
+    {file = "ops_scenario-7.0.1.tar.gz", hash = "sha256:de4127cc6801e8d0ead429f1aa5133e8c35cf1de8e9b4d73ab9ecae2cfc1eb00"},
 ]
 
 [package.dependencies]
@@ -2464,4 +2464,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "d7bc92691e21c7615a2acda5fba81ea93f7984b2013cbc602c386e74619eb10c"
+content-hash = "64fc34d6ce55ec9f5928bb361669a733d0d82133cc1efe96354c7bb66b288a33"
