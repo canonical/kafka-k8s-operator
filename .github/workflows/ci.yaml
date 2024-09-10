@@ -97,7 +97,7 @@ jobs:
         timeout-minutes: 5
         uses: actions/download-artifact@v4
         with:
-          pattern: ${{ needs.build.outputs.artifact-prefix }}-*
+          pattern: packed-charm-cache-true-*
           merge-multiple: true
       - name: Select tests
         id: select-tests
