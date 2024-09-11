@@ -39,6 +39,7 @@ DUMMY_NAME = "app"
 
 
 @pytest.mark.skip_if_deployed
+@pytest.mark.abort_on_fail
 async def test_deploy_tls(ops_test: OpsTest, kafka_charm, app_charm):
     tls_config = {"ca-common-name": "kafka"}
 
@@ -66,7 +67,7 @@ async def test_deploy_tls(ops_test: OpsTest, kafka_charm, app_charm):
         await asyncio.sleep(60)
 
     await ops_test.model.wait_for_idle(
-        apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=30, timeout=2000
+        apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=30, timeout=2000, raise_on_error=False
     )
 
     assert ops_test.model.applications[APP_NAME].status == "blocked"
@@ -78,10 +79,15 @@ async def test_deploy_tls(ops_test: OpsTest, kafka_charm, app_charm):
     # Relate Zookeeper to TLS
     async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[TLS_NAME, ZK_NAME], idle_period=30, status="active", timeout=2000
+            apps=[TLS_NAME, ZK_NAME],
+            idle_period=30,
+            status="active",
+            timeout=2000,
+            raise_on_error=False,
         )
 
 
+@pytest.mark.abort_on_fail
 async def test_kafka_tls(ops_test: OpsTest, app_charm):
     """Tests TLS on Kafka.
 
