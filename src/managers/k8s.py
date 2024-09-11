@@ -4,8 +4,11 @@
 
 """Manager for handling Kafka Kubernetes resources for a single Kafka pod."""
 
+import json
 import logging
-from functools import cached_property
+import math
+import time
+from functools import cache
 
 from lightkube.core.client import Client
 from lightkube.core.exceptions import ApiError
@@ -15,13 +18,16 @@ from lightkube.resources.core_v1 import Node, Pod, Service
 
 from literals import SECURITY_PROTOCOL_PORTS, AuthMap, AuthMechanism
 
-logger = logging.getLogger(__name__)
-
 # default logging from lightkube httpx requests is very noisy
 logging.getLogger("lightkube").disabled = True
 logging.getLogger("lightkube.core.client").disabled = True
 logging.getLogger("httpx").disabled = True
 logging.getLogger("httpcore").disabled = True
+logging.getLogger("lightkube").setLevel(logging.CRITICAL)
+logging.getLogger("httpx").setLevel(logging.CRITICAL)
+logging.getLogger("httpcore").setLevel(logging.CRITICAL)
+
+logger = logging.getLogger(__name__)
 
 
 class K8sManager:
@@ -42,7 +48,15 @@ class K8sManager:
             "SSL": "ssl",
         }
 
-    @cached_property
+    def __eq__(self, other: object) -> bool:
+        """__eq__ dunder."""
+        return isinstance(other, K8sManager) and self.__dict__ == other.__dict__
+
+    def __hash__(self) -> int:
+        """__hash__ dunder."""
+        return hash(json.dumps(self.__dict__, sort_keys=True))
+
+    @property
     def client(self) -> Client:
         """The Lightkube client."""
         return Client(  # pyright: ignore[reportArgumentType]
@@ -50,20 +64,28 @@ class K8sManager:
             namespace=self.namespace,
         )
 
+    @staticmethod
+    def get_ttl_hash(seconds=60 * 2) -> int:
+        """Gets a unique time hash for the lru_cache, expiring after 2 minutes."""
+        return math.floor(time.time() / seconds)
+
     # --- GETTERS ---
 
-    def get_pod(self, pod_name: str = "") -> Pod:
+    @cache
+    def get_pod(self, pod_name: str = "", *_) -> Pod:
         """Gets the Pod via the K8s API."""
         # Allows us to get pods from other peer units
         pod_name = pod_name or self.pod_name
 
         return self.client.get(
             res=Pod,
-            name=self.pod_name,
+            name=pod_name,
         )
 
-    def get_node(self, pod: Pod) -> Node:
+    @cache
+    def get_node(self, pod_name: str, *_) -> Node:
         """Gets the Node the Pod is running on via the K8s API."""
+        pod = self.get_pod(pod_name, self.get_ttl_hash())
         if not pod.spec or not pod.spec.nodeName:
             raise Exception("Could not find podSpec or nodeName")
 
@@ -72,9 +94,11 @@ class K8sManager:
             name=pod.spec.nodeName,
         )
 
-    def get_node_ip(self, node: Node) -> str:
-        """Gets the IP Address of the Node via the K8s API."""
+    @cache
+    def get_node_ip(self, pod_name: str, *_) -> str:
+        """Gets the IP Address of the Node of a given Pod via the K8s API."""
         # all these redundant checks are because Lightkube's typing is awful
+        node = self.get_node(pod_name, self.get_ttl_hash())
         if not node.status or not node.status.addresses:
             raise Exception(f"No status found for {node}")
 
@@ -84,7 +108,8 @@ class K8sManager:
 
         return ""
 
-    def get_service(self, service_name: str) -> Service | None:
+    @cache
+    def get_service(self, service_name: str, *_) -> Service | None:
         """Gets the Service via the K8s API."""
         return self.client.get(
             res=Service,
@@ -120,26 +145,28 @@ class K8sManager:
         """
         return f"{self.pod_name}-{auth_map.protocol.lower().replace('_','-')}-{self.short_auth_mechanism_mapping[auth_map.mechanism]}"
 
-    def get_listener_nodeport(self, auth_map: AuthMap) -> int:
+    @cache
+    def get_listener_nodeport(self, auth_map: AuthMap, *_) -> int:
         """Gets the current NodePort for the desired auth.protocol and auth.mechanism service."""
         service_name = self.build_listener_service_name(auth_map)
-        if not (service := self.get_service(service_name)):
+        if not (service := self.get_service(service_name, self.get_ttl_hash())):
             raise Exception(
                 f"Unable to find Service using {auth_map.protocol} and {auth_map.mechanism}"
             )
 
         return self.get_node_port(service, auth_map)
 
-    def get_bootstrap_nodeport(self, auth_map: AuthMap) -> int:
+    @cache
+    def get_bootstrap_nodeport(self, auth_map: AuthMap, *_) -> int:
         """Gets the current NodePort for the desired bootstrap auth.protocol and auth.mechanism service."""
-        if not (service := self.get_service(self.bootstrap_service_name)):
+        if not (service := self.get_service(self.bootstrap_service_name, self.get_ttl_hash())):
             raise Exception("Unable to find bootstrap Service")
 
         return self.get_node_port(service, auth_map)
 
     def build_bootstrap_services(self) -> Service:
         """Builds a ClusterIP service for initial client connection."""
-        pod = self.get_pod(pod_name=self.pod_name)
+        pod = self.get_pod(self.pod_name, self.get_ttl_hash())
         if not pod.metadata:
             raise Exception(f"Could not find metadata for {pod}")
 

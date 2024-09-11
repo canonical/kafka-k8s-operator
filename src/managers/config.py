@@ -461,7 +461,9 @@ class ConfigManager(CommonConfigManager):
         for auth in self.state.enabled_auth:
             node_port = 0
             try:
-                node_port = self.state.unit_broker.k8s.get_listener_nodeport(auth)
+                node_port = self.state.unit_broker.k8s.get_listener_nodeport(
+                    auth, self.state.unit_broker.k8s.get_ttl_hash()
+                )
             except ApiError as e:
                 # don't worry about defining a service during cluster init
                 # as it doesn't exist yet to `kubectl get`
