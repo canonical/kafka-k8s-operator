@@ -23,7 +23,6 @@ from literals import (
     BALANCER_WEBSERVER_USER,
     BROKER,
     JMX_CC_PORT,
-    PATHS,
     PEER,
     SECURITY_PROTOCOL_PORTS,
 )
@@ -727,3 +726,20 @@ def balancer_exporter_is_up(model_full_name: str | None, app_name: str) -> bool:
         universal_newlines=True,
     )
     return True
+
+
+def get_mtls_nodeport(ops_test: OpsTest):
+    ports = check_output(
+        f"kubectl get svc -n {ops_test.model.info.name} -o wide | grep bootstrap | awk '{{print $5}}'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    ).split(",")
+
+    logger.info(f"{ports=}")
+
+    for port in ports:
+        if port.startswith(str(SECURITY_PROTOCOL_PORTS["SSL", "SSL"].external)):
+            return port.split(":")[1].split("/")[0]
+
+    raise Exception("could not find mtls nodeport in bootstrap service")
