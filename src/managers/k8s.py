@@ -19,10 +19,6 @@ from lightkube.resources.core_v1 import Node, Pod, Service
 from literals import SECURITY_PROTOCOL_PORTS, AuthMap, AuthMechanism
 
 # default logging from lightkube httpx requests is very noisy
-logging.getLogger("lightkube").disabled = True
-logging.getLogger("lightkube.core.client").disabled = True
-logging.getLogger("httpx").disabled = True
-logging.getLogger("httpcore").disabled = True
 logging.getLogger("lightkube").setLevel(logging.CRITICAL)
 logging.getLogger("httpx").setLevel(logging.CRITICAL)
 logging.getLogger("httpcore").setLevel(logging.CRITICAL)
