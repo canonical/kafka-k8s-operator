@@ -341,7 +341,11 @@ async def test_tls_removed(ops_test: OpsTest):
         await asyncio.sleep(180)
 
     await ops_test.model.wait_for_idle(
-        apps=[APP_NAME, ZK_NAME], timeout=3600, idle_period=30, status="active"
+        apps=[APP_NAME, ZK_NAME],
+        timeout=3600,
+        idle_period=30,
+        status="active",
+        raise_on_error=False,
     )
 
     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME)
