@@ -24,6 +24,7 @@ from .helpers import (
     get_active_brokers,
     get_address,
     get_kafka_zk_relation_data,
+    get_mtls_nodeport,
     set_mtls_client_acls,
     set_tls_private_key,
 )
@@ -37,7 +38,6 @@ MTLS_NAME = "mtls"
 DUMMY_NAME = "app"
 
 
-@pytest.mark.abort_on_fail
 @pytest.mark.skip_if_deployed
 async def test_deploy_tls(ops_test: OpsTest, kafka_charm, app_charm):
     tls_config = {"ca-common-name": "kafka"}
@@ -82,7 +82,6 @@ async def test_deploy_tls(ops_test: OpsTest, kafka_charm, app_charm):
         )
 
 
-@pytest.mark.abort_on_fail
 async def test_kafka_tls(ops_test: OpsTest, app_charm):
     """Tests TLS on Kafka.
 
@@ -193,18 +192,22 @@ async def test_mtls(ops_test: OpsTest):
     await ops_test.model.add_relation(
         f"{APP_NAME}:{TRUSTED_CERTIFICATE_RELATION}", f"{MTLS_NAME}:{TLS_RELATION}"
     )
+
+    # ensuring kafka broker restarts with new listeners
+    async with ops_test.fast_forward(fast_interval="30s"):
+        await asyncio.sleep(180)
+
     await ops_test.model.wait_for_idle(
-        apps=[APP_NAME, MTLS_NAME], idle_period=60, timeout=2000, status="active"
+        apps=[APP_NAME, MTLS_NAME], idle_period=180, timeout=2000, status="active"
     )
 
     # getting kafka ca and address
     broker_ca = extract_ca(ops_test=ops_test, unit_name=f"{APP_NAME}/0")
 
     address = await get_address(ops_test, app_name=APP_NAME)
-    ssl_port = SECURITY_PROTOCOL_PORTS["SSL", "SSL"].client
     sasl_port = SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].client
-    ssl_bootstrap_server = f"{address}:{ssl_port}"
     sasl_bootstrap_server = f"{address}:{sasl_port}"
+    ssl_nodeport = get_mtls_nodeport(ops_test)
 
     # setting ACLs using normal sasl port
     await set_mtls_client_acls(ops_test, bootstrap_server=sasl_bootstrap_server)
@@ -215,7 +218,7 @@ async def test_mtls(ops_test: OpsTest):
     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action(
         "run-mtls-producer",
         **{
-            "bootstrap-server": ssl_bootstrap_server,
+            "mtls-nodeport": int(ssl_nodeport),
             "broker-ca": base64.b64encode(broker_ca.encode("utf-8")).decode("utf-8"),
             "num-messages": num_messages,
         },
@@ -228,7 +231,7 @@ async def test_mtls(ops_test: OpsTest):
     offsets_action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action(
         "get-offsets",
         **{
-            "bootstrap-server": ssl_bootstrap_server,
+            "mtls-nodeport": int(ssl_nodeport),
         },
     )
 
