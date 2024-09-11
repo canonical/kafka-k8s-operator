@@ -10,13 +10,10 @@ of the libraries in this repository.
 
 import base64
 import logging
-import os
-import shutil
 import subprocess
 from socket import getfqdn
 
 from charms.data_platform_libs.v0.data_interfaces import KafkaRequires, TopicCreatedEvent
-from charms.operator_libs_linux.v1 import snap
 from client import KafkaClient
 from ops.charm import ActionEvent, CharmBase
 from ops.main import main
@@ -33,7 +30,8 @@ REL_NAME_PRODUCER = "kafka-client-producer"
 REL_NAME_ADMIN = "kafka-client-admin"
 ZK = "zookeeper"
 CONSUMER_GROUP_PREFIX = "test-prefix"
-SNAP_PATH = "/var/snap/charmed-kafka/current/etc/kafka"
+KAFKA_VERSION = "3.7.1"
+KAFKA_DIR = "kafka_2.13-3.7.1"
 
 
 class ApplicationCharm(CharmBase):
@@ -79,6 +77,7 @@ class ApplicationCharm(CharmBase):
         self.framework.observe(
             getattr(self.on, "run_mtls_producer_action"), self.run_mtls_producer
         )
+        self.framework.observe(getattr(self.on, "get_offsets_action"), self.get_offsets)
 
     @property
     def peer_relation(self) -> Relation | None:
@@ -89,60 +88,67 @@ class ApplicationCharm(CharmBase):
 
     def on_topic_created_consumer(self, event: TopicCreatedEvent) -> None:
         logger.info(f"{event.username} {event.password} {event.bootstrap_server} {event.tls}")
-        peer_relation = self.model.get_relation("cluster")
-        peer_relation.data[self.app]["username"] = event.username or ""
-        peer_relation.data[self.app]["password"] = event.password or ""
+        self.peer_relation.data[self.app]["username"] = event.username or ""
+        self.peer_relation.data[self.app]["password"] = event.password or ""
+        self.peer_relation.data[self.app]["bootstrap-server"] = event.bootstrap_server or ""
         return
 
     def on_topic_created_producer(self, event: TopicCreatedEvent) -> None:
         logger.info(f"{event.username} {event.password} {event.bootstrap_server} {event.tls}")
         self.peer_relation.data[self.app]["username"] = event.username or ""
         self.peer_relation.data[self.app]["password"] = event.password or ""
+        self.peer_relation.data[self.app]["bootstrap-server"] = event.bootstrap_server or ""
         return
 
     def on_topic_created_admin(self, event: TopicCreatedEvent) -> None:
         logger.info(f"{event.username} {event.password} {event.bootstrap_server} {event.tls}")
         self.peer_relation.data[self.app]["username"] = event.username or ""
         self.peer_relation.data[self.app]["password"] = event.password or ""
+        self.peer_relation.data[self.app]["bootstrap-server"] = event.bootstrap_server or ""
         return
 
     def _install_packages(self):
-        logger.info("INSTALLING PACKAGES")
-        cache = snap.SnapCache()
-        kafka = cache["charmed-kafka"]
+        subprocess.check_output(
+            "apt update && DEBIAN_FRONTEND=noninteractive apt install openjdk-21-jre-headless -y -qq",
+            stderr=subprocess.STDOUT,
+            shell=True,
+            universal_newlines=True,
+        )
+        subprocess.check_output(
+            "apt install wget",
+            stderr=subprocess.STDOUT,
+            shell=True,
+            universal_newlines=True,
+        )
+        subprocess.check_output(
+            f"wget https://archive.apache.org/dist/kafka/{KAFKA_VERSION}/{KAFKA_DIR}.tgz && tar -xvzf {KAFKA_DIR}.tgz",
+            stderr=subprocess.STDOUT,
+            shell=True,
+            universal_newlines=True,
+        )
 
-        kafka.ensure(snap.SnapState.Latest, channel="3/edge", revision=19)
+    def _create_keystore(self) -> dict[str, str]:
+        if not (peer_relation := self.model.get_relation("cluster")):
+            logger.error("no peer relation")
+            return {}
+        if not (binding := self.model.get_binding(peer_relation)):
+            logger.error("no binding")
+            return {}
 
-    @staticmethod
-    def set_snap_ownership(path: str) -> None:
-        """Sets a filepath `snap_daemon` ownership."""
-        shutil.chown(path, user="snap_daemon", group="root")
+        unit_id = self.unit.name.split("/")[1]
+        bind_address = binding.network.bind_address
+        internal_address = f"{self.app.name}-{unit_id}.{self.app.name}-endpoints"
+        fqdn = getfqdn()
+        pod_name = f"{self.app.name}-{unit_id}"
 
-        for root, dirs, files in os.walk(path):
-            for fp in dirs + files:
-                shutil.chown(os.path.join(root, fp), user="snap_daemon", group="root")
-
-    @staticmethod
-    def set_snap_mode_bits(path: str) -> None:
-        """Sets filepath mode bits."""
-        os.chmod(path, 0o774)
-
-        for root, dirs, files in os.walk(path):
-            for fp in dirs + files:
-                os.chmod(os.path.join(root, fp), 0o774)
-
-    def _create_keystore(self, unit_name: str, unit_host: str):
         try:
             logger.info("creating the keystore")
             subprocess.check_output(
-                f'charmed-kafka.keytool -keystore client.keystore.jks -alias client-key -validity 90 -genkey -keyalg RSA -noprompt -storepass password -dname "CN=client" -ext SAN=DNS:{unit_name},IP:{unit_host}',
+                f'keytool -keystore client.keystore.jks -alias client-key -validity 90 -genkey -keyalg RSA -noprompt -storepass password -dname "CN=client" -ext SAN=DNS:{pod_name},DNS:{internal_address},DNS:{fqdn},IP:{bind_address}',
                 stderr=subprocess.STDOUT,
                 shell=True,
                 universal_newlines=True,
-                cwd=SNAP_PATH,
             )
-            self.set_snap_ownership(path=f"{SNAP_PATH}/client.keystore.jks")
-            self.set_snap_mode_bits(path=f"{SNAP_PATH}/client.keystore.jks")
 
             logger.info("creating a ca")
             subprocess.check_output(
@@ -150,40 +156,30 @@ class ApplicationCharm(CharmBase):
                 stderr=subprocess.STDOUT,
                 shell=True,
                 universal_newlines=True,
-                cwd=SNAP_PATH,
             )
-            self.set_snap_ownership(path=f"{SNAP_PATH}/ca.key")
-            self.set_snap_ownership(path=f"{SNAP_PATH}/ca.cert")
 
             logger.info("signing certificate")
             subprocess.check_output(
-                "charmed-kafka.keytool -keystore client.keystore.jks -alias client-key -certreq -file client.csr -storepass password",
+                "keytool -keystore client.keystore.jks -alias client-key -certreq -file client.csr -storepass password",
                 stderr=subprocess.STDOUT,
                 shell=True,
                 universal_newlines=True,
-                cwd=SNAP_PATH,
             )
-            self.set_snap_ownership(path=f"{SNAP_PATH}/client.csr")
 
             subprocess.check_output(
                 "openssl x509 -req -CA ca.cert -CAkey ca.key -in client.csr -out client.cert -days 90 -CAcreateserial -passin pass:password",
                 stderr=subprocess.STDOUT,
                 shell=True,
                 universal_newlines=True,
-                cwd=SNAP_PATH,
             )
-            self.set_snap_ownership(path=f"{SNAP_PATH}/client.cert")
 
             logger.info("importing certificate to keystore")
             subprocess.check_output(
-                "charmed-kafka.keytool -keystore client.keystore.jks -alias client-cert -importcert -file client.cert -storepass password -noprompt",
+                "keytool -keystore client.keystore.jks -alias client-cert -importcert -file client.cert -storepass password -noprompt",
                 stderr=subprocess.STDOUT,
                 shell=True,
                 universal_newlines=True,
-                cwd=SNAP_PATH,
             )
-            self.set_snap_ownership(path=f"{SNAP_PATH}/client.keystore.jks")
-            self.set_snap_mode_bits(path=f"{SNAP_PATH}/client.keystore.jks")
 
             logger.info("grabbing cert content")
             certificate = subprocess.check_output(
@@ -191,14 +187,12 @@ class ApplicationCharm(CharmBase):
                 stderr=subprocess.STDOUT,
                 shell=True,
                 universal_newlines=True,
-                cwd=SNAP_PATH,
             )
             ca = subprocess.check_output(
                 "cat ca.cert",
                 stderr=subprocess.STDOUT,
                 shell=True,
                 universal_newlines=True,
-                cwd=SNAP_PATH,
             )
 
         except subprocess.CalledProcessError as e:
@@ -209,21 +203,18 @@ class ApplicationCharm(CharmBase):
 
     def _create_truststore(self, broker_ca: str):
         logger.info("writing broker cert to unit")
-        safe_write_to_file(content=broker_ca, path=f"{SNAP_PATH}/broker.cert")
+        safe_write_to_file(content=broker_ca, path="broker.cert")
 
         # creating truststore and importing cert files
         for file in ["broker.cert", "ca.cert", "client.cert"]:
             try:
                 logger.info(f"adding {file} to truststore")
                 subprocess.check_output(
-                    f"charmed-kafka.keytool -keystore client.truststore.jks -alias {file.replace('.', '-')} -importcert -file {file} -storepass password -noprompt",
+                    f"keytool -keystore client.truststore.jks -alias {file.replace('.', '-')} -importcert -file {file} -storepass password -noprompt",
                     stderr=subprocess.STDOUT,
                     shell=True,
                     universal_newlines=True,
-                    cwd=SNAP_PATH,
                 )
-                self.set_snap_ownership(path=f"{SNAP_PATH}/client.truststore.jks")
-                self.set_snap_mode_bits(path=f"{SNAP_PATH}/client.truststore.jks")
             except subprocess.CalledProcessError as e:
                 # in case this reruns and fails
                 if "already exists" in e.output:
@@ -234,47 +225,49 @@ class ApplicationCharm(CharmBase):
         logger.info("creating client.properties file")
         properties = [
             "security.protocol=SSL",
-            f"ssl.truststore.location={SNAP_PATH}/client.truststore.jks",
-            f"ssl.keystore.location={SNAP_PATH}/client.keystore.jks",
+            "ssl.truststore.location=client.truststore.jks",
+            "ssl.keystore.location=client.keystore.jks",
             "ssl.truststore.password=password",
             "ssl.keystore.password=password",
             "ssl.key.password=password",
         ]
         safe_write_to_file(
             content="\n".join(properties),
-            path=f"{SNAP_PATH}/client.properties",
+            path="client.properties",
         )
 
     def _attempt_mtls_connection(self, bootstrap_servers: str, num_messages: int):
         logger.info("creating data to feed to producer")
         content = "\n".join(f"message: {ith}" for ith in range(num_messages))
 
-        safe_write_to_file(content=content, path=f"{SNAP_PATH}/data")
+        safe_write_to_file(content=content, path="data")
 
         logger.info("Creating topic")
         try:
             subprocess.check_output(
-                f"charmed-kafka.topics --bootstrap-server {bootstrap_servers} --topic=TEST-TOPIC --create --command-config client.properties",
+                f"{KAFKA_DIR}/bin/kafka-topics.sh --bootstrap-server {bootstrap_servers} --topic=TEST-TOPIC --create --command-config client.properties",
                 stderr=subprocess.STDOUT,
                 shell=True,
                 universal_newlines=True,
-                cwd=SNAP_PATH,
+                env={"JAVA_HOME": "/usr/lib/jvm/java-21-openjdk-amd64"},
             )
         except subprocess.CalledProcessError as e:
-            logger.exception(e.output)
+            logger.exception(e.stdout)
+            logger.exception(e.stderr)
             raise e
 
         logger.info("running producer application")
         try:
             subprocess.check_output(
-                f"cat data | charmed-kafka.console-producer --bootstrap-server {bootstrap_servers} --topic=TEST-TOPIC --producer.config client.properties -",
+                f"cat data | {KAFKA_DIR}/bin/kafka-console-producer.sh --bootstrap-server {bootstrap_servers} --topic=TEST-TOPIC --producer.config client.properties -",
                 stderr=subprocess.STDOUT,
                 shell=True,
                 universal_newlines=True,
-                cwd=SNAP_PATH,
+                env={"JAVA_HOME": "/usr/lib/jvm/java-21-openjdk-amd64"},
             )
         except subprocess.CalledProcessError as e:
-            logger.exception(e.output)
+            logger.exception(e.stdout)
+            logger.exception(e.stderr)
             raise e
 
     def create_certificate(self, event: ActionEvent):
@@ -285,10 +278,7 @@ class ApplicationCharm(CharmBase):
 
         self._install_packages()
 
-        unit_host = peer_relation.data[self.unit].get("private-address" "") or ""
-        unit_name = getfqdn()
-
-        response = self._create_keystore(unit_host=unit_host, unit_name=unit_name)
+        response = self._create_keystore()
 
         event.set_results(
             {"client-certificate": response["certificate"], "client-ca": response["ca"]}
@@ -296,7 +286,9 @@ class ApplicationCharm(CharmBase):
 
     def run_mtls_producer(self, event: ActionEvent):
         broker_ca = event.params["broker-ca"]
-        bootstrap_server = event.params["bootstrap-server"]
+        mtls_nodeport = event.params["mtls-nodeport"]
+        endpoints = self.peer_relation.data[self.app]["bootstrap-server"].split(":")[0]
+        bootstrap_server = f"{endpoints}:{mtls_nodeport}"
         num_messages = int(event.params["num-messages"])
 
         decode_cert = base64.b64decode(broker_ca).decode("utf-8").strip()
@@ -312,6 +304,26 @@ class ApplicationCharm(CharmBase):
             return
 
         event.set_results({"success": "TRUE"})
+
+    def get_offsets(self, event: ActionEvent):
+        mtls_nodeport = event.params["mtls-nodeport"]
+        endpoints = self.peer_relation.data[self.app]["bootstrap-server"].split(":")[0]
+        bootstrap_server = f"{endpoints}:{mtls_nodeport}"
+
+        try:
+            output = subprocess.check_output(
+                f"{KAFKA_DIR}/bin/kafka-get-offsets.sh --bootstrap-server {bootstrap_server} --topic=TEST-TOPIC --command-config client.properties",
+                stderr=subprocess.STDOUT,
+                shell=True,
+                universal_newlines=True,
+                env={"JAVA_HOME": "/usr/lib/jvm/java-21-openjdk-amd64"},
+            )
+            event.set_results({"output": output})
+        except subprocess.CalledProcessError as e:
+            logger.exception(e.output)
+            event.fail()
+
+        return
 
     def _produce(self, _) -> None:
         uris = None
