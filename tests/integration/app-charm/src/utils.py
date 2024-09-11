@@ -7,7 +7,6 @@ import logging
 import os
 import re
 import secrets
-import shutil
 import string
 
 logger = logging.getLogger(__name__)
@@ -37,14 +36,14 @@ def safe_write_to_file(content: str, path: str, mode: str = "w") -> None:
 
     Args:
         content: the content to be written to a file
-        path: the full destination filepath
+        path: the full destination filepath or filename
         mode: the write mode. Usually "w" for write, or "a" for append. Default "w"
     """
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if parent_dir := os.path.dirname(path):
+        os.makedirs(parent_dir, exist_ok=True)
+
     with open(path, mode) as f:
         f.write(content)
-
-    shutil.chown(path, user="snap_daemon", group="root")
 
     return
 
