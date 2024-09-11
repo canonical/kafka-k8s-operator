@@ -49,11 +49,18 @@ class K8sManager:
         }
 
     def __eq__(self, other: object) -> bool:
-        """__eq__ dunder."""
+        """__eq__ dunder.
+
+        Needed to get an cache hit on calls on the same method from different instances of K8sManager
+        as `self` is passed to methods.
+        """
         return isinstance(other, K8sManager) and self.__dict__ == other.__dict__
 
     def __hash__(self) -> int:
-        """__hash__ dunder."""
+        """__hash__ dunder.
+
+        K8sManager needs to be hashable so that `self` can be passed to the 'dict-like' cache.
+        """
         return hash(json.dumps(self.__dict__, sort_keys=True))
 
     @property
@@ -66,7 +73,11 @@ class K8sManager:
 
     @staticmethod
     def get_ttl_hash(seconds=60 * 2) -> int:
-        """Gets a unique time hash for the lru_cache, expiring after 2 minutes."""
+        """Gets a unique time hash for the cache, expiring after 2 minutes.
+
+        When 2m has passed, a new value will be created, ensuring an cache miss
+        and a re-loading of that K8s API call.
+        """
         return math.floor(time.time() / seconds)
 
     # --- GETTERS ---
