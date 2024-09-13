@@ -78,50 +78,23 @@ class K8sManager:
 
     # --- GETTERS ---
 
-    @cache
-    def get_pod(self, pod_name: str = "", *_) -> Pod:
+    def get_pod(self, pod_name: str = "") -> Pod:
         """Gets the Pod via the K8s API."""
-        # Allows us to get pods from other peer units
-        pod_name = pod_name or self.pod_name
+        return self._get_pod(pod_name, self.get_ttl_hash())
 
-        return self.client.get(
-            res=Pod,
-            name=pod_name,
-        )
-
-    @cache
-    def get_node(self, pod_name: str, *_) -> Node:
+    def get_node(self, pod_name: str) -> Node:
         """Gets the Node the Pod is running on via the K8s API."""
-        pod = self.get_pod(pod_name, self.get_ttl_hash())
-        if not pod.spec or not pod.spec.nodeName:
-            raise Exception("Could not find podSpec or nodeName")
+        return self._get_node(pod_name, self.get_ttl_hash())
 
-        return self.client.get(
-            Node,
-            name=pod.spec.nodeName,
-        )
-
-    @cache
-    def get_node_ip(self, pod_name: str, *_) -> str:
+    def get_node_ip(self, pod_name: str) -> str:
         """Gets the IP Address of the Node of a given Pod via the K8s API."""
-        # all these redundant checks are because Lightkube's typing is awful
-        node = self.get_node(pod_name, self.get_ttl_hash())
-        if not node.status or not node.status.addresses:
-            raise Exception(f"No status found for {node}")
+        return self._get_node_ip(pod_name, self.get_ttl_hash())
 
-        for addresses in node.status.addresses:
-            if addresses.type in ["ExternalIP", "InternalIP", "Hostname"]:
-                return addresses.address
-
-        return ""
-
-    @cache
-    def get_service(self, service_name: str, *_) -> Service | None:
+    def get_service(self, service_name: str) -> Service | None:
         """Gets the Service via the K8s API."""
-        return self.client.get(
-            res=Service,
-            name=service_name,
-        )
+        return self._get_service(service_name, self.get_ttl_hash())
+
+    # SERVICE BUILDERS
 
     def get_node_port(
         self,
@@ -152,28 +125,26 @@ class K8sManager:
         """
         return f"{self.pod_name}-{auth_map.protocol.lower().replace('_','-')}-{self.short_auth_mechanism_mapping[auth_map.mechanism]}"
 
-    @cache
-    def get_listener_nodeport(self, auth_map: AuthMap, *_) -> int:
+    def get_listener_nodeport(self, auth_map: AuthMap) -> int:
         """Gets the current NodePort for the desired auth.protocol and auth.mechanism service."""
         service_name = self.build_listener_service_name(auth_map)
-        if not (service := self.get_service(service_name, self.get_ttl_hash())):
+        if not (service := self.get_service(service_name)):
             raise Exception(
                 f"Unable to find Service using {auth_map.protocol} and {auth_map.mechanism}"
             )
 
         return self.get_node_port(service, auth_map)
 
-    @cache
-    def get_bootstrap_nodeport(self, auth_map: AuthMap, *_) -> int:
+    def get_bootstrap_nodeport(self, auth_map: AuthMap) -> int:
         """Gets the current NodePort for the desired bootstrap auth.protocol and auth.mechanism service."""
-        if not (service := self.get_service(self.bootstrap_service_name, self.get_ttl_hash())):
+        if not (service := self.get_service(self.bootstrap_service_name)):
             raise Exception("Unable to find bootstrap Service")
 
         return self.get_node_port(service, auth_map)
 
     def build_bootstrap_services(self) -> Service:
         """Builds a ClusterIP service for initial client connection."""
-        pod = self.get_pod(self.pod_name, self.get_ttl_hash())
+        pod = self.get_pod(self.pod_name)
         if not pod.metadata:
             raise Exception(f"Could not find metadata for {pod}")
 
@@ -265,3 +236,47 @@ class K8sManager:
                 return
             else:
                 raise
+
+    # PRIVATE METHODS
+
+    @cache
+    def _get_pod(self, pod_name: str = "", *_) -> Pod:
+        # Allows us to get pods from other peer units
+        pod_name = pod_name or self.pod_name
+
+        return self.client.get(
+            res=Pod,
+            name=pod_name,
+        )
+
+    @cache
+    def _get_node(self, pod_name: str, *_) -> Node:
+        pod = self.get_pod(pod_name)
+        if not pod.spec or not pod.spec.nodeName:
+            raise Exception("Could not find podSpec or nodeName")
+
+        return self.client.get(
+            Node,
+            name=pod.spec.nodeName,
+        )
+
+    @cache
+    def _get_node_ip(self, pod_name: str, *_) -> str:
+        """Gets the IP Address of the Node of a given Pod via the K8s API."""
+        # all these redundant checks are because Lightkube's typing is awful
+        node = self.get_node(pod_name)
+        if not node.status or not node.status.addresses:
+            raise Exception(f"No status found for {node}")
+
+        for addresses in node.status.addresses:
+            if addresses.type in ["ExternalIP", "InternalIP", "Hostname"]:
+                return addresses.address
+
+        return ""
+
+    @cache
+    def _get_service(self, service_name: str, *_) -> Service | None:
+        return self.client.get(
+            res=Service,
+            name=service_name,
+        )
