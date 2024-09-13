@@ -81,8 +81,8 @@ jobs:
         with:
           provider: microk8s
           channel: "1.28-strict/stable"
-          juju-channel: 3.5/stable
-          bootstrap-options: "--agent-version 3.5.3"
+          juju-channel: 3.1/stable
+          bootstrap-options: "--agent-version 3.1.6"
       - name: Download packed charm(s)
         uses: actions/download-artifact@v3
         with:
@@ -126,8 +126,8 @@ jobs:
         with:
           provider: microk8s
           channel: "1.28-strict/stable"
-          juju-channel: 3.5/stable
-          bootstrap-options: "--agent-version 3.5.3"
+          juju-channel: 3.1/stable
+          bootstrap-options: "--agent-version 3.1.6"
       - name: Download packed charm(s)
         uses: actions/download-artifact@v3
         with:
