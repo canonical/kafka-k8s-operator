@@ -262,7 +262,6 @@ class K8sManager:
 
     @cache
     def _get_node_ip(self, pod_name: str, *_) -> str:
-        """Gets the IP Address of the Node of a given Pod via the K8s API."""
         # all these redundant checks are because Lightkube's typing is awful
         node = self.get_node(pod_name)
         if not node.status or not node.status.addresses:
