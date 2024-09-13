@@ -6,7 +6,7 @@ To deploy Charmed Kafka K8s, all you need to do is run the following commands, w
 
 ```shell
 $ juju deploy zookeeper-k8s -n 3 
-$ juju deploy kafka-k8s -n 3 
+$ juju deploy kafka-k8s -n 3 --trust
 ```
 
 After this, it is necessary to connect them:

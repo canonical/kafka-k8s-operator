@@ -64,11 +64,13 @@ juju show-model | yq '.[].type'
 The Kafka and ZooKeeper charms can both be deployed as follows:
 
 ```commandline
-juju deploy kafka-k8s --channel 3/edge -n <kafka-units>
+juju deploy kafka-k8s --channel 3/edge -n <kafka-units> --trust
 juju deploy zookeeper-k8s --channel 3/edge -n <zookeeper-units>
 ```
 
 where `<kafka-units>` and `<zookeeper-units>` -- the number of units to deploy for Kafka and ZooKeeper. We recommend values of at least `3` and `5` respectively.
+
+> **NOTE** The `--trust` option is needed for the Kafka application if NodePort is used. For more information about the trust options usage, see the [Juju documentation](/t/5476#heading--trust-an-application-with-a-credential). 
 
 Connect ZooKeeper and Kafka by relating/integrating the charms:
 
