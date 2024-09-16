@@ -163,12 +163,12 @@ class BrokerOperator(Object):
         if not self.upgrade.idle:
             return
 
+        self.update_external_services()
+
         self.charm._set_status(self.charm.state.ready_to_start)
         if not isinstance(self.charm.unit.status, ActiveStatus):
             event.defer()
             return
-
-        self.update_external_services()
 
         # required settings given zookeeper connection config has been created
         self.config_manager.set_server_properties()
