@@ -12,6 +12,7 @@ from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from ops import (
+    CollectStatusEvent,
     EventBase,
     StatusBase,
 )
@@ -60,6 +61,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.restart = RollingOpsManager(self, relation="restart", callback=self._restart_broker)
 
         self.framework.observe(getattr(self.on, "config_changed"), self._on_roles_changed)
+        self.framework.observe(self.on.collect_app_status, self._on_collect_status)
 
         # peer-cluster events are shared between all roles, so necessary to init here to avoid instantiating multiple times
         self.peer_cluster = PeerClusterEventsHandler(self)
@@ -126,6 +128,9 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         getattr(logger, log_level.lower())(status.message)
         self.unit.status = status
+
+    def _on_collect_status(self, event: CollectStatusEvent):
+        event.add_status(self.state.ready_to_start.value.status)
 
 
 if __name__ == "__main__":
