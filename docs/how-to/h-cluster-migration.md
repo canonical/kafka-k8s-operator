@@ -13,14 +13,19 @@ Under the hood, MirrorMaker uses Kafka Connect source connectors to replicate da
 
 Together, they are used for cluster->cluster replication of topics, consumer groups, topic configuration and ACLs, preserving partitioning and consumer offsets. For more detail on MirrorMaker internals, consult the [MirrorMaker README.md](https://github.com/apache/kafka/blob/trunk/connect/mirror/README.md) and the [MirrorMaker 2.0 KIP](https://cwiki.apache.org/confluence/display/KAFKA/KIP-382%3A+MirrorMaker+2.0). In practice, it allows one to sync data one-way between two live Kafka clusters with minimal impact on the ongoing production service.
 
-In short, MirrorMaker runs as a distributed service on the new cluster, and consumes all topics, groups and offsets from the still-active original cluster in production, before producing them one-way to the new cluster that may not yet be serving traffic to external clients. The original, in-production cluster is referred to as an ‘active’ cluster, and the new cluster still waiting to serve external clients is ‘passive’. The MirrorMaker service can be configured using much the same configuration as available for Kafka Connect.
+In short, MirrorMaker runs as a distributed service on both the original cluster in production and the new cluster that may not yet be serving traffic to external clients. On the old cluster, it consumes all topics, groups and offsets to produce them one way on the new one.
+
+The original, in-production cluster is referred to as an ‘active’ cluster, and the new cluster still waiting to serve external clients is ‘passive’. The MirrorMaker service can be configured using a configuration similar to the one available for Kafka Connect.
 
 ## Pre-requisites
 
-- An existing Kafka cluster to migrate from. The clusters need to be reachable from/to Charmed Kafka K8s. 
-- A bootstrapped Juju K8s cloud running Charmed Kafka K8s to migrate to
-    - A tutorial on how to set-up a Charmed Kafka deployment can be found as part of the [Charmed Kafka K8s Tutorial](/t/charmed-kafka-k8s-documentation-tutorial-overview/11945)
-    - The CLI tool `yq` - https://github.com/mikefarah/yq
+To migrate a cluster we need:
+
+- An "old" existing Kafka cluster to migrate from. The cluster needs to be reachable from/to the new Kafka cluster. 
+- A "new" Kafka cluster to migrate to: Charmed Kafka K8s running at a bootstrapped Juju K8s cloud. For guidance on how to deploy a new Charmed Kafka K8s, see:
+    - The [How to deploy guide](/t/13266) for Charmed Kafka K8s
+    - The [Charmed Kafka K8s Tutorial](/t/11945)
+- The CLI tool [yq](https://github.com/mikefarah/yq), that can be installed via snap:
     - `snap install yq --channel=v3/stable`
 
 ## Get cluster details and admin credentials
@@ -31,6 +36,7 @@ By design, the `kafka` charm will not expose any available connections until rel
 juju deploy data-integrator --channel=edge -n 1 --config extra-user-roles="admin" --config topic-name="default"
 juju relate kafka-k8s data-integrator
 ```
+<!-- Do we need the `edge` track in the above? -->
 
 When the `data-integrator` charm relates to a `kafka-k8s` application on the `kafka-client` relation interface, passing `extra-user-roles=admin`, a new user with `super.user` permissions will be created on that cluster, with the charm passing back the credentials and broker addresses in the relation data to the `data-integrator`.
 As we will need full access to both clusters, we must grab these newly-generated authorisation credentials from the `data-integrator`:
