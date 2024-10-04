@@ -34,6 +34,8 @@ Charmed Kafka K8s is a distribution of Apache Kafka. It’s an open-source proje
 - Explore [Canonical Data Fabric solutions](https://canonical.com/data)
 - [Contact us](/t/charmed-kafka-k8s-documentation-reference-contacts/13206) for all further questions
 
+Apache®, Apache Kafka, Kafka®, and the Kafka logo are either registered trademarks or trademarks of the Apache Software Foundation in the United States and/or other countries.
+
 ## License
 
 The Charmed Kafka K8s Operator is free software, distributed under the Apache Software License, version 2.0. See [LICENSE](https://github.com/canonical/kafka-k8s-operator/blob/main/LICENSE) for more information.
