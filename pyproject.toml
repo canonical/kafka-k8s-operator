@@ -27,6 +27,7 @@ name = "kafka-k8s-operator"
 version = "1.0"
 description = "kafka-k8s-operator"
 authors = []
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
