@@ -135,23 +135,6 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         for status in self.unit_statuses + [Status.ACTIVE]:
             event.add_status(status.value.status)
 
-    def _on_collect_status(self, event: CollectStatusEvent):
-        ready_to_start = self.state.ready_to_start.value.status
-        event.add_status(ready_to_start)
-
-        if not isinstance(ready_to_start, ActiveStatus):
-            return
-
-        if not self.state.runs_broker:
-            # early return, the next checks only concern the broker
-            return
-
-        if not self.broker.workload.active():
-            event.add_status(Status.BROKER_NOT_RUNNING.value.status)
-
-        if not self.state.zookeeper.broker_active():
-            event.add_status(Status.ZK_NOT_CONNECTED.value.status)
-
 
 if __name__ == "__main__":
     main(KafkaCharm)
