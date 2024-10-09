@@ -33,7 +33,8 @@ The charm can be deployed in much smaller environments if needed.
 
 ## Usage
 
-This section demonstrate basic usage of the Charmed Kafka K8s operator. For more information on how to perform typical tasks, see the How to guides section of [Charmed Kafka K8s documentation](https://canonical.com/data/docs/kafka/k8s).
+This section demonstrates basic usage of the Charmed Kafka K8s operator. 
+For more information on how to perform typical tasks, see the How to guides section of the [Charmed Kafka K8s documentation](https://canonical.com/data/docs/kafka/k8s).
 
 ### Deployment
 
