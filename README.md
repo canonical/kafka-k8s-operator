@@ -85,7 +85,9 @@ Use the same action without a password parameter to randomly generate a password
 
 Currently, the Charmed Kafka K8s Operator makes use of a 10 GB storage mount, tied to a [Kubernetes PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/).
 
-This is used for logs storage, mounted on `/logs/kafka`.
+This storage is mounted on `/var/lib/data/kafka` and used for log-data.
+
+Service logs can be found in `/var/log/kafka`.
 
 ## Relations
 
