@@ -29,7 +29,7 @@ from literals import (
     Status,
 )
 
-pytestmark = [pytest.mark.broker, pytest.mark.balancer]
+pytestmark = pytest.mark.broker
 
 
 logger = logging.getLogger(__name__)
