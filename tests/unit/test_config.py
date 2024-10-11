@@ -164,6 +164,12 @@ def test_listeners_in_server_properties(
             new_callable=PropertyMock,
             return_value={INTER_BROKER_USER: "fangorn", ADMIN_USER: "forest"},
         ),
+        patch(
+            "managers.k8s.K8sManager._get_service",
+        ),
+        patch(
+            "managers.k8s.K8sManager.get_node_port",
+        ),
         ctx(ctx.on.config_changed(), state_in) as manager,
     ):
         charm = cast(KafkaCharm, manager.charm)
