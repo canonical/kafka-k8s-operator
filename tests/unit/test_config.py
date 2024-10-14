@@ -149,13 +149,16 @@ def test_listeners_in_server_properties(
     expected_listeners = [
         f"INTERNAL_{sasl_pm}://0.0.0.0:19092",
         f"CLIENT_{sasl_pm}://0.0.0.0:9092",
-        f"EXTERNAL_{sasl_pm}://0.0.0.0:29092",
     ]
     expected_advertised_listeners = [
         f"INTERNAL_{sasl_pm}://{host}:19092",
         f"CLIENT_{sasl_pm}://{host}:9092",
-        f"EXTERNAL_{sasl_pm}://1234:20000",  # values for nodeip:nodeport in conftest
     ]
+    if SUBSTRATE == "k8s":
+        expected_listeners += [f"EXTERNAL_{sasl_pm}://0.0.0.0:29092"]
+        expected_advertised_listeners += [
+            f"EXTERNAL_{sasl_pm}://1234:20000"  # values for nodeip:nodeport in conftest
+        ]
 
     # When
     with (

@@ -369,7 +369,7 @@ def test_upgrade_granted_recurses_upgrade_changed_on_leader(
             "events.broker.BrokerOperator.healthy", new_callable=PropertyMock, return_value=True
         ),
         patch("workload.BalancerWorkload.stop"),
-        patch("events.upgrade.KafkaUpgrade.on_upgrade_changed") as patched_upgrade,
+        patch("events.upgrade.KafkaUpgrade.on_upgrade_changed", autospec=True) as patched_upgrade,
         ctx(ctx.on.config_changed(), state_in) as manager,
     ):
         charm = cast(KafkaCharm, manager.charm)

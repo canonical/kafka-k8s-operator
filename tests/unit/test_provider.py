@@ -118,7 +118,7 @@ def test_client_relation_broken_removes_user(ctx: Context, base_state: State) ->
     secret = Secret(
         tracked_content={f"relation-{client_relation.id}": "password"},
         owner="app",
-        label="cluster.kafka-k8s.app",
+        label="cluster.kafka-k8s.app" if SUBSTRATE == "k8s" else "cluster.kafka.app",
     )
     state_in = dataclasses.replace(
         base_state, relations=[cluster_peer, zk_relation, client_relation], secrets=[secret]

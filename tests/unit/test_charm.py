@@ -11,8 +11,6 @@ from unittest.mock import PropertyMock, patch
 
 import pytest
 import yaml
-from charms.operator_libs_linux.v0.sysctl import ApplyError
-from charms.operator_libs_linux.v1.snap import SnapError
 from scenario import Container, Context, PeerRelation, Relation, State, Storage
 
 from charm import KafkaCharm
@@ -21,13 +19,18 @@ from literals import (
     CONTAINER,
     INTERNAL_USERS,
     JMX_EXPORTER_PORT,
-    OS_REQUIREMENTS,
     PEER,
     REL_NAME,
     SUBSTRATE,
     ZK,
     Status,
 )
+
+if SUBSTRATE == "vm":
+    from charms.operator_libs_linux.v0.sysctl import ApplyError
+    from charms.operator_libs_linux.v1.snap import SnapError
+
+    from literals import OS_REQUIREMENTS
 
 pytestmark = pytest.mark.broker
 
@@ -225,6 +228,7 @@ def test_healthy_fails_if_snap_not_active(
     # When
     with (
         patch("workload.KafkaWorkload.active", return_value=False) as patched_snap_active,
+        patch("workload.KafkaWorkload.start"),
         ctx(ctx.on.start(), state_in) as manager,
     ):
         charm = cast(KafkaCharm, manager.charm)
@@ -548,10 +552,11 @@ def test_storage_add_disableenables_and_starts(
 ) -> None:
     # Given
     cluster_peer = PeerRelation(PEER, PEER, local_app_data=passwords_data)
+    restart_peer = PeerRelation("restart", "restart")
     zk_relation = Relation(ZK, ZK, remote_app_data=zk_data)
     storage = Storage("data")
     state_in = dataclasses.replace(
-        base_state, relations=[cluster_peer, zk_relation], storages=[storage]
+        base_state, relations=[cluster_peer, restart_peer, zk_relation], storages=[storage]
     )
 
     # When
