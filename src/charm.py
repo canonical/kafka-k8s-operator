@@ -63,6 +63,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         self.framework.observe(getattr(self.on, "config_changed"), self._on_roles_changed)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_status)
+        self.framework.observe(self.on.collect_app_status, self._on_collect_status)
 
         # peer-cluster events are shared between all roles, so necessary to init here to avoid instantiating multiple times
         self.peer_cluster = PeerClusterEventsHandler(self)
