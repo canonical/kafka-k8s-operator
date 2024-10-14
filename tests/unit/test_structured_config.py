@@ -18,7 +18,7 @@ from literals import (
     SUBSTRATE,
 )
 
-pytestmark = pytest.mark.broker
+pytestmark = [pytest.mark.broker, pytest.mark.balancer]
 
 
 logger = logging.getLogger(__name__)
