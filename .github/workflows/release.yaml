@@ -8,12 +8,6 @@ on:
       - main
 
 jobs:
-  build:
-    name: Build charm
-    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v22.0.0
-    with:
-      cache: false
-
   ci-tests:
     uses: ./.github/workflows/ci.yaml
     secrets: inherit
@@ -21,6 +15,12 @@ jobs:
       contents: write # Needed to login to Discourse
       pull-requests: write # Need to create PR
       actions: write
+
+  build:
+    name: Build charm
+    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v22.0.0
+    with:
+      cache: false
 
   release:
     name: Release to Charmhub
