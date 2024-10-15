@@ -95,7 +95,7 @@ The Charmed Kafka K8s Operator supports Juju [relations](https://juju.is/docs/ol
 
 #### The kafka_client interface
 
-The `kafka_client` interface is used with the `data-integrator` charm. This charm allows to automatically create and manage product credentials needed to authenticate with different kinds of data platform charmed products.
+The `kafka_client` interface is used with the [Data Integrator](https://charmhub.io/data-integrator) charm, which upon relation automatically provides credentials and endpoints for connecting to the desired product.
 
 To deploy the `data-integrator` charm with the desired `topic-name` and user roles: 
 
