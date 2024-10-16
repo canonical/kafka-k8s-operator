@@ -38,6 +38,7 @@ from literals import (
     PEER,
     PROFILE_TESTING,
     REL_NAME,
+    STORAGE,
     USER,
     Status,
 )
@@ -349,6 +350,13 @@ class BrokerOperator(Object):
                     f"""find {self.workload.paths.data_path} -type f -name meta.properties -delete || true""",
                 ]
             )
+
+        if self.charm.substrate == "k8s":
+            logger.info("Setting new ownership...")
+            self.workload.exec(["chown", "-R", "kafka:root", f"{self.workload.paths.data_path}/{STORAGE}"])
+
+            logger.info("Cleaning up lost+found...")
+            self.workload.exec(["rm", "-rf", f"{self.workload.paths.data_path}/{STORAGE}/lost+found"])
 
         # checks first whether the broker is active before warning
         if self.workload.active():
