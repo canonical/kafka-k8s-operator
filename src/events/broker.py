@@ -353,7 +353,7 @@ class BrokerOperator(Object):
 
         if self.charm.substrate == "k8s":
             self.workload.exec(
-                ["chown", "-R", "kafka:root", f"{self.workload.paths.data_path}/{STORAGE}"]
+                ["chown", "-R", f"{USER}:{GROUP}", f"{self.workload.paths.data_path}/{STORAGE}"]
             )
             self.workload.exec(
                 ["rm", "-rf", f"{self.workload.paths.data_path}/{STORAGE}/lost+found"]
