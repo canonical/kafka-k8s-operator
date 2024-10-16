@@ -8,29 +8,30 @@ on:
       - main
 
 jobs:
-
-  build:
-    name: Build charm
-    uses: canonical/data-platform-workflows/.github/workflows/build_charm_without_cache.yaml@v7
-
   ci-tests:
     uses: ./.github/workflows/ci.yaml
     secrets: inherit
     permissions:
-      contents: write  # Needed to login to Discourse
+      contents: write # Needed to login to Discourse
       pull-requests: write # Need to create PR
       actions: write
+
+  build:
+    name: Build charm
+    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v22.0.0
+    with:
+      cache: false
 
   release:
     name: Release to Charmhub
     needs:
       - ci-tests
       - build
-    uses: canonical/data-platform-workflows/.github/workflows/release_charm.yaml@v7
+    uses: canonical/data-platform-workflows/.github/workflows/release_charm.yaml@v22.0.0
     with:
       channel: 3/edge
-      artifact-name: ${{ needs.build.outputs.artifact-name }}
+      artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
     secrets:
       charmhub-token: ${{ secrets.CHARMHUB_TOKEN }}
     permissions:
-      contents: write  # Needed to create GitHub release
+      contents: write # Needed to create GitHub release
