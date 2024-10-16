@@ -352,11 +352,12 @@ class BrokerOperator(Object):
             )
 
         if self.charm.substrate == "k8s":
-            logger.info("Setting new ownership...")
-            self.workload.exec(["chown", "-R", "kafka:root", f"{self.workload.paths.data_path}/{STORAGE}"])
-
-            logger.info("Cleaning up lost+found...")
-            self.workload.exec(["rm", "-rf", f"{self.workload.paths.data_path}/{STORAGE}/lost+found"])
+            self.workload.exec(
+                ["chown", "-R", "kafka:root", f"{self.workload.paths.data_path}/{STORAGE}"]
+            )
+            self.workload.exec(
+                ["rm", "-rf", f"{self.workload.paths.data_path}/{STORAGE}/lost+found"]
+            )
 
         # checks first whether the broker is active before warning
         if self.workload.active():
