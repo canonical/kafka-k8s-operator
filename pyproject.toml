@@ -22,6 +22,9 @@ target-version = ["py310"]
 [tool.isort]
 profile = "black"
 
+[tool.codespell]
+ignore-words-list = "AKS,aks"
+
 [tool.poetry]
 name = "kafka-k8s-operator"
 version = "1.0"
