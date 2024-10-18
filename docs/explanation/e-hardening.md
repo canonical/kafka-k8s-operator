@@ -131,4 +131,4 @@ the [file system paths](/t/charmed-kafka-k8s-documentation-reference-file-system
 
 ## Additional Resources
 
-For further information and details on the security and cryptographic specifications used by Charmed Kafka, please refer to the [Security Explanation page](/t/charmed-kafka-k8s-documentation-explanation-security/15715).
+For more information and details on the security and cryptography used by Charmed Kafka, see the [Security Explanation page](/t/charmed-kafka-k8s-documentation-explanation-security/15715).
