@@ -13,7 +13,7 @@ Under the hood, MirrorMaker uses Kafka Connect source connectors to replicate da
 
 Together, they are used for cluster->cluster replication of topics, consumer groups, topic configuration and ACLs, preserving partitioning and consumer offsets. For more detail on MirrorMaker internals, consult the [MirrorMaker README.md](https://github.com/apache/kafka/blob/trunk/connect/mirror/README.md) and the [MirrorMaker 2.0 KIP](https://cwiki.apache.org/confluence/display/KAFKA/KIP-382%3A+MirrorMaker+2.0). In practice, it allows one to sync data one-way between two live Kafka clusters with minimal impact on the ongoing production service.
 
-In short, MirrorMaker runs as a distributed service on both the original cluster in production and the new cluster that may not yet be serving traffic to external clients. On the old cluster, it consumes all topics, groups and offsets to produce them one way on the new one.
+In short, MirrorMaker runs as a distributed service on the new cluster that may not yet be serving traffic to external clients. MirrorMaker consumes all topics, groups and offsets from the still-active original cluster in production to produce them one way on the new one.
 
 The original, in-production cluster is referred to as an ‘active’ cluster, and the new cluster still waiting to serve external clients is ‘passive’. The MirrorMaker service can be configured using a configuration similar to the one available for Kafka Connect.
 
