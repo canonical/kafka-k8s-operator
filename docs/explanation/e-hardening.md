@@ -112,7 +112,7 @@ Charmed Kafka supports the following authentication layers:
 Each combination of authentication scheme and encryption is associated to the dedicated listener and it maps to a well-defined port. 
 Please refer to the [listener reference documentation](/t/charmed-kafka-k8s-documentation-reference-listeners/13270) for more information. 
 
-### Monitoring and Auditing
+### Monitoring and auditing
 
 Charmed Kafka provides native integration with the [Canonical Observability Stack (COS)](https://charmhub.io/topics/canonical-observability-stack).
 To reduce the blast radius of infrastructure disruptions, the general recommendation is to deploy COS and the observed application into 
