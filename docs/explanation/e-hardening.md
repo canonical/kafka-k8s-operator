@@ -72,7 +72,7 @@ In the following we provide guidance on how to harden your deployment using:
 Charmed Kafka K8s and Charmed ZooKeeper K8s run on top of rockcraft-based image shipping the Apache Kafka and Apache ZooKeeper 
 distribution binaries built by Canonical, and available in the [Kafka release page](https://launchpad.net/kafka-releases) and 
 [ZooKeeper release page](https://launchpad.net/zookeeper-releases), respectively. Both images are based on Ubuntu 22.04. 
-The images that can be found in the [Charmed Kafka](https://github.com/canonical/charmed-spark-rock) and 
+The images that can be found in the [Charmed Kafka rock](https://github.com/canonical/charmed-spark-rock) and 
 [Charmed ZooKeeper](https://github.com/canonical/charmed-zookeeper-rock) Github repositories are used as the base 
 images for the different pods providing Kafka and ZooKeeper services. 
 The following table summarise the relation between the component and its underlying base image. 
