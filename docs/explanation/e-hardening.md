@@ -61,11 +61,11 @@ Juju user credentials must be stored securely and rotated regularly to limit the
 
 In the following we provide guidance on how to harden your deployment using:
 
-1. Base Images
-2. Kafka and ZooKeeper Security Upgrades
+1. Base images
+2. Charmed operator security upgrades
 3. Encryption 
 4. Authentication
-5. Monitoring and Auditing
+5. Monitoring and auditing
 
 ### Base images
 
