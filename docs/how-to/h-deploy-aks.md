@@ -111,7 +111,7 @@ Sample output:
 ...
 ```
 
-Dump newly bootstraped AKS credentials:
+Dump newly bootstrapped AKS credentials:
 ```shell
 az aks get-credentials --resource-group aks --name ${JUJU_NAME} --context aks
 ```
