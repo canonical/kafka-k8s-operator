@@ -92,9 +92,9 @@ New versions of Charmed Kafka K8s and Charmed ZooKeeper K8s operators may theref
 It is important to refresh the charm regularly to make sure the workload is as secure as possible. 
 For more information on how to refresh the charm, see the [how-to refresh](/t/charmed-kafka-k8s-documentation-how-to-upgrade/13267) user guide.
 
-### Encryption
+### Wire Encryption
 
-Charmed Kafka K8s must be deployed with encryption enabled. 
+In order to deploy a hardened solution, Charmed Kafka K8s must be deployed with wire encryption enabled. 
 To do that, you need to relate Kafka and ZooKeeper charms to one of the TLS certificate operator charms. 
 Please refer to the [Charming Security page](https://charmhub.io/topics/security-with-x-509-certificates) for more information on how to select the right certificate
 provider for your use-case. 
