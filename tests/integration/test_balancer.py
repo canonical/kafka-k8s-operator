@@ -143,6 +143,7 @@ class TestBalancer:
             status="active",
             timeout=1800,
             idle_period=60,
+            raise_on_error=False,
         )
 
         assert balancer_is_running(
