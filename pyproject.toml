@@ -30,7 +30,7 @@ authors = []
 
 [tool.poetry.dependencies]
 python = "^3.10"
-ops = ">=2.4.1"
+ops = ">=2.17.0"
 kazoo = ">=2.8.0"
 tenacity = ">=8.0.1"
 pure-sasl = ">=0.6.2"
@@ -70,7 +70,7 @@ pytest = ">=7.2"
 coverage = { extras = ["toml"], version = ">7.0" }
 pytest-mock = "^3.11.1"
 packaging = "^23.1"
-ops-scenario = "^6.0.0"
+ops-scenario = "^7.0.0"
 
 [tool.poetry.group.security]
 optional = true
