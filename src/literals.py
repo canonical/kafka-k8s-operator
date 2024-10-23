@@ -128,7 +128,7 @@ BROKER = Role(
     value="broker",
     service="kafka",
     paths=PATHS["kafka"],
-    relation=PEER_CLUSTER_RELATION,
+    relation=PEER_CLUSTER_ORCHESTRATOR_RELATION,
     requested_secrets=[
         "balancer-username",
         "balancer-password",
@@ -139,7 +139,7 @@ BALANCER = Role(
     value="balancer",
     service="balancer",
     paths=PATHS["cruise-control"],
-    relation=PEER_CLUSTER_ORCHESTRATOR_RELATION,
+    relation=PEER_CLUSTER_RELATION,
     requested_secrets=[
         "broker-username",
         "broker-password",
