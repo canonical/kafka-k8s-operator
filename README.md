@@ -14,8 +14,6 @@ The Charmed Operator can be found on [Charmhub](https://charmhub.io/kafka-k8s) a
 - SASL/SCRAM auth for Broker-Broker and Client-Broker authentication enabled by default.
 - Access control management supported with user-provided ACL lists.
 
-The Charmed Kafka K8s Operator uses Kafka binaries released by the The Apache Software Foundation, made available using the [`ubuntu/kafka` OCI image](https://registry.hub.docker.com/r/ubuntu/kafka) distributed by Canonical.
-
 As currently Kafka requires a paired ZooKeeper deployment in production, this operator makes use of the [ZooKeeper K8s Operator](https://github.com/canonical/zookeeper-k8s-operator) for various essential functions.
 
 ## Requirements
