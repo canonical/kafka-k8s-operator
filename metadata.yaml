@@ -1,10 +1,13 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 name: kafka-k8s
-display-name: Charmed Kafka K8s
+display-name: Apache Kafka - K8s
 description: |
   Kafka is an event streaming platform. This charm deploys and operates Kafka on
   a K8s environment.
+
+  Apache Kafka is a free, open source software project by the Apache Software Foundation. 
+  Users can find out more at the [ZooKeeper project page](https://kafka.apache.org/).
 summary: Charmed Kafka K8s Operator
 docs: https://discourse.charmhub.io/t/charmed-kafka-k8s-documentation/10296
 source: https://github.com/canonical/kafka-k8s-operator
