@@ -21,6 +21,7 @@ from core.structured_config import CharmConfig, LogLevel
 from core.workload import CharmedKafkaPaths, WorkloadBase
 from literals import (
     ADMIN_USER,
+    BALANCER,
     BALANCER_GOALS_TESTING,
     BROKER,
     DEFAULT_BALANCER_GOALS,
@@ -43,6 +44,8 @@ sasl.mechanism.inter.broker.protocol=SCRAM-SHA-512
 authorizer.class.name=kafka.security.authorizer.AclAuthorizer
 allow.everyone.if.no.acl.found=false
 auto.create.topics.enable=false
+"""
+KAFKA_CRUISE_CONTROL_OPTIONS = """
 metric.reporters=com.linkedin.kafka.cruisecontrol.metricsreporter.CruiseControlMetricsReporter
 """
 TESTING_OPTIONS = """
@@ -596,12 +599,15 @@ class ConfigManager(CommonConfigManager):
             + self.default_replication_properties
             + self.auth_properties
             + self.rack_properties
-            + self.metrics_reporter_properties
             + DEFAULT_CONFIG_OPTIONS.split("\n")
         )
 
         if self.state.cluster.tls_enabled and self.state.unit_broker.certificate:
             properties += self.tls_properties + self.zookeeper_tls_properties
+
+        if self.state.runs_balancer or BALANCER.value in self.state.peer_cluster.roles:
+            properties += KAFKA_CRUISE_CONTROL_OPTIONS.splitlines()
+            properties += self.metrics_reporter_properties
 
         if self.config.profile == PROFILE_TESTING:
             properties += TESTING_OPTIONS.split("\n")
