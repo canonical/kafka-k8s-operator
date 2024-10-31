@@ -1207,6 +1207,7 @@ files = [
 ]
 
 [package.dependencies]
+ops-scenario = {version = ">=7.0.5,<8", optional = true, markers = "extra == \"testing\""}
 PyYAML = "==6.*"
 websocket-client = "==1.*"
 
@@ -2491,4 +2492,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "0995b0fdbdbc9c663f975b2ea31fdfe78d168ed7ee6b130f75c8d70fc2a4595d"
+content-hash = "0084dff529cb5c68fac2b545977f2715055f8205c5aa7448035363e2cdc1bc36"

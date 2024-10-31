@@ -13,8 +13,7 @@ import pytest
 import yaml
 from charms.data_platform_libs.v0.upgrade import ClusterNotReadyError, DependencyModel
 from kazoo.client import KazooClient
-from ops.testing import ActionFailed, Harness
-from scenario import Container, Context, PeerRelation, State
+from ops.testing import ActionFailed, Container, Context, Harness, PeerRelation, State
 
 from charm import KafkaCharm
 from events.upgrade import KafkaDependencyModel
