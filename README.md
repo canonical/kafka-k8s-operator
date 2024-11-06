@@ -48,13 +48,13 @@ $ juju deploy kafka-k8s -n 3
 After this, it is necessary to connect them:
 
 ```shell
-$ juju relate kafka-k8s zookeeper-k8s
+$ juju integrate kafka-k8s zookeeper-k8s
 ```
 
 To watch the process, the `juju status` command can be used. Once all the units shown as `active|idle`, the credentials to access a broker can be queried with:
 
 ```shell
-juju run-action kafka-k8s/leader get-admin-credentials --wait 
+juju run kafka-k8s/leader get-admin-credentials
 ```
 
 ### Scaling
@@ -76,7 +76,7 @@ juju scale-application kafka-k8s 5
 The operator user is used internally by the Charmed Kafka K8s Operator. The `set-password` action can be used to rotate its password:
 
 ```shell
-juju run-action kafka-k8s/leader set-password password=<password> --wait
+juju run kafka-k8s/leader set-password password=<password>
 ```
 
 Use the same action without a password parameter to randomly generate a password for the operator user.
@@ -107,13 +107,13 @@ juju config data-integrator topic-name=test-topic extra-user-roles=producer,cons
 To relate the two applications:
 
 ```shell
-juju relate data-integrator kafka-k8s
+juju integrate data-integrator kafka-k8s
 ```
 
 To retrieve information, enter:
 
 ```shell
-juju run-action data-integrator/leader get-credentials --wait
+juju run data-integrator/leader get-credentials
 ```
 
 The output looks like this:
@@ -157,8 +157,8 @@ juju config tls-certificates-operator generate-self-signed-certificates="true" c
 And enable TLS by relating the two applications to the `tls-certificates` charm:
 
 ```shell
-juju relate tls-certificates-operator zookeeper-k8s
-juju relate tls-certificates-operator kafka-k8s
+juju integrate tls-certificates-operator zookeeper-k8s
+juju integrate tls-certificates-operator kafka-k8s
 ```
 
 Now you can generate shared internal key:
@@ -171,9 +171,9 @@ And apply keys on each Charmed Kafka K8s unit:
 
 ```shell
 # 
-juju run-action kafka-k8s/0 set-tls-private-key "internal-key=$(base64 -w0 internal-key.pem)"  --wait
-juju run-action kafka-k8s/1 set-tls-private-key "internal-key=$(base64 -w0 internal-key.pem)"  --wait
-juju run-action kafka-k8s/2 set-tls-private-key "internal-key=$(base64 -w0 internal-key.pem)"  --wait
+juju run kafka-k8s/0 set-tls-private-key "internal-key=$(base64 -w0 internal-key.pem)"
+juju run kafka-k8s/1 set-tls-private-key "internal-key=$(base64 -w0 internal-key.pem)"
+juju run kafka-k8s/2 set-tls-private-key "internal-key=$(base64 -w0 internal-key.pem)"
 ```
 
 To disable TLS remove the relation:
