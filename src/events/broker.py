@@ -38,6 +38,7 @@ from literals import (
     PEER,
     PROFILE_TESTING,
     REL_NAME,
+    STORAGE,
     USER,
     Status,
 )
@@ -348,6 +349,14 @@ class BrokerOperator(Object):
                     "-c",
                     f"""find {self.workload.paths.data_path} -type f -name meta.properties -delete || true""",
                 ]
+            )
+
+        if self.charm.substrate == "k8s":
+            self.workload.exec(
+                ["chown", "-R", f"{USER}:{GROUP}", f"{self.workload.paths.data_path}/{STORAGE}"]
+            )
+            self.workload.exec(
+                ["rm", "-rf", f"{self.workload.paths.data_path}/{STORAGE}/lost+found"]
             )
 
         # checks first whether the broker is active before warning
