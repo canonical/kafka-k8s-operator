@@ -36,7 +36,7 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm):
             resources={"kafka-image": KAFKA_CONTAINER},
             num_units=1,
             trust=True,
-            config={"expose-external": "nodeport"},
+            config={"expose_external": "nodeport"},
         ),
     )
     await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
