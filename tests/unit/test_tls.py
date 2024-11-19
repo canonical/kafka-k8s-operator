@@ -94,18 +94,31 @@ def test_mtls_added(ctx: Context, base_state: State) -> None:
 
 
 @pytest.mark.parametrize(
-    ["extra_sans", "expected"],
+    ["config_option", "extra_sans", "expected"],
     [
-        ("", []),
-        ("worker{unit}.com", ["worker0.com"]),
-        ("worker{unit}.com,{unit}.example", ["worker0.com", "0.example"]),
+        ("certificate_extra_sans", "", []),
+        ("certificate_extra_sans", "worker{unit}.com", ["worker0.com"]),
+        (
+            "certificate_extra_sans",
+            "worker{unit}.com,{unit}.example",
+            ["worker0.com", "0.example"],
+        ),
+        (
+            "extra_listeners",
+            "worker{unit}.com:30000,{unit}.example:40000,nonunit.domain.com:45000",
+            ["worker0.com", "0.example", "nonunit.domain.com"],
+        ),
     ],
 )
 def test_extra_sans_config(
-    charm_configuration: dict, base_state: State, extra_sans: str, expected: list[str]
+    charm_configuration: dict,
+    base_state: State,
+    config_option: str,
+    extra_sans: str,
+    expected: list[str],
 ) -> None:
     # Given
-    charm_configuration["options"]["certificate_extra_sans"]["default"] = extra_sans
+    charm_configuration["options"][config_option]["default"] = extra_sans
     cluster_peer = PeerRelation(
         PEER,
         PEER,

@@ -196,6 +196,97 @@ def test_listeners_in_server_properties(
         assert listener in advertised_listeners
 
 
+def test_extra_listeners_in_server_properties(
+    charm_configuration: dict, base_state: State, zk_data: dict[str, str]
+):
+    """Checks that the extra-listeners are properly set from config."""
+    # Given
+    charm_configuration["options"]["extra_listeners"][
+        "default"
+    ] = "worker-{unit}.foo.com:30000,worker-{unit}.bar.com:40000"
+    cluster_peer = PeerRelation(PEER, PEER, local_unit_data={"private-address": "treebeard"})
+    zk_relation = Relation(ZK, ZK, remote_app_data=zk_data)
+    client_relation = Relation(
+        REL_NAME, "app", remote_app_data={"extra-user-roles": "admin,producer"}
+    )
+    state_in = dataclasses.replace(
+        base_state, relations=[cluster_peer, zk_relation, client_relation]
+    )
+    ctx = Context(
+        KafkaCharm, meta=METADATA, config=charm_configuration, actions=ACTIONS, unit_id=0
+    )
+    expected_listener_names = {
+        "INTERNAL_SASL_PLAINTEXT_SCRAM_SHA_512",
+        "CLIENT_SASL_PLAINTEXT_SCRAM_SHA_512",
+        "CLIENT_SSL_SSL",
+        "EXTRA_SASL_PLAINTEXT_SCRAM_SHA_512_0",
+        "EXTRA_SASL_PLAINTEXT_SCRAM_SHA_512_1",
+        "EXTRA_SSL_SSL_0",
+        "EXTRA_SSL_SSL_1",
+    }
+
+    # When
+    with ctx(ctx.on.config_changed(), state_in) as manager:
+        charm = cast(KafkaCharm, manager.charm)
+
+        # Then
+        # 2 extra, 1 internal, 1 client
+        assert len(charm.broker.config_manager.all_listeners) == 4
+
+    # Adding SSL
+    cluster_peer = dataclasses.replace(cluster_peer, local_app_data={"tls": "enabled"})
+    state_in = dataclasses.replace(base_state, relations=[cluster_peer, client_relation])
+
+    # When
+    with ctx(ctx.on.config_changed(), state_in) as manager:
+        charm = cast(KafkaCharm, manager.charm)
+
+        # Then
+        # 2 extra, 1 internal, 1 client
+        assert len(charm.broker.config_manager.all_listeners) == 4
+
+    # Adding SSL
+    cluster_peer = dataclasses.replace(
+        cluster_peer, local_app_data={"tls": "enabled", "mtls": "enabled"}
+    )
+    state_in = dataclasses.replace(base_state, relations=[cluster_peer, client_relation])
+
+    # When
+    with ctx(ctx.on.config_changed(), state_in) as manager:
+        charm = cast(KafkaCharm, manager.charm)
+
+        # Then
+        # 2 extra sasl_ssl, 2 extra ssl, 1 internal, 2 client
+        assert len(charm.broker.config_manager.all_listeners) == 7
+
+        advertised_listeners_prop = ""
+        for prop in charm.broker.config_manager.server_properties:
+            if "advertised.listener" in prop:
+                advertised_listeners_prop = prop
+
+        # validating every expected listener is present
+        for name in expected_listener_names:
+            assert name in advertised_listeners_prop
+
+        # validating their allocated ports are expected
+        ports = []
+        for listener in advertised_listeners_prop.split("=")[1].split(","):
+            name, _, port = listener.split(":")
+
+            if name.endswith("_0") or name.endswith("_1"):
+                # verifying allocation uses the baseport
+                digit = 10**4
+                assert int(port) // digit * digit in (30000, 40000)
+
+                # verifying allocation is in steps of 100
+                digit = 10**2
+                assert int(port) // digit * digit in (39000, 39100, 49000, 49100)
+
+                # verifying all ports are unique
+                assert port not in ports
+                ports.append(port)
+
+
 def test_oauth_client_listeners_in_server_properties(ctx: Context, base_state: State) -> None:
     """Checks that oauth client listeners are properly set when a relating through oauth."""
     # Given
