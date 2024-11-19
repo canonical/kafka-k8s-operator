@@ -128,7 +128,7 @@ def test_log_dirs_in_server_properties(ctx: Context, base_state: State) -> None:
 
 
 def test_listeners_in_server_properties(
-    charm_configuration: dict, base_state: State, zk_data: dict[str, str], monkeypatch
+    charm_configuration: dict, base_state: State, zk_data: dict[str, str]
 ) -> None:
     """Checks that listeners are split into INTERNAL, CLIENT and EXTERNAL."""
     # Given

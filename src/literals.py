@@ -80,6 +80,13 @@ SECURITY_PROTOCOL_PORTS: dict[AuthMap, Ports] = {
     AuthMap("SASL_PLAINTEXT", "OAUTHBEARER"): Ports(9095, 19095, 29095),
     AuthMap("SASL_SSL", "OAUTHBEARER"): Ports(9096, 19096, 29096),
 }
+# FIXME this port should exist on the previous abstraction
+CONTROLLER_PORT = 9097
+CONTROLLER_LISTENER_NAME = "INTERNAL_CONTROLLER"
+
+# FIXME: when running broker node.id will be unit-id + 100. If unit is only running
+# the controller node.id == unit-id. This way we can keep a human readable mapping of ids.
+KRAFT_NODE_ID_OFFSET = 100
 
 DebugLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR"]
 DatabagScope = Literal["unit", "app"]
@@ -117,7 +124,7 @@ class Role:
     service: str
     paths: dict[str, str]
     relation: str
-    requested_secrets: list[str] | None = None
+    requested_secrets: list[str]
 
     def __eq__(self, value: object, /) -> bool:
         """Provide an easy comparison to the configuration key."""
@@ -135,9 +142,19 @@ BROKER = Role(
         "balancer-uris",
     ],
 )
+CONTROLLER = Role(
+    value="controller",
+    service="daemon",
+    paths=PATHS["kafka"],
+    relation=PEER_CLUSTER_RELATION,
+    requested_secrets=[
+        "broker-username",
+        "broker-password",
+    ],
+)
 BALANCER = Role(
     value="balancer",
-    service="balancer",
+    service="cruise-control",
     paths=PATHS["cruise-control"],
     relation=PEER_CLUSTER_RELATION,
     requested_secrets=[
@@ -175,10 +192,7 @@ HARD_BALANCER_GOALS = [
     "CpuCapacity",
     "ReplicaDistribution",
 ]
-
-BALANCER_GOALS_TESTING = [
-    "ReplicaDistribution",
-]
+BALANCER_GOALS_TESTING = ["ReplicaDistribution"]
 
 
 MODE_FULL = "full"
@@ -208,6 +222,9 @@ class Status(Enum):
     BROKER_NOT_RUNNING = StatusLevel(BlockedStatus("Broker not running"), "WARNING")
     NOT_ALL_RELATED = StatusLevel(MaintenanceStatus("not all units related"), "DEBUG")
     CC_NOT_RUNNING = StatusLevel(BlockedStatus("Cruise Control not running"), "WARNING")
+    MISSING_MODE = StatusLevel(BlockedStatus("Application needs ZooKeeper or KRaft mode"), "DEBUG")
+    NO_CLUSTER_UUID = StatusLevel(WaitingStatus("Waiting for cluster uuid"), "DEBUG")
+    NO_QUORUM_URIS = StatusLevel(WaitingStatus("Waiting for quorum uris"), "DEBUG")
     ZK_NOT_RELATED = StatusLevel(BlockedStatus("missing required zookeeper relation"), "DEBUG")
     ZK_NOT_CONNECTED = StatusLevel(BlockedStatus("unit not connected to zookeeper"), "ERROR")
     ZK_TLS_MISMATCH = StatusLevel(
