@@ -503,14 +503,6 @@ class KafkaBroker(RelationState):
 
         return addr
 
-    @property
-    def host(self) -> str:
-        """Return the hostname of a unit."""
-        if self.substrate == "vm":
-            return self.internal_address
-        else:
-            return self.node_ip or self.internal_address
-
     # --- TLS ---
 
     @property
@@ -756,7 +748,7 @@ class ZooKeeper(RelationState):
     # retry to give ZK time to update its broker zNodes before failing
     @retry(
         wait=wait_fixed(5),
-        stop=stop_after_attempt(3),
+        stop=stop_after_attempt(10),
         retry=retry_if_result(lambda result: result is False),
         retry_error_callback=lambda _: False,
     )
