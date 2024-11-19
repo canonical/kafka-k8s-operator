@@ -78,6 +78,7 @@ class TestKRaft:
                     "roles": self.controller_app,
                     "profile": "testing",
                 },
+                resources={"kafka-image": KAFKA_CONTAINER},
                 trust=True,
             )
 
