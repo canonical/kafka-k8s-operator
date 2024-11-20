@@ -32,7 +32,7 @@ async def test_kafka_simple_scale_up(ops_test: OpsTest, kafka_charm):
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
             trust=True,
-            config={"expose-external": "nodeport"},
+            config={"expose_external": "nodeport"},
         ),
     )
     await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME])

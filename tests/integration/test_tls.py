@@ -55,7 +55,7 @@ async def test_deploy_tls(ops_test: OpsTest, kafka_charm, app_charm):
             resources={"kafka-image": KAFKA_CONTAINER},
             config={
                 "ssl_principal_mapping_rules": "RULE:^.*[Cc][Nn]=([a-zA-Z0-9.]*).*$/$1/L,DEFAULT",
-                "expose-external": "nodeport",
+                "expose_external": "nodeport",
             },
             trust=True,
         ),

@@ -85,7 +85,7 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
             trust=True,
-            config={"expose-external": "nodeport"},
+            config={"expose_external": "nodeport"},
         ),
         ops_test.model.deploy(ZK_NAME, channel="3/edge", num_units=1, trust=True),
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, trust=True),
@@ -124,7 +124,7 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
             num_units=1,
             resources={"kafka-image": KAFKA_CONTAINER},
             trust=True,
-            config={"expose-external": "nodeport"},
+            config={"expose_external": "nodeport"},
         ),
         ops_test.model.deploy(
             ZK_NAME, application_name=second_zk_name, channel="3/edge", trust=True

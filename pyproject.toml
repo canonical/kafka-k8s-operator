@@ -41,9 +41,6 @@ pydantic = "^1.10.7"
 pyyaml = "^6.0.1"
 requests = ">2.25"
 lightkube = "0.15.0"
-# FIXME: Unpin once rustc 1.76 is available at build time
-rpds-py = "<0.19"
-
 
 [tool.poetry.group.charm-libs.dependencies]
 # data_platform_libs/v0/data_interfaces.py
@@ -74,8 +71,6 @@ ruff = ">=0.1.0"
 codespell = ">=2.2.2"
 pyright = "^1.1.301"
 lightkube = "0.15.0"
-# FIXME: Unpin once rustc 1.76 is available at build time
-rpds-py = "<0.19"
 
 [tool.poetry.group.unit]
 optional = true
