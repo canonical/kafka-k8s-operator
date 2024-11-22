@@ -39,7 +39,7 @@ To connect to Charmed Kafka K8s use Kubernetes-external clients, the aforementio
 1. Instruct each broker unit to create its own individual NodePort services by setting the charm config option `expose-external` to equal `nodeport` on the Kafka K8s application (default value is `false`):
 
     ```shell
-    juju config kafka-k8s expose-external=nodeport
+    juju config kafka-k8s expose_external=nodeport
     ```
 
 2. Enable at least one listener using the appropriate relation endpoints:
