@@ -36,6 +36,9 @@ get-admin-credentials:
     The returned client_properties can be used for Kafka bin commands using `--bootstrap-server` and `--command-config` for admin level administration
     This action must be called on the leader unit.
 
+get-listeners:
+  description: Get all active listeners and their port allocations
+
 rebalance:
   description: Trigger a rebalance of cluster partitions based on configured goals
   params:

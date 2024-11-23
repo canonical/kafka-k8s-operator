@@ -136,7 +136,7 @@ def test_ready_to_start_blocks_no_zookeeper_relation(ctx: Context, base_state: S
     state_out = ctx.run(ctx.on.start(), state_in)
 
     # Then
-    assert state_out.unit_status == Status.ZK_NOT_RELATED.value.status
+    assert state_out.unit_status == Status.MISSING_MODE.value.status
 
 
 def test_ready_to_start_waits_no_zookeeper_data(ctx: Context, base_state: State) -> None:
@@ -581,7 +581,7 @@ def test_storage_add_disableenables_and_starts(
 
 
 def test_zookeeper_changed_sets_passwords_and_creates_users_with_zk(
-    ctx: Context, base_state: State, zk_data: dict[str, str], passwords_data: dict[str, str]
+    ctx: Context, base_state: State, zk_data: dict[str, str]
 ) -> None:
     """Checks inter-broker passwords are created on zookeeper-changed hook using zk auth."""
     # Given
@@ -795,7 +795,7 @@ def test_config_changed_updates_client_data(ctx: Context, base_state: State) -> 
     patched_update_client_data.assert_called_once()
 
 
-def test_config_changed_restarts(ctx: Context, base_state: State, monkeypatch) -> None:
+def test_config_changed_restarts(ctx: Context, base_state: State) -> None:
     """Checks units rolling-restat on config changed hook."""
     # Given
     cluster_peer = PeerRelation(PEER, PEER)
@@ -841,7 +841,7 @@ def test_on_remove_sysctl_is_deleted(ctx: Context, base_state: State):
     patched_sysctl_remove.assert_called_once()
 
 
-def test_workload_version_is_setted(ctx: Context, base_state: State, monkeypatch):
+def test_workload_version_is_setted(ctx: Context, base_state: State):
     # Given
     output_bin_install = "3.6.0-ubuntu0"
     output_bin_changed = "3.6.1-ubuntu0"

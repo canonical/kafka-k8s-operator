@@ -174,3 +174,14 @@ def test_incorrect_roles():
     valid_values = ["broker", "balancer", "balancer,broker", "broker, balancer "]
     check_invalid_values("roles", erroneus_values)
     check_valid_values("roles", valid_values)
+
+
+def test_incorrect_extra_listeners():
+    erroneus_values = [
+        "missing.port",
+        "low.port:15000",
+        "high.port:60000",
+        "non.unique:30000,other.non.unique:30000",
+        "close.port:30000,other.close.port:30001",
+    ]
+    check_invalid_values("extra_listeners", erroneus_values)
