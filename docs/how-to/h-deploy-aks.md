@@ -70,6 +70,7 @@ Your CLI is up-to-date.
 ## Create AKS cluster
 
 Login to your Azure account:
+
 ```shell
 az login
 ```
@@ -85,12 +86,13 @@ the resources created on Azure. Also the following guide will use the single ser
 using  `LOCATION=eastus` - but feel free to change this for your own deployment.
 
 Bootstrap AKS with the following command (increase nodes count/size if necessary):
+
 ```shell
 az aks create -g <RESOURCE_GROUP> -n $<K8S_CLUSTER_NAME> --enable-managed-identity --node-count 1 --node-vm-size=<INSTANCE_TYPE> --generate-ssh-keys
 ```
 
 [note type="caution"]
-We recommend selecting an instance type that provides at the very least `16` GB of RAM and `4` cores, e.g. `INSTANCE_TYPE=Standard_A4_v4`.
+We recommend selecting an instance type that provides at the very least `16` GB of RAM and `4` cores, e.g. `Standard_A4_v4`.
 You can find more information about the available instance types in the [Azure documentation](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview).
 [/note]
 
@@ -115,6 +117,7 @@ You can find more information about the available instance types in the [Azure d
 [/details]
 
 Dump newly bootstrapped AKS credentials:
+
 ```shell
 az aks get-credentials --resource-group <RESOURCE_GROUP> --name <K8S_CLUSTER_NAME> --context aks
 ```
@@ -137,6 +140,7 @@ which should provide the list of the pod services running.
 ## Bootstrap Juju controller on AKS
 
 Bootstrap Juju controller:
+
 ```shell
 juju bootstrap aks <CONTROLLER_NAME>
 ```
@@ -162,6 +166,7 @@ to create a new model to deploy k8s workloads.
 ## Deploy Charms
 
 Create a new Juju model, if needed:
+
 ```shell
 juju add-model <MODEL_NAME>
 ```
@@ -248,16 +253,22 @@ To clean the AKS cluster, resources and juju cloud, run the following commands:
 ```shell
 juju destroy-controller <CONTROLLER_NAME> --destroy-all-models --destroy-storage --force
 ```
+
 List all services and then delete those that have an associated EXTERNAL-IP value (load balancers, ...):
+
 ```shell
 kubectl get svc --all-namespaces
 kubectl delete svc <SERVICE_NAME> 
 ```
+
 Next, delete the AKS resources (source: [Deleting an all Azure VMs]((https://learn.microsoft.com/en-us/cli/azure/delete-azure-resources-at-scale#delete-all-azure-resources-of-a-type) )) 
+
 ```shell
 az aks delete -g <RESOURCE_GROUP> -n <K8S_CLUSTER_NAME>
 ```
+
 Finally, logout from AKS to clean the local credentials (to avoid forgetting and getting exposed to a risk of leaking credentials):
+
 ```shell
 az logout
 ```

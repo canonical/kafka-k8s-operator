@@ -3,6 +3,7 @@
 [Amazon Elastic Kubernetes Service](https://aws.amazon.com/eks/) (EKS) is a popular, fully automated Kubernetes service. To access the EKS Web interface, go to [console.aws.amazon.com/eks/home](https://console.aws.amazon.com/eks/home).
 
 ## Summary
+
 * [Install EKS and Juju tooling](#install-eks-juju)
 * [Create a new EKS cluster](#create-eks-cluster)
 * [Bootstrap Juju on EKS](#boostrap-juju)
@@ -21,9 +22,8 @@ sudo snap install juju --channel 3.5/stable
 sudo snap install kubectl --classic
 ```
 
-
-
 Follow the installation guides for:
+
 * [eksctl](https://eksctl.io/installation/) - the Amazon EKS CLI
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) - the Amazon Web Services CLI
 
@@ -102,6 +102,7 @@ aws sts get-caller-identity
 ## Create a new EKS cluster
 
 Export the deployment name for further use:
+
 ```shell
 export JUJU_NAME=eks-$USER-$RANDOM
 ```
@@ -183,8 +184,9 @@ Create a new Juju model, if needed:
 juju add-model <MODEL_NAME>
 ```
 
-[note type="caution"]
+[note]
 (Optional) Increase the debug level if you are troubleshooting charms:
+
 ```shell
 juju model-config logging-config='<root>=INFO;unit=DEBUG'
 ```
@@ -273,7 +275,7 @@ kubectl get svc --all-namespaces
 kubectl delete svc <service-name> 
 ```
 
-Next, delete the EKS cluster  (source: [Deleting an Amazon EKS cluster]((https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html) )) 
+Next, delete the EKS cluster (As described on the [Deleting an Amazon EKS cluster](https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html) page):
 
 ```shell
 eksctl get cluster -A
