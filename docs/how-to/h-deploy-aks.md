@@ -3,6 +3,7 @@
 [Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/) (AKS) allows you to quickly deploy a production ready Kubernetes cluster in Azure. To access the AKS Web interface, go to [https://portal.azure.com/](https://portal.azure.com/).
 
 ## Summary
+
 * [Install Azure and Juju tooling](#install-client-environment)
 * [Create AKS Cluster](#create-aks-cluster)
 * [Bootstrap Juju controller on AKS](#bootstrap-juju-controller-on-aks)
@@ -14,12 +15,16 @@
 
 ## Install Client Environment
 
+Client environment includes:
+* Juju
+* Azure CLI
+
 ### Juju 
 
 Install Juju via snap:
 
 ```shell
-sudo snap install juju
+sudo snap install juju --channel 3.5/stable
 ```
 
 Check that the Juju version is correctly installed:
@@ -28,11 +33,11 @@ Check that the Juju version is correctly installed:
 juju version
 ```
 
-which should show:
-
+[details="Sample output:"]
 ```shell
 3.5.2-genericlinux-amd64
 ```
+[/details]
 
 ### Azure CLI
 
@@ -44,8 +49,7 @@ Verify that it is correctly installed running the command below:
 az --version
 ```
 
-which should show the following output:
-
+[details="Sample output:"]
 ```shell
 azure-cli                         2.65.0
 
@@ -66,33 +70,38 @@ Legal docs and information: aka.ms/AzureCliLegal
 
 Your CLI is up-to-date.
 ```
+[/details]
 
 ## Create AKS cluster
 
 Login to your Azure account:
+
 ```shell
 az login
 ```
 
-This following examples in this guide will use the single server AKS in location `eastus` - feel free to change this for your own deployment.
-
 Create a new [Azure Resource Group](https://learn.microsoft.com/en-us/cli/azure/manage-azure-groups-azure-cli):
 
 ```shell
-az group create --name aks --location eastus
+az group create --name <RESOURCE_GROUP> --location <LOCATION>
 ```
 
-Export the deployment name for further use:
-```shell
-export JUJU_NAME=aks-$USER-$RANDOM
-```
+The placeholder `<RESOURCE_GROUP>` can be a label of your choice, and it will be used to tag
+the resources created on Azure. Also the following guide will use the single server AKS, 
+using  `LOCATION=eastus` - but feel free to change this for your own deployment.
 
 Bootstrap AKS with the following command (increase nodes count/size if necessary):
+
 ```shell
-az aks create -g aks -n ${JUJU_NAME} --enable-managed-identity --node-count 1 --node-vm-size=Standard_D4s_v4 --generate-ssh-keys
+az aks create -g <RESOURCE_GROUP> -n $<K8S_CLUSTER_NAME> --enable-managed-identity --node-count 1 --node-vm-size=<INSTANCE_TYPE> --generate-ssh-keys
 ```
 
-Sample output:
+[note type="caution"]
+We recommend selecting an instance type that provides at the very least `16` GB of RAM and `4` cores, e.g. `Standard_A4_v4`.
+You can find more information about the available instance types in the [Azure documentation](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview).
+[/note]
+
+[details="Sample output:"]
 ```yaml
 {
   "aadProfile": null,
@@ -110,17 +119,20 @@ Sample output:
       "enableNodePublicIp": false,
 ...
 ```
+[/details]
 
 Dump newly bootstrapped AKS credentials:
+
 ```shell
-az aks get-credentials --resource-group aks --name ${JUJU_NAME} --context aks
+az aks get-credentials --resource-group <RESOURCE_GROUP> --name <K8S_CLUSTER_NAME> --context aks
 ```
 
-Sample output:
+[details="Sample output:"]
 ```shell
 ...
 Merged "aks" as current context in ~/.kube/config
 ```
+[/details]
 
 You can verify that the cluster and your client `kubectl` CLI is correctly configured by running a simple command, such as:
 
@@ -133,10 +145,12 @@ which should provide the list of the pod services running.
 ## Bootstrap Juju controller on AKS
 
 Bootstrap Juju controller:
+
 ```shell
 juju bootstrap aks <CONTROLLER_NAME>
 ```
-Sample output:
+
+[details="Sample output:"]
 ```shell
 Creating Juju controller "aks" on aks/eastus
 Bootstrap to Kubernetes cluster identified as azure/eastus
@@ -152,23 +166,28 @@ Now you can run
 	juju add-model <model-name>
 to create a new model to deploy k8s workloads.
 ```
+[/details]
 
 ## Deploy Charms
 
 Create a new Juju model, if needed:
+
 ```shell
 juju add-model <MODEL_NAME>
 ```
-> (Optional) Increase the debug level if you are troubleshooting charms:
-> ```shell
-> juju model-config logging-config='<root>=INFO;unit=DEBUG'
-> ```
+
+[note type="caution"]
+(Optional) Increase the debug level if you are troubleshooting charms:
+```shell
+juju model-config logging-config='<root>=INFO;unit=DEBUG'
+```
+[/note]
 
 Then, Charmed Kafka can be deployed as usual:
 
 ```shell
 juju deploy zookeeper-k8s -n3 --channel 3/stable
-juju deploy kafka-k8s -n3 --constraints "instance-type=Standard_A4_v2" --channel 3/stable
+juju deploy kafka-k8s -n3 --channel 3/stable
 juju integrate kafka-k8s zookeeper-k8s
 ```
 
@@ -191,23 +210,42 @@ For more information on Data Integrator and how to use it, please refer to the [
 ## Display deployment information
 
 Display information about the current deployments with the following commands:
+
 ```shell
-~$ kubectl cluster-info 
+kubectl cluster-info 
+```
+
+[details="Sample output:"]
+```shell
 Kubernetes control plane is running at https://aks-user-aks-aaaaa-bbbbb.hcp.eastus.azmk8s.io:443
 CoreDNS is running at https://aks-user-aks-aaaaa-bbbbb.hcp.eastus.azmk8s.io:443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 Metrics-server is running at https://aks-user-aks-aaaaa-bbbbb.hcp.eastus.azmk8s.io:443/api/v1/namespaces/kube-system/services/https:metrics-server:/proxy
+```
+[/details]
 
-~$ az aks list
+```
+az aks list
+```
+[details="Sample output:"]
+```shell
 ...
         "count": 1,
         "currentOrchestratorVersion": "1.28.9",
         "enableAutoScaling": false,
 ...
+```
+[/details]
 
-~$ kubectl get node
+```
+kubectl get node
+```
+
+[details="Sample output:"]
+```shell
 NAME                                STATUS   ROLES   AGE   VERSION
 aks-nodepool1-31246187-vmss000000   Ready    agent   11m   v1.28.9
 ```
+[/details]
 
 ## Clean up 
 
@@ -220,16 +258,22 @@ To clean the AKS cluster, resources and juju cloud, run the following commands:
 ```shell
 juju destroy-controller <CONTROLLER_NAME> --destroy-all-models --destroy-storage --force
 ```
+
 List all services and then delete those that have an associated EXTERNAL-IP value (load balancers, ...):
+
 ```shell
 kubectl get svc --all-namespaces
-kubectl delete svc <service-name> 
+kubectl delete svc <SERVICE_NAME> 
 ```
+
 Next, delete the AKS resources (source: [Deleting an all Azure VMs]((https://learn.microsoft.com/en-us/cli/azure/delete-azure-resources-at-scale#delete-all-azure-resources-of-a-type) )) 
+
 ```shell
-az aks delete -g aks -n ${JUJU_NAME}
+az aks delete -g <RESOURCE_GROUP> -n <K8S_CLUSTER_NAME>
 ```
-Finally, logout from AKS to clean the local credentials (to avoid forgetting and leaking):
+
+Finally, logout from AKS to clean the local credentials (to avoid forgetting and getting exposed to a risk of leaking credentials):
+
 ```shell
 az logout
 ```
