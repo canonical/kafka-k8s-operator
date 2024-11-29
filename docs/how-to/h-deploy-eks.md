@@ -3,6 +3,7 @@
 [Amazon Elastic Kubernetes Service](https://aws.amazon.com/eks/) (EKS) is a popular, fully automated Kubernetes service. To access the EKS Web interface, go to [console.aws.amazon.com/eks/home](https://console.aws.amazon.com/eks/home).
 
 ## Summary
+
 * [Install EKS and Juju tooling](#install-eks-juju)
 * [Create a new EKS cluster](#create-eks-cluster)
 * [Bootstrap Juju on EKS](#boostrap-juju)
@@ -14,34 +15,61 @@
 
 ## Install EKS and Juju tooling
 
-Install [Juju](https://juju.is/docs/juju/install-juju) and the [`kubectl` CLI tools](https://kubernetes.io/docs/tasks/tools/) via snap:
+Install [Juju](https://juju.is/docs/juju/install-juju) and the [`kubectl` CLI tools](https://kubernetes.io/docs/tasks/tools/) (that will be used for managing the Kubernetes cluster) via snap:
 
 ```shell
-sudo snap install juju
+sudo snap install juju --channel 3.5/stable
 sudo snap install kubectl --classic
 ```
 
 Follow the installation guides for:
+
 * [eksctl](https://eksctl.io/installation/) - the Amazon EKS CLI
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) - the Amazon Web Services CLI
 
-To check they are all correctly installed, you can run the commands demonstrated below with sample outputs:
+To check they are all correctly installed, you can run the commands below.
 
 ```shell
-> juju version
-3.1.7-ubuntu-amd64
+juju version
+```
 
-> kubectl version --client
+[details="Sample output:"]
+```shell
+3.5.2-genericlinux-amd64
+```
+[/details]
+
+```shell
+kubectl version --client
+``` 
+
+[details="Sample output:"]
+```shell
 Client Version: v1.28.2
 Kustomize Version: v5.0.4-0.20230601165947-6ce0bf390ce3
+```
+[/details]
 
-> eksctl info
+```shell
+eksctl info
+```
+
+[details="Sample output:"]
+```shell
 eksctl version: 0.159.0
 kubectl version: v1.28.2
+```
+[/details]
 
-> aws --version
+```shell
+aws --version
+```
+
+[details="Sample output:"]
+```shell
 aws-cli/2.13.25 Python/3.11.5 Linux/6.2.0-33-generic exe/x86_64.ubuntu.23 prompt/off
 ```
+[/details]
 
 ### Authenticate
 
@@ -53,29 +81,36 @@ AWS Access Key ID [None]: SECRET_ACCESS_KEY_ID
 AWS Secret Access Key [None]: SECRET_ACCESS_KEY_VALUE
 Default region name [None]: eu-west-3
 Default output format [None]:
+```
 
-> aws sts get-caller-identity
+Verify that the CLI tool is correctly authenticating
+
+```shell
+aws sts get-caller-identity
+```
+
+[details="Sample output:"]
+```yaml
 {
     "UserId": "1234567890",
     "Account": "1234567890",
     "Arn": "arn:aws:iam::1234567890:root"
 }
 ```
+[/details]
 
 ## Create a new EKS cluster
 
 Export the deployment name for further use:
+
 ```shell
 export JUJU_NAME=eks-$USER-$RANDOM
 ```
 
 This following examples in this guide will use the location `eu-west-3` and K8s `v.1.27` - feel free to change this for your own deployment.
 
-Sample `cluster.yaml`:
-
-```shell
-~$ cat <<-EOF > cluster.yaml
----
+[details="Sample `cluster.yaml`:"]
+```yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
@@ -108,8 +143,8 @@ nodeGroups:
         onDemandBaseCapacity: 0
         onDemandPercentageAboveBaseCapacity: 50
         spotInstancePools: 2
-EOF
 ```
+[/details]
 
 Bootstrap EKS cluster with the following command:
 
@@ -117,8 +152,7 @@ Bootstrap EKS cluster with the following command:
 eksctl create cluster -f cluster.yaml
 ```
 
-Sample output:
-
+[details="Sample `cluster.yaml`:"]
 ```shell
 ...
 2023-10-12 11:13:58 [ℹ]  using region eu-west-3
@@ -126,6 +160,7 @@ Sample output:
 ...
 2023-10-12 11:40:00 [✔]  EKS cluster "eks-taurus-27506" in "eu-west-3" region is ready
 ```
+[/details]
 
 ## Bootstrap Juju on EKS
 
@@ -149,10 +184,13 @@ Create a new Juju model, if needed:
 juju add-model <MODEL_NAME>
 ```
 
-> (Optional) Increase the debug level if you are troubleshooting charms:
-> ```shell
-> juju model-config logging-config='<root>=INFO;unit=DEBUG'
-> ```
+[note]
+(Optional) Increase the debug level if you are troubleshooting charms:
+
+```shell
+juju model-config logging-config='<root>=INFO;unit=DEBUG'
+```
+[/note]
 
 Then, Charmed Kafka can be deployed as usual:
 
@@ -183,20 +221,39 @@ For more information on Data Integrator and how to use it, please refer to the [
 Display information about the current deployments with the following commands:
 
 ```shell
-~$ kubectl cluster-info 
+kubectl cluster-info 
+```
+
+[details="Sample output:"]
+```shell
 Kubernetes control plane is running at https://AAAAAAAAAAAAAAAAAAAAAAA.gr7.eu-west-3.eks.amazonaws.com
 CoreDNS is running at https://AAAAAAAAAAAAAAAAAAAAAAA.gr7.eu-west-3.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+```
+[/details]
 
-~$ eksctl get cluster -A
+```shell
+eksctl get cluster -A
+```
+
+[details="Sample output:"]
+```shell
 NAME            REGION      EKSCTL CREATED
 eks-marc-9587	eu-west-3	True
+```
+[/details]
 
-~$ kubectl get node
+```shell
+kubectl get node
+```
+
+[details="Sample output:"]
+```shell
 NAME                                           STATUS   ROLES    AGE     VERSION
 ip-192-168-1-168.eu-west-3.compute.internal    Ready    <none>   5d22h   v1.27.16-eks-a737599
 ip-192-168-45-234.eu-west-3.compute.internal   Ready    <none>   3h25m   v1.27.16-eks-a737599
 ip-192-168-85-225.eu-west-3.compute.internal   Ready    <none>   5d22h   v1.27.16-eks-a737599
 ```
+[/details]
 
 ## Clean up
 
@@ -218,14 +275,14 @@ kubectl get svc --all-namespaces
 kubectl delete svc <service-name> 
 ```
 
-Next, delete the EKS cluster  (source: [Deleting an Amazon EKS cluster]((https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html) )) 
+Next, delete the EKS cluster (As described on the [Deleting an Amazon EKS cluster](https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html) page):
 
 ```shell
 eksctl get cluster -A
 eksctl delete cluster <cluster_name> --region eu-west-3 --force --disable-nodegroup-eviction
 ```
 
-Finally, remove AWS CLI user credentials (to avoid forgetting and leaking):
+Finally, remove AWS CLI user credentials (to avoid forgetting and getting exposed to a risk of leaking credentials):
 
 ```shell
 rm -f ~/.aws/credentials
