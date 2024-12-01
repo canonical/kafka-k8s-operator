@@ -1,9 +1,9 @@
-# Kafka listeners
+# Apache Kafka listeners
 
-Charmed Kafka comes with a set of listeners that can be enabled to allow for
+Charmed Apache Kafka comes with a set of listeners that can be enabled to allow for
 inter- and intra-cluster communication. 
 
-- **Internal listeners** are used for internal traffic and exchange of information between Kafka brokers
+- **Internal listeners** are used for internal traffic and exchange of information between Apache Kafka brokers
 - **Client listeners** are used for clients within the Kubernetes cluster,
 - **External listeners** are used for clients outside the Kubernetes cluster.
 
@@ -30,4 +30,6 @@ opened.
 | SASL_PLAINTEXT    | OAUTHBEARER              | `kafka-client` + `oauth`                               | `29095` | EXTERNAL | EXTERNAL_SASL_PLAINTEXT_OAUTHBEARER   |
 | SASL_SSL          | OAUTHBEARER              | `kafka-client` + `oauth` + `certificates`              | `29096` | EXTERNAL | EXTERNAL_SASL_SSL_OAUTHBEARER         |
 
-> **Note**: Since `cluster` is a peer-relation, one of the two `INTERNAL_*` listeners is always enabled.
+[note]
+Since `cluster` is a peer relation, one of the two `INTERNAL_*` listeners is always enabled.
+[/note]

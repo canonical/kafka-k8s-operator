@@ -1,8 +1,8 @@
-This is part of the [Charmed Kafka K8s Tutorial](/t/charmed-kafka-k8s-documentation-tutorial-overview/11945). Please refer to this page for more information and the overview of the content. 
+This is part of the [Charmed Apache Kafka K8s Tutorial](/t/charmed-kafka-k8s-documentation-tutorial-overview/11945). Please refer to this page for more information and an overview of the content. 
 
-## Deploy Charmed Kafka K8s (and Charmed ZooKeeper K8s)
+## Deploy Charmed Apache Kafka K8s (and Charmed Apache ZooKeeper K8s)
 
-To deploy Charmed Kafka K8s, all you need to do is run the following commands, which will automatically fetch [Kafka](https://charmhub.io/kafka-k8s?channel=3/stable) and [ZooKeeper](https://charmhub.io/zookeeper-k8s?channel=3/stable) charms from [Charmhub](https://charmhub.io/) and deploy them to your model. For example, to deploy a five Zookeeper unit and three Kafka unit cluster, you can simply run:
+To deploy Charmed Apache Kafka K8s, all you need to do is run the following commands, which will automatically fetch [Apache Kafka](https://charmhub.io/kafka-k8s?channel=3/stable) and [Apache ZooKeeper](https://charmhub.io/zookeeper-k8s?channel=3/stable) charms from [Charmhub](https://charmhub.io/) and deploy them to your model. For example, to deploy a cluster of five Apache Zookeeper units and three Apache Kafka units, you can simply run:
 
 ```shell
 $ juju deploy zookeeper-k8s -n 3 
@@ -15,14 +15,14 @@ After this, it is necessary to connect them:
 $ juju relate kafka-k8s zookeeper-k8s
 ```
 
-Juju will now fetch Charmed Kafka K8s and Charmed ZooKeeper K8s and begin deploying it to the local MicroK8s. This process can take several minutes depending on how provisioned (RAM, CPU, etc) your machine is. You can track the progress by running:
+Juju will now fetch Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s and begin deploying them to the local MicroK8s. This process can take several minutes depending on how provisioned (RAM, CPU, etc) your machine is. You can track the progress by running:
 
 ```shell
 juju status --watch 1s
 ```
 
-This command is useful for checking the status of Charmed ZooKeeper K8s and Charmed Kafka K8s. Some of the helpful information it displays include IP pods addresses, ports, state, etc. 
-The command updates the status of the cluster every second and as the application starts you can watch the status and messages of Charmed Kafka K8s and Charmed ZooKeeper K8s change. 
+This command is useful for checking the status of Charmed Apache ZooKeeper K8s and Charmed Apache Kafka K8s. Some of the helpful information it displays includes pods' IP addresses, ports, state, etc. 
+The command updates the status of the cluster every second and as the application starts you can watch the status and messages of Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s change. 
 
 Wait until the application is ready - when it is ready, `juju status --watch 1s` will show:
 
@@ -45,7 +45,7 @@ zookeeper-k8s/2   active    idle   10.1.36.85
 ```
 To exit the screen with `juju status --watch 1s`, enter `Ctrl+c`.
 
-## Access Kafka cluster
+## Access Apache Kafka cluster
 
 To watch the process, `juju status` can be used. Once all the units show as `active|idle` the credentials to access a broker can be queried with:
 
@@ -69,17 +69,19 @@ password: 0FIQ5QxSaNfl1bXHtV5dyttb21Nbzmpp
 username: admin
 ```
 
-Providing you the `username` and `password` of the Kafka cluster admin user. 
+Providing you the `username` and `password` of the Apache Kafka cluster admin user. 
 
-> **IMPORTANT** Note that when no other application is related to Kafka, the cluster is secured-by-default and external listeners (bound to port `9092`) are disabled, thus preventing any external incoming connection. 
+[note type="caution"]
+When no other application is related to Apache Kafka, the cluster is secured-by-default and external listeners (bound to port `9092`) are disabled, thus preventing any external incoming connection. 
+[/note]
 
-Nevertheless, it is still possible to run a command from within the Kafka cluster. To do so, log in into one of the Kafka container in one of the units
+Nevertheless, it is still possible to run a command from within the Apache Kafka cluster. To do so, log in to one of the Apache Kafka containers in one of the units:
 
 ```shell
 juju ssh --container kafka kafka-k8s/leader /bin/bash
 ```
 
-The Charmed Kafka K8s image ships with the Apache Kafka `bin/*.sh` commands, that can be found under `/opt/kafka/bin/`.
+The Charmed Apache Kafka K8s image ships with the Apache Kafka `bin/*.sh` commands, that can be found under `/opt/kafka/bin/`.
 They can be used to do various administrative tasks, e.g., `bin/kafka-config.sh` to update cluster configuration, `bin/kafka-topics.sh` for topic management, and many more! 
 Within the image you can also find a `client.properties` file that already provides the relevant settings to connect to the cluster using the CLI:
 
@@ -105,7 +107,7 @@ We are now ready to perform some administrative tasks. For example, to create a 
 You can similarly then list the topic:
 
 ```shell
-/opt/kafka/bin//kafka-topics.sh \
+/opt/kafka/bin/kafka-topics.sh \
     --list \
     --bootstrap-server  $INTERNAL_LISTENERS \
     --command-config $CLIENT_PROPERTIES
@@ -126,4 +128,4 @@ You can finally delete the topic:
 
 However, although the commands above can run within the cluster, it is generally recommended during operations
 to enable external listeners and use these for running the admin commands from outside the cluster. 
-To do so, as we will see in the next section, we will deploy a [data-integrator](https://charmhub.io/data-integrator) charm and relate it to Kafka.
+To do so, as we will see in the next section, we will deploy a [data-integrator](https://charmhub.io/data-integrator) charm and relate it to Apache Kafka.

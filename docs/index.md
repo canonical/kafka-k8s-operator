@@ -8,7 +8,7 @@ Charmed Apache Kafka K8s is built on top of [Juju](https://juju.is/) and reliabl
 Charmed Apache Kafka K8s operates Apache Kafka on different Kubernetes distributions, featuring support for both on-premise installation (e.g. using MicroK8s) or cloud services (e.g. AWS EKS).
 
 Charmed Apache Kafka K8s is a solution designed and developed to help ops teams and 
-administrators to automate Apache Kafka operations from Day 0 to Day 2, across multiple cloud environments and platforms.
+administrators to automate Apache Kafka operations from [Day 0 to Day 2](https://codilime.com/blog/day-0-day-1-day-2-the-software-lifecycle-in-the-cloud-age/), across multiple cloud environments and platforms.
 
 [note]
 Canonical has also developed the [Charmed Apache Kafka operator](/t/charmed-kafka-documentation/10288) to support Apache Kafka in VM/IAAS environments.
