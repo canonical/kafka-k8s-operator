@@ -40,13 +40,13 @@ juju model-config logging-config="<root>=INFO;unit=DEBUG"
 # Build the charm locally
 charmcraft pack
 
-# Deploy the latest ZooKeeper release
+# Deploy the latest Apache ZooKeeper release
 juju deploy zookeeper-k8s --channel edge -n 3
 
 # Deploy the charm
 juju deploy ./*.charm -n 3
 
-# After ZooKeeper has initialised, relate the applications
+# After Apache ZooKeeper has initialised, relate the applications
 juju relate kafka-k8s zookeeper-k8s
 ```
 
@@ -71,4 +71,4 @@ tox                      # runs 'lint' and 'unit' environments
 
 ## Canonical Contributor Agreement
 
-Canonical welcomes contributions to the Charmed Kafka Kubernetes Operator. Please check out our [contributor agreement](https://ubuntu.com/legal/contributors) if you're interested in contributing to the solution.
+Canonical welcomes contributions to the Charmed Apache Kafka K8s Operator. Please check out our [contributor agreement](https://ubuntu.com/legal/contributors) if you're interested in contributing to the solution.
