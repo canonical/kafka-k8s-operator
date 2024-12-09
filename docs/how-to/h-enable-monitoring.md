@@ -73,7 +73,7 @@ juju integrate grafana-agent-k8s grafana-dashboards
 juju integrate grafana-agent-k8s loki-logging
 juju integrate grafana-agent-k8s prometheus-receive-remote-write
 ```
-Finally, integrate (previously known as "[relate](https://juju.is/docs/juju/integration)") it with Charmed Kafka K8s
+Finally, integrate (previously known as "[relate](https://juju.is/docs/juju/integration)") it with Charmed Apache Kafka K8s
 
 ```shell
 juju integrate grafana-agent-k8s kafka-k8s:grafana-dashboard

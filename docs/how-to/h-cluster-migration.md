@@ -87,7 +87,7 @@ new->old.enabled = false
 old.bootstrap.servers=$OLD_SERVERS
 new.bootstrap.servers=$NEW_SERVERS
 
-# sasl authentication config for each cluster, in this case using the 'admin' users created by the integrator charm for Charmed Kafka
+# sasl authentication config for each cluster, in this case using the 'admin' users created by the integrator charm for Charmed Apache Kafka
 old.sasl.jaas.config=$OLD_SASL_JAAS_CONFIG
 new.sasl.jaas.config=$NEW_SASL_JAAS_CONFIG
 
@@ -153,7 +153,7 @@ juju ssh kafka-k8s/<id> sudo -i 'cd /opt/kafka/bin && KAFKA_OPTS=$KAFKA_OPTS ./c
 
 ## Monitoring and validating data replication
 
-The migration process can be monitored using built-in Apache Kafka bin commands on the original cluster. In the Charmed Kafka cluster, these bin commands are also mapped to snap commands on the units (e.g `charmed-kafka.get-offsets` or `charmed-kafka.topics`).
+The migration process can be monitored using built-in Apache Kafka bin commands on the original cluster. In the Charmed Apache Kafka, these bin commands are also mapped to snap commands on the units (e.g `charmed-kafka.get-offsets` or `charmed-kafka.topics`).
 
 To monitor the current consumer offsets, run the following on the original cluster being migrated from:
 
