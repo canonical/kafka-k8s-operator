@@ -1,10 +1,10 @@
-This is part of the Charmed Kafka K8s Tutorial. Please refer to the [overview page](/t/charmed-kafka-k8s-documentation-tutorial-overview/11945) for more information and the overview of the content.
+This is part of the Charmed Apache Kafka K8s Tutorial. Please refer to the [overview page](/t/charmed-kafka-k8s-documentation-tutorial-overview/11945) for more information and the overview of the content.
 
 ## Partition rebalancing and reassignment
 
 By default, when scaling-out a Kafka cluster, partitions allocated to the original brokers are not reallocated to make use of any new storage volumes and brokers, which can result in over-provisioning of resources. The inverse is also true when scaling-in, which can result in under-replicated partitions at best, and permanent data loss at worst.
 
-To address this, we can make use of [LinkedIn's Cruise Control](https://github.com/linkedin/cruise-control), which is bundled as part of the Charmed Kafka [Snap](https://github.com/canonical/charmed-kafka-snap) and [rock](https://github.com/canonical/charmed-kafka-rock).
+To address this, we can make use of [LinkedIn's Cruise Control](https://github.com/linkedin/cruise-control), which is bundled as part of the Charmed Apache Kafka [Snap](https://github.com/canonical/charmed-kafka-snap) and [rock](https://github.com/canonical/charmed-kafka-rock).
 
 At a high level, Cruise Control is made up of the following five components:
 
@@ -16,7 +16,7 @@ At a high level, Cruise Control is made up of the following five components:
 
 ### Deploying partition balancer
 
-The Charmed Kafka charms have a configuration option `roles`, which takes a list of possible values.
+The Charmed Apache Kafka charms have a configuration option `roles`, which takes a list of possible values.
 Different roles can be configured to run on the same machine, or as separate Juju applications.
 
 The two possible roles are:
@@ -25,7 +25,7 @@ The two possible roles are:
 
 > **Note**: It is recommended to deploy a separate Juju application for running Cruise Control in production environments.
 
-For the purposes of this tutorial, we will be deploying a single Charmed Kafka K8s unit to serve as the `balancer`:
+For the purposes of this tutorial, we will be deploying a single Charmed Apache Kafka K8s unit to serve as the `balancer`:
 
 ```shell
 juju deploy kafka-k8s --config roles=balancer -n 1 cruise-control

@@ -75,8 +75,8 @@ The successful credential rotation can be confirmed by retrieving the new passwo
 
 #### Without client application downtime
 
-In some use-cases credentials should be rotated with no or limited application downtime.
-If credentials should be rotated with no or limited downtime, you can deploy a new charm with the same permissions and resource definition, e.g. 
+In some use cases, credentials should be rotated with no or limited application downtime.
+If credentials should be rotated with no or limited downtime, you can deploy a new charm with the same permissions and resource definition, e.g.:
 
 ```shell
 juju deploy data-integrator rotated-user --channel stable \
@@ -101,7 +101,7 @@ juju remove-application data-integrator
 
 ### Internal password rotation
 
-The operator user is used internally by the Charmed Kafka Operator, the `set-password` action can be used to rotate its password.
+The operator user is used internally by the Charmed Apache Kafka Operator, the `set-password` action can be used to rotate its password.
 
 ```shell
 # to set a specific password for the operator user

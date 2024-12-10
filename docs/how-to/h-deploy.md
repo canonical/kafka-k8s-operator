@@ -1,15 +1,17 @@
-# How to deploy Charmed Kafka K8s
+# How to deploy Charmed Apache Kafka K8s
 
-> **IMPORTANT** For non-K8s Charmed Kafka, see the [Charmed Kafka documentation](/t/charmed-kafka-documentation/13261) instead.
+[note type="caution"]
+For non-K8s Charmed Apache Apache Kafka, see the [Charmed Apache Kafka documentation](/t/charmed-kafka-documentation/13261) instead.
+[/note]
 
-To deploy a Charmed Kafka K8s cluster:
+To deploy a Charmed Apache Kafka K8s cluster:
 1. Set up a Juju Controller
 2. Set up a Juju Model
-3. Deploy and relate Kafka K8s and ZooKeeper K8s charms.
+3. Deploy and relate Apache Kafka K8s and Apache ZooKeeper K8s charms.
 4. (Optionally) Create an external admin user
 
 In the next subsections, we will cover these steps separately by referring to 
-relevant Juju documentation and providing details on the Charmed Kafka K8s specifics.
+relevant Juju documentation and providing details on the Charmed Apache Kafka K8s specifics.
 If you already have a Juju controller and/or a Juju model, you can skip the associated steps.
 
 ## Juju controller setup
@@ -35,9 +37,9 @@ If there are no suitable controllers, create a new one:
 juju bootstrap <cloud> <controller>
 ```
 
-where `<cloud>` -- the cloud to deploy controller to, e.g., `localhost`. For more information on how to setup a new cloud, see the [How to manage clouds](https:///t/1100) guide in Juju documentation.
+where `<cloud>` -- the cloud to deploy controller to, e.g., `localhost`. For more information on how to set up a new cloud, see the [How to manage clouds](https:///t/1100) guide in Juju documentation.
 
-> **Note** See the [How to manage controllers](/t/1111) guide in Juju documentation for more options.
+For more Juju controller setup guidance, see the [How to manage controllers](/t/1111) guide in Juju documentation.
 
 ## Juju model setup
 
@@ -59,20 +61,22 @@ Make sure that the model is of a correct type (`k8s`):
 juju show-model | yq '.[].type'
 ```
 
-## Deploy and relate Kafka K8s and ZooKeeper charms
+## Deploy and relate Charmed Apache Kafka K8s and Charmed Apache ZooKeeper
 
-The Kafka and ZooKeeper charms can both be deployed as follows:
+Charmed Apache Kafka and Charmed Apache ZooKeeper can both be deployed as follows:
 
 ```commandline
 juju deploy kafka-k8s --channel 3/stable -n <kafka-units> --trust
 juju deploy zookeeper-k8s --channel 3/stable -n <zookeeper-units>
 ```
 
-where `<kafka-units>` and `<zookeeper-units>` -- the number of units to deploy for Kafka and ZooKeeper. We recommend values of at least `3` and `5` respectively.
+where `<kafka-units>` and `<zookeeper-units>` -- the number of units to deploy for Charmed Apache Kafka and Charmed Apache ZooKeeper. We recommend values of at least `3` and `5` respectively.
 
-> **NOTE** The `--trust` option is needed for the Kafka application to work properly, e.g., use NodePort or `juju refresh`. For more information about the trust options usage, see the [Juju documentation](/t/5476#heading--trust-an-application-with-a-credential). 
+[note]
+The `--trust` option is needed for the Apache Kafka application to work properly, e.g., use NodePort or `juju refresh`. For more information about the trust options usage, see the [Juju documentation](/t/5476#heading--trust-an-application-with-a-credential). 
+[/note]
 
-Connect ZooKeeper and Kafka by relating/integrating the charms:
+Connect Charmed Apache ZooKeeper and Charmed Apache Kafka by relating/integrating them:
 
 ```commandline
 juju relate kafka-k8s zookeeper-k8s
@@ -84,18 +88,21 @@ Check the status of the deployment:
 juju status
 ```
 
-Once all the units show `active` or `idle` status, the deployment should be complete. 
+The deployment should be complete once all the units show `active` or `idle` status. 
 
 ## (Optional) Create an external admin users
 
-Charmed Kafka aims to follow the _secure by default_ paradigm. As a consequence, after being deployed the Kafka cluster
+Charmed Apache Kafka aims to follow the _secure by default_ paradigm. As a consequence, after being deployed the Apache Kafka cluster
 won't expose any external listener. 
 In fact, ports are only opened when client applications are related, also 
-depending on the protocols to be used. 
-> **NOTE** For more information about the available listeners and protocols please refer to [this table](/t/13270). 
+depending on the protocols to be used.
+
+[note]
+For more information about the available listeners and protocols please refer to [this table](/t/13270). 
+[/note]
 
 It is however generally useful for most situations to create a first admin user
-to be used to manage the Kafka cluster (either internally or externally). 
+to be used to manage the Apache Kafka cluster (either internally or externally). 
 
 To create an admin user, deploy the [Data Integrator Charm](https://charmhub.io/data-integrator) with 
 `extra-user-roles` set to `admin`:
@@ -104,7 +111,7 @@ To create an admin user, deploy the [Data Integrator Charm](https://charmhub.io/
 juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=admin
 ```
 
-... and relate it to the Kafka charm:
+... and relate it to the Apache Kafka K8s charm:
 
 ```commandline
 juju relate data-integrator kafka-k8s

@@ -1,8 +1,10 @@
 # External K8s connection
 
-> **NOTE**: This feature is available in charm revisions 69+. You can use the `edge` track to get the latest revision of the charm.
+[note]
+This feature is available in charm revisions 69+. You can use the `edge` track to get the latest revision of the charm.
+[/note]
 
-To make the Charmed Kafka K8s brokers reachable from outside the Kubernetes cluster, the charm application can manage several NodePort services:
+To make the Charmed Apache Kafka K8s brokers reachable from outside the Kubernetes cluster, the charm application can manage several NodePort services:
 
 ```shell
 kubectl get services -n <model>
@@ -24,7 +26,7 @@ The result is a console output that looks like the following table:
 | kafka-k8s-2-sasl-ssl-scram       | NodePort  | 10.152.183.117 |             | 29093:30641/TCP                                                                 |
 ```
 
-The `kafka-k8s-bootstrap` NodePort service exposes a selection of ports, with each one being associated with the supported security protocol + authentication mechanism. For additional reference on which port refers to which security protocol and authentication mechanism, please refer to [Charmed Kafka K8s Documentation - Reference Listeners](/t/charmed-kafka-k8s-documentation-reference-listeners/13270).
+The `kafka-k8s-bootstrap` NodePort service exposes a selection of ports, with each one being associated with the supported security protocol + authentication mechanism. For additional reference on which port refers to which security protocol and authentication mechanism, please refer to [Charmed Apache Kafka K8s Documentation - Reference Listeners](/t/charmed-kafka-k8s-documentation-reference-listeners/13270).
 
 The remaining NodePort services each correspond to a specific unit-id, security protocol and authentication mechanism, with fixed Ports and randomly allocated NodePorts.
 
@@ -34,7 +36,7 @@ The remaining NodePort services each correspond to a specific unit-id, security 
 
 By default, the `kafka-k8s-bootstrap` NodePort service will be created automatically, however the `NodeIP:NodePort` addresses will be initially unreachable.
 
-To connect to Charmed Kafka K8s use Kubernetes-external clients, the aforementioned services must be associated with individual listeners. To achieve this:
+To connect to Charmed Apache Kafka K8s use Kubernetes-external clients, the aforementioned services must be associated with individual listeners. To achieve this:
 
 1. Instruct each broker unit to create its own individual NodePort services by setting the charm config option `expose-external` to equal `nodeport` on the Kafka K8s application (default value is `false`):
 
@@ -44,9 +46,9 @@ To connect to Charmed Kafka K8s use Kubernetes-external clients, the aforementio
 
 2. Enable at least one listener using the appropriate relation endpoints:
     - Each combination of supported security protocol + authentication mechanism corresponds to a specific port number
-    - For additional reference on how to enable various security protocols and authentication mechanisms, as well as their associated ports, see the [Charmed Kafka K8s Documentation - Reference Listeners](/t/charmed-kafka-k8s-documentation-reference-listeners/13270)
+    - For additional reference on how to enable various security protocols and authentication mechanisms, as well as their associated ports, see the [Charmed Apache Kafka K8s Documentation - Reference Listeners](/t/charmed-kafka-k8s-documentation-reference-listeners/13270)
 
-Once both conditions have been met, the Charmed Kafka K8s application will expose the per-unit NodePort services. For example, see the table in the [previous section](#external-k8s-connection) for the `kafka-k8s-0-sasl-plaintext-scram` service.
+Once both conditions have been met, the Charmed Apache Kafka K8s application will expose the per-unit NodePort services. For example, see the table in the [previous section](#external-k8s-connection) for the `kafka-k8s-0-sasl-plaintext-scram` service.
 
 ## Client connections using the bootstrap service
 
