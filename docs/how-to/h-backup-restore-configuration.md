@@ -1,10 +1,10 @@
 # Configuration backup and restore
 
-Charmed Apache Kafka K8s' configuration is distributed using [Charmed Apache ZooKeeper K8s](https://charmhub.io/zookeeper-k8s?channel=3/stable).
-A Charmed Apache ZooKeeper K8s backup can be stored on any S3-compatible storage.
-S3 access and configurations are managed with the [`s3-integrator` charm](https://charmhub.io/s3-integrator).
+Apache Kafka configuration is distributed using Apache ZooKeeper.
+An Apache ZooKeeper backup can be stored on any S3-compatible storage.
+S3 access and configurations are managed with the [`s3-integrator` charm](https://charmhub.io/s3-integrator), that can be integrated with Charmed Apache ZooKeeper.
 
-This guide will teach you how to deploy and configure the `s3-integrator` charm for [AWS S3](https://aws.amazon.com/s3/), send the configurations to the Charmed Apache ZooKeeper K8s application, and finally manage your Charmed Apache ZooKeeper K8s backups.
+This guide will teach you how to deploy and configure the `s3-integrator` charm for [AWS S3](https://aws.amazon.com/s3/), send the configurations to Charmed Apache ZooKeeper K8s, and finally manage your Apache ZooKeeper backups.
 
 ## Configure `s3-integrator`
 
@@ -55,7 +55,7 @@ Once Charmed Apache ZooKeeper K8s is `active` and `idle`, you can create your fi
 juju run zookeeper-k8s/leader create-backup
 ```
 
-Charmed Apache ZooKeeper K8s backups created with the command above will always be **full** backups: a copy of _all_ the Charmed Apache Kafka K8s configuration will be stored in S3.
+Apache ZooKeeper K8s backups created with the command above will always be **full** backups: a copy of *all* the Apache Kafka K8s configuration will be stored in S3.
 
 The command will output the ID of the newly created backup:
 

@@ -71,9 +71,9 @@ OLD_SASL_JAAS_CONFIG
 If using `SSL` or `SASL_SSL` authentication, review the configuration options supported by Kafka Connect in the [Apache Kafka documentation](https://kafka.apache.org/documentation/#connectconfigs)
 [/note]
 
-## Generating `mm2.properties` file on the Charmed Apache Kafka cluster
+## Generating `mm2.properties` file on the Apache Kafka cluster
 
-MirrorMaker takes a `.properties` file for its configuration to fine-tune behaviour. See below an example `mm2.properties` file that can be placed on each of the Charmed Apache Kafka units using the above credentials:
+MirrorMaker takes a `.properties` file for its configuration to fine-tune behaviour. See below an example `mm2.properties` file that can be placed on each of the Apache Kafka units using the above credentials:
 
 ```bash
 # Aliases for each cluster, can be set to any unique alias
@@ -131,7 +131,7 @@ new.producer.acks=all
 # new.exactly.once.support = enabled
 ```
 
-Once these properties have been generated (in this example, saved to `/tmp/mm2.properties`), it is needed to place them on every Charmed Apache Kafka unit:
+Once these properties have been generated (in this example, saved to `/tmp/mm2.properties`), it is needed to place them on every Apache Kafka unit:
 
 ```bash
 cat /tmp/mm2.properties | juju ssh kafka-k8s/<id> sudo -i 'sudo tee -a /etc/kafka/mm2.properties'

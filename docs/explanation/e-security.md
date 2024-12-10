@@ -52,7 +52,7 @@ for:
 * Apache ZooKeeper connection
 * External client connection 
 
-To set up a secure connection Apache Kafka and Apache ZooKeeper applications need to be integrated with TLS Certificate Provider charms, e.g. 
+To set up a secure connection Charmed Apache Kafka and Charmed Apache ZooKeeper need to be integrated with TLS Certificate Provider charms, e.g. 
 `self-signed-certificates` operator. CSRs are generated for every unit using `tls_certificates_interface` library that uses `cryptography` 
 python library to create X.509 compatible certificates. The CSR is signed by the TLS Certificate Provider and returned to the units, and 
 stored in a password-protected Keystore file. The password of the Keystore is stored in Juju secrets starting from revision 168 of Charmed Apache Kafka 
@@ -104,5 +104,5 @@ When using SCRAM, username and passwords are stored in Apache ZooKeeper to be us
 in peer-relation data to be used by the Apache Kafka charm and in external relation to be shared with client applications. 
 Starting from revision 168 of Charmed Apache Kafka, Juju secrets are used for storing the credentials in place of plain unencrypted text.
 
-When using mTLS, client certificates are loaded into a `tls-certificates` operator and provided to the Apache Kafka via the plain-text unencrypted 
+When using mTLS, client certificates are loaded into a `tls-certificates` operator and provided to the Charmed Apache Kafka via the plain-text unencrypted 
 relation. Certificates are stored in the password-protected Truststore file.

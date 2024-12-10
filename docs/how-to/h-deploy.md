@@ -61,22 +61,22 @@ Make sure that the model is of a correct type (`k8s`):
 juju show-model | yq '.[].type'
 ```
 
-## Deploy and relate Charmed Apache Kafka K8s and Charmed Apache ZooKeeper charms
+## Deploy and relate Charmed Apache Kafka K8s and Charmed Apache ZooKeeper
 
-The Apache Kafka and Apache ZooKeeper charms can both be deployed as follows:
+Charmed Apache Kafka and Charmed Apache ZooKeeper can both be deployed as follows:
 
 ```commandline
 juju deploy kafka-k8s --channel 3/stable -n <kafka-units> --trust
 juju deploy zookeeper-k8s --channel 3/stable -n <zookeeper-units>
 ```
 
-where `<kafka-units>` and `<zookeeper-units>` -- the number of units to deploy for Apache Kafka and Apache ZooKeeper. We recommend values of at least `3` and `5` respectively.
+where `<kafka-units>` and `<zookeeper-units>` -- the number of units to deploy for Charmed Apache Kafka and Charmed Apache ZooKeeper. We recommend values of at least `3` and `5` respectively.
 
 [note]
 The `--trust` option is needed for the Apache Kafka application to work properly, e.g., use NodePort or `juju refresh`. For more information about the trust options usage, see the [Juju documentation](/t/5476#heading--trust-an-application-with-a-credential). 
 [/note]
 
-Connect Apache ZooKeeper and Apache Kafka by relating/integrating the charms:
+Connect Charmed Apache ZooKeeper and Charmed Apache Kafka by relating/integrating them:
 
 ```commandline
 juju relate kafka-k8s zookeeper-k8s

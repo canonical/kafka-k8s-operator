@@ -8,7 +8,7 @@ Through this tutorial, you will learn a variety of operations, everything from a
 In this tutorial, we will walk through how to:
 
 - Set up an environment using [Multipass](https://multipass.run/) with [MicroK8s](https://microk8s.io/) and [Juju](https://juju.is/).
-- Deploy Apache Kafka using a couple of commands.
+- Deploy Charmed Apache Kafka using a couple of commands.
 - Get the admin credentials directly.
 - Add high availability with replication.
 - Change the admin password.
@@ -33,7 +33,7 @@ Before we start, make sure your machine meets the following requirements:
 
 Here’s an overview of the steps required with links to our separate tutorials that deal with each individual step:
 * [Set up the environment](/t/charmed-kafka-k8s-documentation-tutorial-setup-environment/11946)
-* [Deploy Apache Kafka](/t/charmed-kafka-k8s-documentation-tutorial-deploy-kafka/11947)
+* [Deploy Charmed Apache Kafka](/t/charmed-kafka-k8s-documentation-tutorial-deploy-kafka/11947)
 * [Integrate with client applications](/t/charmed-kafka-k8s-documentation-tutorial-relate-applications/11949)
 * [Manage passwords](/t/charmed-kafka-k8s-documentation-tutorial-manage-passwords/11948)
 * [Enable encryption](/t/charmed-kafka-k8s-documentation-tutorial-enable-encryption/11950)
