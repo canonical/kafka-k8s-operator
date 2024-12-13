@@ -237,4 +237,4 @@ Please see the [Juju SDK docs](https://juju.is/docs/sdk) for guidelines on enhan
 
 ## License
 
-The Charmed Apache Kafka K8s Operator is free software, distributed under the Apache Software License, version 2.0. For more information, see the [LICENSE](https://github.com/canonical/kafka-k8s-operator/blob/main/LICENSE) file .
+Charmed Apache Kafka K8s is a free software, distributed under the Apache Software License, version 2.0. For more information, see the [LICENSE](https://github.com/canonical/kafka-k8s-operator/blob/main/LICENSE) file.
