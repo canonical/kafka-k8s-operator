@@ -7,14 +7,14 @@
 
 ## Overview
 
-The Charmed Apache Kafka K8s Operator delivers automated operations management [from Day 0 to Day 2](https://codilime.com/blog/day-0-day-1-day-2-the-software-lifecycle-in-the-cloud-age/) on the [Apache Kafka](https://kafka.apache.org) event streaming platform deployed on top of a [Kubernetes cluster](https://kubernetes.io/). It is an open source, end-to-end, production ready data platform on top of cloud native technologies.
+Charmed Apache Kafka K8s delivers automated operations management [from Day 0 to Day 2](https://codilime.com/blog/day-0-day-1-day-2-the-software-lifecycle-in-the-cloud-age/) on the [Apache Kafka](https://kafka.apache.org) event streaming platform deployed on top of a [Kubernetes cluster](https://kubernetes.io/). It is an open source, end-to-end, production ready data platform on top of cloud native technologies.
 
 The Charmed Operator can be found on [Charmhub](https://charmhub.io/kafka-k8s) and it comes with features such as:
 - Fault-tolerance, replication, scalability and high-availability out-of-the-box.
 - SASL/SCRAM auth for Broker-Broker and Client-Broker authentication enabled by default.
 - Access control management supported with user-provided ACL lists.
 
-As currently Apache Kafka requires a paired Apache ZooKeeper deployment in production, this operator makes use of the [Apache ZooKeeper K8s Operator](https://github.com/canonical/zookeeper-k8s-operator) for various essential functions.
+As currently Apache Kafka requires a paired Apache ZooKeeper deployment in production, this operator makes use of the [Charmed Apache ZooKeeper K8s](https://github.com/canonical/zookeeper-k8s-operator) for various essential functions.
 
 ## Requirements
 
@@ -31,7 +31,7 @@ The charm can be deployed in much smaller environments if needed.
 
 ## Usage
 
-This section demonstrates basic usage of the Charmed Apache Kafka K8s operator. 
+This section demonstrates basic usage of Charmed Apache Kafka K8s. 
 For more information on how to perform typical tasks, see the How to guides section of the [Charmed Apache Kafka K8s documentation](https://canonical.com/data/docs/kafka/k8s).
 
 ### Deployment
@@ -81,7 +81,7 @@ Use the same action without a password parameter to randomly generate a password
 
 ### Storage support
 
-Currently, the Charmed Apache Kafka K8s Operator makes use of a 10 GB storage mount, tied to a [Kubernetes PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/).
+Currently, Charmed Apache Kafka K8s makes use of a 10 GB storage mount, tied to a [Kubernetes PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/).
 
 This storage is mounted on `/var/lib/data/kafka` and used for log-data.
 
@@ -185,7 +185,7 @@ juju remove-relation zookeeper-k8s tls-certificates-operator
 
 ## Monitoring
 
-The Charmed Apache Kafka K8s Operator comes with several exporters by default. The metrics can be queried by accessing the following endpoints:
+The Charmed Apache Kafka K8s comes with several exporters by default. The metrics can be queried by accessing the following endpoints:
 
 - JMX exporter: `http://<pod-ip>:9101/metrics`
 
@@ -226,9 +226,9 @@ After this is complete, Grafana will show a new dashboard: `Kafka JMX Metrics`.
 
 ## Security
 
-For an overview of security features of the Charmed Apache Kafka K8s Operator, see the [Security page](https://canonical.com/data/docs/kafka/k8s/e-security) in the Explanation section of the documentation.
+For an overview of security features of the Charmed Apache Kafka K8s, see the [Security page](https://canonical.com/data/docs/kafka/k8s/e-security) in the Explanation section of the documentation.
 
-Security issues in the Charmed Apache Kafka K8s Operator can be reported through [LaunchPad](https://wiki.ubuntu.com/DebuggingSecurity#How%20to%20File). Please do not file GitHub issues about security issues.
+Security issues in the Charmed Apache Kafka K8s can be reported through [LaunchPad](https://wiki.ubuntu.com/DebuggingSecurity#How%20to%20File). Please do not file GitHub issues about security issues.
 
 ## Contributing
 

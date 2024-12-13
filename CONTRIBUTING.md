@@ -101,4 +101,4 @@ For subsequent usage, the full form can be substituted by alternatives.
 
 ## Canonical Contributor Agreement
 
-Canonical welcomes contributions to the Charmed Apache Kafka K8s Operator. Please check out our [contributor agreement](https://ubuntu.com/legal/contributors) if you're interested in contributing to the solution.
+Canonical welcomes contributions to the Charmed Apache Kafka K8s. Please check out our [contributor agreement](https://ubuntu.com/legal/contributors) if you're interested in contributing to the solution.
