@@ -37,7 +37,6 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm):
             channel="3/edge",
             application_name=ZK_NAME,
             num_units=3,
-            trust=True,
         ),
         ops_test.model.deploy(
             kafka_charm,
