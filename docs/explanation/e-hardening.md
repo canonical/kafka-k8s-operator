@@ -51,7 +51,7 @@ In general, it is common practice to run Juju using the admin role of K8s, to ha
 
 #### Juju users
 
-It is very important that juju users are set up with minimal permissions depending on the scope of their operations. 
+It is very important that Juju users are set up with minimal permissions depending on the scope of their operations. 
 Please refer to the [User access levels](https://juju.is/docs/juju/user-permissions) documentation for more information on the access level and corresponding abilities 
 that the different users can be granted. 
 

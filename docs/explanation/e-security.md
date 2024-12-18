@@ -71,7 +71,7 @@ In Charmed Apache Kafka, authentication layers can be enabled for:
 
 1. Apache ZooKeeper connections
 2. Apache Kafka inter-broker communication 
-3. Apache Kafka Clients
+3. Apache Kafka clients
 
 ### Apache Kafka authentication to Apache ZooKeeper
 
