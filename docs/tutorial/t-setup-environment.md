@@ -1,4 +1,4 @@
-This is part of the [Charmed Kafka Tutorial](/t/charmed-kafka-k8s-documentation-tutorial-overview/11945). Please refer to this page for more information and the overview of the content.
+This is part of the [Charmed Apache Kafka Tutorial](/t/charmed-kafka-k8s-documentation-tutorial-overview/11945). Please refer to this page for more information and an overview of the content.
 
 ## Setup the environment
 
@@ -18,7 +18,7 @@ Multipass [list of commands](https://multipass.run/docs/multipass-cli-commands) 
 multipass list
 ```
 
-As soon as new VM started, enter inside using:
+As soon as the new VM starts, enter:
 
 ```shell
 multipass shell my-vm
@@ -37,13 +37,14 @@ lxd*        tutorial  admin  superuser  localhost/localhost       2      1  none
 microk8s    -         admin  superuser  microk8s/localhost        1      1     -  3.1.5
 ```
 
-Make sure that you use the controller bound to the MicroK8s cluster, e.g. 
+Make sure that you use the controller bound to the MicroK8s cluster, e.g.:
 
 ```shell
 juju switch microk8s
 ```
 
-The Juju controller can work with different models; models host applications such as Charmed Kafka K8s. Set up a specific model for Charmed Kafka K8s named ‘tutorial’:
+The Juju controller can work with different models; models host applications such as Charmed Apache Kafka K8s. Set up a specific model for Charmed Apache Kafka K8s named `tutorial`:
+
 ```shell
 juju add-model tutorial
 ```

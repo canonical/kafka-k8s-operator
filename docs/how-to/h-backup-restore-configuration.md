@@ -1,18 +1,18 @@
 # Configuration backup and restore
 
-Charmed Kafka K8s' configuration is distributed using [Charmed ZooKeeper K8s](https://charmhub.io/zookeeper-k8s?channel=3/stable).
-A Charmed ZooKeeper K8s backup can be stored on any S3-compatible storage.
-S3 access and configurations are managed with the [`s3-integrator` charm](https://charmhub.io/s3-integrator).
+Apache Kafka configuration is distributed using Apache ZooKeeper.
+An Apache ZooKeeper backup can be stored on any S3-compatible storage.
+S3 access and configurations are managed with the [`s3-integrator` charm](https://charmhub.io/s3-integrator), that can be integrated with Charmed Apache ZooKeeper.
 
-This guide contains step-by-step instructions on how to deploy and configure the `s3-integrator` charm for [AWS S3](https://aws.amazon.com/s3/), send the configurations to the Charmed ZooKeeper K8s application, and finally manage your Charmed ZooKeeper K8s backups.
+This guide will teach you how to deploy and configure the `s3-integrator` charm for [AWS S3](https://aws.amazon.com/s3/), send the configurations to Charmed Apache ZooKeeper K8s, and finally manage your Apache ZooKeeper backups.
 
 ## Configure `s3-integrator`
 
-First, deploy the `s3-integrator` charm:
+First, deploy and run the charm:
 
 ```shell
 juju deploy s3-integrator
-juju run s3-integrator/leader sync-s3-credentials access-key=<aws-access-key-id> secret-key=<aws-secret-key>
+juju run s3-integrator/leader sync-s3-credentials access-key=<access-key-here> secret-key=<secret-key-here>
 ```
 
 Then, use `juju config` to add your configuration parameters. For example:
@@ -26,12 +26,12 @@ juju config s3-integrator \
 ```
 
 [note]
-The only mandatory configuration parameter in the command above is the `bucket`.
+The only mandatory configuration parameter in the command above is `bucket`.
 [/note]
 
-### Integrate with Charmed ZooKeeper K8s
+### Integrate with Charmed Apache ZooKeeper K8s
 
-To pass these configurations to Charmed ZooKeeper K8s, integrate the two applications:
+To pass these configurations to Charmed Apache ZooKeeper K8s, integrate the two applications:
 
 ```shell
 juju integrate s3-integrator zookeeper-k8s
@@ -40,6 +40,7 @@ juju integrate s3-integrator zookeeper-k8s
 You can create, list, and restore backups now:
 
 ```shell
+juju run zookeeper-k8s/leader list-backups
 juju run zookeeper-k8s/leader create-backup
 juju run zookeeper-k8s/leader list-backups
 juju run zookeeper-k8s/leader restore backup-id=<backup-id-here>
@@ -47,15 +48,17 @@ juju run zookeeper-k8s/leader restore backup-id=<backup-id-here>
 
 ## Create a backup
 
-Check that Charmed ZooKeeper K8s deployment with configurations set for S3 storage is `active` and `idle` with the `juju status` command. Once it's active, create a backup with the `create-backup` command:
+Once you have a Charmed Apache ZooKeeper K8s deployment with configurations set for S3 storage, check that it is `active` and `idle` with `juju status`.\
+Once Charmed Apache ZooKeeper K8s is `active` and `idle`, you can create your first backup with the `create-backup` command.
 
 ```shell
 juju run zookeeper-k8s/leader create-backup
 ```
 
-Charmed ZooKeeper K8s backups created with the command above will always be **full** backups: a copy of *all* the Charmed Kafka K8s configuration will be stored in S3.
+Apache ZooKeeper K8s backups created with the command above will always be **full** backups: a copy of *all* the Apache Kafka K8s configuration will be stored in S3.
 
 The command will output the ID of the newly created backup:
+
 
 ```
                                      Backup created
@@ -69,13 +72,13 @@ The command will output the ID of the newly created backup:
 
 ## List backups
 
-To list available backups, run the `list-backups` command:
+You can list your available backups by running the `list-backups` command:
 
 ```shell
 juju run zookeeper-k8s/leader list-backups
 ```
 
-This command shows available backups, for example:
+This should show your available backups, like in the sample output below:
 
 ```
                                      Backups
@@ -95,7 +98,7 @@ Below is a list of parameters shown for each backup:
 
 - `Id`: identifier of the backup.
 - `Log-Sequence-number`: a database-specific number to identify its state. Learn more about the Zxid on [Apache ZooKeeper documentation](https://zookeeper.apache.org/doc/r3.9.2/zookeeperProgrammers.html#sc_timeInZk).
-- `Path`: path of the snapshot file in the S3 repository.
+- `Path`:  path of the snapshot file in the S3 repository.
 
 ## Restore a backup
 
@@ -104,7 +107,7 @@ This operation puts you at risk of losing unsaved configuration data.
 We recommend creating a backup first.
 [/note]
 
-To restore from backup, run the `restore` command and pass the `backup-id` (in the `YYYY-MM-DDTHH:MM:SSZ` format) that is listed in the `list-backups` action output:
+To restore a backup from that list, run the `restore` command and pass the `backup-id` (in the form of `YYYY-MM-DDTHH:MM:SSZ`) that is listed in the `list-backups` action output:
 
 ```shell
 juju run zookeeper-k8s/leader restore backup-id=<backup-id-here>
