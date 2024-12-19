@@ -1,4 +1,4 @@
-# Charmed Kafka K8s Operator
+# Charmed Apache Kafka K8s Operator
 
 [![CharmHub Badge](https://charmhub.io/kafka-k8s/badge.svg)](https://charmhub.io/kafka-k8s)
 [![Release](https://github.com/canonical/kafka-k8s-operator/actions/workflows/release.yaml/badge.svg)](https://github.com/canonical/kafka-k8s-operator/actions/workflows/release.yaml)
@@ -7,18 +7,18 @@
 
 ## Overview
 
-The Charmed Kafka K8s Operator delivers automated operations management [from Day 0 to Day 2](https://codilime.com/blog/day-0-day-1-day-2-the-software-lifecycle-in-the-cloud-age/) on the [Apache Kafka](https://kafka.apache.org) event streaming platform deployed on top of a [Kubernetes cluster](https://kubernetes.io/). It is an open source, end-to-end, production ready data platform on top of cloud native technologies.
+Charmed Apache Kafka K8s delivers automated operations management [from Day 0 to Day 2](https://codilime.com/blog/day-0-day-1-day-2-the-software-lifecycle-in-the-cloud-age/) on the [Apache Kafka](https://kafka.apache.org) event streaming platform deployed on top of a [Kubernetes cluster](https://kubernetes.io/). It is an open source, end-to-end, production ready data platform on top of cloud native technologies.
 
 The Charmed Operator can be found on [Charmhub](https://charmhub.io/kafka-k8s) and it comes with features such as:
 - Fault-tolerance, replication, scalability and high-availability out-of-the-box.
 - SASL/SCRAM auth for Broker-Broker and Client-Broker authentication enabled by default.
 - Access control management supported with user-provided ACL lists.
 
-As currently Kafka requires a paired ZooKeeper deployment in production, this operator makes use of the [ZooKeeper K8s Operator](https://github.com/canonical/zookeeper-k8s-operator) for various essential functions.
+As currently Apache Kafka requires a paired Apache ZooKeeper deployment in production, this operator makes use of the [Charmed Apache ZooKeeper K8s](https://github.com/canonical/zookeeper-k8s-operator) for various essential functions.
 
 ## Requirements
 
-For production environments, it is recommended to deploy at least 5 nodes for Zookeeper and 3 for Kafka.
+For production environments, it is recommended to deploy at least 5 nodes for Apache Zookeeper and 3 for Apache Kafka.
 
 The following minimum requirements are meant to be for a production environment:
 
@@ -31,12 +31,12 @@ The charm can be deployed in much smaller environments if needed.
 
 ## Usage
 
-This section demonstrates basic usage of the Charmed Kafka K8s operator. 
-For more information on how to perform typical tasks, see the How to guides section of the [Charmed Kafka K8s documentation](https://canonical.com/data/docs/kafka/k8s).
+This section demonstrates basic usage of Charmed Apache Kafka K8s. 
+For more information on how to perform typical tasks, see the How to guides section of the [Charmed Apache Kafka K8s documentation](https://canonical.com/data/docs/kafka/k8s).
 
 ### Deployment
 
-The Kafka and ZooKeeper operators can both be deployed as follows:
+The Apache Kafka and Apache ZooKeeper operators can both be deployed as follows:
 
 ```shell
 $ juju deploy zookeeper-k8s -n 5
@@ -71,7 +71,7 @@ juju scale-application kafka-k8s 5
 
 ### Password rotation
 
-The operator user is used internally by the Charmed Kafka K8s Operator. The `set-password` action can be used to rotate its password:
+The operator user is used internally by the Charmed Apache Kafka K8s Operator. The `set-password` action can be used to rotate its password:
 
 ```shell
 juju run kafka-k8s/leader set-password password=<password>
@@ -81,7 +81,7 @@ Use the same action without a password parameter to randomly generate a password
 
 ### Storage support
 
-Currently, the Charmed Kafka K8s Operator makes use of a 10 GB storage mount, tied to a [Kubernetes PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/).
+Currently, Charmed Apache Kafka K8s makes use of a 10 GB storage mount, tied to a [Kubernetes PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/).
 
 This storage is mounted on `/var/lib/data/kafka` and used for log-data.
 
@@ -89,7 +89,7 @@ Service logs can be found in `/var/log/kafka`.
 
 ## Relations
 
-The Charmed Kafka K8s Operator supports Juju [relations](https://juju.is/docs/olm/relations) for interfaces listed below.
+The Charmed Apache Kafka K8s Operator supports Juju [relations](https://juju.is/docs/olm/relations) for interfaces listed below.
 
 #### The kafka_client interface
 
@@ -165,7 +165,7 @@ Now you can generate shared internal key:
 openssl genrsa -out internal-key.pem 3072
 ```
 
-And apply keys on each Charmed Kafka K8s unit:
+And apply keys on each Charmed Apache Kafka K8s unit:
 
 ```shell
 # 
@@ -185,7 +185,7 @@ juju remove-relation zookeeper-k8s tls-certificates-operator
 
 ## Monitoring
 
-The Charmed Kafka K8s Operator comes with several exporters by default. The metrics can be queried by accessing the following endpoints:
+The Charmed Apache Kafka K8s comes with several exporters by default. The metrics can be queried by accessing the following endpoints:
 
 - JMX exporter: `http://<pod-ip>:9101/metrics`
 
@@ -193,7 +193,7 @@ Additionally, the charm provides integration with the [Canonical Observability S
 
 Deploy `cos-lite` bundle in a Kubernetes environment. This can be done by following the [deployment tutorial](https://charmhub.io/topics/canonical-observability-stack/tutorials/install-microk8s). It is needed to offer the endpoints of the COS relations. The [offers-overlay](https://github.com/canonical/cos-lite-bundle/blob/main/overlays/offers-overlay.yaml) can be used, and this step is shown on the COS tutorial.
 
-Once COS is deployed, we can find the offers from the Kafka model. To do that, switch back to the kafka model:
+Once COS is deployed, we can find the offers from the Apache Kafka model. To do that, switch back to the kafka model:
 
 ```shell
 juju switch <kafka_model_name>
@@ -226,9 +226,9 @@ After this is complete, Grafana will show a new dashboard: `Kafka JMX Metrics`.
 
 ## Security
 
-For an overview of security features of the Charmed Kafka K8s Operator, see the [Security page](https://canonical.com/data/docs/kafka/k8s/e-security) in the Explanation section of the documentation.
+For an overview of security features of the Charmed Apache Kafka K8s, see the [Security page](https://canonical.com/data/docs/kafka/k8s/e-security) in the Explanation section of the documentation.
 
-Security issues in the Charmed Kafka K8s Operator can be reported through [LaunchPad](https://wiki.ubuntu.com/DebuggingSecurity#How%20to%20File). Please do not file GitHub issues about security issues.
+Security issues in the Charmed Apache Kafka K8s can be reported through [LaunchPad](https://wiki.ubuntu.com/DebuggingSecurity#How%20to%20File). Please do not file GitHub issues about security issues.
 
 ## Contributing
 
@@ -237,4 +237,4 @@ Please see the [Juju SDK docs](https://juju.is/docs/sdk) for guidelines on enhan
 
 ## License
 
-The Charmed Kafka K8s Operator is free software, distributed under the Apache Software License, version 2.0. For more information, see the [LICENSE](https://github.com/canonical/kafka-k8s-operator/blob/main/LICENSE) file .
+Charmed Apache Kafka K8s is free software, distributed under the Apache Software License, version 2.0. For more information, see the [LICENSE](https://github.com/canonical/kafka-k8s-operator/blob/main/LICENSE) file.
