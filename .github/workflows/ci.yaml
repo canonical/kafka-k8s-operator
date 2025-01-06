@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install tox 
+      - name: Install tox
         run: pipx install tox
       - name: Run linters
         run: tox run -e lint
@@ -48,7 +48,7 @@ jobs:
 
   build:
     name: Build charms
-    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v22.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v24.0.0
     with:
       cache: true
       path-to-charm-directory: ${{ matrix.path }}
