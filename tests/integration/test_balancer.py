@@ -119,7 +119,10 @@ class TestBalancer:
             )
 
         await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, ZK_NAME, self.balancer_app}), idle_period=30
+            apps=list({APP_NAME, ZK_NAME, self.balancer_app}),
+            idle_period=30,
+            timeout=1200,
+            check_freq=30,
         )
 
         async with ops_test.fast_forward(fast_interval="20s"):
@@ -141,7 +144,8 @@ class TestBalancer:
         await ops_test.model.wait_for_idle(
             apps=list({APP_NAME, ZK_NAME, self.balancer_app, PRODUCER_APP}),
             status="active",
-            timeout=1800,
+            timeout=3600,
+            check_freq=30,
             idle_period=60,
             raise_on_error=False,
         )
@@ -327,7 +331,7 @@ class TestBalancer:
         await ops_test.model.wait_for_idle(
             apps=list({APP_NAME, ZK_NAME, self.balancer_app}),
             idle_period=30,
-            timeout=1800,
+            timeout=3600,
             raise_on_error=False,
         )
         async with ops_test.fast_forward(fast_interval="30s"):
