@@ -40,6 +40,7 @@ from literals import (
     BROKER,
     CONTROLLER,
     CONTROLLER_PORT,
+    CONTROLLER_USER,
     INTERNAL_USERS,
     KRAFT_NODE_ID_OFFSET,
     MIN_REPLICAS,
@@ -65,11 +66,13 @@ custom_secret_groups = SECRET_GROUPS
 setattr(custom_secret_groups, "BROKER", "broker")
 setattr(custom_secret_groups, "BALANCER", "balancer")
 setattr(custom_secret_groups, "ZOOKEEPER", "zookeeper")
+setattr(custom_secret_groups, "CONTROLLER", "controller")
 
 SECRET_LABEL_MAP = {
     "broker-username": getattr(custom_secret_groups, "BROKER"),
     "broker-password": getattr(custom_secret_groups, "BROKER"),
     "broker-uris": getattr(custom_secret_groups, "BROKER"),
+    "controller-password": getattr(custom_secret_groups, "CONTROLLER"),
     "zk-username": getattr(custom_secret_groups, "ZOOKEEPER"),
     "zk-password": getattr(custom_secret_groups, "ZOOKEEPER"),
     "zk-uris": getattr(custom_secret_groups, "ZOOKEEPER"),
@@ -156,7 +159,10 @@ class ClusterState(Object):
         if self.runs_controller:
             extra_kwargs.update(
                 {
-                    "controller_quorum_uris": self.cluster.controller_quorum_uris,
+                    "controller_password": self.cluster.controller_password,
+                    "bootstrap_controller": self.cluster.bootstrap_controller,
+                    "bootstrap_unit_id": self.cluster.bootstrap_unit_id,
+                    "bootstrap_replica_id": self.cluster.bootstrap_replica_id,
                 }
             )
 
@@ -177,7 +183,10 @@ class ClusterState(Object):
                     "balancer_username": self.cluster.balancer_username,
                     "balancer_password": self.cluster.balancer_password,
                     "balancer_uris": self.cluster.balancer_uris,
-                    "controller_quorum_uris": self.cluster.controller_quorum_uris,
+                    "controller_password": self.cluster.controller_password,
+                    "bootstrap_controller": self.cluster.bootstrap_controller,
+                    "bootstrap_unit_id": self.cluster.bootstrap_unit_id,
+                    "bootstrap_replica_id": self.cluster.bootstrap_replica_id,
                 }
             )
 
@@ -220,6 +229,13 @@ class ClusterState(Object):
             component=self.model.unit,
             substrate=self.substrate,
         )
+
+    @property
+    def kraft_unit_id(self) -> int:
+        """Returns current unit ID in KRaft Quorum Manager."""
+        if self.runs_broker and self.runs_controller:
+            return KRAFT_NODE_ID_OFFSET + self.unit_broker.unit_id
+        return self.unit_broker.unit_id
 
     @cached_property
     def peer_units_data_interfaces(self) -> dict[Unit, DataPeerOtherUnitData]:
@@ -323,6 +339,10 @@ class ClusterState(Object):
             Semicolon delimited string of current super users
         """
         super_users = set(INTERNAL_USERS)
+
+        if self.kraft_mode:
+            super_users.add(CONTROLLER_USER)
+
         for relation in self.client_relations:
             if not relation or not relation.app:
                 continue
@@ -432,18 +452,10 @@ class ClusterState(Object):
         )
 
     @property
-    def controller_quorum_uris(self) -> str:
-        """The current controller quorum uris when running KRaft mode."""
-        # FIXME: when running broker node.id will be unit-id + 100. If unit is only running
-        # the controller node.id == unit-id. This way we can keep a human readable mapping of ids.
+    def bootstrap_controller(self) -> str:
+        """Returns the controller listener in the format HOST:PORT."""
         if self.runs_controller:
-            node_offset = KRAFT_NODE_ID_OFFSET if self.runs_broker else 0
-            return ",".join(
-                [
-                    f"{broker.unit_id + node_offset}@{broker.internal_address}:{CONTROLLER_PORT}"
-                    for broker in self.brokers
-                ]
-            )
+            return f"{self.unit_broker.internal_address}:{CONTROLLER_PORT}"
         return ""
 
     @property
@@ -532,8 +544,8 @@ class ClusterState(Object):
             return Status.MISSING_MODE
 
         if self.kraft_mode:
-            if not self.peer_cluster.controller_quorum_uris:  # FIXME: peer_cluster or cluster?
-                return Status.NO_QUORUM_URIS
+            if not self.peer_cluster.bootstrap_controller:
+                return Status.NO_BOOTSTRAP_CONTROLLER
             if not self.cluster.cluster_uuid:
                 return Status.NO_CLUSTER_UUID
 

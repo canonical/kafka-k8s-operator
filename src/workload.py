@@ -114,32 +114,6 @@ class Workload(WorkloadBase):
         command = f"{self.paths.binaries_path}/bin/kafka-{bin_keyword}.sh {' '.join(bin_args)}"
         return self.exec(command=command.split(), env=parsed_opts or None)
 
-    def format_storages(
-        self, uuid: str, internal_user_credentials: dict[str, str] | None = None
-    ) -> None:
-        """Use a passed uuid to format storages."""
-        # NOTE data dirs have changed permissions by storage_attached hook. For some reason
-        # storage command bin needs these locations to be root owned. Momentarily raise permissions
-        # during the format phase.
-        self.exec(["chown", "-R", "root:root", f"{self.paths.data_path}"])
-
-        command = [
-            "format",
-            "--ignore-formatted",
-            "--cluster-id",
-            uuid,
-            "-c",
-            self.paths.server_properties,
-        ]
-        if internal_user_credentials:
-            for user, password in internal_user_credentials.items():
-                command += ["--add-scram", f"SCRAM-SHA-512=[name={user},password={password}]"]
-        self.run_bin_command(bin_keyword="storage", bin_args=command)
-
-        # Drop permissions again for the main process
-        self.exec(["chmod", "-R", "750", f"{self.paths.data_path}"])
-        self.exec(["chown", "-R", f"{USER}:{GROUP}", f"{self.paths.data_path}"])
-
     # ------- Kafka vm specific -------
 
     def install(self) -> None:

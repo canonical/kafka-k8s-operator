@@ -6,6 +6,7 @@ import json
 import logging
 import re
 import subprocess
+from enum import Enum
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
 from typing import Any, List, Optional, Set
@@ -38,6 +39,12 @@ DUMMY_NAME = "app"
 REL_NAME_ADMIN = "kafka-client-admin"
 TEST_DEFAULT_MESSAGES = 15
 STORAGE = "data"
+
+
+class KRaftUnitStatus(Enum):
+    LEADER = "Leader"
+    FOLLOWER = "Follower"
+    OBSERVER = "Observer"
 
 
 def load_acls(model_full_name: str | None, zk_uris: str) -> Set[Acl]:
@@ -789,3 +796,34 @@ def get_mtls_nodeport(ops_test: OpsTest):
             return port.split(":")[1].split("/")[0]
 
     raise Exception("could not find mtls nodeport in bootstrap service")
+
+
+@retry(
+    wait=wait_fixed(20),
+    stop=stop_after_attempt(6),
+    reraise=True,
+)
+def kraft_quorum_status(
+    ops_test: OpsTest, unit_name: str, bootstrap_controller: str, verbose: bool = True
+) -> dict[int, KRaftUnitStatus]:
+    """Returns a dict mapping of unit ID to KRaft unit status based on `kafka-metadata-quorum.sh` utility's output."""
+    result = check_output(
+        f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} '{BROKER.paths['BIN']}/bin/kafka-metadata-quorum.sh --command-config {BROKER.paths['CONF']}/server.properties --bootstrap-controller {bootstrap_controller} describe --replication'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+    # parse `kafka-metadata-quorum.sh` output
+    # NodeId  DirectoryId  LogEndOffset  Lag  LastFetchTimestamp  LastCaughtUpTimestamp
+    unit_status: dict[int, str] = {}
+    for line in result.split("\n"):
+        fields = [c.strip() for c in line.split("\t")]
+        try:
+            unit_status[int(fields[0])] = KRaftUnitStatus(fields[6])
+        except (ValueError, IndexError):
+            continue
+
+    if verbose:
+        print(unit_status)
+
+    return unit_status
