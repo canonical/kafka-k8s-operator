@@ -26,11 +26,8 @@ profile = "black"
 ignore-words-list = "AKS,aks,EKS,eks"
 
 [tool.poetry]
-name = "kafka-k8s-operator"
-version = "1.0"
-description = "kafka-k8s-operator"
-authors = []
 package-mode = false
+requires-poetry = ">=2.0.0"
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -105,7 +102,7 @@ tenacity = ">=7.0"
 pure-sasl = ">=0.5"
 kafka-python-ng = ">=2.0"
 requests = ">2.25"
-pytest-operator-cache = { git = "https://github.com/canonical/data-platform-workflows", tag = "v24.0.5", subdirectory = "python/pytest_plugins/pytest_operator_cache" }
+pytest-operator-cache = { git = "https://github.com/canonical/data-platform-workflows", tag = "v26.0.0", subdirectory = "python/pytest_plugins/pytest_operator_cache" }
 
 [tool.ruff]
 line-length = 99
