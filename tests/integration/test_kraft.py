@@ -11,6 +11,7 @@ from pytest_operator.plugin import OpsTest
 
 from literals import (
     CONTROLLER_PORT,
+    KRAFT_NODE_ID_OFFSET,
     PEER_CLUSTER_ORCHESTRATOR_RELATION,
     PEER_CLUSTER_RELATION,
     SECURITY_PROTOCOL_PORTS,
@@ -19,7 +20,10 @@ from literals import (
 from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
+    KRaftUnitStatus,
+    create_test_topic,
     get_address,
+    kraft_quorum_status,
     netcat,
 )
 
@@ -35,6 +39,27 @@ class TestKRaft:
 
     deployment_strat: str = os.environ.get("DEPLOYMENT", "multi")
     controller_app: str = {"single": APP_NAME, "multi": CONTROLLER_APP}[deployment_strat]
+
+    async def _assert_listeners_accessible(
+        self, ops_test: OpsTest, broker_unit_num=0, controller_unit_num=0
+    ):
+        address = await get_address(ops_test=ops_test, app_name=APP_NAME, unit_num=broker_unit_num)
+        assert netcat(
+            address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].internal
+        )  # Internal listener
+
+        # Client listener should not be enabled if there is no relations
+        assert not netcat(
+            address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client
+        )
+
+        # Check controller socket
+        if self.controller_app != APP_NAME:
+            address = await get_address(
+                ops_test=ops_test, app_name=self.controller_app, unit_num=controller_unit_num
+            )
+
+        assert netcat(address, CONTROLLER_PORT)
 
     @pytest.mark.abort_on_fail
     async def test_build_and_deploy(self, ops_test: OpsTest, kafka_charm):
@@ -117,18 +142,63 @@ class TestKRaft:
         print("SLEEPING")
         logger.info("SLEEPING")
         await asyncio.sleep(300)
-        address = await get_address(ops_test=ops_test)
-        assert netcat(
-            address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].internal
-        )  # Internal listener
+        await self._assert_listeners_accessible(ops_test)
 
-        # Client listener should not be enabled if there is no relations
-        assert not netcat(
-            address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client
+    @pytest.mark.abort_on_fail
+    async def test_authorizer(self, ops_test: OpsTest):
+
+        address = await get_address(ops_test=ops_test)
+        port = SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].internal
+
+        await create_test_topic(ops_test, f"{address}:{port}")
+
+    @pytest.mark.abort_on_fail
+    async def test_scale_out(self, ops_test: OpsTest):
+        await ops_test.model.applications[self.controller_app].add_units(count=2)
+        await ops_test.model.wait_for_idle(
+            apps=list({APP_NAME, self.controller_app}),
+            status="active",
+            timeout=1200,
+            idle_period=20,
         )
 
-        # Check controller socket
-        if self.controller_app != APP_NAME:
-            address = await get_address(ops_test=ops_test, app_name=self.controller_app)
+        address = await get_address(ops_test=ops_test, app_name=self.controller_app)
+        bootstrap_controller = f"{address}:{CONTROLLER_PORT}"
 
-        assert netcat(address, CONTROLLER_PORT)
+        unit_status = kraft_quorum_status(
+            ops_test, f"{self.controller_app}/0", bootstrap_controller
+        )
+
+        offset = KRAFT_NODE_ID_OFFSET if self.controller_app == APP_NAME else 0
+
+        for unit_id, status in unit_status.items():
+            if unit_id == offset + 0:
+                assert status == KRaftUnitStatus.LEADER
+            elif unit_id < offset + 100:
+                assert status == KRaftUnitStatus.FOLLOWER
+            else:
+                assert status == KRaftUnitStatus.OBSERVER
+
+    @pytest.mark.abort_on_fail
+    async def test_scale_in(self, ops_test: OpsTest):
+        await ops_test.model.applications[self.controller_app].scale(scale=1)
+        await ops_test.model.wait_for_idle(
+            apps=[self.controller_app],
+            status="active",
+            timeout=600,
+            idle_period=20,
+            wait_for_exact_units=1,
+        )
+
+        async with ops_test.fast_forward(fast_interval="20s"):
+            await asyncio.sleep(120)
+
+        address = await get_address(ops_test=ops_test, app_name=self.controller_app, unit_num=0)
+        bootstrap_controller = f"{address}:{CONTROLLER_PORT}"
+
+        unit_status = kraft_quorum_status(
+            ops_test, f"{self.controller_app}/0", bootstrap_controller
+        )
+
+        assert KRaftUnitStatus.LEADER in unit_status.values()
+        await self._assert_listeners_accessible(ops_test, broker_unit_num=0, controller_unit_num=0)
