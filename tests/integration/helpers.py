@@ -3,10 +3,10 @@
 # See LICENSE file for licensing details.
 
 import json
-import tempfile
 import logging
 import re
 import subprocess
+import tempfile
 from enum import Enum
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
@@ -146,6 +146,7 @@ def extract_ca(ops_test: OpsTest, unit_name: str) -> str | None:
 
     return user_secret.get("ca-cert") or user_secret.get("ca")
 
+
 def extract_truststore_password(ops_test: OpsTest, unit_name: str) -> str | None:
     user_secret = get_secret_by_label(
         ops_test,
@@ -154,6 +155,7 @@ def extract_truststore_password(ops_test: OpsTest, unit_name: str) -> str | None
     )
 
     return user_secret.get("truststore-password")
+
 
 def netcat(host: str, port: int) -> bool:
     try:
@@ -836,6 +838,7 @@ def kraft_quorum_status(
         print(unit_status)
 
     return unit_status
+
 
 def sign_manual_certs(ops_test: OpsTest, manual_app: str = "manual-tls-certificates") -> None:
     delim = "-----BEGIN CERTIFICATE REQUEST-----"

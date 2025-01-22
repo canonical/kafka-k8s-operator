@@ -461,6 +461,7 @@ async def test_tls_removed(ops_test: OpsTest):
         ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].client
     )
 
+
 @pytest.mark.abort_on_fail
 async def test_manual_tls_chain(ops_test: OpsTest):
     await ops_test.model.deploy(MANUAL_TLS_NAME)
