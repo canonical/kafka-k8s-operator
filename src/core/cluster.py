@@ -71,8 +71,8 @@ setattr(custom_secret_groups, "CONTROLLER", "controller")
 SECRET_LABEL_MAP = {
     "broker-username": getattr(custom_secret_groups, "BROKER"),
     "broker-password": getattr(custom_secret_groups, "BROKER"),
-    "broker-uris": getattr(custom_secret_groups, "BROKER"),
     "controller-password": getattr(custom_secret_groups, "CONTROLLER"),
+    "broker-uris": getattr(custom_secret_groups, "BROKER"),
     "zk-username": getattr(custom_secret_groups, "ZOOKEEPER"),
     "zk-password": getattr(custom_secret_groups, "ZOOKEEPER"),
     "zk-uris": getattr(custom_secret_groups, "ZOOKEEPER"),
@@ -544,7 +544,7 @@ class ClusterState(Object):
             return Status.MISSING_MODE
 
         if self.kraft_mode:
-            if not self.peer_cluster.bootstrap_controller:
+            if not self.peer_cluster.bootstrap_controller:  # FIXME: peer_cluster or cluster?
                 return Status.NO_BOOTSTRAP_CONTROLLER
             if not self.cluster.cluster_uuid:
                 return Status.NO_CLUSTER_UUID

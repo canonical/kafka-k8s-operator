@@ -474,6 +474,11 @@ class KafkaCluster(RelationState):
         return credentials
 
     @property
+    def controller_password(self) -> str:
+        """The controller user password in KRaft mode."""
+        return self.relation_data.get("controller-password", "")
+
+    @property
     def client_passwords(self) -> dict[str, str]:
         """Usernames and passwords of related client applications."""
         return {key: value for key, value in self.relation_data.items() if "relation-" in key}
@@ -512,11 +517,6 @@ class KafkaCluster(RelationState):
     def balancer_uris(self) -> str:
         """Persisted balancer uris."""
         return self.relation_data.get("balancer-uris", "")
-
-    @property
-    def controller_password(self) -> str:
-        """The controller user password in KRaft mode."""
-        return self.relation_data.get("controller-password", "")
 
     @property
     def cluster_uuid(self) -> str:
@@ -587,7 +587,7 @@ class KafkaBroker(RelationState):
 
         Returns:
             String of key contents
-            None if key not yet generated
+            Empty if key not yet generated
         """
         return self.relation_data.get("private-key", "")
 
@@ -597,7 +597,7 @@ class KafkaBroker(RelationState):
 
         Returns:
             String of csr contents
-            None if csr not yet generated
+            Empty if csr not yet generated
         """
         return self.relation_data.get("csr", "")
 
@@ -607,7 +607,7 @@ class KafkaBroker(RelationState):
 
         Returns:
             String of cert contents in PEM format
-            None if cert not yet generated/signed
+            Empty if cert not yet generated/signed
         """
         return self.relation_data.get("certificate", "")
 
@@ -859,7 +859,6 @@ class ZooKeeper(RelationState):
         """Checks if broker id is recognised as active by ZooKeeper."""
         broker_id = self.data_interface.local_unit.name.split("/")[1]
         path = f"{self.database}/brokers/ids/"
-
         try:
             zk = ZooKeeperManager(
                 hosts=self.hosts,
