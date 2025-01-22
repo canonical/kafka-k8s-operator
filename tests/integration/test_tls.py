@@ -30,14 +30,17 @@ from .helpers import (
     get_address,
     get_kafka_zk_relation_data,
     get_mtls_nodeport,
+    list_truststore_aliases,
     search_secrets,
     set_mtls_client_acls,
     set_tls_private_key,
+    sign_manual_certs,
 )
 
 logger = logging.getLogger(__name__)
 
 TLS_NAME = "self-signed-certificates"
+MANUAL_TLS_NAME = "manual-tls-certificates"
 CERTS_NAME = "tls-certificates-operator"
 TLS_REQUIRER = "tls-certificates-requirer"
 
@@ -455,5 +458,41 @@ async def test_tls_removed(ops_test: OpsTest):
 
     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME)
     assert not check_tls(
+        ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].client
+    )
+
+@pytest.mark.abort_on_fail
+async def test_manual_tls_chain(ops_test: OpsTest):
+    await ops_test.model.deploy(MANUAL_TLS_NAME)
+
+    await asyncio.gather(
+        ops_test.model.add_relation(f"{APP_NAME}:{TLS_RELATION}", MANUAL_TLS_NAME),
+        ops_test.model.add_relation(ZK_NAME, MANUAL_TLS_NAME),
+    )
+
+    # ensuring enough time for multiple rolling-restart with update-status
+    async with ops_test.fast_forward(fast_interval="20s"):
+        await asyncio.sleep(90)
+
+    async with ops_test.fast_forward(fast_interval="60s"):
+        await ops_test.model.wait_for_idle(
+            apps=[APP_NAME, ZK_NAME, MANUAL_TLS_NAME], idle_period=30, timeout=1000
+        )
+
+    sign_manual_certs(ops_test)
+
+    # verifying brokers + servers can communicate with one-another
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME, MANUAL_TLS_NAME], idle_period=30, timeout=1000
+    )
+
+    # verifying the chain is in there
+    trusted_aliases = await list_truststore_aliases(ops_test)
+
+    assert len(trusted_aliases) == 3  # CA, intermediate, rootca
+
+    # verifying TLS is enabled and working
+    kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME)
+    assert check_tls(
         ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].client
     )

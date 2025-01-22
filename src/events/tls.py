@@ -12,10 +12,10 @@ import re
 import warnings
 from typing import TYPE_CHECKING
 
-from charms.tls_certificates_interface.v1.tls_certificates import (
+from charms.tls_certificates_interface.v3.tls_certificates import (
     CertificateAvailableEvent,
     EventBase,
-    TLSCertificatesRequiresV1,
+    TLSCertificatesRequiresV3,
     _load_relation_data,
     generate_csr,
     generate_private_key,
@@ -43,7 +43,7 @@ class TLSHandler(Object):
         super().__init__(charm, "tls")
         self.charm: "KafkaCharm" = charm
 
-        self.certificates = TLSCertificatesRequiresV1(self.charm, TLS_RELATION)
+        self.certificates = TLSCertificatesRequiresV3(self.charm, TLS_RELATION)
 
         # Own certificates handlers
         self.framework.observe(
@@ -114,7 +114,7 @@ class TLSHandler(Object):
     def _tls_relation_broken(self, _) -> None:
         """Handler for `certificates_relation_broken` event."""
         self.charm.state.unit_broker.update(
-            {"csr": "", "certificate": "", "ca": "", "ca-cert": ""}
+            {"csr": "", "certificate": "", "ca": "", "ca-cert": "", "chain": ""}
         )
 
         # remove all existing keystores from the unit so we don't preserve certs
@@ -185,7 +185,7 @@ class TLSHandler(Object):
             event.defer()
             return
 
-        relation_data = _load_relation_data(dict(event.relation.data[event.relation.app]))
+        relation_data = _load_relation_data(event.relation.data[event.relation.app])
         provider_certificates = relation_data.get("certificates", [])
 
         if not provider_certificates:
@@ -262,12 +262,18 @@ class TLSHandler(Object):
             return
 
         self.charm.state.unit_broker.update(
-            {"certificate": event.certificate, "ca-cert": event.ca, "ca": ""}
+            {
+                "certificate": event.certificate,
+                "ca-cert": event.ca,
+                "ca": "",
+                "chain": json.dumps(event.chain),
+            }
         )
 
         for dependent in ["broker", "balancer"]:
             getattr(self.charm, dependent).tls_manager.set_server_key()
             getattr(self.charm, dependent).tls_manager.set_ca()
+            getattr(self.charm, dependent).tls_manager.set_chain()
             getattr(self.charm, dependent).tls_manager.set_certificate()
             getattr(self.charm, dependent).tls_manager.set_truststore()
             getattr(self.charm, dependent).tls_manager.set_keystore()
