@@ -872,7 +872,7 @@ async def list_truststore_aliases(ops_test: OpsTest, unit: str = f"{APP_NAME}/0"
     truststore_password = extract_truststore_password(ops_test=ops_test, unit_name=unit)
 
     result = check_output(
-        f"JUJU_MODEL={ops_test.model_full_name} juju ssh {unit} sudo -i 'charmed-kafka.keytool -list -keystore /var/snap/charmed-kafka/current/etc/kafka/truststore.jks -storepass {truststore_password}'",
+        f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit} sudo -i 'keytool -list -keystore /etc/kafka/truststore.jks -storepass {truststore_password}'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
