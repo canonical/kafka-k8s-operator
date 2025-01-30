@@ -442,8 +442,13 @@ async def test_pod_reschedule_tls(ops_test: OpsTest):
 
 @pytest.mark.abort_on_fail
 async def test_tls_removed(ops_test: OpsTest):
-    await ops_test.model.applications[APP_NAME].remove_relation(
-        f"{APP_NAME}:certificates", f"{TLS_NAME}:certificates"
+    await asyncio.gather(
+        ops_test.model.applications[APP_NAME].remove_relation(
+            f"{APP_NAME}:certificates", f"{TLS_NAME}:certificates"
+        ),
+        ops_test.model.applications[APP_NAME].remove_relation(
+            f"{ZK_NAME}:certificates", f"{TLS_NAME}:certificates"
+        ),
     )
 
     # ensuring enough update-status to unblock ZK
