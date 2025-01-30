@@ -871,12 +871,16 @@ def sign_manual_certs(ops_test: OpsTest, manual_app: str = "manual-tls-certifica
 async def list_truststore_aliases(ops_test: OpsTest, unit: str = f"{APP_NAME}/0") -> list[str]:
     truststore_password = extract_truststore_password(ops_test=ops_test, unit_name=unit)
 
-    result = check_output(
-        f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit} sudo -i 'keytool -list -keystore /etc/kafka/truststore.jks -storepass {truststore_password}'",
-        stderr=PIPE,
-        shell=True,
-        universal_newlines=True,
-    )
+    try:
+        result = check_output(
+            f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit} 'keytool -list -keystore /etc/kafka/truststore.jks -storepass {truststore_password}'",
+            stderr=PIPE,
+            shell=True,
+            universal_newlines=True,
+        )
+    except CalledProcessError as e:
+        logger.error(f"{e.output=}, {e.stdout=}, {e.stderr=}")
+        raise e
 
     trusted_aliases = []
     for line in result.splitlines():
