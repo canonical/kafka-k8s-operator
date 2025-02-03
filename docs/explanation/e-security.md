@@ -4,8 +4,7 @@ This document describes the cryptography used by Charmed Apache Kafka K8s.
 
 ## Resource checksums
 
-Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s operators use pinned revisions of the Charmed Apache Kafka rock
-and Charmed Apache ZooKeeper rock, respectively. This provides a reproducible and secure environment.
+Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s operators use pinned revisions of their respective rocks to provide reproducible and secure environments.
 
 The [Charmed Apache Kafka rock](https://github.com/canonical/charmed-kafka-rock/pkgs/container/charmed-kafka) and 
 [Charmed Apache ZooKeeper rock](https://github.com/canonical/charmed-zookeeper-rock/pkgs/container/charmed-zookeeper) are OCI images
