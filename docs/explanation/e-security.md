@@ -84,7 +84,7 @@ Authentication among brokers is based on the SCRAM-SHA-512 protocol. Usernames a
 
 The Apache Kafka username and password, used by brokers to authenticate each other, are stored both in an Apache ZooKeeper zNode and in a JAAS configuration file on the Apache Kafka server in plain text format.
 
-The file needs to be readable and writable by root (as it is created by the charm), and readable by the `snap_daemon` user running the Charmed Apache Kafka server snap commands.
+The file needs to be readable and writable by root (as it is created by the charm) and readable by the `snap_daemon` user running the Charmed Apache Kafka server snap commands.
 
 ### Client authentication to Apache Kafka
 

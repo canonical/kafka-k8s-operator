@@ -23,8 +23,8 @@ main supported cloud platforms.
 
 ### Juju 
 
-Juju is the component responsible for orchestrating the entire lifecycle, from deployment to Day 2 operations. For more information on Juju security, see the
-[Juju security page](/t/juju-security/15684) and the [How to harden your deployment guide](https://juju.is/docs/juju/harden-your-deployment) guide.
+Juju is the component responsible for orchestrating the entire lifecycle, from deployment to Day 2 operations. For more information on Juju security hardening, see the
+[Juju security page](/t/juju-security/15684) and the [How to harden your deployment](https://juju.is/docs/juju/harden-your-deployment) guide.
 
 #### Cloud credentials
 
@@ -120,4 +120,4 @@ only tune the logging level of the `authorizerAppender` in the `log4j.properties
 
 ## Additional Resources
 
-For details on the cryptography used by Charmed Apache Kafka K8s, see the [Cryptography page](/t/charmed-apache-kafka-k8s-documentation-explanation-cryptography/15715) explanation page.
+For details on the cryptography used by Charmed Apache Kafka K8s, see the [Cryptography](/t/charmed-apache-kafka-k8s-documentation-explanation-cryptography/15715) explanation page.
