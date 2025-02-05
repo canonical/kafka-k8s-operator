@@ -1,6 +1,6 @@
 # Security hardening guide
 
-This document provides an overview of security features and guidance for hardening the security of [Charmed Apache Kafka K8s](https://github.com/canonical/kafka-k8s-bundle) deployments, including setting up and managing a secure environment.
+This document provides an overview of security features and guidance for hardening the security of [Charmed Apache Kafka K8s](https://charmhub.io/kafka-k8s) deployments, including setting up and managing a secure environment.
 
 ## Environment
 
