@@ -1,27 +1,21 @@
 # Security hardening guide
 
-This document provides guidance and instructions to achieve 
-a secure deployment of [Charmed Apache Kafka K8s](https://github.com/canonical/kafka-k8s-bundle), including setting up and managing a secure environment.
-The document is divided into the following sections:
-
-1. Environment, outlining the recommendation for deploying a secure environment
-2. Applications, outlining the product features that enable a secure deployment of a Apache Kafka cluster
-3. Additional resources, providing any further information about security and compliance
+This document provides an overview of security features and guidance for hardening the security of [Charmed Apache Kafka K8s](https://charmhub.io/kafka-k8s) deployments, including setting up and managing a secure environment.
 
 ## Environment
 
-The environment where applications operate can be divided in two components:
+The environment where Charmed Apache Kafka K8s operate can be divided into two components:
 
 1. Kubernetes
 2. Juju 
 
 ### Kubernetes
 
-Charmed Apache Kafka can be deployed on top of several Kubernetes distributions. 
+Charmed Apache Kafka K8s can be deployed on top of several Kubernetes distributions. 
 The following table provides references for the security documentation for the 
 main supported cloud platforms.
 
-| Cloud              | Security guide                                                                                                                                                                                                                                                                                                                                   |
+| Cloud              | Security guides                                                                                                                                                                                                                                                                                                                                   |
 |--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Charmed Kubernetes | [Security in Charmed Kubernetes](https://ubuntu.com/kubernetes/docs/security)                                                                                                                                                                                                                                                                    |
 | AWS EKS            | [Best Practices for Security, Identity and Compliance](https://aws.amazon.com/architecture/security-identity-compliance), [AWS security credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/security-creds.html#access-keys-and-secret-access-keys), [Security in EKS](https://docs.aws.amazon.com/eks/latest/userguide/security.html) | 
@@ -29,15 +23,14 @@ main supported cloud platforms.
 
 ### Juju 
 
-Juju is the component responsible for orchestrating the entire lifecycle, from deployment to Day 2 operations, of 
-all applications. Therefore, Juju must be set up securely. For more information, see the
-[Juju security page](/t/juju-security/15684) and the [How to harden your deployment guide](https://juju.is/docs/juju/harden-your-deployment).
+Juju is the component responsible for orchestrating the entire lifecycle, from deployment to Day 2 operations. For more information on Juju security hardening, see the
+[Juju security page](/t/juju-security/15684) and the [How to harden your deployment](https://juju.is/docs/juju/harden-your-deployment) guide.
 
 #### Cloud credentials
 
-When configuring the cloud credentials to be used with Juju, ensure that the users have the correct permissions to operate at the required level on the Kubernetes cluster. 
+When configuring cloud credentials to be used with Juju, ensure that users have the correct permissions to operate at the required level on the Kubernetes cluster. 
 Juju superusers responsible for bootstrapping and managing controllers require elevated permissions to manage several kinds of resources. For this reason, the 
-K8s user used for bootstrapping and managing the deployments should have full permissions, such as: 
+K8s user for bootstrapping and managing the deployments should have full permissions, such as: 
 
 * create, delete, patch, and list:
     * namespaces
@@ -52,8 +45,7 @@ In general, it is common practice to run Juju using the admin role of K8s, to ha
 #### Juju users
 
 It is very important that Juju users are set up with minimal permissions depending on the scope of their operations. 
-Please refer to the [User access levels](https://juju.is/docs/juju/user-permissions) documentation for more information on the access level and corresponding abilities 
-that the different users can be granted. 
+Please refer to the [User access levels](https://juju.is/docs/juju/user-permissions) documentation for more information on the access levels and corresponding abilities. 
 
 Juju user credentials must be stored securely and rotated regularly to limit the chances of unauthorized access due to credentials leakage.
 
@@ -72,10 +64,11 @@ In the following, we provide guidance on how to harden your deployment using:
 Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s run on top of rockcraft-based image shipping the Apache Kafka and Apache ZooKeeper 
 distribution binaries built by Canonical, and available in the [Apache Kafka release page](https://launchpad.net/kafka-releases) and 
 [Apache ZooKeeper release page](https://launchpad.net/zookeeper-releases), respectively. Both images are based on Ubuntu 22.04. 
+
 The images that can be found in the [Charmed Apache Kafka rock](https://github.com/canonical/charmed-spark-rock) and 
 [Charmed Apache ZooKeeper rock](https://github.com/canonical/charmed-zookeeper-rock) Github repositories are used as the base 
 images for the different pods providing Apache Kafka and Apache ZooKeeper services. 
-The following table summarise the relation between the component and its underlying base image. 
+The following table summarises the relation between the component and its underlying base image. 
 
 | Component         | Image                                                                                                 |
 |-------------------|-------------------------------------------------------------------------------------------------------|
@@ -95,41 +88,36 @@ For more information on how to refresh the charm, see the [how-to refresh](/t/ch
 ### Encryption
 
 Charmed Apache Kafka K8s must be deployed with encryption enabled. 
-To do that, you need to relate Charmed Apache Kafka and Charmed Apache ZooKeeper charms to one of the TLS certificate operator charms. 
+To do that, you need to relate Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s charms to one of the TLS certificate operator charms. 
 Please refer to the [Charming Security page](https://charmhub.io/topics/security-with-x-509-certificates) for more information on how to select the right certificate
 provider for your use case. 
 
-For more information on encryption setup, see the [How to enable encryption](/t/charmed-kafka-k8s-how-to-enable-encryption/10289) guide.
+For more information on encryption, see the [Cryptography](/t/charmed-apache-kafka-k8s-documentation-explanation-cryptography/15715) explanation page and [How to enable encryption](/t/charmed-kafka-k8s-how-to-enable-encryption/10289) guide.
 
 ### Authentication
 
-Charmed Apache Kafka supports the following authentication layers:
+Charmed Apache Kafka K8s supports the following authentication layers:
 
 1. [SCRAM-based SASL Authentication](/t/charmed-kafka-k8s-how-to-manage-app/10293)
 2. [certificate-base Authentication (mTLS)](/t/create-mtls-client-credentials/11079)
 3. OAuth Authentication using [Hydra](/t/how-to-connect-to-kafka-using-hydra-as-oidc-provider/14610) or [Google](/t/how-to-connect-to-kafka-using-google-as-oidc-provider/14611)
 
-Each combination of authentication scheme and encryption is associated to the dedicated listener and it maps to a well-defined port. 
-Please refer to the [listener reference documentation](/t/charmed-kafka-k8s-documentation-reference-listeners/13270) for more information. 
+Each combination of authentication scheme and encryption is associated with the dedicated listener and it maps to a well-defined port. 
+See the [listener reference documentation](/t/charmed-kafka-k8s-documentation-reference-listeners/13270) for more information. 
 
 ### Monitoring and auditing
 
-Charmed Apache Kafka provides native integration with the [Canonical Observability Stack (COS)](https://charmhub.io/topics/canonical-observability-stack).
-To reduce the blast radius of infrastructure disruptions, the general recommendation is to deploy COS and the observed application into 
-separate environments, isolated one another. Refer to the [COS production deployments best practices](https://charmhub.io/topics/canonical-observability-stack/reference/best-practices)
-for more information. 
+Charmed Apache Kafka K8s provides native integration with the [Canonical Observability Stack (COS)](https://charmhub.io/topics/canonical-observability-stack).
+To reduce the blast radius of infrastructure disruptions, the general recommendation is to deploy COS and the observed application into separate environments, isolated from one another. Refer to the [COS production deployments best practices](https://charmhub.io/topics/canonical-observability-stack/reference/best-practices) for more information. 
 
-Refer to How-To user guide for more information on:
-
-* [how to integrate the Charmed Apache Kafka deployment with COS](/t/charmed-kafka-k8s-how-to-enable-monitoring/10291)
-* [how to customise the alerting rules and dashboards](/t/charmed-kafka-k8s-documentation-how-to-integrate-custom-alerting-rules-and-dashboards/13528)
+For instructions, see the [How to integrate the Charmed Apache Kafka K8s deployment with COS](/t/charmed-kafka-k8s-how-to-enable-monitoring/10291) and [How to customise the alerting rules and dashboards](/t/charmed-kafka-k8s-documentation-how-to-integrate-custom-alerting-rules-and-dashboards/13528) guides.
 
 External user access to Apache Kafka is logged to the `kafka-authorizer.log` that is pushed to [Loki endpoint](https://charmhub.io/loki-k8s) and exposed via [Grafana](https://charmhub.io/grafana), both components being part of the COS stack.
+
 Access denials are logged at the `INFO` level, whereas allowed accesses are logged at the `DEBUG` level. Depending on the auditing needs, 
 customize the logging level either for all logs via the [`log_level`](https://charmhub.io/kafka-k8s/configurations?channel=3/stable#log_level) config option or 
-only tune the logging level of the `authorizerAppender` in the `log4j.properties` file. Refer to the Reference documentation, for more information about 
-the [file system paths](/t/charmed-kafka-k8s-documentation-reference-file-system-paths/13269).
+only tune the logging level of the `authorizerAppender` in the `log4j.properties` file. See the [file system paths](/t/charmed-kafka-k8s-documentation-reference-file-system-paths/13269) for further information.
 
 ## Additional Resources
 
-For more information and details on the security and cryptography used by Charmed Apache Kafka, see the [Security Explanation page](/t/charmed-kafka-k8s-documentation-explanation-security/15715).
+For details on the cryptography used by Charmed Apache Kafka K8s, see the [Cryptography](/t/charmed-apache-kafka-k8s-documentation-explanation-cryptography/15715) explanation page.

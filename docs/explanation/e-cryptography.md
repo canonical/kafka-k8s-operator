@@ -1,18 +1,16 @@
 # Cryptography
 
-This document describes cryptography used by Charmed Apache Kafka K8s.
+This document describes the cryptography used by Charmed Apache Kafka K8s.
 
 ## Resource checksums
 
-Every version of the Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s operators employs a pinned revision of the Charmed Apache Kafka rock
-and Charmed Apache ZooKeeper rock, respectively, to 
-provide reproducible and secure environments. 
+Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s operators use pinned revisions of their respective rocks to provide reproducible and secure environments.
+
 The [Charmed Apache Kafka rock](https://github.com/canonical/charmed-kafka-rock/pkgs/container/charmed-kafka) and 
 [Charmed Apache ZooKeeper rock](https://github.com/canonical/charmed-zookeeper-rock/pkgs/container/charmed-zookeeper) are OCI images
-derived by the Charmed Apache Kafka snap and Charmed Apache ZooKeeper snap, which package the Apache Kafka and Apache ZooKeeper workload together with 
-a set of dependencies and utilities required by the lifecycle of the operators (see [Charmed Apache Kafka snap contents](https://github.com/canonical/charmed-kafka-snap/blob/3/edge/snap/snapcraft.yaml) and [Charmed Apache ZooKeeper snap contents](https://github.com/canonical/charmed-zookeeper-snap/blob/3/edge/snap/snapcraft.yaml)).
+derived from their respective snaps. These snaps package the Apache Kafka and Apache ZooKeeper workloads along with the necessary dependencies and utilities required for the operators' lifecycle. See the snap contents for the [Charmed Apache Kafka](https://github.com/canonical/charmed-kafka-snap/blob/3/edge/snap/snapcraft.yaml)  and [Charmed Apache ZooKeeper](https://github.com/canonical/charmed-zookeeper-snap/blob/3/edge/snap/snapcraft.yaml).
 
-Every artifact bundled into the Charmed Apache Kafka snap and Charmed Apache ZooKeeper snap is verified against their MD5, SHA256 or SHA512 checksum after download. 
+Every artifact bundled into the Charmed Apache Kafka and Charmed Apache ZooKeeper snaps is verified against their MD5, SHA256, or SHA512 checksum after download. 
 The installation of certified snaps into the rock is ensured by snap primitives that verify their 
 squashfs filesystems images GPG signature. For more information on the snap verification process, refer to the [snapcraft.io documentation](https://snapcraft.io/docs/assertions). 
 
@@ -53,15 +51,12 @@ for:
 * External client connection 
 
 To set up a secure connection Charmed Apache Kafka and Charmed Apache ZooKeeper need to be integrated with TLS Certificate Provider charms, e.g. 
-`self-signed-certificates` operator. CSRs are generated for every unit using `tls_certificates_interface` library that uses `cryptography` 
-python library to create X.509 compatible certificates. The CSR is signed by the TLS Certificate Provider and returned to the units, and 
+`self-signed-certificates` operator. Certificate Singing Requests (CSRs) are generated for every unit using the `tls_certificates_interface` library that uses the `cryptography` 
+Python library to create X.509 compatible certificates. The CSR is signed by the TLS Certificate Provider, returned to the units, and 
 stored in a password-protected Keystore file. The password of the Keystore is stored in Juju secrets starting from revision 168 of Charmed Apache Kafka 
-and revision 130 of Charmed Apache ZooKeeper. The relation provides also the certificate for the CA to be loaded in a password-protected Truststore file.
+and revision 130 of Charmed Apache ZooKeeper. The relation also provides the CA certificate, which is loaded into a password-protected Truststore file.
 
-When encryption is enabled, hostname verification is turned on for client connections, including inter-broker communication. Cipher suite can 
-be customized by providing a list of allowed cipher suite to be used for external clients and Apache Apache ZooKeeper connections, using the charm config options
-`ssl_cipher_suites`  and `zookeeper_ssl_cipher_suites` config options respectively. Please refer to the [reference documentation](https://charmhub.io/kafka-k8s/configurations)
-for more information. 
+When encryption is enabled, hostname verification is turned on for client connections, including inter-broker communication. The cipher suite can be customized by specifying a list of allowed cipher suites for external clients and Apache ZooKeeper connections. This is done using the charm configuration options `ssl_cipher_suites` and `zookeeper_ssl_cipher_suites`, respectively (see [reference documentation](https://charmhub.io/kafka-k8s/configurations)).
 
 Encryption at rest is currently not supported, although it can be provided by the substrate (cloud or on-premises).
 
@@ -80,18 +75,16 @@ username and password, and implemented both for client-server (with Apache Kafka
 Username and passwords are exchanged using peer relations among Apache ZooKeeper units and using normal relations between Apache Kafka and Apache ZooKeeper.
 Juju secrets are used for exchanging credentials starting from revision 168 of Apache Kafka and revision 130 of Apache ZooKeeper.
 
-Username and password for the different users are stored in Apache ZooKeeper servers in a JAAS configuration file in plain format. 
-Permission on the file is restricted to the root user. 
+Usernames and passwords for different users are stored in Apache ZooKeeper servers in a [JAAS](https://docs.oracle.com/en/java/javase/11/security/java-authentication-and-authorization-service-jaas-reference-guide.html) configuration file in plain text format. 
+Permissions on the file are restricted to the root user only.
 
 ### Apache Kafka Inter-broker authentication
 
-Authentication among brokers is based on SCRAM-SHA-512 protocol. Username and passwords are exchanged 
-via peer relations, using Juju secrets from revision 168 of Charmed Apache Kafka.
+Authentication among brokers is based on the SCRAM-SHA-512 protocol. Usernames and passwords are exchanged via peer relations, using Juju secrets from revision 168 of Charmed Apache Kafka.
 
-Apache Kafka username and password used by brokers to authenticate one another are stored 
-both in a Apache ZooKeeper zNode and in a JAAS configuration file in the Apache Kafka server in plain format. 
-The file needs to be readable and
-writable by root (as it is created by the charm), and be readable by the `snap_daemon` user running the Charmed Apache Kafka server snap commands.
+The Apache Kafka username and password, used by brokers to authenticate each other, are stored both in an Apache ZooKeeper zNode and in a JAAS configuration file on the Apache Kafka server in plain text format.
+
+The file needs to be readable and writable by root (as it is created by the charm) and readable by the `snap_daemon` user running the Charmed Apache Kafka server snap commands.
 
 ### Client authentication to Apache Kafka
 
@@ -100,9 +93,10 @@ Clients can authenticate to Kafka using:
 1. username and password exchanged using SCRAM-SHA-512 protocols 
 2. client certificates or CAs (mTLS)
 
-When using SCRAM, username and passwords are stored in Apache ZooKeeper to be used by the Apache Kafka processes, 
-in peer-relation data to be used by the Apache Kafka charm and in external relation to be shared with client applications. 
-Starting from revision 168 of Charmed Apache Kafka, Juju secrets are used for storing the credentials in place of plain unencrypted text.
+When using SCRAM, usernames and passwords are stored in Apache ZooKeeper to be used by the Apache Kafka processes, 
+in peer-relation data to be used by the Apache Kafka charm 
+and in external relation to be shared with client applications. 
+Starting from revision 168 of Charmed Apache Kafka, Juju secrets are used for storing the credentials instead of plain text.
 
 When using mTLS, client certificates are loaded into a `tls-certificates` operator and provided to the Charmed Apache Kafka via the plain-text unencrypted 
 relation. Certificates are stored in the password-protected Truststore file.
