@@ -61,7 +61,7 @@ In the following, we provide guidance on how to harden your deployment using:
 
 ### Base images
 
-Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s run on top of rockcraft-based image shipping the Apache Kafka and Apache ZooKeeper 
+Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s run on top of rockcraft-based images shipping the Apache Kafka and Apache ZooKeeper 
 distribution binaries built by Canonical, and available in the [Apache Kafka release page](https://launchpad.net/kafka-releases) and 
 [Apache ZooKeeper release page](https://launchpad.net/zookeeper-releases), respectively. Both images are based on Ubuntu 22.04. 
 
