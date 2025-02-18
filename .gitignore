@@ -10,3 +10,4 @@ __pycache__/
 .idea
 .python-version
 last_written_value
+*.srl

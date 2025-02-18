@@ -685,7 +685,6 @@ def test_inter_broker_protocol_version(ctx: Context, base_state: State, zk_data)
             f"inter.broker.protocol.version={major_minor}"
             in charm.broker.config_manager.server_properties
         )
-
     assert len(DEPENDENCIES["kafka_service"]["version"].split(".")) == 3
 
 

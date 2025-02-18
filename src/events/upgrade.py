@@ -92,10 +92,13 @@ class KafkaUpgrade(DataUpgrade):
             self.charm.state.cluster.tls_enabled
             and self.charm.state.unit_broker.certificate
             and self.charm.state.unit_broker.ca
+            and self.charm.state.unit_broker.chain
         ):  # TLS is probably completed
             self.dependent.tls_manager.set_server_key()
             self.dependent.tls_manager.set_ca()
+            self.dependent.tls_manager.set_chain()
             self.dependent.tls_manager.set_certificate()
+            self.dependent.tls_manager.set_bundle()
             self.dependent.tls_manager.set_truststore()
             self.dependent.tls_manager.set_keystore()
 
