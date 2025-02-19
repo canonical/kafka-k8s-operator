@@ -50,6 +50,7 @@ juju add-model tutorial
 ```
 
 You can now view the model you created above by entering the command `juju status` into the command line. You should see the following:
+
 ```
 Model     Controller  Cloud/Region        Version  SLA          Timestamp
 tutorial  microk8s    microk8s/localhost  3.1.5    unsupported  15:46:55+02:00
