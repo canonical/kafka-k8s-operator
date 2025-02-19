@@ -142,7 +142,7 @@ class KafkaClient:
             ssl_cafile=self.cafile_path if self.ssl else None,
             ssl_certfile=self.certfile_path if self.ssl else None,
             ssl_keyfile=self.keyfile_path if self.mtls else None,
-            api_version=KafkaClient.API_VERSION if self.mtls else None,
+            api_version=KafkaClient.API_VERSION,
         )
 
     @cached_property
@@ -158,7 +158,7 @@ class KafkaClient:
             ssl_cafile=self.cafile_path if self.ssl else None,
             ssl_certfile=self.certfile_path if self.ssl else None,
             ssl_keyfile=self.keyfile_path if self.mtls else None,
-            api_version=KafkaClient.API_VERSION if self.mtls else None,
+            api_version=KafkaClient.API_VERSION,
             acks="all",
             retries=10,
             retry_backoff_ms=1000,
@@ -177,7 +177,7 @@ class KafkaClient:
             ssl_cafile=self.cafile_path if self.ssl else None,
             ssl_certfile=self.certfile_path if self.ssl else None,
             ssl_keyfile=self.keyfile_path if self.mtls else None,
-            api_version=KafkaClient.API_VERSION if self.mtls else None,
+            api_version=KafkaClient.API_VERSION,
             group_id=self._consumer_group_prefix,
             enable_auto_commit=True,
             auto_offset_reset="earliest",

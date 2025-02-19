@@ -25,8 +25,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install tox
-        run: pipx install tox
+      - name: Install tox & poetry
+        run: |
+          pipx install tox
+          pipx install poetry
       - name: Run linters
         run: tox run -e lint
 
@@ -37,8 +39,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install tox
-        run: pipx install tox
+      - name: Install tox & poetry
+        run: |
+          pipx install tox
+          pipx install poetry
       - name: Run tests
         run: tox run -e unit
 
@@ -91,8 +95,7 @@ jobs:
         with:
           provider: microk8s
           channel: "1.28-strict/stable"
-          juju-channel: 3.5/stable
-          bootstrap-options: "--agent-version 3.5.3"
+          juju-channel: 3.6/stable
       - name: Download packed charm(s)
         uses: actions/download-artifact@v4
         with:
@@ -136,8 +139,7 @@ jobs:
         with:
           provider: microk8s
           channel: "1.28-strict/stable"
-          juju-channel: 3.5/stable
-          bootstrap-options: "--agent-version 3.5.3"
+          juju-channel: 3.6/stable
       - name: Download packed charm(s)
         uses: actions/download-artifact@v4
         with:

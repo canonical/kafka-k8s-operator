@@ -6,6 +6,7 @@ import json
 import logging
 import re
 import subprocess
+import tempfile
 from enum import Enum
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
@@ -146,6 +147,16 @@ def extract_ca(ops_test: OpsTest, unit_name: str) -> str | None:
     return user_secret.get("ca-cert") or user_secret.get("ca")
 
 
+def extract_truststore_password(ops_test: OpsTest, unit_name: str) -> str | None:
+    user_secret = get_secret_by_label(
+        ops_test,
+        label=f"cluster.{unit_name.split('/')[0]}.unit",
+        owner=unit_name,
+    )
+
+    return user_secret.get("truststore-password")
+
+
 def netcat(host: str, port: int) -> bool:
     try:
         check_output(
@@ -168,10 +179,7 @@ def check_tls(ip: str, port: int) -> bool:
             shell=True,
             universal_newlines=True,
         )
-        # FIXME: The server cannot be validated, we would need to try to connect using the CA
-        # from self-signed certificates. This is indication enough that the server is sending a
-        # self-signed key.
-        return "CN=kafka" in result.replace(" ", "")
+        return bool(result)
     except CalledProcessError as e:
         logger.error(f"command '{e.cmd}' return with error (code {e.returncode}): {e.output}")
         return False
@@ -827,3 +835,58 @@ def kraft_quorum_status(
         print(unit_status)
 
     return unit_status
+
+
+def sign_manual_certs(ops_test: OpsTest, manual_app: str = "manual-tls-certificates") -> None:
+    delim = "-----BEGIN CERTIFICATE REQUEST-----"
+
+    csrs_cmd = f"JUJU_MODEL={ops_test.model_full_name} juju run {manual_app}/0 get-outstanding-certificate-requests --format=json | jq -r '.[\"{manual_app}/0\"].results.result' | jq '.[].csr' | sed 's/\\\\n/\\n/g' | sed 's/\\\"//g'"
+    csrs = check_output(csrs_cmd, stderr=PIPE, universal_newlines=True, shell=True).split(delim)
+
+    for i, csr in enumerate(csrs):
+        if not csr:
+            continue
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_dir = Path(tmp)
+            csr_file = tmp_dir / f"csr{i}"
+            csr_file.write_text(delim + csr)
+
+            cert_file = tmp_dir / f"{i}.pem"
+
+            try:
+                sign_cmd = f"openssl x509 -req -in {csr_file} -CAkey tests/integration/data/int.key -CA tests/integration/data/int.pem -days 100 -CAcreateserial -out {cert_file} -copy_extensions copyall --passin pass:password"
+                provide_cmd = f'JUJU_MODEL={ops_test.model_full_name} juju run {manual_app}/0 provide-certificate ca-certificate="$(base64 -w0 tests/integration/data/int.pem)" ca-chain="$(base64 -w0 tests/integration/data/root.pem)" certificate="$(base64 -w0 {cert_file})" certificate-signing-request="$(base64 -w0 {csr_file})"'
+
+                check_output(sign_cmd, stderr=PIPE, universal_newlines=True, shell=True)
+                response = check_output(
+                    provide_cmd, stderr=PIPE, universal_newlines=True, shell=True
+                )
+                logger.info(f"{response=}")
+            except CalledProcessError as e:
+                logger.error(f"{e.stdout=}, {e.stderr=}, {e.output=}")
+                raise e
+
+
+async def list_truststore_aliases(ops_test: OpsTest, unit: str = f"{APP_NAME}/0") -> list[str]:
+    truststore_password = extract_truststore_password(ops_test=ops_test, unit_name=unit)
+
+    try:
+        result = check_output(
+            f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit} 'keytool -list -keystore /etc/kafka/truststore.jks -storepass {truststore_password}'",
+            stderr=PIPE,
+            shell=True,
+            universal_newlines=True,
+        )
+    except CalledProcessError as e:
+        logger.error(f"{e.output=}, {e.stdout=}, {e.stderr=}")
+        raise e
+
+    trusted_aliases = []
+    for line in result.splitlines():
+        if "trustedCertEntry" not in line:
+            continue
+
+        trusted_aliases.append(line.split(",")[0])
+
+    return trusted_aliases
