@@ -32,7 +32,7 @@ refer to [Charmhub.io](https://charmhub.io/), for more Charmed operators that ca
 Charmed Apache Kafka K8s is a distribution of Apache Kafka. It’s an open-source project that welcomes community contributions, suggestions, fixes and constructive feedback.
 
 - [Read our Code of Conduct](https://ubuntu.com/community/code-of-conduct)
-- [Join the Discourse forum](/tag/kafka-k8s)
+- [Join the Discourse forum](https://discourse.charmhub.io/tag/kafka)
 - [Contribute](https://github.com/canonical/kafka-k8s-operator/blob/main/CONTRIBUTING.md) and report [issues](https://github.com/canonical/kafka-k8s-operator/issues/new)
 - Explore [Canonical Data Fabric solutions](https://canonical.com/data)
 - [Contact us](/t/charmed-kafka-k8s-documentation-reference-contacts/13206) for all further questions
