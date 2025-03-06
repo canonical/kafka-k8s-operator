@@ -1,4 +1,6 @@
-> This is a **Kubernetes** operator. To deploy on IAAS/VM, see [Charmed Apache Kafka operator](https://charmhub.io/kafka).
+[note]
+This is a **Kubernetes** operator. To deploy on IAAS/VM, see [Charmed Apache Kafka operator](https://charmhub.io/kafka).
+[/note]
 
 # Charmed Apache Kafka K8s documentation
 
