@@ -40,6 +40,13 @@ DUMMY_NAME = "app"
 REL_NAME_ADMIN = "kafka-client-admin"
 TEST_DEFAULT_MESSAGES = 15
 STORAGE = "data"
+TLS_NAME = "self-signed-certificates"
+MANUAL_TLS_NAME = "manual-tls-certificates"
+CERTS_NAME = "tls-certificates-operator"
+TLS_REQUIRER = "tls-certificates-requirer"
+
+MTLS_NAME = "mtls"
+DUMMY_NAME = "app"
 
 
 class KRaftUnitStatus(Enum):
