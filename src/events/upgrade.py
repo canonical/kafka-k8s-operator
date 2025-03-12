@@ -3,6 +3,7 @@
 
 """Manager for handling Kafka in-place upgrades."""
 
+import json
 import logging
 import subprocess
 from typing import TYPE_CHECKING
@@ -22,7 +23,7 @@ from ops.pebble import ExecError
 from pydantic import BaseModel
 from typing_extensions import override
 
-from literals import Status
+from literals import TLS_RELATION, Status
 
 if TYPE_CHECKING:
     from charm import KafkaCharm
@@ -197,3 +198,20 @@ class KafkaUpgrade(DataUpgrade):
 
         # Rev.65 - Creation of external K8s services
         self.dependent.update_external_services()
+
+        # Rev.78 - TLS chain not yet set to peer relation data
+        if (
+            tls_relation := self.charm.model.get_relation(TLS_RELATION)
+        ) and not self.charm.state.unit_broker.chain:
+            all_certificates = json.loads(
+                tls_relation.data[tls_relation.app].get("certificates", "[]")
+            )
+            for certificate in all_certificates:
+                if certificate["certificate"] == self.charm.state.unit_broker.certificate:
+                    logger.info("Saving new bundle...")
+                    self.charm.state.unit_broker.update(
+                        {"chain": json.dumps(certificate["chain"])}
+                    )
+
+            if not self.charm.state.unit_broker.chain:
+                logger.error("Unable to find valid chain")
