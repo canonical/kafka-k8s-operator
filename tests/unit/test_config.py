@@ -393,6 +393,7 @@ def test_zookeeper_config_succeeds_fails_config(ctx: Context, base_state: State)
             "chroot": "/kafka",
             "username": "moria",
             "endpoints": "1.1.1.1:2181,2.2.2.2:2181",
+            "uris": "1.1.1.1:2181,2.2.2.2:2181/kafka",
             "tls": "disabled",
         },
     )
@@ -418,6 +419,7 @@ def test_zookeeper_config_succeeds_valid_config(ctx: Context, base_state: State)
             "username": "moria",
             "password": "mellon",
             "endpoints": "1.1.1.1:2181,2.2.2.2:2181",
+            "uris": "1.1.1.1:2181,2.2.2.2:2181/kafka",
             "tls": "disabled",
         },
     )

@@ -107,12 +107,10 @@ async def test_in_place_upgrade(ops_test: OpsTest, kafka_charm):
     )
 
     # cleanup existing 'current' Kafka, and remove TLS for next test
-    await asyncio.gather(
-        ops_test.model.remove_application(APP_NAME, block_until_done=True),
-        ops_test.model.remove_application(TLS_NAME, block_unit_done=True),
-        ops_test.model.wait_for_idle(
-            apps=[ZK_NAME], timeout=1800, idle_period=30, status="active"
-        ),
+    await ops_test.model.remove_application(APP_NAME, block_until_done=True)
+    await ops_test.model.remove_application(TLS_NAME, block_until_done=True)
+    await ops_test.model.wait_for_idle(
+        apps=[ZK_NAME], timeout=1800, idle_period=30, status="active"
     )
 
 
