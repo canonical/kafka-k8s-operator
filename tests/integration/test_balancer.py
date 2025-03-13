@@ -106,6 +106,10 @@ class TestBalancer:
                 raise_on_error=False,
             )
 
+        # ensuring update-status fires
+        async with ops_test.fast_forward(fast_interval="10s"):
+            await asyncio.sleep(30)
+
         assert ops_test.model.applications[APP_NAME].status == "blocked"
         assert ops_test.model.applications[ZK_NAME].status == "active"
         assert ops_test.model.applications[self.balancer_app].status == "blocked"

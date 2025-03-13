@@ -115,6 +115,10 @@ class TestKRaft:
                 raise_on_error=False,
             )
 
+        # ensuring update-status fires
+        async with ops_test.fast_forward(fast_interval="10s"):
+            await asyncio.sleep(30)
+
         if self.controller_app != APP_NAME:
             assert ops_test.model.applications[APP_NAME].status == "blocked"
             assert ops_test.model.applications[self.controller_app].status == "blocked"
