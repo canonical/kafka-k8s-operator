@@ -98,12 +98,14 @@ class TestBalancer:
                 trust=True,
             )
 
-        await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, ZK_NAME, self.balancer_app}),
-            idle_period=30,
-            timeout=1800,
-            raise_on_error=False,
-        )
+        async with ops_test.fast_forward(fast_interval="60s"):
+            await ops_test.model.wait_for_idle(
+                apps=list({APP_NAME, ZK_NAME, self.balancer_app}),
+                idle_period=30,
+                timeout=1800,
+                raise_on_error=False,
+            )
+
         assert ops_test.model.applications[APP_NAME].status == "blocked"
         assert ops_test.model.applications[ZK_NAME].status == "active"
         assert ops_test.model.applications[self.balancer_app].status == "blocked"
