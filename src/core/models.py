@@ -845,10 +845,8 @@ class ZooKeeper(RelationState):
         """Get running zookeeper version."""
         zk = ZooKeeperManager(
             hosts=self.hosts,
-            client_port=self.port,
             username=self.username,
             password=self.password,
-            use_ssl=self.tls,
         )
 
         return zk.get_version()
@@ -867,10 +865,8 @@ class ZooKeeper(RelationState):
         try:
             zk = ZooKeeperManager(
                 hosts=self.hosts,
-                client_port=self.port,
                 username=self.username,
                 password=self.password,
-                use_ssl=self.tls,
             )
             brokers = zk.leader_znodes(path=path)
         except (
