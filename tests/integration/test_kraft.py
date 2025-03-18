@@ -107,12 +107,18 @@ class TestKRaft:
                 trust=True,
             )
 
-        await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, self.controller_app}),
-            idle_period=30,
-            timeout=1800,
-            raise_on_error=False,
-        )
+        async with ops_test.fast_forward(fast_interval="60s"):
+            await ops_test.model.wait_for_idle(
+                apps=list({APP_NAME, self.controller_app}),
+                idle_period=30,
+                timeout=1800,
+                raise_on_error=False,
+            )
+
+        # ensuring update-status fires
+        async with ops_test.fast_forward(fast_interval="10s"):
+            await asyncio.sleep(30)
+
         if self.controller_app != APP_NAME:
             assert ops_test.model.applications[APP_NAME].status == "blocked"
             assert ops_test.model.applications[self.controller_app].status == "blocked"

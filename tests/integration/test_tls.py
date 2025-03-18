@@ -18,8 +18,14 @@ from literals import SECURITY_PROTOCOL_PORTS, TLS_RELATION, TRUSTED_CERTIFICATE_
 
 from .helpers import (
     APP_NAME,
+    CERTS_NAME,
+    DUMMY_NAME,
     KAFKA_CONTAINER,
+    MANUAL_TLS_NAME,
+    MTLS_NAME,
     REL_NAME_ADMIN,
+    TLS_NAME,
+    TLS_REQUIRER,
     ZK_NAME,
     check_tls,
     create_test_topic,
@@ -38,14 +44,6 @@ from .helpers import (
 )
 
 logger = logging.getLogger(__name__)
-
-TLS_NAME = "self-signed-certificates"
-MANUAL_TLS_NAME = "manual-tls-certificates"
-CERTS_NAME = "tls-certificates-operator"
-TLS_REQUIRER = "tls-certificates-requirer"
-
-MTLS_NAME = "mtls"
-DUMMY_NAME = "app"
 
 
 @pytest.mark.skip_if_deployed

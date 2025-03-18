@@ -770,6 +770,17 @@ class ZooKeeper(RelationState):
         )
 
     @property
+    def uris(self) -> str:
+        """Connection address for Kafka to use to connect to ZooKeeper with."""
+        if not self.relation:
+            return ""
+
+        return (
+            self.data_interface.fetch_relation_field(relation_id=self.relation.id, field="uris")
+            or ""
+        )
+
+    @property
     def database(self) -> str:
         """Path allocated for Kafka on ZooKeeper."""
         if not self.relation:
@@ -827,41 +838,15 @@ class ZooKeeper(RelationState):
     @property
     def hosts(self) -> list[str]:
         """Get the hosts from the databag."""
-        return [host.split(":")[0] for host in self.endpoints.split(",")]
-
-    @property
-    def uris(self):
-        """Comma separated connection string, containing endpoints + chroot."""
-        return f"{self.endpoints.removesuffix('/')}/{self.database.removeprefix('/')}"
-
-    @property
-    def port(self) -> int:
-        """Get the port in use from the databag.
-
-        We can extract from:
-        - host1:port,host2:port
-        - host1,host2:port
-        """
-        try:
-            port = next(
-                iter([int(host.split(":")[1]) for host in reversed(self.endpoints.split(","))]),
-                2181,
-            )
-        except IndexError:
-            # compatibility with older zk versions
-            port = 2181
-
-        return port
+        return [host.split(":")[0] for host in self.uris.split(",")]
 
     @property
     def zookeeper_version(self) -> str:
         """Get running zookeeper version."""
         zk = ZooKeeperManager(
             hosts=self.hosts,
-            client_port=self.port,
             username=self.username,
             password=self.password,
-            use_ssl=self.tls,
         )
 
         return zk.get_version()
@@ -880,10 +865,8 @@ class ZooKeeper(RelationState):
         try:
             zk = ZooKeeperManager(
                 hosts=self.hosts,
-                client_port=self.port,
                 username=self.username,
                 password=self.password,
-                use_ssl=self.tls,
             )
             brokers = zk.leader_znodes(path=path)
         except (

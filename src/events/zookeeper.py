@@ -54,7 +54,8 @@ class ZooKeeperHandler(Object):
 
     def _on_zookeeper_changed(self, event: RelationChangedEvent) -> None:
         """Handler for `zookeeper_relation_created/joined/changed` events, ensuring internal users get created."""
-        if not self.charm.state.zookeeper.endpoints:
+        if not self.charm.state.zookeeper.uris and self.charm.workload.container_can_connect:
+
             # Kafka keeps a meta.properties in every log.dir with a unique ClusterID
             # this ID is provided by ZK, and removing it on relation-changed allows
             # re-joining a ZK cluster undergoing backup restoration.
