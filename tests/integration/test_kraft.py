@@ -160,12 +160,13 @@ class TestKRaft:
 
     @pytest.mark.abort_on_fail
     async def test_scale_out(self, ops_test: OpsTest):
-        await ops_test.model.applications[self.controller_app].add_units(count=2)
+        await ops_test.model.applications[self.controller_app].add_units(count=4)
         await ops_test.model.wait_for_idle(
             apps=list({APP_NAME, self.controller_app}),
             status="active",
             timeout=1200,
             idle_period=20,
+            wait_for_exact_units=5,
         )
 
         address = await get_address(ops_test=ops_test, app_name=self.controller_app)
@@ -187,16 +188,16 @@ class TestKRaft:
 
     @pytest.mark.abort_on_fail
     async def test_scale_in(self, ops_test: OpsTest):
-        await ops_test.model.applications[self.controller_app].scale(scale=1)
+        await ops_test.model.applications[self.controller_app].scale(scale=3)
         await ops_test.model.wait_for_idle(
             apps=[self.controller_app],
             status="active",
             timeout=600,
             idle_period=20,
-            wait_for_exact_units=1,
+            wait_for_exact_units=3,
         )
 
-        async with ops_test.fast_forward(fast_interval="20s"):
+        async with ops_test.fast_forward(fast_interval="30s"):
             await asyncio.sleep(120)
 
         address = await get_address(ops_test=ops_test, app_name=self.controller_app, unit_num=0)
