@@ -166,7 +166,6 @@ class TestKRaft:
             status="active",
             timeout=1200,
             idle_period=20,
-            wait_for_exact_units=5,
         )
 
         address = await get_address(ops_test=ops_test, app_name=self.controller_app)
