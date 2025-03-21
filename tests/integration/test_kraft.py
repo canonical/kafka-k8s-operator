@@ -43,6 +43,7 @@ class TestKRaft:
     async def _assert_listeners_accessible(
         self, ops_test: OpsTest, broker_unit_num=0, controller_unit_num=0
     ):
+        logger.info(f"Asserting broker listeners are up: {APP_NAME}/{broker_unit_num}")
         address = await get_address(ops_test=ops_test, app_name=APP_NAME, unit_num=broker_unit_num)
         assert netcat(
             address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].internal
@@ -54,6 +55,9 @@ class TestKRaft:
         )
 
         # Check controller socket
+        logger.info(
+            f"Asserting controller listeners are up: {self.controller_app}/{controller_unit_num}"
+        )
         if self.controller_app != APP_NAME:
             address = await get_address(
                 ops_test=ops_test, app_name=self.controller_app, unit_num=controller_unit_num
@@ -161,11 +165,16 @@ class TestKRaft:
     @pytest.mark.abort_on_fail
     async def test_scale_out(self, ops_test: OpsTest):
         await ops_test.model.applications[self.controller_app].add_units(count=2)
+
+        if self.deployment_strat == "multi":
+            await ops_test.model.applications[APP_NAME].add_units(count=2)
+
         await ops_test.model.wait_for_idle(
             apps=list({APP_NAME, self.controller_app}),
             status="active",
             timeout=1200,
             idle_period=20,
+            wait_for_exact_units=3,
         )
 
         address = await get_address(ops_test=ops_test, app_name=self.controller_app)
@@ -184,6 +193,11 @@ class TestKRaft:
                 assert status == KRaftUnitStatus.FOLLOWER
             else:
                 assert status == KRaftUnitStatus.OBSERVER
+
+        for unit_num in range(3):
+            await self._assert_listeners_accessible(
+                ops_test, broker_unit_num=unit_num, controller_unit_num=unit_num
+            )
 
     @pytest.mark.abort_on_fail
     async def test_scale_in(self, ops_test: OpsTest):
