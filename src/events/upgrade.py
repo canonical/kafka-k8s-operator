@@ -215,3 +215,12 @@ class KafkaUpgrade(DataUpgrade):
 
             if not self.charm.state.unit_broker.chain:
                 logger.error("Unable to find valid chain")
+
+        # Rev.66 - broker_capacities needs setting if not already set
+        if self.charm.state.runs_broker:
+            self.charm.state.unit_broker.update(
+                {
+                    "cores": str(self.charm.broker.balancer_manager.cores),
+                    "rack": self.charm.broker.config_manager.rack,
+                }
+            )
