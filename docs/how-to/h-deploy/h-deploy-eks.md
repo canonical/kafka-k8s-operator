@@ -196,7 +196,7 @@ Then, Charmed Apache Kafka can be deployed as usual:
 
 ```shell
 juju deploy zookeeper-k8s -n3 --channel 3/stable
-juju deploy kafka-k8s -n3 --channel 3/stable
+juju deploy kafka-k8s -n3 --channel 3/stable --trust
 juju integrate kafka-k8s zookeeper-k8s
 ```
 
