@@ -31,7 +31,7 @@ It is recommended to deploy a separate Juju application for running Cruise Contr
 For the purposes of this tutorial, we will be deploying a single Charmed Apache Kafka unit to serve as the `balancer`:
 
 ```bash
-juju deploy kafka-k8s --config roles=balancer -n 1 cruise-control
+juju deploy kafka-k8s --trust --config roles=balancer -n 1 cruise-control
 ```
 
 Earlier in the tutorial, we covered enabling TLS encryption, so we will repeat that step here for the new `cruise-control` application:
