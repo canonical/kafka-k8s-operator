@@ -822,12 +822,17 @@ def kraft_quorum_status(
     ops_test: OpsTest, unit_name: str, bootstrap_controller: str, verbose: bool = True
 ) -> dict[int, KRaftUnitStatus]:
     """Returns a dict mapping of unit ID to KRaft unit status based on `kafka-metadata-quorum.sh` utility's output."""
-    result = check_output(
-        f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} '{BROKER.paths['BIN']}/bin/kafka-metadata-quorum.sh --command-config {BROKER.paths['CONF']}/server.properties --bootstrap-controller {bootstrap_controller} describe --replication'",
-        stderr=PIPE,
-        shell=True,
-        universal_newlines=True,
-    )
+    try:
+        result = check_output(
+            f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} '{BROKER.paths['BIN']}/bin/kafka-metadata-quorum.sh --command-config {BROKER.paths['CONF']}/server.properties --bootstrap-controller {bootstrap_controller} describe --replication'",
+            stderr=PIPE,
+            shell=True,
+            universal_newlines=True,
+        )
+    except CalledProcessError as e:
+        logger.error(vars(e))
+        raise
+
     # parse `kafka-metadata-quorum.sh` output
     # NodeId  DirectoryId  LogEndOffset  Lag  LastFetchTimestamp  LastCaughtUpTimestamp
     unit_status: dict[int, str] = {}
