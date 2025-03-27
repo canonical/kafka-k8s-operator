@@ -40,9 +40,7 @@ class TestKRaft:
     deployment_strat: str = os.environ.get("DEPLOYMENT", "multi")
     controller_app: str = {"single": APP_NAME, "multi": CONTROLLER_APP}[deployment_strat]
 
-    async def _assert_broker_listeners_accessible(
-        self, ops_test: OpsTest, broker_unit_num=0
-    ):
+    async def _assert_broker_listeners_accessible(self, ops_test: OpsTest, broker_unit_num=0):
         logger.info(f"Asserting broker listeners are up: {APP_NAME}/{broker_unit_num}")
         address = await get_address(ops_test=ops_test, app_name=APP_NAME, unit_num=broker_unit_num)
         assert netcat(
@@ -198,10 +196,8 @@ class TestKRaft:
                 assert status == KRaftUnitStatus.OBSERVER
 
         for unit_num in range(3):
-            await self._assert_broker_listeners_accessible(
-                ops_test, broker_unit_num=unit_num
-            )
-        
+            await self._assert_broker_listeners_accessible(ops_test, broker_unit_num=unit_num)
+
         for unit_num in range(5):
             await self._assert_controller_listeners_accessible(
                 ops_test, controller_unit_num=unit_num
@@ -231,9 +227,5 @@ class TestKRaft:
         assert KRaftUnitStatus.LEADER in unit_status.values()
 
         for unit_num in range(3):
-            await self._assert_broker_listeners_accessible(
-                ops_test, broker_unit_num=unit_num
-            )
-        await self._assert_controller_listeners_accessible(
-            ops_test, controller_unit_num=unit_num
-        )            
+            await self._assert_broker_listeners_accessible(ops_test, broker_unit_num=unit_num)
+        await self._assert_controller_listeners_accessible(ops_test, controller_unit_num=unit_num)
