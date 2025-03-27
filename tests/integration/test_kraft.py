@@ -59,10 +59,9 @@ class TestKRaft:
         logger.info(
             f"Asserting controller listeners are up: {self.controller_app}/{controller_unit_num}"
         )
-        if self.controller_app != APP_NAME:
-            address = await get_address(
-                ops_test=ops_test, app_name=self.controller_app, unit_num=controller_unit_num
-            )
+        address = await get_address(
+            ops_test=ops_test, app_name=self.controller_app, unit_num=controller_unit_num
+        )
 
         assert netcat(address, CONTROLLER_PORT)
 
@@ -228,4 +227,6 @@ class TestKRaft:
 
         for unit_num in range(3):
             await self._assert_broker_listeners_accessible(ops_test, broker_unit_num=unit_num)
-        await self._assert_controller_listeners_accessible(ops_test, controller_unit_num=unit_num)
+            await self._assert_controller_listeners_accessible(
+                ops_test, controller_unit_num=unit_num
+            )
