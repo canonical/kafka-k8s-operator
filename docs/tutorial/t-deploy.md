@@ -5,7 +5,7 @@ This is part of the [Charmed Apache Kafka K8s Tutorial](/t/charmed-kafka-k8s-doc
 To deploy Charmed Apache Kafka K8s, all you need to do is run the following commands, which will automatically fetch [Apache Kafka](https://charmhub.io/kafka-k8s?channel=3/stable) and [Apache ZooKeeper](https://charmhub.io/zookeeper-k8s?channel=3/stable) charms from [Charmhub](https://charmhub.io/) and deploy them to your model. For example, to deploy a cluster of five Apache Zookeeper units and three Apache Kafka units, you can simply run:
 
 ```shell
-$ juju deploy zookeeper-k8s -n 3 
+$ juju deploy zookeeper-k8s -n 3 --trust
 $ juju deploy kafka-k8s -n 3 --trust
 ```
 
