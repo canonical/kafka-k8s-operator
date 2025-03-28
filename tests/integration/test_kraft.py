@@ -40,9 +40,8 @@ class TestKRaft:
     deployment_strat: str = os.environ.get("DEPLOYMENT", "multi")
     controller_app: str = {"single": APP_NAME, "multi": CONTROLLER_APP}[deployment_strat]
 
-    async def _assert_listeners_accessible(
-        self, ops_test: OpsTest, broker_unit_num=0, controller_unit_num=0
-    ):
+    async def _assert_broker_listeners_accessible(self, ops_test: OpsTest, broker_unit_num=0):
+        logger.info(f"Asserting broker listeners are up: {APP_NAME}/{broker_unit_num}")
         address = await get_address(ops_test=ops_test, app_name=APP_NAME, unit_num=broker_unit_num)
         assert netcat(
             address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].internal
@@ -53,11 +52,16 @@ class TestKRaft:
             address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client
         )
 
+    async def _assert_controller_listeners_accessible(
+        self, ops_test: OpsTest, controller_unit_num=0
+    ):
         # Check controller socket
-        if self.controller_app != APP_NAME:
-            address = await get_address(
-                ops_test=ops_test, app_name=self.controller_app, unit_num=controller_unit_num
-            )
+        logger.info(
+            f"Asserting controller listeners are up: {self.controller_app}/{controller_unit_num}"
+        )
+        address = await get_address(
+            ops_test=ops_test, app_name=self.controller_app, unit_num=controller_unit_num
+        )
 
         assert netcat(address, CONTROLLER_PORT)
 
@@ -148,7 +152,8 @@ class TestKRaft:
         print("SLEEPING")
         logger.info("SLEEPING")
         await asyncio.sleep(300)
-        await self._assert_listeners_accessible(ops_test)
+        await self._assert_broker_listeners_accessible(ops_test)
+        await self._assert_controller_listeners_accessible(ops_test)
 
     @pytest.mark.abort_on_fail
     async def test_authorizer(self, ops_test: OpsTest):
@@ -160,7 +165,11 @@ class TestKRaft:
 
     @pytest.mark.abort_on_fail
     async def test_scale_out(self, ops_test: OpsTest):
-        await ops_test.model.applications[self.controller_app].add_units(count=2)
+        await ops_test.model.applications[self.controller_app].add_units(count=4)
+
+        if self.deployment_strat == "multi":
+            await ops_test.model.applications[APP_NAME].add_units(count=2)
+
         await ops_test.model.wait_for_idle(
             apps=list({APP_NAME, self.controller_app}),
             status="active",
@@ -185,18 +194,26 @@ class TestKRaft:
             else:
                 assert status == KRaftUnitStatus.OBSERVER
 
+        for unit_num in range(3):
+            await self._assert_broker_listeners_accessible(ops_test, broker_unit_num=unit_num)
+
+        for unit_num in range(5):
+            await self._assert_controller_listeners_accessible(
+                ops_test, controller_unit_num=unit_num
+            )
+
     @pytest.mark.abort_on_fail
     async def test_scale_in(self, ops_test: OpsTest):
-        await ops_test.model.applications[self.controller_app].scale(scale=1)
+        await ops_test.model.applications[self.controller_app].scale(scale=3)
         await ops_test.model.wait_for_idle(
             apps=[self.controller_app],
             status="active",
             timeout=600,
             idle_period=20,
-            wait_for_exact_units=1,
+            wait_for_exact_units=3,
         )
 
-        async with ops_test.fast_forward(fast_interval="20s"):
+        async with ops_test.fast_forward(fast_interval="30s"):
             await asyncio.sleep(120)
 
         address = await get_address(ops_test=ops_test, app_name=self.controller_app, unit_num=0)
@@ -207,4 +224,9 @@ class TestKRaft:
         )
 
         assert KRaftUnitStatus.LEADER in unit_status.values()
-        await self._assert_listeners_accessible(ops_test, broker_unit_num=0, controller_unit_num=0)
+
+        for unit_num in range(3):
+            await self._assert_broker_listeners_accessible(ops_test, broker_unit_num=unit_num)
+            await self._assert_controller_listeners_accessible(
+                ops_test, controller_unit_num=unit_num
+            )
