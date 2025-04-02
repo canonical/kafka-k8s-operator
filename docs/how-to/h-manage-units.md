@@ -4,42 +4,30 @@ For general Juju unit management process, see the [Juju documentation](https://j
 
 ## Scale the cluster
 
-Scaling the cluster (adding or removing units) does not lead automatically to rebalancing existing topics and partitions. The rebalancing needs to be done manually, before removing units or after adding them.
+Scaling the cluster does not automatically rebalance existing topics and partitions. Rebalancing must be performed manually—before scaling in or after scaling out.
 
-### Add units
+[note type="caution"]
+Reassign partitions **before** scaling in to ensure that decommissioned units do not hold any data. Failing to do so may lead to data loss.
+[/note]
 
-To increase the number of Apache Kafka brokers, add more units to the Charmed Apache Kafka K8s application:
+To scale Charmed Apache Kafka application, use `juju scale-application` command with the name of the app and the required number of units:
 
 ```shell
-juju add-unit kafka-k8s -n <num_brokers_to_add>
+juju scale-application kafka-k8s <units>
 ```
 
-See the `juju add-unit` [command reference](https://documentation.ubuntu.com/juju/latest/reference/juju-cli/list-of-juju-cli-commands/add-unit/).
+See the `scale-application` [command reference](https://documentation.ubuntu.com/juju/latest/reference/juju-cli/list-of-juju-cli-commands/scale-application/index.html).
 
 Make sure to reassign partitions and topics to use newly added units for existing topics and partitions. See below for guidance.
 
-### Remove units
-
-[note type="caution"]
-Reassign partitions **before** scaling down to ensure that decommissioned units do not hold any data. Failing to do so may lead to data loss.
-[/note]
-
-To decrease the number of Apache Kafka brokers, remove some existing units from the Charmed Apache Kafka K8s application:
-
-```shell
-juju remove-unit kafka-k8s/1 kafka-k8s/2
-```
-
-See the `juju remove-unit` [command reference](https://documentation.ubuntu.com/juju/latest/reference/juju-cli/list-of-juju-cli-commands/remove-unit/).
-
 ### Partition reassignment
 
-When units are added or removed, the Apache Kafka cluster does not *automatically* rebalance existing topics and partitions.
+When brokers are added or removed, Apache Kafka cluster does not *automatically* rebalance existing topics and partitions.
 
 Without reassignment or rebalancing:
 
-* New storage and new brokers will be used only for newer topics and partitions. 
-* Removing a unit can lead to data from its storage being lost.
+* New storages and new brokers will be used only when new topics and new partitions are created. 
+* Removing a broker can result in permanent data loss if the partitions are not replicated on another broker.
 
 Partition reassignment can be done manually by the admin user with the `/opt/kafka/bin/kafka-reassign-partitions.sh` Apache Kafka bin utility script. 
 For more information on the script usage, refer to [Apache Kafka documentation](https://kafka.apache.org/documentation/#basic_ops_partitionassignment). 
