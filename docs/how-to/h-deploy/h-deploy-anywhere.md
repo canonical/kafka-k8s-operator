@@ -67,7 +67,7 @@ Charmed Apache Kafka and Charmed Apache ZooKeeper can both be deployed as follow
 
 ```commandline
 juju deploy kafka-k8s --channel 3/stable -n <kafka-units> --trust
-juju deploy zookeeper-k8s --channel 3/stable -n <zookeeper-units>
+juju deploy zookeeper-k8s --channel 3/stable -n <zookeeper-units> --trust
 ```
 
 where `<kafka-units>` and `<zookeeper-units>` -- the number of units to deploy for Charmed Apache Kafka and Charmed Apache ZooKeeper. We recommend values of at least `3` and `5` respectively.
