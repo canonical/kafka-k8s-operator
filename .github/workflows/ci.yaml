@@ -117,6 +117,7 @@ jobs:
         with:
           timeout_minutes: 75
           max_attempts: 3
+          retry_wait_seconds: 300
           command: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}'
         env:
           CI_PACKED_CHARMS: ${{ needs.build.outputs.charms }}
@@ -134,7 +135,7 @@ jobs:
       - build
       - integration-test
     runs-on: ubuntu-22.04
-    timeout-minutes: 120
+    timeout-minutes: 200
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -163,8 +164,9 @@ jobs:
       - name: Run integration tests
         uses: nick-fields/retry@v3
         with:
-          timeout_minutes: 75
+          timeout_minutes: 60
           max_attempts: 3
+          retry_wait_seconds: 300
           command: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}'
         env:
           CI_PACKED_CHARMS: ${{ needs.build.outputs.charms }}
