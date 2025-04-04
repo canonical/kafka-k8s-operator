@@ -308,7 +308,9 @@ class BrokerOperator(Object):
             self.config_manager.set_server_properties()
 
         if zk_jaas_changed or properties_changed:
-            if isinstance(event, StorageEvent):  # to get new storages
+            if (
+                isinstance(event, StorageEvent) and self.charm.substrate == "vm"
+            ):  # to get new storages
                 self.charm.on[f"{self.charm.restart.name}"].acquire_lock.emit(
                     callback_override="_disable_enable_restart_broker"
                 )
