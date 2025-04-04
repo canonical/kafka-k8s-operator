@@ -2,15 +2,17 @@
 
 For general Juju unit management process, see the [Juju documentation](https://juju.is/docs/juju/manage-units).
 
-## Scale the cluster
+## Scaling
 
-Scaling the cluster does not automatically rebalance existing topics and partitions. Rebalancing must be performed manually—before scaling in or after scaling out.
+[note]
+Scaling a Charmed Apache Kafka cluster does not automatically rebalance existing topics and partitions. Rebalancing must be performed manually—before scaling in or after scaling out.
+[/note]
 
 [note type="caution"]
 Reassign partitions **before** scaling in to ensure that decommissioned units do not hold any data. Failing to do so may lead to data loss.
 [/note]
 
-To scale Charmed Apache Kafka application, use `juju scale-application` command with the name of the app and the required number of units:
+To scale the Charmed Apache Kafka application, use the `juju scale-application` command with the name of the app and the desired number of units:
 
 ```shell
 juju scale-application kafka-k8s <units>
@@ -18,11 +20,11 @@ juju scale-application kafka-k8s <units>
 
 See the `scale-application` [command reference](https://documentation.ubuntu.com/juju/latest/reference/juju-cli/list-of-juju-cli-commands/scale-application/index.html).
 
-Make sure to reassign partitions and topics to use newly added units for existing topics and partitions. See below for guidance.
+Make sure to reassign partitions and topics to use newly added units. See below for guidance.
 
 ### Partition reassignment
 
-When brokers are added or removed, Apache Kafka cluster does not *automatically* rebalance existing topics and partitions.
+When brokers are added or removed, Apache Kafka does not automatically rebalance existing topics and partitions across the new set of brokers.
 
 Without reassignment or rebalancing:
 
@@ -78,7 +80,7 @@ The content of the file can be accessed using `juju ssh` command:
 juju ssh --container kafka kafka-k8s/leader 'cat /etc/kafka/client.properties'
 ```
 
-where the `--container kafka` is to select the Apache Kafka workload container of the unit. By default, the charm operator container is opened.
+where the `--container kafka` argument selects the Apache Kafka workload container of the unit. By default, the charm operator container is opened.
 
 This file can be provided to the Apache Kafka bin commands via the `--command-config`
 argument. Note that `client.properties` may also refer to other files (e.g. truststore and keystore for TLS-enabled connections). 
@@ -86,11 +88,11 @@ Those files also need to be accessible and correctly specified.
 
 Commands can be run within an Apache Kafka broker, since both the authentication 
 file (along with the truststore if needed) and the Charmed Apache Kafka binaries are 
-already present. 
+already present. For example, see below.
 
-#### Listing topics example
+#### List topics
 
-For instance, to list the current topics on the Apache Kafka cluster, run:
+To list the current topics on the Apache Kafka cluster, using credentials from inside the cluster, run:
 
 ```shell
 juju ssh --container kafka kafka-k8s/leader '/opt/kafka/bin/kafka-topics.sh --bootstrap-server $BOOTSTRAP_SERVERS --list --command-config /etc/kafka/client.properties'
