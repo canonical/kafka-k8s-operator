@@ -80,7 +80,7 @@ The content of the file can be accessed using `juju ssh` command:
 juju ssh --container kafka kafka-k8s/leader 'cat /etc/kafka/client.properties'
 ```
 
-where the `--container kafka` argument selects the Apache Kafka workload container of the unit. By default, the charm operator container is opened.
+where the `--container kafka` argument selects the Apache Kafka workload container of the unit. By default, the `charm` operator container is opened.
 
 This file can be provided to the Apache Kafka bin commands via the `--command-config`
 argument. Note that `client.properties` may also refer to other files (e.g. truststore and keystore for TLS-enabled connections). 
