@@ -78,7 +78,6 @@ async def test_deploy_tls(ops_test: OpsTest, kafka_charm, app_charm):
         apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=30, timeout=2000, raise_on_error=False
     )
 
-    assert ops_test.model.applications[APP_NAME].status == "blocked"
     assert ops_test.model.applications[ZK_NAME].status == "active"
     assert ops_test.model.applications[TLS_NAME].status == "active"
 

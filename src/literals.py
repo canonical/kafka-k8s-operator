@@ -16,7 +16,8 @@ CONTAINER = "kafka"
 SUBSTRATE = "k8s"
 STORAGE = "data"
 
-USER = "kafka"
+USER_ID = "kafka"
+USER_NAME = "kafka"
 GROUP = "kafka"
 
 # FIXME: these need better names
