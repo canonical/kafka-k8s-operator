@@ -42,6 +42,7 @@ pyyaml = "^6.0.1"
 requests = ">2.25"
 lightkube = "0.15.0"
 trustme = "^1.2.0"
+charmlibs-pathops = "^1.0.0"
 
 [tool.poetry.group.charm-libs.dependencies]
 # data_platform_libs/v0/data_interfaces.py
@@ -123,7 +124,7 @@ lint.extend-ignore = [
   "D413",
 ]
 lint.ignore = ["E501", "D107"]
-extend-exclude = ["__pycache__", "*.egg_info"]
+extend-exclude = ["__pycache__", "*.egg_info", "tests/integration/app-charm/lib"]
 lint.per-file-ignores = { "tests/*" = ["D100", "D101", "D102", "D103", "D104", "E999"], "src/literals.py" = ["D101"] }
 target-version = "py310"
 src = ["src", "tests"]

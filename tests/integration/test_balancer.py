@@ -98,13 +98,20 @@ class TestBalancer:
                 trust=True,
             )
 
-        async with ops_test.fast_forward(fast_interval="60s"):
-            await ops_test.model.wait_for_idle(
-                apps=list({APP_NAME, ZK_NAME, self.balancer_app}),
-                idle_period=30,
-                timeout=1800,
-                raise_on_error=False,
-            )
+        await ops_test.model.wait_for_idle(
+            apps=[ZK_NAME],
+            idle_period=30,
+            timeout=1800,
+            raise_on_error=False,
+            status="active",
+        )
+        await ops_test.model.wait_for_idle(
+            apps=list({APP_NAME, self.balancer_app}),
+            idle_period=30,
+            timeout=1800,
+            raise_on_error=False,
+            status="blocked",
+        )
 
         # ensuring update-status fires
         async with ops_test.fast_forward(fast_interval="10s"):

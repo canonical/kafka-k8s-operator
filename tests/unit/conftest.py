@@ -42,9 +42,13 @@ def patched_etc_environment():
 
 
 @pytest.fixture(autouse=True)
-def patched_workload_write():
-    with patch("workload.KafkaWorkload.write") as workload_write:
-        yield workload_write
+def patched_workload(monkeypatch: pytest.MonkeyPatch):
+
+    monkeypatch.setattr("time.sleep", lambda _: None)
+    monkeypatch.setattr("workload.Workload.active", lambda _: True)
+    monkeypatch.setattr("workload.Workload.write", lambda _, content, path: None)
+    monkeypatch.setattr("workload.Workload.read", lambda _, path: [])
+    monkeypatch.setattr("workload.Workload.stop", lambda _: None)
 
 
 @pytest.fixture(autouse=True)

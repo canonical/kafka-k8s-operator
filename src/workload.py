@@ -7,12 +7,13 @@
 import logging
 import re
 
+from charmlibs import pathops
 from ops import Container, pebble
 from ops.pebble import ExecError
 from typing_extensions import override
 
 from core.workload import CharmedKafkaPaths, WorkloadBase
-from literals import BALANCER, BROKER, CHARM_KEY, GROUP, JMX_CC_PORT, JMX_EXPORTER_PORT, USER
+from literals import BALANCER, BROKER, CHARM_KEY, GROUP, JMX_CC_PORT, JMX_EXPORTER_PORT, USER_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class Workload(WorkloadBase):
             raise AttributeError("Container is required.")
 
         self.container = container
+        self.root = pathops.ContainerPath("/", container=self.container)
 
     @property
     @override
@@ -49,17 +51,13 @@ class Workload(WorkloadBase):
 
     @override
     def read(self, path: str) -> list[str]:
-        if not self.container.exists(path):
-            return []  # FIXME previous return is None
-        else:
-            with self.container.pull(path) as f:
-                content = f.read().split("\n")
-
-        return content
+        return (
+            [] if not (self.root / path).exists() else (self.root / path).read_text().split("\n")
+        )
 
     @override
     def write(self, content: str, path: str) -> None:
-        self.container.push(path, content, make_dirs=True)
+        (self.root / path).write_text(content, user=USER_NAME, group=GROUP)
 
     @override
     def exec(
@@ -176,7 +174,7 @@ class KafkaWorkload(Workload):
                     "summary": "kafka",
                     "command": command,
                     "startup": "enabled",
-                    "user": str(USER),
+                    "user": str(USER_NAME),
                     "group": GROUP,
                     "environment": {
                         "KAFKA_OPTS": " ".join(extra_opts),
@@ -247,7 +245,7 @@ class BalancerWorkload(Workload):
                     "summary": "balancer",
                     "command": command,
                     "startup": "enabled",
-                    "user": str(USER),
+                    "user": str(USER_NAME),
                     "group": GROUP,
                     "environment": {
                         "KAFKA_OPTS": " ".join(extra_opts),
