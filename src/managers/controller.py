@@ -133,7 +133,7 @@ class ControllerManager:
                 ],
             )
         except CalledProcessError as e:
-            error_details = e.stderr
+            error_details = f"{e.stdout} {e.stderr}"
             if "VoterNotFoundException" in error_details or "TimeoutException" in error_details:
                 # successful
                 return
