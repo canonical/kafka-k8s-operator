@@ -15,7 +15,7 @@ kubectl get services -n <model>
 
 The result is a console output that looks like the following table:
 
-```
+```text
 | NAME                             | TYPE      | CLUSTER-IP     | CLIENT-IP   | PORT(S)                                                                         |
 |----------------------------------|-----------|----------------|-------------|---------------------------------------------------------------------------------|
 | kafka-k8s                        | ClusterIP | 10.152.183.77  |             | 65535/TCP                                                                       |
@@ -63,7 +63,7 @@ To get NodeIPs:
 kubectl get nodes -o wide -n model | awk -v OFS='\t\t' '{print $1, $6}'
 ```
 
-```
+```text
 NAME        INTERNAL-IP
 node-0      10.155.67.110
 node-1      10.155.67.120

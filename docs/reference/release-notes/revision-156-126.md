@@ -1,7 +1,5 @@
 (reference-release-notes-revision-156-126)=
 # Revision 156/126
-
-# Revision 156/126
 <sub>Wednesday, February 28, 2024</sub>
 
 Dear community,
@@ -31,7 +29,7 @@ Please reach out should you have any question, comment, feedback or information.
 Canonical Data issues are now public on both [Jira](https://warthogs.atlassian.net/jira/software/c/projects/DPE/issues/) 
 and [GitHub](https://github.com/canonical/kafka-operator/issues) platforms.
 
-[GitHub Releases](https://github.com/canonical/kafka-operator/releases) provide a detailed list of bugfixes, PRs, and commits for each revision.
+[GitHub Releases](https://github.com/canonical/kafka-operator/releases) provide a detailed list of bug fixes, PRs, and commits for each revision.
 
 ## Inside the charms
 
@@ -41,9 +39,9 @@ and [GitHub](https://github.com/canonical/kafka-operator/issues) platforms.
 * Charmed Apache Kafka charm is based on [charmed-kafka snap](https://snapcraft.io/charmed-kafka) on the `3/stable` channel (Ubuntu LTS “22.04” - core22-based)
 * Principal charms support the latest LTS series “22.04” only.
 
-More information about the artifacts is provided by the following table:
+More information about the artefacts is provided by the following table:
 
-| Artifact               | Track/Series | Version/Revision | Code                                                                                                                |
+| Artefact               | Track/Series | Version/Revision | Code                                                                                                                |
 |------------------------|--------------|------------------|---------------------------------------------------------------------------------------------------------------------|
 | Apache ZooKeeper distribution | 3.x          | 3.8.2-ubuntu0    | [5bb82d](https://git.launchpad.net/zookeeper-releases/tree/?h=lp-3.8.2&id=5bb82df4ffba910a5b30dd42499921466405f087) |
 | Apache Kafka distribution     | 3.x          | 3.6.0-ubuntu0    | [424389](https://git.launchpad.net/kafka-releases/tree/?h=lp-3.6.0&id=424389bb8f230beaef4ccb94aca464b5d22ac310)     |
@@ -58,6 +56,5 @@ More information about the artifacts is provided by the following table:
 * We recommend deploying one `data-integrator` with `extra-user-roles=admin` alongside the Charmed Apache Kafka deployment, in order to enable listeners and also create one user with elevated permission 
   to perform administrative tasks. For more information, see the [How-to manage application](/how-to/manage-applications) guide.
 * The current release has been tested with Juju 2.9.45+ and Juju 3.1+
-* Inplace upgrade for charms tracking `latest` is not supported, both for Charmed Apache ZooKeeper and Charmed Apache Kafka charms. Perform data migration to upgrade to a Charmed Apache Kafka cluster managed via a `3/stable` charm. 
+* In-place upgrade for charms tracking `latest` is not supported, both for Charmed Apache ZooKeeper and Charmed Apache Kafka charms. Perform data migration to upgrade to a Charmed Apache Kafka cluster managed via a `3/stable` charm. 
   For more information on how to perform the migration, see [How-to migrate a cluster](/how-to/cluster-replication/migrate-a-cluster) guide.
-

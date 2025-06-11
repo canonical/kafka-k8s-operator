@@ -36,12 +36,12 @@ Juju superusers responsible for bootstrapping and managing controllers require e
 K8s user for bootstrapping and managing the deployments should have full permissions, such as: 
 
 * create, delete, patch, and list:
-    * namespaces
-    * services
-    * deployments
-    * stateful sets
-    * pods
-    * PVCs
+  * namespaces
+  * services
+  * deployments
+  * stateful sets
+  * pods
+  * PVCs
 
 In general, it is common practice to run Juju using the admin role of K8s, to have full permissions on the Kubernetes cluster. 
 
@@ -50,7 +50,7 @@ In general, it is common practice to run Juju using the admin role of K8s, to ha
 It is very important that Juju users are set up with minimal permissions depending on the scope of their operations. 
 Please refer to the [User access levels](https://juju.is/docs/juju/user-permissions) documentation for more information on the access levels and corresponding abilities. 
 
-Juju user credentials must be stored securely and rotated regularly to limit the chances of unauthorized access due to credentials leakage.
+Juju user credentials must be stored securely and rotated regularly to limit the chances of unauthorised access due to credentials leakage.
 
 ## Applications
 
@@ -78,13 +78,13 @@ The following table summarises the relation between the component and its underl
 | Charmed Apache Kafka     | [`charmed-kafka`](https://github.com/orgs/canonical/packages/container/package/charmed-kafka)         |
 | Charmed Apache ZooKeeper | [`charmed-zookeeper`](https://github.com/orgs/canonical/packages/container/package/charmed-zookeeper) |
 
-New versions of Charmed Apache Kafka and Charmed Apache ZooKeeper images may be released to provide patching of vulnerabilities (CVEs). 
+New versions of Charmed Apache Kafka and Charmed Apache ZooKeeper images may be released to provide patching of vulnerabilities (CVE). 
 
 ### Charmed operator security upgrades
 
 Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s operators install a pinned revision of the images outlined in the previous table 
 to provide reproducible and secure environments. 
-New versions of Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s operators may therefore be released to provide patching of vulnerabilities (CVEs). 
+New versions of Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s operators may therefore be released to provide patching of vulnerabilities (CVE). 
 It is important to refresh the charm regularly to make sure the workload is as secure as possible. 
 For more information on how to refresh the charm, see the [how-to refresh](/) user guide.
 

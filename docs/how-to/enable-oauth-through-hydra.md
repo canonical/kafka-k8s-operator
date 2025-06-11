@@ -1,5 +1,5 @@
 (how-to-enable-oauth-through-hydra)=
-# Enable Oauth through Hydra
+# Enable OAuth through Hydra
 
 Versions used for this integration example:
 

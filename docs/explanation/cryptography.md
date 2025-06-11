@@ -13,7 +13,7 @@ The [Charmed Apache Kafka rock](https://github.com/canonical/charmed-kafka-rock/
 [Charmed Apache ZooKeeper rock](https://github.com/canonical/charmed-zookeeper-rock/pkgs/container/charmed-zookeeper) are OCI images
 derived from their respective snaps. These snaps package the Apache Kafka and Apache ZooKeeper workloads along with the necessary dependencies and utilities required for the operators' lifecycle. See the snap contents for the [Charmed Apache Kafka](https://github.com/canonical/charmed-kafka-snap/blob/3/edge/snap/snapcraft.yaml)  and [Charmed Apache ZooKeeper](https://github.com/canonical/charmed-zookeeper-snap/blob/3/edge/snap/snapcraft.yaml).
 
-Every artifact bundled into the Charmed Apache Kafka and Charmed Apache ZooKeeper snaps is verified against their MD5, SHA256, or SHA512 checksum after download. 
+Every artefact bundled into the Charmed Apache Kafka and Charmed Apache ZooKeeper snaps is verified against their MD5, SHA256, or SHA512 checksum after download. 
 The installation of certified snaps into the rock is ensured by snap primitives that verify their 
 squashfs filesystems images GPG signature. For more information on the snap verification process, refer to the [snapcraft.io documentation](https://snapcraft.io/docs/assertions). 
 
@@ -22,20 +22,20 @@ squashfs filesystems images GPG signature. For more information on the snap veri
 Charmed Apache Kafka sources are stored in:
 
 * GitHub repositories for snaps, rocks and charms
-* LaunchPad repositories for the Apache Kafka and Apache ZooKeeper upstream fork used for building their respective distributions
+* Launchpad repositories for the Apache Kafka and Apache ZooKeeper upstream fork used for building their respective distributions
 
-### LaunchPad
+### Launchpad
 
 Distributions are built using private repositories only, hosted as part of the [SOSS namespace](https://launchpad.net/soss) to eventually
-integrate with Canonical's standard process for fixing CVEs. 
-Branches associated with releases are mirrored to a public repository, hosted in the [Data Platform namespace](https://launchpad.net/~data-platform) 
-to also provide the community with the patched source code. 
+integrate with Canonical's standard process for fixing CVE.
+Branches associated with releases are mirrored to a public repository, hosted in the [Data Platform namespace](https://launchpad.net/~data-platform)
+to also provide the community with the patched source code.
 
 ### GitHub
 
-All Apache Kafka and Apache ZooKeeper artifacts built by Canonical are published and released 
-programmatically using release pipelines implemented via GitHub Actions. 
-Distributions are published as both GitHub and LaunchPad releases via the [central-uploader repository](https://github.com/canonical/central-uploader), while 
+All Apache Kafka and Apache ZooKeeper artefacts built by Canonical are published and released 
+programmatically using release pipelines implemented via GitHub Actions.
+Distributions are published as both GitHub and Launchpad releases via the [central-uploader repository](https://github.com/canonical/central-uploader), while 
 charms, snaps and rocks are published using the workflows of their respective repositories. 
 
 All repositories in GitHub are set up with branch protection rules, requiring:
@@ -94,7 +94,7 @@ The file needs to be readable and writable by root (as it is created by the char
 Clients can authenticate to Kafka using:
 
 1. username and password exchanged using SCRAM-SHA-512 protocols 
-2. client certificates or CAs (mTLS)
+2. client certificates or CA (mTLS)
 
 When using SCRAM, usernames and passwords are stored in Apache ZooKeeper to be used by the Apache Kafka processes, 
 in peer-relation data to be used by the Apache Kafka charm 

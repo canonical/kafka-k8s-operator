@@ -115,7 +115,7 @@ We recommend having two Kafka Connect deployments ready, one on each end of the 
 
 ### Deployment
 
-To ensure that the topics are prefixed with the cluster name and do not collide with each other, deploy two different Mirrormaker integrators with the config option `prefix_topics=true`:
+To ensure that the topics are prefixed with the cluster name and do not collide with each other, deploy two different MirrorMaker integrators with the config option `prefix_topics=true`:
 
 ```bash
 juju deploy mirrormaker-connect-integrator --config prefix_topics=true mirrormaker-a-b

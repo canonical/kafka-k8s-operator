@@ -16,7 +16,7 @@ Please reach out should you have any question, comment, feedback or information.
 
 * [DPE-3726] Workload upgrade to 3.8.4-ubuntu0
 
-## Bugfixes
+## Bug fixes
 
 * [DPE-4183] (backport) fix: only handle quorum removal on relation-departed
 * [DPE-4362] (backport) add alive check fix
@@ -24,7 +24,7 @@ Please reach out should you have any question, comment, feedback or information.
 Canonical Data issues are now public on both [Jira](https://warthogs.atlassian.net/jira/software/c/projects/DPE/issues/) 
 and [GitHub](https://github.com/canonical/kafka-operator/issues) platforms.
 
-[GitHub Releases](https://github.com/canonical/kafka-operator/releases) provide a detailed list of bugfixes, PRs, and commits for each revision.
+[GitHub Releases](https://github.com/canonical/kafka-operator/releases) provide a detailed list of bug fixes, PRs, and commits for each revision.
 
 ## Inside the charms
 
@@ -34,9 +34,9 @@ and [GitHub](https://github.com/canonical/kafka-operator/issues) platforms.
 * Charmed Apache Kafka charm is based on [charmed-kafka snap](https://snapcraft.io/charmed-kafka) on the `3/stable` channel (Ubuntu LTS “22.04” - core22-based)
 * Principal charms support the latest LTS series “22.04” only.
 
-More information about the artifacts is provided by the following table:
+More information about the artefacts is provided by the following table:
 
-| Artifact               | Track/Series | Version/Revision | Code                                                                                                                |
+| Artefact               | Track/Series | Version/Revision | Code                                                                                                                |
 |------------------------|--------------|------------------|---------------------------------------------------------------------------------------------------------------------|
 | Apache ZooKeeper distribution | 3.x          | 3.8.4-ubuntu0    | [78499c](https://git.launchpad.net/zookeeper-releases/tree/?h=lp-3.8.4&id=78499c9f4d4610f9fb963afdad1ffd1aab2a96b8) |
 | Apache Kafka distribution     | 3.x          | 3.6.0-ubuntu0    | [424389](https://git.launchpad.net/kafka-releases/tree/?h=lp-3.6.0&id=424389bb8f230beaef4ccb94aca464b5d22ac310)     |

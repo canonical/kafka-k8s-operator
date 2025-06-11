@@ -3,18 +3,7 @@
 
 # How to deploy on EKS
 
-[Amazon Elastic Kubernetes Service](https://aws.amazon.com/eks/) (EKS) is a popular, fully automated Kubernetes service. To access the EKS Web interface, go to [console.aws.amazon.com/eks/home](https://console.aws.amazon.com/eks/home).
-
-## Summary
-
-* [Install EKS and Juju tooling](#install-eks-juju)
-* [Create a new EKS cluster](#create-eks-cluster)
-* [Bootstrap Juju on EKS](#boostrap-juju)
-* [Deploy charms](#deploy-charms)
-* [Display deployment information](#display-information)
-* [Clean up](#clean-up)
-
----
+[Amazon Elastic Kubernetes Service](https://aws.amazon.com/eks/) (EKS) is a popular, fully automated Kubernetes service. To access the EKS Web interface, go to [{spellexception}`console.aws.amazon.com/eks/home`](https://console.aws.amazon.com/eks/home).
 
 ## Install EKS and Juju tooling
 
@@ -290,4 +279,3 @@ Finally, remove AWS CLI user credentials (to avoid forgetting and getting expose
 ```shell
 rm -f ~/.aws/credentials
 ```
-

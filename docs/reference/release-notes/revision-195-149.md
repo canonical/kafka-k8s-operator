@@ -1,7 +1,5 @@
 (reference-release-notes-revision-195-149)=
 # Revision 195/149
-
-# Revision 195/149
 <sub>Wed, Dec 18th, 2024</sub>
 
 Dear community,
@@ -94,9 +92,9 @@ Contents of the Charmed Apache Kafka and Charmed Apache ZooKeeper include:
 * Charmed Apache Kafka is based on the [charmed-kafka snap](https://snapcraft.io/charmed-kafka) of the `3/stable` channel (Ubuntu LTS “22.04” - core22-based) that ships the Apache Kafka [3.6.1-ubuntu0](https://launchpad.net/kafka-releases/3.x/3.6.1-ubuntu0), built and supported by Canonical
 * Principal charms support the latest LTS series “22.04” only.
 
-More information about the artifacts are provided by the following table:
+More information about the artefacts are provided by the following table:
 
-| Artifact                          | Track/Series | Version/Revision | Code                                                                                                                |
+| Artefact                          | Track/Series | Version/Revision | Code                                                                                                                |
 |-----------------------------------|--------------|------------------|---------------------------------------------------------------------------------------------------------------------|
 | Apache ZooKeeper distribution     | 3.x          | 3.8.4-ubuntu0    | [78499c](https://git.launchpad.net/zookeeper-releases/tree/?h=lp-3.8.4&id=78499c9f4d4610f9fb963afdad1ffd1aab2a96b8) |
 | Apache Kafka distribution         | 3.x          | 3.6.1-ubuntu0    | [db44db](https://git.launchpad.net/kafka-releases/tree/?h=lp-3.6.1&id=db44db1ebf870854dddfc3be0187a976b997d4dc)     |
@@ -105,9 +103,7 @@ More information about the artifacts are provided by the following table:
 | Charmed Apache Kafka snap         | 3/stable     | 37               | [c266f9](https://github.com/canonical/charmed-kafka-snap/tree/c266f9cd283408d2106d4682b67661205a12ea7f)             |  
 | Charmed Apache Kafka operator     | 3/stable     | 195              | [7948df](https://github.com/canonical/kafka-operator/pull/241/commits/7948dfbbfaaa53fccc88beaa90f80de1e70beaa9)                 |   
 
-
 ## Technical notes
 
-* [GitHub Releases](https://github.com/canonical/kafka-operator/releases) provide a detailed list of bugfixes, PRs, and commits for each revision.
+* [GitHub Releases](https://github.com/canonical/kafka-operator/releases) provide a detailed list of bug fixes, PRs, and commits for each revision.
 * Upgrades from previous stable versions can be done with the standard upgrading process, as outlined in the [documentation](/how-to/upgrade)
-

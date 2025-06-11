@@ -3,17 +3,7 @@
 
 # How to deploy on AWS
 
-[Amazon Web Services](https://aws.amazon.com/) is a popular subsidiary of Amazon that provides on-demand cloud computing platforms on a metered pay-as-you-go basis. Access the AWS web console at [console.aws.amazon.com](https://console.aws.amazon.com/).
-
-## Summary
-
-* [Install AWS and Juju tooling](#install-aws-and-juju-tooling)
-  * [Authenticate](#authenticate)
-* [Bootstrap Juju controller on AWS EC2](#bootstrap-juju-controller-on-aws-ec2)
-* [Deploy charms](#deploy-charms)
-* [Clean up](#clean-up)
-
----
+[Amazon Web Services](https://aws.amazon.com/) is a popular subsidiary of Amazon that provides on-demand cloud computing platforms on a metered pay-as-you-go basis. Access the AWS web console at [{spellexception}`console.aws.amazon.com`](https://console.aws.amazon.com/).
 
 ## Install AWS and Juju tooling
 
@@ -29,17 +19,19 @@ To check whether both Juju and AWS CLI are correctly installed, run commands to 
 
 ```shell
 juju version
-
 aws --version
 ```
 
-[details="Output example"]
-```shell
-3.5.4-genericlinux-amd64
+<details>
 
+<summary>Output example</summary>
+
+```text
+3.5.4-genericlinux-amd64
 aws-cli/2.13.25 Python/3.11.5 Linux/6.2.0-33-generic exe/x86_64.ubuntu.23 prompt/off
 ```
-[/details]
+
+</details>
 
 ### Authenticate
 
@@ -70,8 +62,11 @@ Bootstrap Juju controller ([check all supported configuration options](https://j
 juju bootstrap aws <CONTROLLER_NAME>
 ```
 
-[details="Output example"]
-```shell
+<details>
+
+<summary>Output example</summary>
+
+```text
 Creating Juju controller "aws-us-east-1" on aws/us-east-1
 Looking for packaged Juju agent version 3.5.4 for amd64
 Located Juju agent version 3.5.4-ubuntu-amd64 at https://juju-dist-aws.s3.amazonaws.com/agents/agent/3.5.4/juju-3.5.4-linux-amd64.tgz
@@ -93,7 +88,8 @@ Now you can run
 	juju add-model <model-name>
 to create a new model to deploy workloads.
 ```
-[/details]
+
+</details>
 
 ## Deploy charms
 
@@ -164,5 +160,10 @@ After destroying the controller, check and manually delete all unnecessary AWS E
 aws ec2 describe-instances --region us-east-1 --query "Reservations[].Instances[*].{InstanceType: InstanceType, InstanceId: InstanceId, State: State.Name}" --output table
 ```
 
-[details="Output example"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
+
+```

@@ -1,10 +1,8 @@
 (reference-apache-kafka-listeners)=
 # Apache Kafka Listeners
 
-# Apache Kafka listeners
-
 Charmed Apache Kafka comes with a set of listeners that can be enabled to allow for
-inter- and intra-cluster communication. 
+inter- and intra-cluster communication.
 
 - **Internal listeners** are used for internal traffic and exchange of information between Apache Kafka brokers
 - **Client listeners** are used for clients within the Kubernetes cluster,
@@ -20,20 +18,19 @@ opened.
 
 | Security protocol | Authentication mechanism | Driving endpoints                                      | Port    | Scope    | Listener name                         |
 |-------------------|--------------------------|--------------------------------------------------------|---------|----------|---------------------------------------|
-| SASL_PLAINTEXT    | SCRAM-SHA-512            | `cluster`                                              | `19092` | INTERNAL | INTERNAL_SASL_PLAINTEXT_SCRAM_SHA_512 |
-| SASL_SSL          | SCRAM-SHA-512            | `cluster` + `certificates`                             | `19093` | INTERNAL | INTERNAL_SASL_SSL_SCRAM_SHA_512       |
-| SASL_PLAINTEXT    | SCRAM-SHA-512            | `kafka-client`                                         | `9092`  | CLIENT   | CLIENT_SASL_PLAINTEXT_SCRAM_SHA_512   |
-| SASL_SSL          | SCRAM-SHA-512            | `kafka-client` + `certificates`                        | `9093`  | CLIENT   | CLIENT_SASL_SSL_SCRAM_SHA_512         |
-| SSL               | SSL                      | (`trusted-certificate`\|`trusted-ca`) + `certificates` | `9094`  | CLIENT   | CLIENT_SSL_SSL                        |
-| SASL_PLAINTEXT    | OAUTHBEARER              | `kafka-client` + `oauth`                               | `9095`  | CLIENT   | CLIENT_SASL_PLAINTEXT_OAUTHBEARER     |
-| SASL_SSL          | OAUTHBEARER              | `kafka-client` + `oauth` + `certificates`              | `9096`  | CLIENT   | CLIENT_SASL_SSL_OAUTHBEARER           |
-| SASL_PLAINTEXT    | SCRAM-SHA-512            | `kafka-client`                                         | `29092` | EXTERNAL | EXTERNAL_SASL_PLAINTEXT_SCRAM_SHA_512 |
-| SASL_SSL          | SCRAM-SHA-512            | `kafka-client` + `certificates`                        | `29093` | EXTERNAL | EXTERNAL_SASL_SSL_SCRAM_SHA_512       |
-| SSL               | SSL                      | (`trusted-certificate`\|`trusted-ca`) + `certificates` | `29094` | EXTERNAL | EXTERNAL_SSL_SSL                      |
-| SASL_PLAINTEXT    | OAUTHBEARER              | `kafka-client` + `oauth`                               | `29095` | EXTERNAL | EXTERNAL_SASL_PLAINTEXT_OAUTHBEARER   |
-| SASL_SSL          | OAUTHBEARER              | `kafka-client` + `oauth` + `certificates`              | `29096` | EXTERNAL | EXTERNAL_SASL_SSL_OAUTHBEARER         |
+| SASL_PLAINTEXT    | `SCRAM-SHA-512`            | `cluster`                                              | `19092` | INTERNAL | `INTERNAL_SASL_PLAINTEXT_SCRAM_SHA_512` |
+| SASL_SSL          | `SCRAM-SHA-512`            | `cluster` + `certificates`                             | `19093` | INTERNAL | `INTERNAL_SASL_SSL_SCRAM_SHA_512`       |
+| SASL_PLAINTEXT    | `SCRAM-SHA-512`            | `kafka-client`                                         | `9092`  | CLIENT   | `CLIENT_SASL_PLAINTEXT_SCRAM_SHA_512`   |
+| SASL_SSL          | `SCRAM-SHA-512`            | `kafka-client` + `certificates`                        | `9093`  | CLIENT   | `CLIENT_SASL_SSL_SCRAM_SHA_512`         |
+| SSL               | `SSL`                      | (`trusted-certificate`\|`trusted-ca`) + `certificates` | `9094`  | CLIENT   | `CLIENT_SSL_SSL`                        |
+| SASL_PLAINTEXT    | `OAUTHBEARER`              | `kafka-client` + `oauth`                               | `9095`  | CLIENT   | `CLIENT_SASL_PLAINTEXT_OAUTHBEARER`     |
+| SASL_SSL          | `OAUTHBEARER`              | `kafka-client` + `oauth` + `certificates`              | `9096`  | CLIENT   | `CLIENT_SASL_SSL_OAUTHBEARER`           |
+| SASL_PLAINTEXT    | `SCRAM-SHA-512`            | `kafka-client`                                         | `29092` | EXTERNAL | `EXTERNAL_SASL_PLAINTEXT_SCRAM_SHA_512` |
+| SASL_SSL          | `SCRAM-SHA-512`            | `kafka-client` + `certificates`                        | `29093` | EXTERNAL | `EXTERNAL_SASL_SSL_SCRAM_SHA_512`       |
+| SSL               | `SSL`                      | (`trusted-certificate`\|`trusted-ca`) + `certificates` | `29094` | EXTERNAL | `EXTERNAL_SSL_SSL`                      |
+| SASL_PLAINTEXT    | `OAUTHBEARER`              | `kafka-client` + `oauth`                               | `29095` | EXTERNAL | `EXTERNAL_SASL_PLAINTEXT_OAUTHBEARER`   |
+| SASL_SSL          | `OAUTHBEARER`              | `kafka-client` + `oauth` + `certificates`              | `29096` | EXTERNAL | `EXTERNAL_SASL_SSL_OAUTHBEARER`         |
 
 ```{note}
 Since `cluster` is a peer relation, one of the two `INTERNAL_*` listeners is always enabled.
 ```
-

@@ -17,7 +17,7 @@ MirrorMaker runs as a distributed service on the target cluster. It can consume 
 
 In addition to the [MirrorMaker-specific configuration](https://kafka.apache.org/documentation/#mirrormakerconfigs), the MirrorMaker service can also be configured using many of the same settings as [Kafka Connect](https://kafka.apache.org/documentation/#connectconfigs).
 
-## Charmed MirorMaker integrator
+## Charmed MirrorMaker integrator
 
 The [MirrorMaker Integrator charm](https://charmhub.io/mirrormaker-connect-integrator) enables the management of Apache Kafka Connect tasks to mirror and replicate topics from one Charmed Apache Kafka application to another.
 

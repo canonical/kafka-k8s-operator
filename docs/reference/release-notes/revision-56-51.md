@@ -1,7 +1,5 @@
 (reference-release-notes-revision-56-51)=
 # Revision 56/51
-
-# Revision 56/51
 <sub>Wednesday, February 28, 2024</sub>
 
 Dear community,
@@ -31,7 +29,7 @@ Please reach out should you have any question, comment, feedback or information.
 Canonical Data issues are now public on both [Jira](https://warthogs.atlassian.net/jira/software/c/projects/DPE/issues/) 
 and [GitHub](https://github.com/canonical/kafka-k8s-operator/issues) platforms.
 
-[GitHub Releases](https://github.com/canonical/kafka-k8s-operator/releases) provide a detailed list of bugfixes, PRs, and commits for each revision.
+[GitHub Releases](https://github.com/canonical/kafka-k8s-operator/releases) provide a detailed list of bug fixes, PRs, and commits for each revision.
 
 ## Inside the charms
 
@@ -40,9 +38,9 @@ and [GitHub](https://github.com/canonical/kafka-k8s-operator/issues) platforms.
 * Charmed Apache ZooKeeper K8s charm is provided with the [charmed-zookeeper rock](https://snapcraft.io/charmed-zookeeper) on the `3-22.04_stable` tag (based on top of a Ubuntu LTS “22.04” base)
 * Charmed Apache Kafka K8s charm is provided with the [charmed-kafka rock](https://snapcraft.io/charmed-zookeeper) on the `3-22.04_stable` tag (based on top of a Ubuntu LTS “22.04” base)
 
-More information about the artifacts is provided by the following table:
+More information about the artefacts is provided by the following table:
 
-| Artifact               | Track/Series/Tag | Version/Revision/Hash                                                                                           | Code                                                                                                                |
+| Artefact               | Track/Series/Tag | Version/Revision/Hash                                                                                           | Code                                                                                                                |
 |------------------------|------------------|-----------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
 | ZooKeeper distribution | 3.x              | 3.8.2-ubuntu0                                                                                                   | [5bb82d](https://git.launchpad.net/zookeeper-releases/tree/?h=lp-3.8.2&id=5bb82df4ffba910a5b30dd42499921466405f087) |
 | Apache Kafka distribution     | 3.x              | 3.6.0-ubuntu0                                                                                                   | [424389](https://git.launchpad.net/kafka-releases/tree/?h=lp-3.6.0&id=424389bb8f230beaef4ccb94aca464b5d22ac310)     |
@@ -51,14 +49,12 @@ More information about the artifacts is provided by the following table:
 | Charmed Apache Kafka rock     | 3-22.04_stable   | [sha256:4b3495](https://github.com/canonical/charmed-kafka-rock/pkgs/container/charmed-kafka/169796414)         | [66518b](https://github.com/canonical/charmed-kafka-rock/tree/66518b362e73528c8aaec06e331337fbfd0697f1)             |  
 | Charmed Apache Kafka K8s operator     | 3/stable         | 56                                                                                                              | [fe1f1c](https://github.com/canonical/kafka-k8s-operator/tree/fe1f1ce1d8412423e1cccb91b06a96b9622789b1)             |   
 
-
 ## Technical notes
 
 * A Charmed Apache Kafka K8s cluster is secure by default, meaning that when deployed if there are no client charms related to it, external listeners will not be enabled.
 * We recommend deploying one `data-integrator` with `extra-user-roles=admin` alongside the Charmed Apache Kafka deployment, in order to enable listeners and also create one user with elevated permission 
   to perform administrative tasks. For more information, see the [How-to manage application](/) guide.
-* The current version of Apache Kafka does not yet support direct integration with Ingress, NodePort or LoadBalancer services. We recommend using it for usage within the K8s network.
+* The current version of Apache Kafka does not yet support direct integration with Ingress, NodePort or Load Balancer services. We recommend using it for usage within the K8s network.
 * The current release has been tested with Juju 2.9.45+ and Juju 3.1+
-* Inplace upgrade for charms tracking `latest` is not supported, both for Apache ZooKeeper and Apache Kafka charms. Perform data migration to upgrade to a Charmed Apache Kafka cluster managed via a `3/stable` charm. 
+* In-place upgrade for charms tracking `latest` is not supported, both for Apache ZooKeeper and Apache Kafka charms. Perform data migration to upgrade to a Charmed Apache Kafka cluster managed via a `3/stable` charm. 
   For more information on how to perform the migration, see [How-to migrate a cluster](/) guide.
-
