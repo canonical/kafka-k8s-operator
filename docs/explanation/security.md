@@ -39,7 +39,7 @@ K8s user for bootstrapping and managing the deployments should have full permiss
   * namespaces
   * services
   * deployments
-  * stateful sets
+  * statefulsets
   * pods
   * PVCs
 
@@ -64,7 +64,7 @@ In the following, we provide guidance on how to harden your deployment using:
 
 ### Base images
 
-Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s run on top of rockcraft-based images shipping the Apache Kafka and Apache ZooKeeper 
+Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s run on top of Rockcraft-based images shipping the Apache Kafka and Apache ZooKeeper 
 distribution binaries built by Canonical, and available in the [Apache Kafka release page](https://launchpad.net/kafka-releases) and 
 [Apache ZooKeeper release page](https://launchpad.net/zookeeper-releases), respectively. Both images are based on Ubuntu 22.04. 
 
@@ -118,10 +118,9 @@ For instructions, see the [How to integrate the Charmed Apache Kafka K8s deploym
 External user access to Apache Kafka is logged to the `kafka-authorizer.log` that is pushed to [Loki endpoint](https://charmhub.io/loki-k8s) and exposed via [Grafana](https://charmhub.io/grafana), both components being part of the COS stack.
 
 Access denials are logged at the `INFO` level, whereas allowed accesses are logged at the `DEBUG` level. Depending on the auditing needs, 
-customize the logging level either for all logs via the [`log_level`](https://charmhub.io/kafka-k8s/configurations?channel=3/stable#log_level) config option or 
+customise the logging level either for all logs via the [`log_level`](https://charmhub.io/kafka-k8s/configurations?channel=3/stable#log_level) configuration option or
 only tune the logging level of the `authorizerAppender` in the `log4j.properties` file. See the [file system paths](/) for further information.
 
 ## Additional Resources
 
 For details on the cryptography used by Charmed Apache Kafka K8s, see the [Cryptography](/) explanation page.
-

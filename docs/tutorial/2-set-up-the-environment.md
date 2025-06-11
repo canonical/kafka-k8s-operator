@@ -5,14 +5,15 @@ This is part of the [Charmed Apache Kafka Tutorial](/). Please refer to this pag
 
 ## Setup the environment
 
-[Multipass](https://multipass.run/) is a quick and easy way to launch virtual machines running Ubuntu. It uses "[cloud-init](https://cloud-init.io/)" standard to install and configure all the necessary parts automatically.
+[Multipass](https://multipass.run/) is a quick and easy way to launch virtual machines running Ubuntu. It uses "[{spellexception}`cloud-init`](https://cloud-init.io/)" standard to install and configure all the necessary parts automatically.
 
-Let's install Multipass from [Snap](https://snapcraft.io/multipass) and launch a new VM using "[charm-dev](https://github.com/canonical/multipass-blueprints/blob/main/v1/charm-dev.yaml)" cloud-init config:
+Let's install Multipass from [Snap](https://snapcraft.io/multipass) and launch a new VM using "[{spellexception}`charm-dev`](https://github.com/canonical/multipass-blueprints/blob/main/v1/charm-dev.yaml)" cloud-init configuration:
 
 ```shell
 sudo snap install multipass && \
 multipass launch --cpus 4 --memory 8G --disk 50G --name my-vm charm-dev
 ```
+
 *Note: See all `multipass launch` parameters in the [launch command documentation](https://multipass.run/docs/launch-command)*.
 
 Multipass [list of commands](https://multipass.run/docs/multipass-cli-commands) is short and self-explanatory, e.g. show all running VMs:
@@ -26,6 +27,7 @@ As soon as the new VM starts, enter:
 ```shell
 multipass shell my-vm
 ```
+
 *Note: if at any point you'd like to leave Multipass VM, use `Ctrl+D` or type `exit`*.
 
 All the parts have been pre-installed inside VM already, like MicroK8s, LXD and Juju (the files `/var/log/cloud-init.log` and `/var/log/cloud-init-output.log` contain all low-level installation details). 

@@ -40,9 +40,9 @@ New revisions of [Charmed Apache Kafka](http://charmhub.io/kafka) and [Charmed A
 - [DPE-5553](https://warthogs.atlassian.net/browse/DPE-5553) - feat: don't restart server on keystore/truststore updates [#272](https://github.com/canonical/kafka-operator/pull/#272)
 - [DPE-5349](https://warthogs.atlassian.net/browse/DPE-5349) - feat: add internal user and SASL/SCRAM authentication [#284](https://github.com/canonical/kafka-operator/pull/#284)
 - [DPE-6138](https://warthogs.atlassian.net/browse/DPE-6138) - chore: update zookeeper client lib [#282](https://github.com/canonical/kafka-operator/pull/#282)
-- [DPE-6266](https://warthogs.atlassian.net/browse/DPE-6266) - chore: prepare charm for charmcraft 3 [#293](https://github.com/canonical/kafka-operator/pull/#293)
+- [DPE-6266](https://warthogs.atlassian.net/browse/DPE-6266) - chore: prepare charm for Charmcraft 3 [#293](https://github.com/canonical/kafka-operator/pull/#293)
 - [DPE-5232](https://warthogs.atlassian.net/browse/DPE-5232);[DPE-5233](https://warthogs.atlassian.net/browse/DPE-5233) - chore: support for scaling operations in KRaft mode (single & multi-app) [#281](https://github.com/canonical/kafka-operator/pull/#281)
-- [DPE-6247](https://warthogs.atlassian.net/browse/DPE-6247) - test/cicd: stabalise int-test ci [#320](https://github.com/canonical/kafka-operator/pull/#320)
+- [DPE-6247](https://warthogs.atlassian.net/browse/DPE-6247) - {spellexception}`test/cicd`: stabilise int-test CI [#320](https://github.com/canonical/kafka-operator/pull/#320)
 
 ### Bug fixes
 
@@ -50,7 +50,7 @@ New revisions of [Charmed Apache Kafka](http://charmhub.io/kafka) and [Charmed A
 - [DPE-4951](https://warthogs.atlassian.net/browse/DPE-4951) - fix: re-enable prefixed topic names during relations [#227](https://github.com/canonical/kafka-operator/pull/#227)
 - [DPE-5208](https://warthogs.atlassian.net/browse/DPE-5208) - fix: secure written znodes [#231](https://github.com/canonical/kafka-operator/pull/#231)
 - [DPE-5218](https://warthogs.atlassian.net/browse/DPE-5218) - chore: enable compatibility with ZK restore feature [#243](https://github.com/canonical/kafka-operator/pull/#243)
-- [DPE-5686](https://warthogs.atlassian.net/browse/DPE-5686) - test: fix flakey CI
+- [DPE-5686](https://warthogs.atlassian.net/browse/DPE-5686) - test: fix flaky CI
 - [DPE-5611](https://warthogs.atlassian.net/browse/DPE-5611) - fix: remove cruise-control metrics reporter if no balancer [#250](https://github.com/canonical/kafka-operator/pull/#250)
 - [DPE-5826](https://warthogs.atlassian.net/browse/DPE-5826) - fix: remove lost+found from new storages [#275](https://github.com/canonical/kafka-operator/pull/#275)
 - [DPE-6261](https://warthogs.atlassian.net/browse/DPE-6261) - fix: remove '/' character from generated SANs for Digicert [#297](https://github.com/canonical/kafka-operator/pull/#297)

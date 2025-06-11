@@ -1,9 +1,7 @@
 (how-to-manage-applications)=
-# Manage applications
-
 # How to manage related applications
 
-Relations to new applications are supported via the "[kafka_client](https://github.com/canonical/charm-relation-interfaces/blob/main/interfaces/kafka_client/v0/README.md)" interface.
+Relations to new applications are supported via the "[{spellexception}`kafka_client`](https://github.com/canonical/charm-relation-interfaces/blob/main/interfaces/kafka_client/v0/README.md)" interface.
 
 ## Within Juju via `kafka_client` interface
  
@@ -87,6 +85,7 @@ juju deploy data-integrator rotated-user --channel stable \
 ```
 
 The `data-integrator` charm can then be related to the `kafka-k8s` charm to create a new user
+
 ```shell
 juju relate kafka-k8s rotated-user
 ```
@@ -113,4 +112,3 @@ juju run kafka-k8s/leader set-password password=<password>
 # to randomly generate a password for the operator user
 juju run kafka-k8s/leader set-password
 ```
-

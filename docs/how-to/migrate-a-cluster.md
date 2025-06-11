@@ -1,6 +1,4 @@
 (how-to-migrate-a-cluster)=
-# Migrate a cluster
-
 # Cluster migration using MirrorMaker2.0
 
 This How-To guide covers executing a cluster migration to a Charmed Apache Kafka K8s deployment using MirrorMaker2.0.
@@ -12,7 +10,7 @@ The MirrorMaker runs on the new (destination) cluster as a process on each Juju 
 Under the hood, MirrorMaker uses Kafka Connect source connectors to replicate data, those being the following:
 
 - **MirrorSourceConnector** - replicates topics from an original cluster to a new cluster. It also replicates ACLs and is necessary for the MirrorCheckpointConnector to run
-- **MirrorCheckpointConnector** - periodically tracks offsets. If enabled, it also synchronizes consumer group offsets between the original and new clusters
+- **MirrorCheckpointConnector** - periodically tracks offsets. If enabled, it also synchronises consumer group offsets between the original and new clusters
 - **MirrorHeartbeatConnector** - periodically checks connectivity between the original and new clusters
 
 Together, they are used for cluster->cluster replication of topics, consumer groups, topic configuration and ACLs, preserving partitioning and consumer offsets. For more detail on MirrorMaker internals, consult the [MirrorMaker README.md](https://github.com/apache/kafka/blob/trunk/connect/mirror/README.md) and the [MirrorMaker 2.0 KIP](https://cwiki.apache.org/confluence/display/KAFKA/KIP-382%3A+MirrorMaker+2.0). In practice, it allows one to sync data one way between two live Apache Kafka clusters with minimal impact on the ongoing production service.

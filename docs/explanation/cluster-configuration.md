@@ -1,8 +1,6 @@
 (explanation-cluster-configuration)=
 # Cluster configuration
 
-# Cluster configuration
-
 [Apache Kafka](https://kafka.apache.org) is an open-source distributed event streaming platform that requires an external solution to coordinate and sync metadata between all active brokers.
 One of such solutions is [Apache ZooKeeper](https://zookeeper.apache.org).
 

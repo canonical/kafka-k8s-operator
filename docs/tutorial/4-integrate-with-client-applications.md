@@ -70,7 +70,7 @@ kafka:
 ok: "True"
 ```
 
-Save the value listed under `endpoints`, `username` and `password`. *(Note: your hostnames, usernames, and passwords will likely be different.)*
+Save the value listed under `endpoints`, `username` and `password`. *(Note: your hostname, username, and password will likely be different.)*
 
 ### Produce/consume messages
 

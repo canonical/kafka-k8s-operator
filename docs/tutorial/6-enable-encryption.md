@@ -96,7 +96,7 @@ with the encrypted port 9093.
 
 ### Remove external TLS certificate
 
-To remove the external TLS and return to the locally generated one, un-relate applications:
+To remove the external TLS and return to the locally generated one, unrelate applications:
 
 ```shell
 juju remove-relation kafka-k8s  self-signed-certificates

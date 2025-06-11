@@ -1,8 +1,6 @@
 (explanation-cryptography)=
 # Cryptography
 
-# Cryptography
-
 This document describes the cryptography used by Charmed Apache Kafka K8s.
 
 ## Resource checksums
@@ -13,9 +11,9 @@ The [Charmed Apache Kafka rock](https://github.com/canonical/charmed-kafka-rock/
 [Charmed Apache ZooKeeper rock](https://github.com/canonical/charmed-zookeeper-rock/pkgs/container/charmed-zookeeper) are OCI images
 derived from their respective snaps. These snaps package the Apache Kafka and Apache ZooKeeper workloads along with the necessary dependencies and utilities required for the operators' lifecycle. See the snap contents for the [Charmed Apache Kafka](https://github.com/canonical/charmed-kafka-snap/blob/3/edge/snap/snapcraft.yaml)  and [Charmed Apache ZooKeeper](https://github.com/canonical/charmed-zookeeper-snap/blob/3/edge/snap/snapcraft.yaml).
 
-Every artefact bundled into the Charmed Apache Kafka and Charmed Apache ZooKeeper snaps is verified against their MD5, SHA256, or SHA512 checksum after download. 
-The installation of certified snaps into the rock is ensured by snap primitives that verify their 
-squashfs filesystems images GPG signature. For more information on the snap verification process, refer to the [snapcraft.io documentation](https://snapcraft.io/docs/assertions). 
+Every artefact bundled into the Charmed Apache Kafka and Charmed Apache ZooKeeper snaps is verified against their MD5, SHA256, or SHA512 checksum after download.
+The installation of certified snaps into the rock is ensured by snap primitives that verify their
+Squashfs file systems images GPG signature. For more information on the snap verification process, refer to the [Snapcraft documentation](https://snapcraft.io/docs/assertions).
 
 ## Sources verification
 
@@ -59,7 +57,7 @@ Python library to create X.509 compatible certificates. The CSR is signed by the
 stored in a password-protected Keystore file. The password of the Keystore is stored in Juju secrets starting from revision 168 of Charmed Apache Kafka 
 and revision 130 of Charmed Apache ZooKeeper. The relation also provides the CA certificate, which is loaded into a password-protected Truststore file.
 
-When encryption is enabled, hostname verification is turned on for client connections, including inter-broker communication. The cipher suite can be customized by specifying a list of allowed cipher suites for external clients and Apache ZooKeeper connections. This is done using the charm configuration options `ssl_cipher_suites` and `zookeeper_ssl_cipher_suites`, respectively (see [reference documentation](https://charmhub.io/kafka-k8s/configurations)).
+When encryption is enabled, hostname verification is turned on for client connections, including inter-broker communication. The cipher suite can be customised by specifying a list of allowed cipher suites for external clients and Apache ZooKeeper connections. This is done using the charm configuration options `ssl_cipher_suites` and `zookeeper_ssl_cipher_suites`, respectively (see [reference documentation](https://charmhub.io/kafka-k8s/configurations)).
 
 Encryption at rest is currently not supported, although it can be provided by the substrate (cloud or on-premises).
 
@@ -85,7 +83,7 @@ Permissions on the file are restricted to the root user only.
 
 Authentication among brokers is based on the SCRAM-SHA-512 protocol. Usernames and passwords are exchanged via peer relations, using Juju secrets from revision 168 of Charmed Apache Kafka.
 
-The Apache Kafka username and password, used by brokers to authenticate each other, are stored both in an Apache ZooKeeper zNode and in a JAAS configuration file on the Apache Kafka server in plain text format.
+The Apache Kafka username and password, used by brokers to authenticate each other, are stored both in an Apache ZooKeeper znode and in a JAAS configuration file on the Apache Kafka server in plain text format.
 
 The file needs to be readable and writable by root (as it is created by the charm) and readable by the `snap_daemon` user running the Charmed Apache Kafka server snap commands.
 

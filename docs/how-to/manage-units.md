@@ -124,7 +124,7 @@ file available on the brokers at `/etc/kafka/client.properties`.
 
 To do so, fetch the information using `juju` commands:
 
-```
+```shell
 BOOTSTRAP_SERVERS=$(juju run data-integrator/leader get-credentials --format yaml | yq .kafka.endpoints )
 USERNAME=$(juju run data-integrator/leader get-credentials --format yaml | yq .kafka.username )
 PASSWORD=$(juju run data-integrator/leader get-credentials --format yaml | yq .kafka.password )
@@ -132,10 +132,9 @@ PASSWORD=$(juju run data-integrator/leader get-credentials --format yaml | yq .k
 
 Then copy the `/etc/kafka/client.properties` and substitute the following lines:
 
-```
+```text
 ...
 sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="<USERNAME>" password="<PASSWORD>";
 ...
 bootstrap.servers=<BOOTSTRAP_SERVERS>
 ```
-

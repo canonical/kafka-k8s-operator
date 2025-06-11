@@ -62,13 +62,15 @@ juju consume <k8s_cos_controller>:admin/<cos_model_name>.grafana-dashboards
 juju consume <k8s_cos_controller>:admin/<cos_model_name>.loki-logging
 juju consume <k8s_cos_controller>:admin/<cos_model_name>.prometheus-receive-remote-write
 ```
+
 ## Deploy and integrate Grafana
 
-First, deploy [grafana-agent-k8s](https://charmhub.io/grafana-agent-k8s): 
+First, deploy [{spellexception}`grafana-agent-k8s`](https://charmhub.io/grafana-agent-k8s):
 
 ```shell
 juju deploy grafana-agent-k8s --trust
 ```
+
 Then, integrate `grafana-agent-k8s` with consumed COS offers:
 
 ```shell
@@ -76,6 +78,7 @@ juju integrate grafana-agent-k8s grafana-dashboards
 juju integrate grafana-agent-k8s loki-logging
 juju integrate grafana-agent-k8s prometheus-receive-remote-write
 ```
+
 Finally, integrate (previously known as "[relate](https://juju.is/docs/juju/integration)") it with Charmed Apache Kafka K8s
 
 ```shell
@@ -92,14 +95,15 @@ juju integrate grafana-agent-k8s zookeeper-k8s:logging
 juju integrate grafana-agent-k8s zookeeper-k8s:metrics-endpoint
 ```
 
-Wait for all components to settle down on a `active/idle` state on both 
+Wait for all components to settle down on a `active/idle` state on both
 models, e.g. `<kafka_model_name>` and `<cos_model_name>`.
 
-After this is complete, the monitoring COS stack should be up and running and ready to be used. 
+After this is complete, the monitoring COS stack should be up and running and ready to be used.
 
 ### Connect Grafana web interface
 
 To connect to the Grafana web interface, follow the [Browse dashboards](https://charmhub.io/topics/canonical-observability-stack/tutorials/install-microk8s?_ga=2.201254254.1948444620.1704703837-757109492.1701777558#browse-dashboards) section of the MicroK8s "Getting started" guide.
+
 ```shell
 juju run grafana/leader get-admin-password --model <k8s_cos_controller>:<cos_model_name>
 ```
@@ -108,9 +112,9 @@ juju run grafana/leader get-admin-password --model <k8s_cos_controller>:<cos_mod
 
 To tune the level of the server logs for Apache Kafka and Apache ZooKeeper, configure the `log-level` and `log_level` properties accordingly.
 
-### Apache Kafka 
+### Apache Kafka
 
-```
+```shell
 juju config kafka log_level=<LOG_LEVEL>
 ```
 
@@ -118,9 +122,8 @@ Possible values are `ERROR`, `WARNING`, `INFO`, `DEBUG`.
 
 ### Apache ZooKeeper
 
-```
+```shell
 juju config kafka log-level=<LOG_LEVEL>
 ```
 
 Possible values are `ERROR`, `WARNING`, `INFO`, `DEBUG`.
-

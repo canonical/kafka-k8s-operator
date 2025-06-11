@@ -27,6 +27,7 @@ Rockcraft
 readthedocs
 rst
 sitemapindex
+statefulsets
 subproject
 subprojects
 SVG
@@ -49,6 +50,7 @@ ZooKeeper
 checksums
 mTLS
 unencrypted
+unrelate
 truststore
 keystore
 SHA
@@ -120,6 +122,7 @@ authorised
 AWS
 backport
 backporting
+balancers
 Charmcraft
 Charmhub
 CI

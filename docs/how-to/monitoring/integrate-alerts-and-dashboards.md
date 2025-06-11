@@ -1,6 +1,4 @@
 (how-to-monitoring-integrate-alerts-and-dashboards)=
-# Integrate alerts and dashboards
-
 # Integrate custom alerting rules and dashboards
 
 This guide shows you how to integrate an existing set of rules and/or dashboards to your Charmed Apache Kafka and Charmed Apache ZooKeeper deployment to be consumed with the [Canonical Observability Stack (COS)](https://charmhub.io/topics/canonical-observability-stack).
@@ -22,7 +20,7 @@ This guide will refer to the models that charms are deployed into as:
 Create an empty git repository, or in an existing one, save your alert rules and dashboard models under the `<path_to_prom_rules>`, `<path_to_loki_rules>` and `<path_to_models>` folders.
 
 If you want a primer to rule writing, refer to the [Prometheus documentation](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/).  
-You may also find an example in the [kafka-test-app repository](https://github.com/canonical/kafka-test-app).
+You may also find an example in the [{spellexception}`kafka-test-app repository`](https://github.com/canonical/kafka-test-app).
 
 Then, push your changes to the remote repository.
 
@@ -69,4 +67,3 @@ As for the dashboards, they should be available in the Grafana interface.
 ## Conclusion
 
 In this guide, we enabled monitoring on a Charmed Apache Kafka deployment and integrated alert rules and dashboards by syncing a git repository to the COS stack.
-
