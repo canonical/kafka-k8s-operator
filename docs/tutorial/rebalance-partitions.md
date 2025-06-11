@@ -51,7 +51,7 @@ juju integrate kafka-k8s:peer-cluster-orchestrator cruise-control:peer-cluster
 
 ### Adding new brokers
 
-After completing the steps in the [Integrate with client applications](/) tutorial page, you should have three `kafka` units and a client application actively writing messages to an existing topic. Let's scale-out the `kafka` application to four units:
+After completing the steps in the [Integrate with client applications](tutorial-integrate-with-client-applications) tutorial page, you should have three `kafka` units and a client application actively writing messages to an existing topic. Let's scale-out the `kafka` application to four units:
 
 ```bash
 juju scale-application kafka-k8s 4

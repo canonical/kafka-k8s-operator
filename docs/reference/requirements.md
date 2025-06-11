@@ -5,7 +5,7 @@
 
 The charm currently runs both on [Juju 2.9 LTS](https://github.com/juju/juju/releases) and [Juju 3.1](https://github.com/juju/juju/releases), although 2.9 is now deprecated and support on this Juju version may be discontinued in future charm release. We therefore advise new deployments to be carried out on Juju 3.
 
-For migration of the deployment from a Juju 2.9 to a 3.x controller, please [get in touch](/) with the product team. 
+For migration of the deployment from a Juju 2.9 to a 3.x controller, please [get in touch](reference-contact) with the product team.
 
 The minimum supported Juju versions are:
 
@@ -23,4 +23,4 @@ For production environments, it is recommended to deploy at least five nodes for
 
 ## Supported architectures
 
-The charm is based on [ROCK OCI](https://github.com/canonical/charmed-kafka-rock) named "[{spellexception}`charmed-kafka`](https://github.com/canonical/charmed-kafka-rock/pkgs/container/charmed-kafka)", which is recursively based on SNAP "[{spellexception}`charmed-kafka`](https://snapcraft.io/charmed-kafka)", which is currently available for `amd64` only! The architecture `arm64` support is planned. Please [contact us](/) if you are interested in new architectures!
+The charm is based on [ROCK OCI](https://github.com/canonical/charmed-kafka-rock) named "[{spellexception}`charmed-kafka`](https://github.com/canonical/charmed-kafka-rock/pkgs/container/charmed-kafka)", which is recursively based on SNAP "[{spellexception}`charmed-kafka`](https://snapcraft.io/charmed-kafka)", which is currently available for `amd64` only! The architecture `arm64` support is planned. Please [contact us](reference-contact) if you are interested in new architectures!

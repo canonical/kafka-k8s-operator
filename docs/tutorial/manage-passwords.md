@@ -146,7 +146,7 @@ kafka:
 ok: "True"
 ```
 
-To rotate external passwords with no or limited downtime, please refer to the how-to guide on [app management](/).
+To rotate external passwords with no or limited downtime, please refer to the how-to guide on [app management](how-to-manage-applications).
 
 #### Remove the user
 

@@ -52,9 +52,9 @@ More information about the artefacts is provided by the following table:
 ## Technical notes
 
 * A Charmed Apache Kafka K8s cluster is secure by default, meaning that when deployed if there are no client charms related to it, external listeners will not be enabled.
-* We recommend deploying one `data-integrator` with `extra-user-roles=admin` alongside the Charmed Apache Kafka deployment, in order to enable listeners and also create one user with elevated permission 
-  to perform administrative tasks. For more information, see the [How-to manage application](/) guide.
+* We recommend deploying one `data-integrator` with `extra-user-roles=admin` alongside the Charmed Apache Kafka deployment, in order to enable listeners and also create one user with elevated permission
+  to perform administrative tasks. For more information, see the [How-to manage application](how-to-manage-applications) guide.
 * The current version of Apache Kafka does not yet support direct integration with Ingress, NodePort or Load Balancer services. We recommend using it for usage within the K8s network.
 * The current release has been tested with Juju 2.9.45+ and Juju 3.1+
-* In-place upgrade for charms tracking `latest` is not supported, both for Apache ZooKeeper and Apache Kafka charms. Perform data migration to upgrade to a Charmed Apache Kafka cluster managed via a `3/stable` charm. 
-  For more information on how to perform the migration, see [How-to migrate a cluster](/) guide.
+* In-place upgrade for charms tracking `latest` is not supported, both for Apache ZooKeeper and Apache Kafka charms. Perform data migration to upgrade to a Charmed Apache Kafka cluster managed via a `3/stable` charm.
+  For more information on how to perform the migration, see [How-to migrate a cluster](how-to-migrate-a-cluster) guide.

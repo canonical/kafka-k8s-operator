@@ -8,7 +8,7 @@ Additionally, the charm provides integration with the [Canonical Observability S
 
 ## Prerequisites
 
-* A deployed [Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s bundle](/)
+* A deployed [Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s bundle](https://charmhub.io/kafka-k8s)
 * A deployed [`cos-lite` bundle in a Kubernetes environment](https://charmhub.io/topics/canonical-observability-stack/tutorials/install-microk8s)
 
 ## Offer interfaces via the COS controller

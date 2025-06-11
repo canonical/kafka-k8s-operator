@@ -6,7 +6,7 @@ To do so, we will sync resources stored in a git repository to COS Lite.
 
 ## Prerequisites
 
-Deploy the `cos-lite` bundle in a Kubernetes environment and integrate Charmed Apache Kafka and Charmed Apache ZooKeeper to the COS offers, as shown in the [How to Enable Monitoring](/) guide.
+Deploy the `cos-lite` bundle in a Kubernetes environment and integrate Charmed Apache Kafka and Charmed Apache ZooKeeper to the COS offers, as shown in the [How to Enable Monitoring](how-to-monitoring-enable-monitoring) guide.
 This guide will refer to the models that charms are deployed into as:
 
 * `<cos-model>` for the model containing observability charms (and deployed on K8s)
@@ -39,7 +39,7 @@ Refer to the [documentation](https://charmhub.io/cos-configuration-k8s/configure
 Adding, updating or deleting an alert rule or a dashboard in the repository will be reflected in the monitoring stack.
 
 ```{note}
-You need to manually refresh `cos-config`'s local repository with the *sync-now* action if you do not want to wait for the next [update-status event](/) to pull the latest changes.
+You need to manually refresh `cos-config`'s local repository with the *sync-now* action if you do not want to wait for the next [update-status event](https://documentation.ubuntu.com/juju/3.6/reference/hook/#update-status) to pull the latest changes.
 ```
 
 ## Forward the rules and dashboards

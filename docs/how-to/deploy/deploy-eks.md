@@ -233,7 +233,7 @@ And integrate it with the Kafka application:
 juju integrate kafka-k8s admin
 ```
 
-For more information on Data Integrator and how to use it, please refer to the [how-to manage applications](/) user guide.
+For more information on Data Integrator and how to use it, please refer to the [how-to manage applications](how-to-manage-applications) user guide.
 
 ## Display deployment information
 

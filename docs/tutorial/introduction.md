@@ -35,10 +35,10 @@ Before we start, make sure your machine meets the following requirements:
 
 Here’s an overview of the steps required with links to our separate tutorials that deal with each individual step:
 
-- [Set up the environment](/)
-- [Deploy Charmed Apache Kafka](/)
-- [Integrate with client applications](/)
-- [Manage passwords](/)
-- [Enable encryption](/)
-- [Reassign partitions](/)
-- [Cleanup your environment](/)
+- [Set up the environment](tutorial-environment)
+- [Deploy Charmed Apache Kafka](tutorial-deploy)
+- [Integrate with client applications](tutorial-integrate-with-client-applications)
+- [Manage passwords](tutorial-manage-passwords)
+- [Enable encryption](tutorial-enable-encryption)
+- [Rebalance partitions](tutorial-rebalance-partitions)
+- [Cleanup your environment](tutorial-cleanup)

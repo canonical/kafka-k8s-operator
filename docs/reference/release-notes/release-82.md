@@ -1,6 +1,8 @@
 (reference-release-notes-release-82)=
 # Release 82
 
+## Charmed Apache Kafka
+
 New revisions of [Charmed Apache Kafka](http://charmhub.io/kafka) and [Charmed Apache Kafka K8s](http://charmhub.io/kafka-k8s) have been published to their `3/stable` channels.
 
 > Check the documentation on how to upgrade between minor versions on [VM](https://charmhub.io/kafka/docs/h-upgrade), and on [K8s](https://charmhub.io/kafka-k8s/docs/h-upgrade)
@@ -8,17 +10,17 @@ New revisions of [Charmed Apache Kafka](http://charmhub.io/kafka) and [Charmed A
 ### Highlights
 
 - **Upgraded Apache Kafka version from 3.6.1 → 3.9.0**
-    - Check the official Apache Kafka [Version 3.7.0 release notes](https://archive.apache.org/dist/kafka/3.7.0/RELEASE_NOTES.html)
-    - Check the official Apache Kafka [Version 3.8.0 release notes](https://archive.apache.org/dist/kafka/3.8.0/RELEASE_NOTES.html)
-    - Check the official Apache Kafka [Version 3.9.0 release notes](https://archive.apache.org/dist/kafka/3.9.0/RELEASE_NOTES.html)
+  - Check the official Apache Kafka [Version 3.7.0 release notes](https://archive.apache.org/dist/kafka/3.7.0/RELEASE_NOTES.html)
+  - Check the official Apache Kafka [Version 3.8.0 release notes](https://archive.apache.org/dist/kafka/3.8.0/RELEASE_NOTES.html)
+  - Check the official Apache Kafka [Version 3.9.0 release notes](https://archive.apache.org/dist/kafka/3.9.0/RELEASE_NOTES.html)
 - **Added support for the KRaft consensus protocol, removing the need for Apache ZooKeeper**
-    - Check the [documentation](https://charmhub.io/kafka/docs/h-kraft-mode) for a guide on setting up a KRaft cluster
+  - Check the [documentation](https://charmhub.io/kafka/docs/h-kraft-mode) for a guide on setting up a KRaft cluster
 - **Added support for partition rebalancing using Cruise Control**
-    - Check the [documentation](https://charmhub.io/kafka/docs/t-reassign-partitions) for a tutorial on partition rebalancing and reassignment using [Cruise Control](https://github.com/linkedin/cruise-control)
+  - Check the [documentation](https://charmhub.io/kafka/docs/t-reassign-partitions) for a tutorial on partition rebalancing and reassignment using [Cruise Control](https://github.com/linkedin/cruise-control)
 - **Created the `karapace` and `karapace-k8s` charms as a drop-in replacement for Schema Registry**
-    - Check the [documentation](https://charmhub.io/kafka/docs/h-manage-message-schemas) on how to manage message schemas using [Karapace](https://www.karapace.io/)
+  - Check the [documentation](https://charmhub.io/kafka/docs/h-manage-message-schemas) on how to manage message schemas using [Karapace](https://www.karapace.io/)
 - **Upgraded Apache ZooKeeper version from 3.8.2 → 3.9.2**
-    - Check the official Apache ZooKeeper [Version 3.9.0 release notes](https://zookeeper.apache.org/doc/r3.9.0/releasenotes.html)
+  - Check the official Apache ZooKeeper [Version 3.9.0 release notes](https://zookeeper.apache.org/doc/r3.9.0/releasenotes.html)
 - **Adding backup/restore support using S3**
 
 ### Features

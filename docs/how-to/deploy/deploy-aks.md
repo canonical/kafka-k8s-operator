@@ -215,7 +215,7 @@ And integrate it with the Kafka application:
 juju integrate kafka-k8s admin
 ```
 
-For more information on Data Integrator and how to use it, please refer to the [how-to manage applications](/) user guide.
+For more information on Data Integrator and how to use it, please refer to the [how-to manage applications](how-to-manage-applications) user guide.
 
 ## Display deployment information
 
@@ -288,7 +288,7 @@ kubectl get svc --all-namespaces
 kubectl delete svc <SERVICE_NAME> 
 ```
 
-Next, delete the AKS resources (source: [Deleting an all Azure VMs]((https://learn.microsoft.com/en-us/cli/azure/delete-azure-resources-at-scale#delete-all-azure-resources-of-a-type) )) 
+Next, delete the AKS resources (source: [Deleting an all Azure VMs](https://learn.microsoft.com/en-us/cli/azure/delete-azure-resources-at-scale#delete-all-azure-resources-of-a-type)):
 
 ```shell
 az aks delete -g <RESOURCE_GROUP> -n <K8S_CLUSTER_NAME>
