@@ -1,11 +1,10 @@
 (reference-contact)=
 # Contacts
 
-Contact Canonical Data Platform team in [Matrix](https://matrix.to/#/#charmhub-data-platform:ubuntu.com) (preferred),
-(the legacy [Mattermost](https://chat.charmhub.io/charmhub/channels/data-platform) channel is in read-only until January 31, 2025).
+Contact Canonical Data Platform team in [Matrix](https://matrix.to/#/#charmhub-data-platform:ubuntu.com).
 
 Report your ideas/issues on [GitHub](https://github.com/canonical/kafka-k8s-operator/issues/new).
-Security issues should be reported through [Launchpad](https://wiki.ubuntu.com/DebuggingSecurity#How%20to%20File).
+Security issues should be reported through [Launchpad](https://wiki.ubuntu.com/DebuggingSecurity#How_to_File).
 
 Please do NOT file GitHub issues on security topics.
 

@@ -6,7 +6,7 @@ Dear community,
 
 We are extremely thrilled and excited to share that Charmed Apache Kafka K8s and Charmed ZooKeeper K8s have now been released as GA. You can find them in [Charmhub](https://charmhub.io/) under the `3/stable` track.
 
-More information are available in the [Canonical website](https://canonical.com/data/kafka-k8s), alongside its [documentation](https://canonical.com/data/docs/kafka/k8s).
+More information are available in the [Canonical website](https://canonical.com/data/kafka), alongside its [documentation](https://canonical.com/data/docs/kafka/k8s).
 Also find the full announcement of the release [here](https://canonical.com/blog/charmed-kafka-general-availability) and [here](https://discourse.charmhub.io/t/announcing-general-availability-of-charmed-kafka/13277).
 And more importantly, make sure you don't miss out the [webinar](https://www.linkedin.com/events/7161727829259366401/about/) that Raúl Zamora and Rob Gibbon will be holding later today.
 

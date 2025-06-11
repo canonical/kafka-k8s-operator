@@ -1,7 +1,7 @@
 (reference-statuses)=
 # Charm statuses
 
-This charm follows [standard Juju applications statuses](https://juju.is/docs/olm/status-values#application-status). 
+This charm follows [standard Juju applications statuses](https://documentation.ubuntu.com/juju/latest/reference/status/index.html).
 
 ## Apache Kafka
 
