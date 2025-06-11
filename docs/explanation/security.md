@@ -8,7 +8,7 @@ This document provides an overview of security features and guidance for hardeni
 The environment where Charmed Apache Kafka K8s operate can be divided into two components:
 
 1. Kubernetes
-2. Juju 
+2. Juju
 
 ### Kubernetes
 

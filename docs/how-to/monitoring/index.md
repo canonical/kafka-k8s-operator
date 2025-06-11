@@ -4,9 +4,8 @@
 ```{toctree}
 :titlesonly:
 :maxdepth: 2
-:glob:
 :hidden:
 
-*
-*/index
+enable-monitoring.md
+alerts.md
 ```

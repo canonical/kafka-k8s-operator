@@ -4,9 +4,10 @@
 ```{toctree}
 :titlesonly:
 :maxdepth: 2
-:glob:
 :hidden:
 
-*
-*/index
+security.md
+cryptography.md
+cluster-configuration.md
+trademarks.md
 ```

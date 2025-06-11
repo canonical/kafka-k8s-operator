@@ -2,11 +2,10 @@
 # Deploy
 
 ```{toctree}
-:titlesonly:
 :maxdepth: 2
-:glob:
 :hidden:
 
-*
-*/index
+How to deploy<deploy-anywhere.md>
+AKS<deploy-aks.md>
+EKS<deploy-eks.md>
 ```
