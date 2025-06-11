@@ -48,13 +48,11 @@ The Charmed Apache Kafka K8s Operator is free software, distributed under the Ap
 ```{toctree}
 :titlesonly:
 :maxdepth: 2
-:glob:
 :hidden:
 
 Home <self>
-tutorial*/index
-how*/index
-reference*/index
-explanation*/index
-*
+tutorial/index
+how-to/index
+reference/index
+explanation/index
 ```

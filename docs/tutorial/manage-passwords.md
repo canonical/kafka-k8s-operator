@@ -1,7 +1,7 @@
-(tutorial-5-manage-passwords)=
+(tutorial-manage-passwords)=
 # 5. Manage passwords
 
-This is part of the [Charmed Apache Kafka K8s Tutorial](/). Please refer to this page for more information and an overview of the content.
+This is part of the [Charmed Apache Kafka K8s Tutorial](index.md). Please refer to this page for more information and an overview of the content.
 
 ## Manage passwords
 

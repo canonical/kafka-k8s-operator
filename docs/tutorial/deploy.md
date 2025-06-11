@@ -1,7 +1,7 @@
-(tutorial-3-deploy-apache-kafka)=
+(tutorial-deploy)=
 # 3. Deploy Apache Kafka
 
-This is part of the [Charmed Apache Kafka K8s Tutorial](/). Please refer to this page for more information and an overview of the content. 
+This is part of the [Charmed Apache Kafka K8s Tutorial](index.md). Please refer to this page for more information and an overview of the content. 
 
 ## Deploy Charmed Apache Kafka K8s (and Charmed Apache ZooKeeper K8s)
 
