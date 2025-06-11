@@ -1,6 +1,4 @@
 (how-to-enable-encryption)=
-# Enable encryption
-
 # How to enable encryption
 
 The Apache Kafka K8s and Apache ZooKeeper K8s charms implement the Requirer side of the [`tls-certificates/v1`](https://github.com/canonical/charm-relation-interfaces/blob/main/interfaces/tls_certificates/v1/README.md) charm relation. 

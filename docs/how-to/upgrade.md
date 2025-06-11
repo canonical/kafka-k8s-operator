@@ -1,6 +1,4 @@
 (how-to-upgrade)=
-# Upgrade
-
 # How to upgrade between minor versions
 
 ```{note}
@@ -141,4 +139,3 @@ We strongly recommend to also retrieve the full set of logs with `juju debug-log
 ## Combined upgrades
 
 If Charmed Apache Kafka and Charmed Apache ZooKeeper both need to be upgraded, we recommend starting the upgrade from the Charmed Apache ZooKeeper. As outlined above, the two upgrades should **NEVER** be done concurrently.
-

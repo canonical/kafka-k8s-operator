@@ -1,6 +1,4 @@
 (how-to-monitoring-enable-monitoring)=
-# Enable Monitoring
-
 # Enable monitoring
 
 Both Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s come with the [JMX exporter](https://github.com/prometheus/jmx_exporter/).
@@ -22,6 +20,7 @@ To switch to the Kubernetes controller for the COS model, run
 ```shell
 juju switch <k8s_cos_controller>:<cos_model_name>
 ```
+
 To offer the COS interfaces, run 
 
 ```shell
@@ -39,6 +38,7 @@ We are currently on the Kubernetes controller for the COS model. To switch to th
 ```shell
 juju switch <k8s_db_controller>:<kafka_model_name>
 ```
+
 To find offers, run the following command (make sure not to miss the ":" at the end!):
 
 ```shell

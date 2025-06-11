@@ -184,4 +184,3 @@ Finally, the producer client applications can be stopped, updated with the Charm
 ## Stopping MirrorMaker replication
 
 Once confident in the successful completion of the data an client migration, the running processes on each of the charm units can be killed, stopping the MirrorMaker processes active on the Charmed Apache Kafka cluster.
-

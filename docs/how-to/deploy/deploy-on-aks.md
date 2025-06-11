@@ -1,6 +1,4 @@
 (how-to-deploy-deploy-on-aks)=
-# Deploy on AKS
-
 # How to deploy on AKS
 
 [Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/) (AKS) allows you to quickly deploy a production ready Kubernetes cluster in Azure. To access the AKS Web interface, go to [https://portal.azure.com/](https://portal.azure.com/).
@@ -301,4 +299,3 @@ Finally, logout from AKS to clean the local credentials (to avoid forgetting and
 ```shell
 az logout
 ```
-

@@ -6,7 +6,7 @@ This is a **Kubernetes** operator. To deploy on IAAS/VM, see [Charmed Apache Kaf
 
 # Charmed Apache Kafka K8s documentation
 
-Charmed Apache Kafka K8s is an open-source operator that makes it easier to manage Apache Kafka on Kubernetes, with built-in support for enterprise features. 
+Charmed Apache Kafka K8s is an open-source operator that makes it easier to manage Apache Kafka on Kubernetes, with built-in support for enterprise features.
 
 Apache Kafka is a free, open-source software project by the Apache Software Foundation. Users can find out more at the [Apache Kafka project page](https://kafka.apache.org).
 

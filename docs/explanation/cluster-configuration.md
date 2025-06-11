@@ -19,4 +19,3 @@ For a Charmed Apache Kafka K8s related to a Charmed Apache ZooKeeper K8s:
 - the list of the broker ids of the cluster can be found in `/kafka-k8s/brokers/ids`
 - the endpoint used to access the broker with id `0` can be found in `/kafka-k8s/brokers/ids/0`
 - the credentials for the Apache Kafka K8s users can be found in `/kafka-k8s/config/users`
-

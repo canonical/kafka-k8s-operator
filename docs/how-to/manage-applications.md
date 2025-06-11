@@ -4,7 +4,7 @@
 Relations to new applications are supported via the "[{spellexception}`kafka_client`](https://github.com/canonical/charm-relation-interfaces/blob/main/interfaces/kafka_client/v0/README.md)" interface.
 
 ## Within Juju via `kafka_client` interface
- 
+
 If the charm supports the `kafka_client` interface, just create a relation between the two charms:
 
 ```shell

@@ -1,8 +1,6 @@
 (reference-release-notes-release-82)=
 # Release 82
 
-# Release 82
-
 New revisions of [Charmed Apache Kafka](http://charmhub.io/kafka) and [Charmed Apache Kafka K8s](http://charmhub.io/kafka-k8s) have been published to their `3/stable` channels.
 
 > Check the documentation on how to upgrade between minor versions on [VM](https://charmhub.io/kafka/docs/h-upgrade), and on [K8s](https://charmhub.io/kafka-k8s/docs/h-upgrade)
@@ -84,4 +82,3 @@ New revisions of [Charmed Apache ZooKeeper](http://charmhub.io/zookeeper) and [C
 - [DPE-5463](https://warthogs.atlassian.net/browse/DPE-5463);[DPE-5462](https://warthogs.atlassian.net/browse/DPE-5462) - fix: quote SERVER_JVMFLAGS, safe rm tls files [#160](https://github.com/canonical/zookeeper-operator/pull/#160)
 - [DPE-5462](https://warthogs.atlassian.net/browse/DPE-5462) - fix: handle NoNodeError during relation-broken [#168](https://github.com/canonical/zookeeper-operator/pull/#168)
 - [DPE-6157](https://warthogs.atlassian.net/browse/DPE-6157) - fix: don't erase previous records from /etc/hosts [#175](https://github.com/canonical/zookeeper-operator/pull/#175)
-

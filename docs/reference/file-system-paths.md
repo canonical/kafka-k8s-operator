@@ -25,4 +25,3 @@ In the following table, we summarise some of the most relevant file paths used i
 
 External storage is used for storing persistent raw data, and it is  
 mounted at `/var/lib/zookeeper`.
-

@@ -104,4 +104,3 @@ juju remove-relation zookeeper-k8s  self-signed-certificates
 ```
 
 The Charmed Apache Kafka K8s application is not using TLS anymore.
-

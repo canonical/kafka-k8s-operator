@@ -1,6 +1,4 @@
 (how-to-back-up-and-restore)=
-# Back up and restore
-
 # Configuration backup and restore
 
 Apache Kafka configuration is distributed using Apache ZooKeeper.
@@ -83,7 +81,7 @@ juju run zookeeper-k8s/leader list-backups
 
 This should show your available backups, like in the sample output below:
 
-```
+```text
                                      Backups
 ┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Id                   ┃ Log-sequence-number ┃ Path                           ┃
@@ -117,4 +115,3 @@ juju run zookeeper-k8s/leader restore backup-id=<backup-id-here>
 ```
 
 The restore will then proceed. Follow its progress using `juju status`.
-

@@ -218,4 +218,3 @@ After configuring the Apache Kafka Test App, just relate it again with the Charm
 ## What's next?
 
 In the next section, we will learn how to rotate and manage the passwords for the Apache Kafka users, both the admin one and the ones managed by the Data Integrator.
-

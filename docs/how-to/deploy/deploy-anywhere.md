@@ -1,6 +1,4 @@
 (how-to-deploy-deploy-anywhere)=
-# Deploy anywhere
-
 # How to deploy Charmed Apache Kafka K8s
 
 ```{caution}
@@ -8,19 +6,20 @@ For non-K8s Charmed Apache Apache Kafka, see the [Charmed Apache Kafka documenta
 ```
 
 To deploy a Charmed Apache Kafka K8s cluster:
+
 1. Set up a Juju Controller
 2. Set up a Juju Model
 3. Deploy and relate Apache Kafka K8s and Apache ZooKeeper K8s charms.
 4. (Optionally) Create an external admin user
 
-In the next subsections, we will cover these steps separately by referring to 
+In the next subsections, we will cover these steps separately by referring to
 relevant Juju documentation and providing details on the Charmed Apache Kafka K8s specifics.
 If you already have a Juju controller and/or a Juju model, you can skip the associated steps.
 
 ## Juju controller setup
 
-Make sure you have a Juju controller accessible from 
-your local environment using the [Juju client snap](https://snapcraft.io/juju). 
+Make sure you have a Juju controller accessible from
+your local environment using the [Juju client snap](https://snapcraft.io/juju).
 
 List available controllers:
 
@@ -125,4 +124,3 @@ To retrieve authentication information, such as the username and password, use:
 ```commandline
 juju run data-integrator/leader get-credentials
 ```
-

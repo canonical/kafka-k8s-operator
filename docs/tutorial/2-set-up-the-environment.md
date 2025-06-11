@@ -62,4 +62,3 @@ tutorial  microk8s    microk8s/localhost  3.1.5    unsupported  15:46:55+02:00
 
 Model "admin/tutorial" is empty.
 ```
-

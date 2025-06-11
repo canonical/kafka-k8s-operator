@@ -1,8 +1,6 @@
 (explanation-security)=
 # Security
 
-# Security hardening guide
-
 This document provides an overview of security features and guidance for hardening the security of [Charmed Apache Kafka K8s](https://charmhub.io/kafka-k8s) deployments, including setting up and managing a secure environment.
 
 ## Environment

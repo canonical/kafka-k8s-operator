@@ -243,4 +243,3 @@ To implement the proposed changes, run the same command but with `dryrun=false`:
 ```bash
 juju run cruise-control/0 rebalance mode=full dryrun=false --wait=10m
 ```
-

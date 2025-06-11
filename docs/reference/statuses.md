@@ -1,6 +1,4 @@
 (reference-statuses)=
-# Statuses
-
 # Charm statuses
 
 This charm follows [standard Juju applications statuses](https://juju.is/docs/olm/status-values#application-status). 
@@ -47,4 +45,3 @@ This charm follows [standard Juju applications statuses](https://juju.is/docs/ol
 | **Error**       | any                                                      | An unhanded internal error happened                                                                                             | Read the message hint. Use `juju resolve <error_unit/0>` after addressing the root of the error state                                                                                                 |
 | **Terminated**  | any                                                      | The unit is gone and will be cleaned by Juju soon                                                                               | No actions possible                                                                                                                                                                                       |
 | **Unknown**     | any                                                      | Juju doesn't know the charm app/unit status. Possible reason: K8s charm termination is in progress.                                | Manual investigation required if the status is permanent                                                                                                                                                      |
-

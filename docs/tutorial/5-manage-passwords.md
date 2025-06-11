@@ -185,4 +185,3 @@ The operations above would also apply to Charmed applications that implement  th
 ## What's next?
 
 In the next part, we will now see how easy it is to enable encryption across the board, to make sure no one is eavesdropping, sniffing or snooping your traffic by enabling TLS.
-

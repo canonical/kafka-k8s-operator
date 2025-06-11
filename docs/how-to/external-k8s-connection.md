@@ -1,8 +1,6 @@
 (how-to-external-k8s-connection)=
 # External K8s connection
 
-# External K8s connection
-
 ```{note}
 This feature is available in charm revisions 69+. You can use the `edge` track to get the latest revision of the charm.
 ```
@@ -85,4 +83,3 @@ For example, let's say that a client wishes to connect to the Kafka cluster with
 - With `SCRAM-SHA-512` as the authentication mechanism
 
 In this example, the client should configure their `bootstrap-servers` to equal `10.155.67.110:31982,10.155.67.120:31982,10.155.67.130:31982`.
-
