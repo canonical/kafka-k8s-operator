@@ -25,11 +25,15 @@ Check that the Juju version is correctly installed:
 juju version
 ```
 
-[details="Sample output:"]
-```shell
+<details>
+
+<summary>Output example</summary>
+
+```text
 3.5.2-genericlinux-amd64
 ```
-[/details]
+
+</details>
 
 ### Azure CLI
 
@@ -41,8 +45,11 @@ Verify that it is correctly installed running the command below:
 az --version
 ```
 
-[details="Sample output:"]
-```shell
+<details>
+
+<summary>Output example</summary>
+
+```text
 azure-cli                         2.65.0
 
 core                              2.65.0
@@ -62,7 +69,8 @@ Legal docs and information: aka.ms/AzureCliLegal
 
 Your CLI is up-to-date.
 ```
-[/details]
+
+</details>
 
 ## Create AKS cluster
 
@@ -93,7 +101,10 @@ We recommend selecting an instance type that provides at the very least `16` GB 
 You can find more information about the available instance types in the [Azure documentation](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview).
 ```
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```yaml
 {
   "aadProfile": null,
@@ -111,7 +122,8 @@ You can find more information about the available instance types in the [Azure d
       "enableNodePublicIp": false,
 ...
 ```
-[/details]
+
+</details>
 
 Dump newly bootstrapped AKS credentials:
 
@@ -119,12 +131,16 @@ Dump newly bootstrapped AKS credentials:
 az aks get-credentials --resource-group <RESOURCE_GROUP> --name <K8S_CLUSTER_NAME> --context aks
 ```
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
 ...
 Merged "aks" as current context in ~/.kube/config
 ```
-[/details]
+
+</details>
 
 You can verify that the cluster and your client `kubectl` CLI is correctly configured by running a simple command, such as:
 
@@ -142,7 +158,10 @@ Bootstrap Juju controller:
 juju bootstrap aks <CONTROLLER_NAME>
 ```
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
 Creating Juju controller "aks" on aks/eastus
 Bootstrap to Kubernetes cluster identified as azure/eastus
@@ -158,7 +177,8 @@ Now you can run
 	juju add-model <model-name>
 to create a new model to deploy k8s workloads.
 ```
-[/details]
+
+</details>
 
 ## Deploy Charms
 
@@ -207,18 +227,25 @@ Display information about the current deployments with the following commands:
 kubectl cluster-info 
 ```
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
 Kubernetes control plane is running at https://aks-user-aks-aaaaa-bbbbb.hcp.eastus.azmk8s.io:443
 CoreDNS is running at https://aks-user-aks-aaaaa-bbbbb.hcp.eastus.azmk8s.io:443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 Metrics-server is running at https://aks-user-aks-aaaaa-bbbbb.hcp.eastus.azmk8s.io:443/api/v1/namespaces/kube-system/services/https:metrics-server:/proxy
 ```
-[/details]
+
+</details>
 
 ```
 az aks list
 ```
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
 ...
         "count": 1,
@@ -226,20 +253,25 @@ az aks list
         "enableAutoScaling": false,
 ...
 ```
-[/details]
 
-```
+</details>
+
+```shell
 kubectl get node
 ```
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
 NAME                                STATUS   ROLES   AGE   VERSION
 aks-nodepool1-31246187-vmss000000   Ready    agent   11m   v1.28.9
 ```
-[/details]
 
-## Clean up 
+</details>
+
+## Clean up
 
 ```{caution}
 Always clean AKS resources that are no longer necessary -  they could be costly!

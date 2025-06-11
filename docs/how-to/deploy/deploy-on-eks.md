@@ -25,50 +25,67 @@ To check they are all correctly installed, you can run the commands below.
 juju version
 ```
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
 3.5.2-genericlinux-amd64
 ```
-[/details]
+
+</details>
 
 ```shell
 kubectl version --client
 ``` 
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
 Client Version: v1.28.2
 Kustomize Version: v5.0.4-0.20230601165947-6ce0bf390ce3
 ```
-[/details]
+
+</details>
 
 ```shell
 eksctl info
 ```
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
 eksctl version: 0.159.0
 kubectl version: v1.28.2
 ```
-[/details]
+
+</details>
 
 ```shell
 aws --version
 ```
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
 aws-cli/2.13.25 Python/3.11.5 Linux/6.2.0-33-generic exe/x86_64.ubuntu.23 prompt/off
 ```
-[/details]
+
+</details>
 
 ### Authenticate
 
 Create an IAM account (or use legacy access keys) and login to AWS:
 
 ```shell
-> aws configure
+aws configure
+
 AWS Access Key ID [None]: SECRET_ACCESS_KEY_ID
 AWS Secret Access Key [None]: SECRET_ACCESS_KEY_VALUE
 Default region name [None]: eu-west-3
@@ -81,7 +98,10 @@ Verify that the CLI tool is correctly authenticating
 aws sts get-caller-identity
 ```
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```yaml
 {
     "UserId": "1234567890",
@@ -89,7 +109,8 @@ aws sts get-caller-identity
     "Arn": "arn:aws:iam::1234567890:root"
 }
 ```
-[/details]
+
+</details>
 
 ## Create a new EKS cluster
 
@@ -101,7 +122,10 @@ export JUJU_NAME=eks-$USER-$RANDOM
 
 This following examples in this guide will use the location `eu-west-3` and K8s `v.1.27` - feel free to change this for your own deployment.
 
-[details="Sample `cluster.yaml`:"]
+<details>
+
+<summary>Sample `cluster.yaml`</summary>
+
 ```yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
@@ -136,7 +160,8 @@ nodeGroups:
         onDemandPercentageAboveBaseCapacity: 50
         spotInstancePools: 2
 ```
-[/details]
+
+</details>
 
 Bootstrap EKS cluster with the following command:
 
@@ -144,7 +169,10 @@ Bootstrap EKS cluster with the following command:
 eksctl create cluster -f cluster.yaml
 ```
 
-[details="Sample `cluster.yaml`:"]
+<details>
+
+<summary>Sample `cluster.yaml`</summary>
+
 ```shell
 ...
 2023-10-12 11:13:58 [ℹ]  using region eu-west-3
@@ -152,7 +180,8 @@ eksctl create cluster -f cluster.yaml
 ...
 2023-10-12 11:40:00 [✔]  EKS cluster "eks-taurus-27506" in "eu-west-3" region is ready
 ```
-[/details]
+
+</details>
 
 ## Bootstrap Juju on EKS
 
@@ -216,36 +245,48 @@ Display information about the current deployments with the following commands:
 kubectl cluster-info 
 ```
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
 Kubernetes control plane is running at https://AAAAAAAAAAAAAAAAAAAAAAA.gr7.eu-west-3.eks.amazonaws.com
 CoreDNS is running at https://AAAAAAAAAAAAAAAAAAAAAAA.gr7.eu-west-3.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 ```
-[/details]
+
+</details>
 
 ```shell
 eksctl get cluster -A
 ```
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
 NAME            REGION      EKSCTL CREATED
 eks-marc-9587	eu-west-3	True
 ```
-[/details]
+
+</details>
 
 ```shell
 kubectl get node
 ```
 
-[details="Sample output:"]
+<details>
+
+<summary>Output example</summary>
+
 ```shell
 NAME                                           STATUS   ROLES    AGE     VERSION
 ip-192-168-1-168.eu-west-3.compute.internal    Ready    <none>   5d22h   v1.27.16-eks-a737599
 ip-192-168-45-234.eu-west-3.compute.internal   Ready    <none>   3h25m   v1.27.16-eks-a737599
 ip-192-168-85-225.eu-west-3.compute.internal   Ready    <none>   5d22h   v1.27.16-eks-a737599
 ```
-[/details]
+
+</details>
 
 ## Clean up
 
