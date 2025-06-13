@@ -10,6 +10,7 @@
 Charmed Apache Kafka K8s delivers automated operations management [from Day 0 to Day 2](https://codilime.com/blog/day-0-day-1-day-2-the-software-lifecycle-in-the-cloud-age/) on the [Apache Kafka](https://kafka.apache.org) event streaming platform deployed on top of a [Kubernetes cluster](https://kubernetes.io/). It is an open source, end-to-end, production ready data platform on top of cloud native technologies.
 
 The Charmed Operator can be found on [Charmhub](https://charmhub.io/kafka-k8s) and it comes with features such as:
+
 - Fault-tolerance, replication, scalability and high-availability out-of-the-box.
 - SASL/SCRAM auth for Broker-Broker and Client-Broker authentication enabled by default.
 - Access control management supported with user-provided ACL lists.
@@ -39,14 +40,14 @@ For more information on how to perform typical tasks, see the How to guides sect
 The Apache Kafka and Apache ZooKeeper operators can both be deployed as follows:
 
 ```shell
-$ juju deploy zookeeper-k8s -n 5
-$ juju deploy kafka-k8s -n 3
+juju deploy zookeeper-k8s -n 5
+juju deploy kafka-k8s -n 3
 ```
 
 After this, it is necessary to connect them:
 
 ```shell
-$ juju integrate kafka-k8s zookeeper-k8s
+juju integrate kafka-k8s zookeeper-k8s
 ```
 
 To watch the process, the `juju status` command can be used. Once all the units shown as `active|idle`, the credentials to access a broker can be queried with:
@@ -228,7 +229,7 @@ After this is complete, Grafana will show a new dashboard: `Kafka JMX Metrics`.
 
 For an overview of security features of the Charmed Apache Kafka K8s, see the [Security page](https://canonical.com/data/docs/kafka/k8s/e-security) in the Explanation section of the documentation.
 
-Security issues in the Charmed Apache Kafka K8s can be reported through [LaunchPad](https://wiki.ubuntu.com/DebuggingSecurity#How%20to%20File). Please do not file GitHub issues about security issues.
+Security issues in the Charmed Apache Kafka K8s can be reported through [Launchpad](https://wiki.ubuntu.com/DebuggingSecurity#How%20to%20File). Please do not file GitHub issues about security issues.
 
 ## Contributing
 
