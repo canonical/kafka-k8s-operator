@@ -36,6 +36,11 @@ class Workload(WorkloadBase):
     def container_can_connect(self) -> bool:
         return self.container.can_connect()
 
+    @property
+    @override
+    def installed(self) -> bool:
+        return self.container_can_connect
+
     @override
     def start(self) -> None:
         self.container.add_layer(CHARM_KEY, self.layer, combine=True)
