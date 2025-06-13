@@ -68,7 +68,7 @@ jobs:
     with:
       path-to-charm-directory: ${{ matrix.path }}
 
-  integration-test:
+  integration-test-1:
     strategy:
       fail-fast: false
       matrix:
@@ -78,7 +78,6 @@ jobs:
           - integration-provider
           - integration-password-rotation
           - integration-tls
-          - integration-upgrade
           - integration-balancer-single
           - integration-balancer-multi
           - integration-kraft-single
@@ -120,20 +119,20 @@ jobs:
         env:
           CI_PACKED_CHARMS: ${{ needs.build.outputs.charms }}
 
-  integration-test-ha:
+  integration-test-2:
     strategy:
       fail-fast: false
       matrix:
         tox-environments:
+          - integration-upgrade
           - integration-ha
     name: ${{ matrix.tox-environments }}
     needs:
       - lint
       - unit-test
       - build
-      - integration-test
     runs-on: ubuntu-22.04
-    timeout-minutes: 120
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4

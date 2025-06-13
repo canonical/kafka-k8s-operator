@@ -5,8 +5,10 @@
 import json
 import logging
 import re
+import socket
 import subprocess
 import tempfile
+from contextlib import closing
 from enum import Enum
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
@@ -903,3 +905,8 @@ async def list_truststore_aliases(ops_test: OpsTest, unit: str = f"{APP_NAME}/0"
         trusted_aliases.append(line.split(",")[0])
 
     return trusted_aliases
+
+
+def check_socket(host: str, port: int) -> bool:
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+        return sock.connect_ex((host, port)) == 0
