@@ -49,7 +49,7 @@ class AuthManager:
     def _get_acls_from_cluster(self) -> str:
         """Loads the currently active ACLs from the Kafka cluster."""
         command = [
-            f"--bootstrap-server={self.state.bootstrap_server}",
+            f"--bootstrap-server={self.state.bootstrap_server_internal}",
             f"--command-config={self.workload.paths.client_properties}",
             "--list",
         ]

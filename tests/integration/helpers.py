@@ -38,6 +38,7 @@ APP_NAME = METADATA["name"]
 ZK_NAME = "zookeeper-k8s"
 DUMMY_NAME = "app"
 REL_NAME_ADMIN = "kafka-client-admin"
+REL_NAME_PRODUCER = "kafka-client-producer"
 TEST_DEFAULT_MESSAGES = 15
 STORAGE = "data"
 TLS_NAME = "self-signed-certificates"
