@@ -247,10 +247,6 @@ async def test_certificate_transfer(ops_test: OpsTest):
         f"{APP_NAME}:{CERTIFICATE_TRANSFER_RELATION}", "other-ca:send-ca-cert"
     )
 
-    await ops_test.model.wait_for_idle(
-        apps=["other-ca", APP_NAME], idle_period=60, timeout=2000, status="active"
-    )
-
     address = await get_address(ops_test, app_name=APP_NAME, unit_num=0)
     sasl_port = SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].client
     sasl_bootstrap_server = f"{address}:{sasl_port}"
