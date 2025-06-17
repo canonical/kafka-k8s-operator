@@ -27,6 +27,7 @@ from literals import (
     BALANCER_WEBSERVER_USER,
     BROKER,
     CONTROLLER_USER,
+    INTERNAL_USERS,
     JMX_CC_PORT,
     PEER,
     PEER_CLUSTER_ORCHESTRATOR_RELATION,
@@ -51,7 +52,7 @@ TLS_NAME = "self-signed-certificates"
 MANUAL_TLS_NAME = "manual-tls-certificates"
 CERTS_NAME = "tls-certificates-operator"
 TLS_REQUIRER = "tls-certificates-requirer"
-
+NON_REL_USERS = set(INTERNAL_USERS + [CONTROLLER_USER])
 MTLS_NAME = "mtls"
 DUMMY_NAME = "app"
 
@@ -523,7 +524,7 @@ def get_client_usernames(ops_test: OpsTest, owner: str = APP_NAME) -> set[str]:
         if "relation" in key:
             usernames.add(key)
 
-    return usernames - {CONTROLLER_USER}
+    return usernames - NON_REL_USERS
 
 
 # FIXME: will need updating after zookeeper_client is implemented in full
