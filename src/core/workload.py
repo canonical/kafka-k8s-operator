@@ -42,14 +42,6 @@ class CharmedKafkaPaths:
         return f"{self.conf_path}/client.properties"
 
     @property
-    def zk_jaas(self):
-        """The zookeeper-jaas.cfg filepath.
-
-        Contains internal+external user credentials used in SASL auth.
-        """
-        return f"{self.conf_path}/zookeeper-jaas.cfg"
-
-    @property
     def balancer_jaas(self):
         """The cruise_control_jaas.conf filepath."""
         return f"{self.conf_path}/cruise_control_jaas.conf"
@@ -202,6 +194,12 @@ class WorkloadBase(ABC):
         except:  # noqa: E722
             version = ""
         return version
+
+    @property
+    @abstractmethod
+    def installed(self) -> bool:
+        """Checks whether the workload service is installed."""
+        ...
 
     @property
     @abstractmethod

@@ -126,6 +126,8 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         else:
             logger.error(f"Broker {self.unit.name.split('/')[1]} failed to restart")
 
+        self.broker.update_credentials_cache()
+
     def _set_status(self, key: Status) -> None:
         """Sets charm status."""
         status: StatusBase = key.value.status

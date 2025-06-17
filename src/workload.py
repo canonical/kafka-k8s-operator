@@ -36,6 +36,11 @@ class Workload(WorkloadBase):
     def container_can_connect(self) -> bool:
         return self.container.can_connect()
 
+    @property
+    @override
+    def installed(self) -> bool:
+        return self.container_can_connect
+
     @override
     def start(self) -> None:
         self.container.add_layer(CHARM_KEY, self.layer, combine=True)
@@ -159,7 +164,6 @@ class KafkaWorkload(Workload):
         """Returns a Pebble configuration layer for Kafka."""
         extra_opts = [
             f"-javaagent:{self.paths.jmx_prometheus_javaagent}={JMX_EXPORTER_PORT}:{self.paths.jmx_prometheus_config}",
-            f"-Djava.security.auth.login.config={self.paths.zk_jaas}",
         ]
         command = (
             f"{self.paths.binaries_path}/bin/kafka-server-start.sh {self.paths.server_properties}"
@@ -179,7 +183,7 @@ class KafkaWorkload(Workload):
                     "environment": {
                         "KAFKA_OPTS": " ".join(extra_opts),
                         # FIXME https://github.com/canonical/kafka-k8s-operator/issues/80
-                        "JAVA_HOME": "/usr/lib/jvm/java-18-openjdk-amd64",
+                        "JAVA_HOME": "/usr/lib/jvm/java-21-openjdk-amd64",
                         "LOG_DIR": self.paths.logs_path,
                     },
                 }
@@ -250,7 +254,7 @@ class BalancerWorkload(Workload):
                     "environment": {
                         "KAFKA_OPTS": " ".join(extra_opts),
                         # FIXME https://github.com/canonical/kafka-k8s-operator/issues/80
-                        "JAVA_HOME": "/usr/lib/jvm/java-18-openjdk-amd64",
+                        "JAVA_HOME": "/usr/lib/jvm/java-21-openjdk-amd64",
                         "LOG_DIR": self.paths.logs_path,
                     },
                 }

@@ -13,22 +13,12 @@ create-certificate:
 run-mtls-producer:
   description: Runs producer
   params:
-    mtls-nodeport:
-      type: integer
-      description: The NodePort for the mTLS bootstrap service
-    broker-ca:
-      type: string
-      description: The CA used for broker identity from certificates relation
     num-messages:
       type: integer
       description: The number of messages to be sent for testing
 
 get-offsets:
   description: Retrieve offset for test topic
-  params:
-    mtls-nodeport:
-      type: integer
-      description: The NodePort for the mTLS bootstrap service
 
 create-topic:
   description: Attempts the configured topic
