@@ -10,17 +10,22 @@ import pytest
 import requests
 from pytest_operator.plugin import OpsTest
 
-from literals import DEPENDENCIES, REL_NAME, SECURITY_PROTOCOL_PORTS
+from literals import (
+    DEPENDENCIES,
+    PEER_CLUSTER_ORCHESTRATOR_RELATION,
+    PEER_CLUSTER_RELATION,
+    REL_NAME,
+    SECURITY_PROTOCOL_PORTS,
+)
 
 from .helpers import (
     APP_NAME,
     DUMMY_NAME,
-    KAFKA_CONTAINER,
     REL_NAME_ADMIN,
-    ZK_NAME,
     check_external_access_non_tls,
     check_logs,
     count_lines_with,
+    deploy_cluster,
     get_address,
     netcat,
     run_client_properties,
@@ -30,36 +35,16 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.abort_on_fail
-async def test_build_and_deploy(ops_test: OpsTest, kafka_charm):
-    await asyncio.gather(
-        ops_test.model.deploy(
-            ZK_NAME,
-            channel="3/edge",
-            application_name=ZK_NAME,
-            num_units=3,
-            trust=True,
-        ),
-        ops_test.model.deploy(
-            kafka_charm,
-            application_name=APP_NAME,
-            num_units=1,
-            resources={"kafka-image": KAFKA_CONTAINER},
-            trust=True,
-            config={"expose_external": "nodeport"},
-        ),
+async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, kraft_mode, controller_app):
+    await deploy_cluster(
+        ops_test=ops_test,
+        charm=kafka_charm,
+        kraft_mode=kraft_mode,
+        config_broker={"expose_external": "nodeport"},
     )
-    await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
-    async with ops_test.fast_forward(fast_interval="60s"):
-        await ops_test.model.wait_for_idle(
-            apps=[ZK_NAME], timeout=1000, idle_period=30, raise_on_error=False, status="active"
-        )
 
-    await ops_test.model.add_relation(APP_NAME, ZK_NAME)
-
-    async with ops_test.fast_forward(fast_interval="60s"):
-        await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME], timeout=1000, idle_period=30, status="active"
-        )
+    assert ops_test.model.applications[APP_NAME].status == "active"
+    assert ops_test.model.applications[controller_app].status == "active"
 
 
 @pytest.mark.abort_on_fail
@@ -69,23 +54,30 @@ async def test_consistency_between_workload_and_metadata(ops_test: OpsTest):
 
 
 @pytest.mark.abort_on_fail
-async def test_remove_zk_relation_relate(ops_test: OpsTest):
+async def test_remove_zk_relation_relate(ops_test: OpsTest, kraft_mode, controller_app):
+    if kraft_mode == "single":
+        logger.info(f"Skipping because we're using {kraft_mode} mode.")
+        return
+
     check_output(
-        f"JUJU_MODEL={ops_test.model_full_name} juju remove-relation {APP_NAME} {ZK_NAME}",
+        f"JUJU_MODEL={ops_test.model_full_name} juju remove-relation {APP_NAME} {controller_app}",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
     )
 
     await ops_test.model.wait_for_idle(
-        apps=[APP_NAME, ZK_NAME], idle_period=40, timeout=3600, raise_on_error=False
+        apps=[APP_NAME, controller_app], idle_period=40, timeout=3600, raise_on_error=False
     )
 
-    await ops_test.model.add_relation(APP_NAME, ZK_NAME)
+    await ops_test.model.add_relation(
+        f"{APP_NAME}:{PEER_CLUSTER_ORCHESTRATOR_RELATION}",
+        f"{controller_app}:{PEER_CLUSTER_RELATION}",
+    )
 
     async with ops_test.fast_forward(fast_interval="90s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, ZK_NAME],
+            apps=[APP_NAME, controller_app],
             status="active",
             idle_period=30,
             timeout=1000,
@@ -94,7 +86,7 @@ async def test_remove_zk_relation_relate(ops_test: OpsTest):
 
 
 @pytest.mark.abort_on_fail
-async def test_listeners(ops_test: OpsTest, app_charm):
+async def test_listeners(ops_test: OpsTest, app_charm, kafka_apps):
     address = await get_address(ops_test=ops_test)
     assert netcat(
         address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].internal
@@ -112,7 +104,7 @@ async def test_listeners(ops_test: OpsTest, app_charm):
 
     async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=2000
+            apps=[*kafka_apps, DUMMY_NAME], idle_period=30, status="active", timeout=2000
         )
 
     # check that client listener is active
@@ -123,47 +115,49 @@ async def test_listeners(ops_test: OpsTest, app_charm):
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME}:{REL_NAME_ADMIN}"
     )
     await ops_test.model.wait_for_idle(
-        apps=[APP_NAME], idle_period=30, status="active", timeout=600
+        apps=kafka_apps, idle_period=30, status="active", timeout=600
     )
 
     assert not netcat(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client)
 
 
 @pytest.mark.abort_on_fail
-async def test_client_properties_makes_admin_connection(ops_test: OpsTest):
+async def test_client_properties_makes_admin_connection(ops_test: OpsTest, kafka_apps, kraft_mode):
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
     async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=800
+            apps=[*kafka_apps, DUMMY_NAME], idle_period=30, status="active", timeout=800
         )
 
     result = await run_client_properties(ops_test=ops_test)
     assert result
-    assert len(result.strip().split("\n")) == 3
+    # single mode: admin, sync, relation-# => 3
+    # multi mode: admin, relation-# => 2
+    assert len(result.strip().split("\n")) == 2 + int(kraft_mode == "single")
 
     await ops_test.model.applications[APP_NAME].remove_relation(
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME}:{REL_NAME_ADMIN}"
     )
     await ops_test.model.wait_for_idle(
-        apps=[APP_NAME], idle_period=30, status="active", timeout=600
+        apps=kafka_apps, idle_period=30, status="active", timeout=600
     )
 
 
 @pytest.mark.abort_on_fail
-async def test_logs_write_to_storage(ops_test: OpsTest):
+async def test_logs_write_to_storage(ops_test: OpsTest, kafka_apps):
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
     async with ops_test.fast_forward(fast_interval="60s"):
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME, DUMMY_NAME], idle_period=30, status="active", timeout=800
+            apps=[*kafka_apps, DUMMY_NAME], idle_period=30, status="active", timeout=800
         )
 
     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("produce")
     await action.wait()
 
     await ops_test.model.wait_for_idle(
-        apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30, status="active"
+        apps=[*kafka_apps, DUMMY_NAME], timeout=1000, idle_period=30, status="active"
     )
 
     check_logs(
