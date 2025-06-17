@@ -22,7 +22,6 @@ GROUP = "kafka"
 
 # FIXME: these need better names
 PEER = "cluster"
-ZK = "zookeeper"
 REL_NAME = "kafka-client"
 OAUTH_REL_NAME = "oauth"
 
@@ -226,10 +225,12 @@ class Status(Enum):
         BlockedStatus("missing required peer-cluster relation"), "DEBUG"
     )
     SNAP_NOT_INSTALLED = StatusLevel(BlockedStatus(f"unable to install {SNAP_NAME} snap"), "ERROR")
-    BROKER_NOT_RUNNING = StatusLevel(BlockedStatus("Broker not running"), "WARNING")
+    SERVICE_NOT_RUNNING = StatusLevel(BlockedStatus("Service not running"), "WARNING")
     NOT_ALL_RELATED = StatusLevel(MaintenanceStatus("not all units related"), "DEBUG")
     CC_NOT_RUNNING = StatusLevel(BlockedStatus("Cruise Control not running"), "WARNING")
-    MISSING_MODE = StatusLevel(BlockedStatus("Application needs ZooKeeper or KRaft mode"), "DEBUG")
+    MISSING_MODE = StatusLevel(
+        BlockedStatus("Application needs to be related with a KRaft controller"), "DEBUG"
+    )
     NO_CLUSTER_UUID = StatusLevel(WaitingStatus("Waiting for cluster uuid"), "DEBUG")
     NO_BOOTSTRAP_CONTROLLER = StatusLevel(
         WaitingStatus("Waiting for bootstrap controller"), "DEBUG"
@@ -237,12 +238,6 @@ class Status(Enum):
     MISSING_CONTROLLER_PASSWORD = StatusLevel(
         WaitingStatus("Waiting for controller user credentials"), "DEBUG"
     )
-    ZK_NOT_RELATED = StatusLevel(BlockedStatus("missing required zookeeper relation"), "DEBUG")
-    ZK_NOT_CONNECTED = StatusLevel(BlockedStatus("unit not connected to zookeeper"), "ERROR")
-    ZK_TLS_MISMATCH = StatusLevel(
-        BlockedStatus("tls must be enabled on both kafka and zookeeper"), "ERROR"
-    )
-    ZK_NO_DATA = StatusLevel(WaitingStatus("zookeeper credentials not created yet"), "DEBUG")
     ADDED_STORAGE = StatusLevel(
         ActiveStatus("manual partition reassignment may be needed to utilize new storage volumes"),
         "WARNING",
@@ -291,9 +286,9 @@ class Status(Enum):
 
 DEPENDENCIES = {
     "kafka_service": {
-        "dependencies": {"zookeeper": ">3.6"},
+        "dependencies": {},
         "name": "kafka",
-        "upgrade_supported": "^3",  # zk support removed in 4.0
-        "version": "3.9.0",
+        "upgrade_supported": "^4",  # zk support removed in 4.0
+        "version": "4.0.0",
     },
 }

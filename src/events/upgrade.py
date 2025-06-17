@@ -5,7 +5,6 @@
 
 import json
 import logging
-import subprocess
 from typing import TYPE_CHECKING
 
 from charms.data_platform_libs.v0.upgrade import (
@@ -14,16 +13,14 @@ from charms.data_platform_libs.v0.upgrade import (
     DependencyModel,
     EventBase,
     KubernetesClientError,
-    verify_requirements,
 )
 from lightkube.core.client import Client
 from lightkube.core.exceptions import ApiError
 from lightkube.resources.apps_v1 import StatefulSet
-from ops.pebble import ExecError
 from pydantic import BaseModel
 from typing_extensions import override
 
-from literals import TLS_RELATION, Status
+from literals import TLS_RELATION
 
 if TYPE_CHECKING:
     from charm import KafkaCharm
@@ -65,18 +62,18 @@ class KafkaUpgrade(DataUpgrade):
         if not self.charm.state.ready_to_start or self.idle:
             return
 
-        dependency_model: DependencyModel = getattr(self.dependency_model, "kafka_service")
-        if not verify_requirements(
-            version=self.charm.state.zookeeper.zookeeper_version,
-            requirement=dependency_model.dependencies["zookeeper"],
-        ):
-            logger.error(
-                "Current ZooKeeper version %s does not meet requirement %s",
-                self.charm.state.zookeeper.zookeeper_version,
-                dependency_model.dependencies["zookeeper"],
-            )
-            self.set_unit_failed()
-            return
+        # dependency_model: DependencyModel = getattr(self.dependency_model, "kafka_service")
+        # if not verify_requirements(
+        #     version=self.charm.state.zookeeper.zookeeper_version,
+        #     requirement=dependency_model.dependencies["zookeeper"],
+        # ):
+        #     logger.error(
+        #         "Current ZooKeeper version %s does not meet requirement %s",
+        #         self.charm.state.zookeeper.zookeeper_version,
+        #         dependency_model.dependencies["zookeeper"],
+        #     )
+        #     self.set_unit_failed()
+        #     return
 
         # needed to run before setting config
         self.apply_backwards_compatibility_fixes(event)
@@ -84,7 +81,6 @@ class KafkaUpgrade(DataUpgrade):
         # required settings given zookeeper connection config has been created
         self.dependent.config_manager.set_environment()
         self.dependent.config_manager.set_server_properties()
-        self.dependent.config_manager.set_zk_jaas_config()
         self.dependent.config_manager.set_client_properties()
 
         # during pod-reschedules (e.g upgrades or otherwise) we lose all files
@@ -110,11 +106,6 @@ class KafkaUpgrade(DataUpgrade):
             self.post_upgrade_check()
         except ClusterNotReadyError as e:
             logger.error(e.cause)
-            self.set_unit_failed()
-            return
-
-        if not self.charm.state.zookeeper.broker_active():
-            logger.error(Status.ZK_NOT_CONNECTED)
             self.set_unit_failed()
             return
 
@@ -181,20 +172,20 @@ class KafkaUpgrade(DataUpgrade):
         """A range of functions needed for backwards compatibility."""
         logger.info("Applying upgrade fixes")
         # Rev.38 (VM) - Create credentials for missing internal user, to reconcile state during upgrades
-        if (
-            not self.charm.state.cluster.internal_user_credentials
-            and self.charm.state.zookeeper.zookeeper_connected
-        ):
-            try:
-                internal_user_credentials = self.dependent.zookeeper._create_internal_credentials()
-            except (KeyError, RuntimeError, subprocess.CalledProcessError, ExecError) as e:
-                logger.warning(str(e))
-                event.defer()
-                return
+        # if (
+        #     not self.charm.state.cluster.internal_user_credentials
+        #     and self.charm.state.zookeeper.zookeeper_connected
+        # ):
+        #     try:
+        #         internal_user_credentials = self.dependent.zookeeper._create_internal_credentials()
+        #     except (KeyError, RuntimeError, subprocess.CalledProcessError, ExecError) as e:
+        #         logger.warning(str(e))
+        #         event.defer()
+        #         return
 
-            # only set to relation data when all set
-            for username, password in internal_user_credentials:
-                self.charm.state.cluster.update({f"{username}-password": password})
+        #     # only set to relation data when all set
+        #     for username, password in internal_user_credentials:
+        #         self.charm.state.cluster.update({f"{username}-password": password})
 
         # Rev.65 - Creation of external K8s services
         self.dependent.update_external_services()
