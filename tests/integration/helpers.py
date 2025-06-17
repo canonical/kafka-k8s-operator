@@ -12,7 +12,7 @@ from contextlib import closing
 from enum import Enum
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
-from typing import Any, List, Optional, Set
+from typing import Any, List, Literal, Optional, Set
 
 import yaml
 from charms.kafka.client import KafkaClient
@@ -26,8 +26,11 @@ from core.models import JSON
 from literals import (
     BALANCER_WEBSERVER_USER,
     BROKER,
+    CONTROLLER_USER,
     JMX_CC_PORT,
     PEER,
+    PEER_CLUSTER_ORCHESTRATOR_RELATION,
+    PEER_CLUSTER_RELATION,
     SECURITY_PROTOCOL_PORTS,
 )
 from managers.auth import Acl, AuthManager
@@ -37,6 +40,7 @@ logger = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 KAFKA_CONTAINER = METADATA["resources"]["kafka-image"]["upstream-source"]
 APP_NAME = METADATA["name"]
+CONTROLLER_NAME = "controller"
 ZK_NAME = "zookeeper-k8s"
 DUMMY_NAME = "app"
 REL_NAME_ADMIN = "kafka-client-admin"
@@ -52,14 +56,89 @@ MTLS_NAME = "mtls"
 DUMMY_NAME = "app"
 
 
+KRaftMode = Literal["single", "multi"]
+
+
 class KRaftUnitStatus(Enum):
     LEADER = "Leader"
     FOLLOWER = "Follower"
     OBSERVER = "Observer"
 
 
-def load_acls(model_full_name: str | None, zk_uris: str) -> Set[Acl]:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={BROKER.paths['CONF']}/zookeeper-jaas.cfg {BROKER.paths['BIN']}/bin/kafka-acls.sh --authorizer-properties zookeeper.connect={zk_uris} --list"
+async def deploy_cluster(
+    ops_test: OpsTest,
+    charm: Path,
+    kraft_mode: KRaftMode,
+    series: str = "noble",
+    config_broker: dict = {},
+    config_controller: dict = {},
+    num_broker: int = 1,
+    num_controller: int = 1,
+    storage_broker: dict = {},
+    app_name_broker: str = str(APP_NAME),
+    app_name_controller: str = CONTROLLER_NAME,
+):
+    """Deploys an Apache Kafka cluster using the Charmed Apache Kafka operator in KRaft mode."""
+    logger.info(f"Deploying Kafka cluster in '{kraft_mode}' mode")
+
+    await ops_test.model.deploy(
+        charm,
+        application_name=app_name_broker,
+        num_units=num_broker,
+        series=series,
+        storage=storage_broker,
+        config={
+            "roles": "broker,controller" if kraft_mode == "single" else "broker",
+            "profile": "testing",
+        }
+        | config_broker,
+        resources={"kafka-image": KAFKA_CONTAINER},
+        trust=True,
+    )
+
+    if kraft_mode == "multi":
+        await ops_test.model.deploy(
+            charm,
+            application_name=app_name_controller,
+            num_units=num_controller,
+            series=series,
+            config={
+                "roles": "controller",
+                "profile": "testing",
+            }
+            | config_controller,
+            resources={"kafka-image": KAFKA_CONTAINER},
+            trust=True,
+        )
+
+    status = "active" if kraft_mode == "single" else "blocked"
+    apps = [app_name_broker] if kraft_mode == "single" else [app_name_broker, app_name_controller]
+    await ops_test.model.wait_for_idle(
+        apps=apps,
+        idle_period=30,
+        timeout=1800,
+        raise_on_error=False,
+        status=status,
+    )
+
+    if kraft_mode == "multi":
+        await ops_test.model.add_relation(
+            f"{app_name_broker}:{PEER_CLUSTER_ORCHESTRATOR_RELATION}",
+            f"{app_name_controller}:{PEER_CLUSTER_RELATION}",
+        )
+
+    await ops_test.model.wait_for_idle(
+        apps=apps,
+        idle_period=30,
+        timeout=1800,
+        raise_on_error=False,
+        status="active",
+    )
+
+
+def load_acls(model_full_name: str | None) -> Set[Acl]:
+    container_command = f"{BROKER.paths['BIN']}/bin/kafka-acls.sh --command-config {BROKER.paths['CONF']}/client.properties --bootstrap-server localhost:19092 --list"
+
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -87,7 +166,7 @@ def load_super_users(model_full_name: str | None) -> List[str]:
 
 
 def check_user(model_full_name: str | None, username: str) -> None:
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={BROKER.paths['CONF']}/zookeeper-jaas.cfg {BROKER.paths['BIN']}/bin/kafka-configs.sh --bootstrap-server localhost:19092 --describe --entity-type users --entity-name {username} --command-config {BROKER.paths['CONF']}/client.properties"
+    container_command = f"{BROKER.paths['BIN']}/bin/kafka-configs.sh --bootstrap-server localhost:19092 --describe --entity-type users --entity-name {username} --command-config {BROKER.paths['CONF']}/client.properties"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -314,7 +393,7 @@ async def run_client_properties(ops_test: OpsTest) -> str:
         + f":{SECURITY_PROTOCOL_PORTS['SASL_PLAINTEXT', 'SCRAM-SHA-512'].client}"
     )
 
-    container_command = f"KAFKA_OPTS=-Djava.security.auth.login.config={BROKER.paths['CONF']}/zookeeper-jaas.cfg {BROKER.paths['BIN']}/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config {BROKER.paths['CONF']}/client.properties --entity-type users"
+    container_command = f"{BROKER.paths['BIN']}/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config {BROKER.paths['CONF']}/client.properties --entity-type users"
 
     result = check_output(
         f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
@@ -444,7 +523,7 @@ def get_client_usernames(ops_test: OpsTest, owner: str = APP_NAME) -> set[str]:
         if "relation" in key:
             usernames.add(key)
 
-    return usernames
+    return usernames - {CONTROLLER_USER}
 
 
 # FIXME: will need updating after zookeeper_client is implemented in full
