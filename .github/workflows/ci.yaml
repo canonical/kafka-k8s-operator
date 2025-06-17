@@ -47,7 +47,7 @@ jobs:
           pipx install tox
           pipx install poetry
       - name: Run tests
-        run: echo PASS # tox run -e unit
+        run: tox run -e unit
 
   build:
     strategy:
@@ -117,7 +117,7 @@ jobs:
             echo "mark_expression=not unstable" >> $GITHUB_OUTPUT
           fi
       - name: Run integration tests
-        run: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}' --model testing --keep-models --kraft-mode ${{ matrix.kraft-mode }}
+        run: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}' --kraft-mode ${{ matrix.kraft-mode }}
         env:
           CI_PACKED_CHARMS: ${{ needs.build.outputs.charms }}
 

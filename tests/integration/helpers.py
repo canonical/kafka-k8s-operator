@@ -29,6 +29,7 @@ from literals import (
     CONTROLLER_USER,
     INTERNAL_USERS,
     JMX_CC_PORT,
+    KRAFT_NODE_ID_OFFSET,
     PEER,
     PEER_CLUSTER_ORCHESTRATOR_RELATION,
     PEER_CLUSTER_RELATION,
@@ -380,7 +381,7 @@ def check_logs(ops_test: OpsTest, kafka_unit_name: str, topic: str) -> None:
 
     passed = False
     for log in logs:
-        if topic and "index" in log:
+        if topic in log and "index" in log:
             passed = True
             break
 
@@ -990,3 +991,13 @@ async def list_truststore_aliases(ops_test: OpsTest, unit: str = f"{APP_NAME}/0"
 def check_socket(host: str, port: int) -> bool:
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
         return sock.connect_ex((host, port)) == 0
+
+
+def unit_id_to_broker_id(unit_id: int) -> int:
+    """Converts unit id to broker id in KRaft mode."""
+    return KRAFT_NODE_ID_OFFSET + unit_id
+
+
+def broker_id_to_unit_id(broker_id: int) -> int:
+    """Converts broker id to unit id in KRaft mode."""
+    return broker_id - KRAFT_NODE_ID_OFFSET
