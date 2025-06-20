@@ -68,7 +68,7 @@ jobs:
     with:
       path-to-charm-directory: ${{ matrix.path }}
 
-  integration-test-1:
+  integration-tests-stable:
     strategy:
       fail-fast: false
       matrix:
@@ -119,7 +119,7 @@ jobs:
         env:
           CI_PACKED_CHARMS: ${{ needs.build.outputs.charms }}
 
-  integration-test-2:
+  integration-tests-flaky:
     strategy:
       fail-fast: false
       matrix:
