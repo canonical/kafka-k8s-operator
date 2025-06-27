@@ -1,5 +1,5 @@
 (reference-file-system-paths)=
-# File System Paths
+# File system paths
 
 In the following table, we summarise some of the most relevant file paths used in the Apache Kafka and Apache ZooKeeper charms.
 

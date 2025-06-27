@@ -1,10 +1,14 @@
 (how-to-deploy-deploy-anywhere)=
 # How to deploy Charmed Apache Kafka K8s
 
+This guide provides platform-independent deployment instructions.
+For specific guides, see: [AWS](how-to-deploy-deploy-on-aws), [Azure](how-to-deploy-deploy-on-azure) and [KRaft mode](how-to-deploy-kraft-mode).
+
+(how-to-deploy-deploy-anywhere)=
+
 ```{caution}
 For non-K8s Charmed Apache Apache Kafka, see the [Charmed Apache Kafka documentation](https://charmhub.io/kafka-k8s) instead.
 ```
-<!-- Update the link to lead to the docs! -->
 
 To deploy a Charmed Apache Kafka K8s cluster:
 
@@ -42,7 +46,7 @@ juju bootstrap <cloud> <controller>
 
 where `<cloud>` -- the cloud to deploy controller to, e.g., `localhost`. For more information on how to set up a new cloud, see the [How to manage clouds](https://documentation.ubuntu.com/juju/latest/howto/manage-clouds/index.html) guide in Juju documentation.
 
-For more Juju controller setup guidance, see the [How to manage controllers](https://documentation.ubuntu.com/juju/latest/howto/manage-controllers/index.html) guide in Juju documentation.
+For more Juju controller setup guidance, see the [How to manage controllers](https://documentation.ubuntu.com/juju/3.6/howto/manage-controllers/) guide in Juju documentation.
 
 ## Juju model setup
 
@@ -55,7 +59,7 @@ juju add-model <model>
 Alternatively, you can switch to any existing Juju model: 
 
 ```shell
-juju switch <model>
+juju switch <model-name>
 ```
 
 Make sure that the model is of a correct type (`k8s`):
@@ -83,7 +87,7 @@ For more information about the trust options usage, see the [Juju documentation]
 Connect Charmed Apache ZooKeeper and Charmed Apache Kafka by relating/integrating them:
 
 ```shell
-juju relate kafka-k8s zookeeper-k8s
+juju integrate kafka-k8s zookeeper-k8s
 ```
 
 Check the status of the deployment:
@@ -102,10 +106,10 @@ In fact, ports are only opened when client applications are related, also
 depending on the protocols to be used.
 
 ```{note}
-For more information about the available listeners and protocols please refer to [this table](reference-apache-kafka-listeners). 
+For more information about the available listeners and protocols please refer to [this table](reference-broker-listeners). 
 ```
 
-It is however generally useful for most situations to create a first admin user
+It is however generally useful for most of the use cases to create a first admin user
 to be used to manage the Apache Kafka cluster (either internally or externally).
 
 To create an admin user, deploy the [Data Integrator Charm](https://charmhub.io/data-integrator) with
@@ -115,10 +119,10 @@ To create an admin user, deploy the [Data Integrator Charm](https://charmhub.io/
 juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=admin
 ```
 
-... and relate it to the Apache Kafka K8s charm:
+... and integrate it to the Apache Kafka K8s charm:
 
 ```shell
-juju relate data-integrator kafka-k8s
+juju integrate data-integrator kafka-k8s
 ```
 
 To retrieve authentication information, such as the username and password, use:

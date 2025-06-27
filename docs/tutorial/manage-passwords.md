@@ -1,7 +1,7 @@
 (tutorial-manage-passwords)=
 # 5. Manage passwords
 
-This is part of the [Charmed Apache Kafka K8s Tutorial](index.md). Please refer to this page for more information and an overview of the content.
+This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 ## Manage passwords
 
@@ -9,9 +9,9 @@ Passwords help to secure our cluster and are essential for security. Over time i
 
 ### Admin user
 
-The admin user password management is handled directly by the charm, by using Juju actions.
+The admin user password management is handled directly by the charm, by using Juju actions. 
 
-#### Retrieve the password
+#### Retrieve the admin password
 
 As previously mentioned, the admin password can be retrieved by running the `get-admin-credentials` action on the Charmed Apache Kafka application:
 
@@ -68,6 +68,7 @@ You can change the admin password to a specific password by entering:
 ```shell
 juju run kafka-k8s/leader set-password username=admin password=my-new-password
 ```
+
 Running the command should output:
 
 ```shell
@@ -77,6 +78,7 @@ Running operation 18 with 1 task
 Waiting for task 19...
 admin-password: my-new-password
 ```
+
 The admin password under the result: `admin-password` should match the password we provided as the action argument. 
 
 ```{caution}

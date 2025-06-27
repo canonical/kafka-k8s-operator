@@ -1,11 +1,15 @@
 (how-to-deploy-index)=
-# Deploy
+
+```{include} deploy-anywhere.md
+
+```
 
 ```{toctree}
+:titlesonly:
 :maxdepth: 2
 :hidden:
 
-How to deploy<deploy-anywhere.md>
-AKS<deploy-aks.md>
-EKS<deploy-eks.md>
+AWS<deploy-aws.md>
+Azure<deploy-azure.md>
+KRaft mode<kraft-mode.md>
 ```

@@ -26,8 +26,8 @@ refer to [Charmhub.io](https://charmhub.io/), for more Charmed operators that ca
 
 | | |
 |--|--|
-|  [Tutorials](tutorial-index)</br>  Get started - a hands-on introduction to using Charmed Apache Kafka K8s operator for new users </br> |  [How-to guides](how-to-index) </br> Step-by-step guides covering key operations and common tasks |
-| [Reference](reference-index) </br> Technical information - specifications, APIs, architecture | [Explanation](explanation-index) </br> Concepts - discussion and clarification of key topics  |
+|  [Tutorial](tutorial-introduction)</br>  Get started - a hands-on introduction to using Charmed Apache Kafka operator for new users </br> |  [How-to guides](how-to/manage-units) </br> Step-by-step guides covering key operations and common tasks |
+| [Reference](reference/file-system-paths) </br> Technical information - specifications, APIs, architecture | [Explanation](explanation/security) </br> Concepts - discussion and clarification of key topics  |
 
 ## Project and community
 

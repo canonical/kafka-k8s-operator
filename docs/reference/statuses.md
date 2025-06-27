@@ -1,7 +1,7 @@
 (reference-statuses)=
 # Charm statuses
 
-This charm follows [standard Juju applications statuses](https://documentation.ubuntu.com/juju/latest/reference/status/index.html).
+A deployed charm follows [standard Juju applications statuses](https://documentation.ubuntu.com/juju/3.6/reference/status/#application-status). Here you can find the expected reactions on different statuses:
 
 ## Apache Kafka
 

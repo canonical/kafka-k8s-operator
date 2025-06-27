@@ -1,7 +1,7 @@
 (tutorial-integrate-with-client-applications)=
 # 4. Integrate with client applications
 
-This is part of the [Charmed Apache Kafka K8s Tutorial](index.md). Please refer to this page for more information and an overview of the content. 
+This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 ## Integrate with client applications
 
@@ -9,6 +9,14 @@ As mentioned in the previous section of the Tutorial, the recommended way to cre
 
 ```{note}
 Relations, or what Juju documentation describes also as [Integrations](https://documentation.ubuntu.com/juju/3.6/reference/relation/), let two charms to exchange information and interact with one another. Creating a relation between Apache Kafka and the Data Integrator will automatically generate a username, password, and assign read/write permissions on a given topic. This is the simplest method to create and manage users in Charmed Apache Kafka.
+```
+
+### Data Integrator charm
+
+The [Data Integrator charm](https://charmhub.io/data-integrator) is a bare-bones charm for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Apache Kafka, OpenSearch, etc.) with a consistent, opinionated and robust user experience. To deploy the Data Integrator charm we can use the command `juju deploy` we have learned above:
+
+```shell
+juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=producer,consumer
 ```
 
 ### Data Integrator Charm
@@ -70,7 +78,7 @@ kafka:
 ok: "True"
 ```
 
-Save the value listed under `endpoints`, `username` and `password`. *(Note: your hostname, username, and password will likely be different.)*
+Save the value listed under `bootstrap-server`, `username` and `password`. *(Note: your hostname, usernames, and passwords will likely be different.)*
 
 ### Produce/consume messages
 
@@ -174,7 +182,9 @@ To start to produce messages to Apache Kafka, we **JUST** simply relate the Apac
 juju relate kafka-test-app kafka-k8s
 ```
 
-> **Note** This will both take care of creating a dedicated user (as much as done for the data-integrator) as well as start a producer process publishing messages to the `test_kafka_app_topic` topic. 
+```{note}
+This will both take care of creating a dedicated user (as much as done for the data-integrator) as well as start a producer process publishing messages to the `test_kafka_app_topic` topic, basically automating what was done before by hand. 
+```
 
 After some time, the `juju status` output should show:
 

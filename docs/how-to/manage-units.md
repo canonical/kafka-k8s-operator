@@ -57,7 +57,7 @@ Before running bash scripts, make sure that some listeners have been correctly
 opened by creating appropriate integrations. 
 ```
 
-For more information about listeners opened based on integrations, see the [Listeners](reference-apache-kafka-listeners) reference page.
+For more information about listeners opened based on integrations, see the [Listeners](reference-broker-listeners) reference page.
 For example, to open a SASL/SCRAM listener, integrate a client application using the data integrator, as described in the [How to manage app guide](how-to-manage-applications).
 
 To run most of the scripts, you need to provide:
@@ -130,7 +130,7 @@ PASSWORD=$(juju run data-integrator/leader get-credentials --format yaml | yq .k
 
 Then copy the `/etc/kafka/client.properties` and substitute the following lines:
 
-```text
+```shell
 ...
 sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="<USERNAME>" password="<PASSWORD>";
 ...
