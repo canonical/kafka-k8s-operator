@@ -92,7 +92,7 @@ Service logs can be found in `/var/log/kafka`.
 
 The Charmed Apache Kafka K8s Operator supports Juju [relations](https://juju.is/docs/olm/relations) for interfaces listed below.
 
-#### The kafka_client interface
+#### The Kafka_client interface
 
 The `kafka_client` interface is used with the [Data Integrator](https://charmhub.io/data-integrator) charm, which upon relation automatically provides credentials and endpoints for connecting to the desired product.
 

@@ -19,6 +19,14 @@ The [Data Integrator charm](https://charmhub.io/data-integrator) is a bare-bones
 juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=producer,consumer
 ```
 
+### Data Integrator charm
+
+The [Data Integrator charm](https://charmhub.io/data-integrator) is a bare-bones charm for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Apache Kafka, OpenSearch, etc.) with a consistent, opinionated and robust user experience. To deploy the Data Integrator charm we can use the command `juju deploy` we have learned above:
+
+```shell
+juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=producer,consumer
+```
+
 ### Data Integrator Charm
 
 The [Data Integrator Charm](https://charmhub.io/data-integrator) is a bare-bones charm that can be used for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Apache Kafka, OpenSearch, etc) with a consistent, opinionated and robust user experience. To deploy the Data Integrator Charm we can use the command `juju deploy` we have learned above:
