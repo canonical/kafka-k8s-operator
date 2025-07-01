@@ -4,7 +4,6 @@
 
 import asyncio
 import logging
-import os
 
 import pytest
 from pytest_operator.plugin import OpsTest
@@ -20,6 +19,7 @@ from literals import (
 from .helpers import (
     APP_NAME,
     KAFKA_CONTAINER,
+    KRaftMode,
     KRaftUnitStatus,
     create_test_topic,
     get_address,
@@ -37,8 +37,13 @@ PRODUCER_APP = "producer"
 
 class TestKRaft:
 
-    deployment_strat: str = os.environ.get("DEPLOYMENT", "multi")
-    controller_app: str = {"single": APP_NAME, "multi": CONTROLLER_APP}[deployment_strat]
+    deployment_strat: str
+    controller_app: str
+
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, kraft_mode: KRaftMode):
+        self.deployment_strat = kraft_mode
+        self.controller_app = {"single": APP_NAME, "multi": CONTROLLER_APP}[self.deployment_strat]
 
     async def _assert_broker_listeners_accessible(self, ops_test: OpsTest, broker_unit_num=0):
         logger.info(f"Asserting broker listeners are up: {APP_NAME}/{broker_unit_num}")
@@ -72,7 +77,6 @@ class TestKRaft:
                 kafka_charm,
                 application_name=APP_NAME,
                 num_units=1,
-                series="jammy",
                 config={
                     "roles": "broker,controller" if self.controller_app == APP_NAME else "broker",
                     "profile": "testing",
@@ -102,7 +106,6 @@ class TestKRaft:
                 kafka_charm,
                 application_name=self.controller_app,
                 num_units=1,
-                series="jammy",
                 config={
                     "roles": self.controller_app,
                     "profile": "testing",
