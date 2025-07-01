@@ -13,7 +13,6 @@ from ops.pebble import ExecError
 
 from core.cluster import ClusterState
 from core.workload import WorkloadBase
-from literals import SECURITY_PROTOCOL_PORTS
 
 logger = logging.getLogger(__name__)
 
@@ -137,13 +136,12 @@ class AuthManager:
 
         return consumer_acls
 
-    def add_user(self, username: str, password: str, internal: bool = False) -> None:
+    def add_user(self, username: str, password: str) -> None:
         """Adds new user credentials to cluster.
 
         Args:
             username: the user name to add
             password: the user password
-            internal: flag to use internal ports or client ones
 
         Raises:
             `(subprocess.CalledProcessError | ops.pebble.ExecError)`: if the error returned a non-zero exit code
@@ -155,13 +153,8 @@ class AuthManager:
             f"--add-config=SCRAM-SHA-512=[password={password}]",
         ]
 
-        bootstrap_server = (
-            f"{self.state.unit_broker.internal_address}:{SECURITY_PROTOCOL_PORTS[self.state.default_auth].internal}"
-            if internal
-            else self.state.bootstrap_server
-        )
         command = base_command + [
-            f"--bootstrap-server={bootstrap_server}",
+            f"--bootstrap-server={self.state.bootstrap_server_internal}",
             f"--command-config={self.workload.paths.client_properties}",
         ]
         opts = []
