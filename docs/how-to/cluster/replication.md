@@ -22,9 +22,8 @@ The best practice is to co-locate the Kafka Connect cluster with the target Apac
 
 For guidance on how to set up Charmed Apache Kafka, please refer to the following resources:
 
-- The [Charmed Apache Kafka Tutorial](tutorial-introduction)
+- The [Charmed Apache Kafka K8s Tutorial](tutorial-introduction)
 - The [How to deploy guide](how-to-deploy-deploy-anywhere) for Charmed Apache Kafka
-- The [Charmed Kafka Connect Tutorial](tutorial-kafka-connect)
 
 ## Set up active-passive replication
 

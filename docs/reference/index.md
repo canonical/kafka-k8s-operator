@@ -14,14 +14,12 @@ Charmhub generated content:
 Charm-specific reference materials:
 
 * {ref}`reference-file-system-paths`
-* {ref}`reference-snap-entrypoints`
 * {ref}`reference-statuses`
 * {ref}`reference-requirements`
 
 General useful references:
 
 * {ref}`reference-broker-listeners`
-* {ref}`reference-performance-tuning`
 * {ref}`Contact information <reference-contact>`
 
 ```{toctree}

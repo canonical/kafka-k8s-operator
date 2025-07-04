@@ -1,4 +1,4 @@
-(reference-apache-kafka-listeners)=
+(reference-broker-listeners)=
 # Apache Kafka Listeners
 
 Charmed Apache Kafka comes with a set of listeners that can be enabled to allow for

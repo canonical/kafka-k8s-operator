@@ -1,8 +1,7 @@
-(how-to-deploy-deploy-anywhere)=
 # How to deploy Charmed Apache Kafka K8s
 
 This guide provides platform-independent deployment instructions.
-For specific guides, see: [AWS](how-to-deploy-deploy-on-aws), [Azure](how-to-deploy-deploy-on-azure) and [KRaft mode](how-to-deploy-kraft-mode).
+For specific guides, see: [AKS](how-to-deploy-deploy-on-aks) and [EKS](how-to-deploy-deploy-on-eks).
 
 (how-to-deploy-deploy-anywhere)=
 

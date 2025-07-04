@@ -83,3 +83,5 @@ Principal charms support the latest LTS series “22.04” only.
 Apache Kafka release notes: [3.7.0](https://archive.apache.org/dist/kafka/3.7.0/RELEASE_NOTES.html), [3.8.0](https://archive.apache.org/dist/kafka/3.8.0/RELEASE_NOTES.html), [3.9.0](https://archive.apache.org/dist/kafka/3.9.0/RELEASE_NOTES.html).
 
 Apache ZooKeeper release notes: [3.9.0](https://zookeeper.apache.org/doc/r3.9.0/releasenotes.html), [3.9.1](https://zookeeper.apache.org/doc/r3.9.1/releasenotes.html), [3.9.2](https://zookeeper.apache.org/doc/r3.9.2/releasenotes.html).
+
+<!-- We mentioned updating ZK to 3.9.2, but the ZK charm revision didn't change -- how is that possible? -->

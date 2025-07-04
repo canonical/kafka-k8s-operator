@@ -9,9 +9,8 @@ Deployment follows a broadly similar pattern on all platforms, but due to differ
 
 * Common [deployment guide](how-to-deploy-deploy-anywhere)
 * Specific deployment guides:
-  * [AWS](how-to-deploy-deploy-on-aws)
-  * [Azure](how-to-deploy-deploy-on-azure)
-  * [KRaft mode](how-to-deploy-kraft-mode)
+  * [AKS](how-to-deploy-deploy-on-aks)
+  * [EKS](how-to-deploy-deploy-on-eks)
 
 ## Management
 
@@ -26,8 +25,6 @@ For guidance on managing your deployed Charmed Apache Kafka, see:
 We have a series of How-to guides for security-related topics:
 
 * [Enable encryption](how-to-enable-encryption)
-* [Create mTLS credentials](how-to-create-mtls-client-credentials)
-* [Enable OAuth](how-to-enable-oauth-through-hydra)
 * [Back up and restore](how-to-back-up-and-restore)
 
 See also: our [security overview](explanation-security) page.
@@ -53,12 +50,6 @@ See the guides for more details:
 Advanced features of Charmed Apache Kafka include:
 
 * [Message schemas management](how-to-manage-message-schemas)
-* [Kafka Connect usage](how-to-use-kafka-connect-for-etl-workloads)
-
-<!-- Alternative landing page prototype
-| | |
-|--|--|
-| **Deployment** </br> Deployment follows a broadly similar pattern on all platforms, but due to differences in the platforms, configuration and deployment must be approached differently in each case. </br> [Common deployment guide](how-to-deploy-deploy-anywhere), [AWS](how-to-deploy-deploy-on-aws), [Azure](how-to-deploy-deploy-on-azure), [KRaft mode](how-to-deploy-kraft-mode) |**Management** </br> For guidance on managing your deployed Charmed Apache Kafka, see: [How to manage units](how-to-manage-units), [How to manage related applications](how-to-manage-applications), [How to Upgrade](how-to-upgrade) | -->
 
 ```{toctree}
 :titlesonly:
