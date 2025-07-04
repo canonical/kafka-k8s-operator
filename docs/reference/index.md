@@ -9,7 +9,7 @@ Charmhub generated content:
 
 * [Actions](https://charmhub.io/kafka-k8s/actions?channel=3/edge)
 * [Configurations](https://charmhub.io/kafka-k8s/configure?channel=3/edge)
-* [Libraries](https://charmhub.io/kafka-k8s/libraries/kafka_libs?channel=3/edge)
+* [Libraries](https://charmhub.io/kafka-k8s/libraries/kafka?channel=3/edge)
 
 Charm-specific reference materials:
 
@@ -30,7 +30,7 @@ General useful references:
 release-notes/index.md
 Actions<https://charmhub.io/kafka-k8s/actions?channel=3/edge>
 Configurations<https://charmhub.io/kafka-k8s/configure?channel=3/edge>
-Libraries<https://charmhub.io/kafka-k8s/libraries/kafka_libs?channel=3/edge>
+Libraries<https://charmhub.io/kafka-k8s/libraries/kafka?channel=3/edge>
 file-system-paths.md
 listeners.md
 Statuses<statuses.md>
