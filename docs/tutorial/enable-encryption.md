@@ -1,5 +1,5 @@
 (tutorial-enable-encryption)=
-# 6. Enable Encryption
+# 5. Enable Encryption
 
 This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 

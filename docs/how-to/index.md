@@ -72,9 +72,7 @@ Encryption<enable-encryption.md>
 Upgrade<upgrade.md>
 Monitoring<monitoring.md>
 cluster/index.md
-Create mTLS client credentials<create-mtls-client-credentials.md>
-Enable OAuth<oauth.md>
+external-k8s-connection.md
 Back up and restore<back-up-and-restore.md>
 Manage message schemas<schemas.md>
-Use Kafka Connect<kafka-connect.md>
 ```

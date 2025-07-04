@@ -9,7 +9,6 @@
 :maxdepth: 2
 :hidden:
 
-AWS<deploy-aws.md>
-Azure<deploy-azure.md>
-KRaft mode<kraft-mode.md>
+AKS<deploy-aks.md>
+EKS<deploy-eks.md>
 ```

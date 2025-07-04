@@ -1,5 +1,5 @@
 (tutorial-deploy)=
-# 3. Deploy Apache Kafka
+# 2. Deploy Apache Kafka
 
 This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 

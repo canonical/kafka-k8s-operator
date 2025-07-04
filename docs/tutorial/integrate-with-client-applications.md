@@ -1,5 +1,5 @@
 (tutorial-integrate-with-client-applications)=
-# 4. Integrate with client applications
+# 3. Integrate with client applications
 
 This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 

@@ -30,14 +30,12 @@ General useful references:
 :hidden:
 
 release-notes/index.md
-Actions<https://charmhub.io/kafka-k8s/actions?channel=4/edge>
-Configurations<https://charmhub.io/kafka-k8s/configure?channel=4/edge>
-Libraries<https://charmhub.io/kafka-k8s/libraries/kafka_libs?channel=4/edge>
+Actions<https://charmhub.io/kafka-k8s/actions?channel=3/edge>
+Configurations<https://charmhub.io/kafka-k8s/configure?channel=3/edge>
+Libraries<https://charmhub.io/kafka-k8s/libraries/kafka_libs?channel=3/edge>
 file-system-paths.md
-snap-entrypoints.md
 listeners.md
 Statuses<statuses.md>
 requirements.md
-performance-tuning.md
 Contact<contact.md>
 ```

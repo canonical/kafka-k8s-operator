@@ -1,11 +1,11 @@
 (explanation-index)=
 # Explanation
 
-The pages in this section aim to provide additional context and deeper understanding of foundational topics and concepts relevant to Charmed Apache Kafka.
+The pages in this section aim to provide additional context and deeper understanding of foundational topics and concepts relevant to Charmed Apache Kafka K8s.
 
 ## Security
 
-Secure deployments of Charmed Apache Kafka can be achieved through using recommended configurations, including setting up encryption and authentication.
+Secure deployments of Charmed Apache Kafka K8s can be achieved through using recommended configurations, including setting up encryption and authentication.
 For more details, see [Security topic overview](explanation-security) and [Cryptography usage explanation](explanation-cryptography) pages.
 
 ## Cluster configuration
