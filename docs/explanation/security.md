@@ -104,7 +104,7 @@ Charmed Apache Kafka K8s supports the following authentication layers:
 3. OAuth Authentication using [Hydra](https://discourse.charmhub.io/t/how-to-connect-to-kafka-using-hydra-as-oidc-provider/14610) or [Google](https://discourse.charmhub.io/t/how-to-connect-to-kafka-using-google-as-oidc-provider/14611)
 
 Each combination of authentication scheme and encryption is associated with the dedicated listener and it maps to a well-defined port.
-See the [listener reference documentation](reference-apache-kafka-listeners) for more information.
+See the [listener reference documentation](reference-broker-listeners) for more information.
 
 ### Monitoring and auditing
 

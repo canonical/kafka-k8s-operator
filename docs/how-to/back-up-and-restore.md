@@ -1,5 +1,5 @@
 (how-to-back-up-and-restore)=
-# Configuration backup and restore
+# Backup and restore
 
 Apache Kafka configuration is distributed using Apache ZooKeeper.
 An Apache ZooKeeper backup can be stored on any S3-compatible storage.
@@ -27,7 +27,7 @@ juju config s3-integrator \
 ```
 
 ```{note}
-The only mandatory configuration parameter in the command above is `bucket`.
+The only mandatory configuration parameter in the command above is the `bucket`.
 ```
 
 ### Integrate with Charmed Apache ZooKeeper K8s
@@ -98,8 +98,8 @@ This should show your available backups, like in the sample output below:
 Below is a list of parameters shown for each backup:
 
 - `Id`: identifier of the backup.
-- `Log-Sequence-number`: a database-specific number to identify its state. Learn more about the Zxid on [Apache ZooKeeper documentation](https://zookeeper.apache.org/doc/r3.9.2/zookeeperProgrammers.html#sc_timeInZk).
-- `Path`:  path of the snapshot file in the S3 repository.
+- `Log-Sequence-number`: a database-specific number to identify its state. Learn more about the zxid on [Apache ZooKeeper documentation](https://zookeeper.apache.org/doc/r3.9.2/zookeeperProgrammers.html#sc_timeInZk).
+- `Path`: path of the snapshot file in the S3 repository.
 
 ## Restore a backup
 
@@ -108,7 +108,7 @@ This operation puts you at risk of losing unsaved configuration data.
 We recommend creating a backup first.
 ```
 
-To restore a backup from that list, run the `restore` command and pass the `backup-id` (in the form of `YYYY-MM-DDTHH:MM:SSZ`) that is listed in the `list-backups` action output:
+To restore from backup, run the `restore` command and pass the `backup-id` (in the `YYYY-MM-DDTHH:MM:SSZ` format) that is listed in the `list-backups` action output:
 
 ```shell
 juju run zookeeper-k8s/leader restore backup-id=<backup-id-here>

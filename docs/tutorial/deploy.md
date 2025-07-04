@@ -1,7 +1,7 @@
 (tutorial-deploy)=
-# 3. Deploy Apache Kafka
+# 2. Deploy Apache Kafka
 
-This is part of the [Charmed Apache Kafka K8s Tutorial](index.md). Please refer to this page for more information and an overview of the content.
+This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 ## Deploy Charmed Apache Kafka K8s (and Charmed Apache ZooKeeper K8s)
 
@@ -131,4 +131,4 @@ You can finally delete the topic:
 
 However, although the commands above can run within the cluster, it is generally recommended during operations
 to enable external listeners and use these for running the admin commands from outside the cluster. 
-To do so, as we will see in the next section, we will deploy a [data-integrator](https://charmhub.io/data-integrator) charm and relate it to Charmed Apache Kafka.
+To do so, as we will see in the next section, we will deploy a [data-integrator](https://charmhub.io/data-integrator) charm and relate it to Charmed Apache Kafka K8s.

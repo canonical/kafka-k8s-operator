@@ -26,7 +26,7 @@ The following minimum requirements are meant to be for a production environment:
 - 64GB of RAM
 - 24 cores
 - 12 storage devices
-- 10 GbE card
+- 10 Gb Ethernet card
 
 The charm can be deployed in much smaller environments if needed.
 
@@ -92,7 +92,7 @@ Service logs can be found in `/var/log/kafka`.
 
 The Charmed Apache Kafka K8s Operator supports Juju [relations](https://juju.is/docs/olm/relations) for interfaces listed below.
 
-#### The kafka_client interface
+#### The Kafka_client interface
 
 The `kafka_client` interface is used with the [Data Integrator](https://charmhub.io/data-integrator) charm, which upon relation automatically provides credentials and endpoints for connecting to the desired product.
 
@@ -229,12 +229,15 @@ After this is complete, Grafana will show a new dashboard: `Kafka JMX Metrics`.
 
 For an overview of security features of the Charmed Apache Kafka K8s, see the [Security page](https://canonical.com/data/docs/kafka/k8s/e-security) in the Explanation section of the documentation.
 
-Security issues in the Charmed Apache Kafka K8s can be reported through [Launchpad](https://wiki.ubuntu.com/DebuggingSecurity#How%20to%20File). Please do not file GitHub issues about security issues.
+Security issues in the Charmed Apache Kafka K8s operator can be reported through [Launchpad](https://wiki.ubuntu.com/DebuggingSecurity#How_to_File). Please do not file GitHub issues about security issues.
+
+## Performance tuning
+
+For information on tuning performance of Charmed Apache Kafka K8s, see the [Performance tuning reference](https://discourse.charmhub.io/t/charmed-kafka-documentation-reference-performace-tuning/10561) page.
 
 ## Contributing
 
 Please see the [Juju SDK docs](https://juju.is/docs/sdk) for guidelines on enhancements to this charm following best practice guidelines, and [CONTRIBUTING.md](https://github.com/canonical/kafka-k8s-operator/blob/main/CONTRIBUTING.md) for developer guidance.
-
 
 ## License
 

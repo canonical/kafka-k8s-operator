@@ -91,9 +91,9 @@ juju relate kafka-k8s rotated-user
 ```
 
 At this point, we effectively have two overlapping users, so that applications can swap the password
-from one to another. 
+from one to another.
 If the applications consist of fleets of independent producers and consumers, user credentials can be rotated
-progressively across fleets, such that no effective downtime is achieved. 
+progressively across fleets, such that no effective downtime is achieved.
 
 Once all applications have rotated their credentials, it is then safe to remove data first `data-integrator` charm
 
@@ -103,7 +103,7 @@ juju remove-application data-integrator
 
 ### Internal password rotation
 
-The operator user is used internally by the Charmed Apache Kafka Operator, the `set-password` action can be used to rotate its password.
+The operator user is used internally by the Charmed Apache Kafka K8s Operator, the `set-password` action can be used to rotate its password.
 
 ```shell
 # to set a specific password for the operator user
