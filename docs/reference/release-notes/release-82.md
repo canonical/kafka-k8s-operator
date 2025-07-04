@@ -3,29 +3,11 @@
 
 This release upgrades workload versions for Apache Kafka to `3.9.0` and for Apache ZooKeeper to `3.9.2`, as well as adds support for: Cruise Control partition rebalancing, KRaft consensus protocol, Karapace, and backup/restore using S3.
 
-[Charmhub](https://charmhub.io/kafka) | [Deploy guide](how-to-deploy-index) | [Upgrade instructions](how-to-upgrade) | [System requirements](reference-requirements)
+[Charmhub](https://charmhub.io/kafka-k8s) | [Deploy guide](how-to-deploy-index) | [Upgrade instructions](how-to-upgrade) | [System requirements](reference-requirements)
 
-## Charmed Apache Kafka
+## Charmed Apache Kafka K8s
 
-New revisions of [Charmed Apache Kafka](http://charmhub.io/kafka) and [Charmed Apache Kafka K8s](http://charmhub.io/kafka-k8s) have been published to their `3/stable` channels.
-
-> Check the documentation on how to upgrade between minor versions on [VM](https://charmhub.io/kafka/docs/h-upgrade), and on [K8s](https://charmhub.io/kafka-k8s/docs/h-upgrade)
-
-### Highlights
-
-- **Upgraded Apache Kafka version from 3.6.1 → 3.9.0**
-  - Check the official Apache Kafka [Version 3.7.0 release notes](https://archive.apache.org/dist/kafka/3.7.0/RELEASE_NOTES.html)
-  - Check the official Apache Kafka [Version 3.8.0 release notes](https://archive.apache.org/dist/kafka/3.8.0/RELEASE_NOTES.html)
-  - Check the official Apache Kafka [Version 3.9.0 release notes](https://archive.apache.org/dist/kafka/3.9.0/RELEASE_NOTES.html)
-- **Added support for the KRaft consensus protocol, removing the need for Apache ZooKeeper**
-  - Check the [documentation](https://charmhub.io/kafka/docs/h-kraft-mode) for a guide on setting up a KRaft cluster
-- **Added support for partition rebalancing using Cruise Control**
-  - Check the [documentation](https://charmhub.io/kafka/docs/t-reassign-partitions) for a tutorial on partition rebalancing and reassignment using [Cruise Control](https://github.com/linkedin/cruise-control)
-- **Created the `karapace` and `karapace-k8s` charms as a drop-in replacement for Schema Registry**
-  - Check the [documentation](https://charmhub.io/kafka/docs/h-manage-message-schemas) on how to manage message schemas using [Karapace](https://www.karapace.io/)
-- **Upgraded Apache ZooKeeper version from 3.8.2 → 3.9.2**
-  - Check the official Apache ZooKeeper [Version 3.9.0 release notes](https://zookeeper.apache.org/doc/r3.9.0/releasenotes.html)
-- **Adding backup/restore support using S3**
+New features and bug fixes in the Charmed Apache Kafka K8s:
 
 ### Features
 
@@ -61,9 +43,9 @@ New revisions of [Charmed Apache Kafka](http://charmhub.io/kafka) and [Charmed A
 - [DPE-6498](https://warthogs.atlassian.net/browse/DPE-6498) - fix: gracefully handle rebalance action when role not set [#313](https://github.com/canonical/kafka-operator/pull/#313)
 - [DPE-6547](https://warthogs.atlassian.net/browse/DPE-6547) - fix: KRaft multi-mode scaling bug on broker side [#319](https://github.com/canonical/kafka-operator/pull/#319)
 
-## Charmed Apache ZooKeeper
+## Charmed Apache ZooKeeper K8s
 
-New features and bug fixes in the Charmed Apache Kafka bundle:
+New features and bug fixes in the Charmed Apache ZooKeeper K8s:
 
 ### Features
 
@@ -88,3 +70,16 @@ New features and bug fixes in the Charmed Apache Kafka bundle:
 - [DPE-5463](https://warthogs.atlassian.net/browse/DPE-5463);[DPE-5462](https://warthogs.atlassian.net/browse/DPE-5462) - fix: quote SERVER_JVMFLAGS, safe rm tls files [#160](https://github.com/canonical/zookeeper-operator/pull/#160)
 - [DPE-5462](https://warthogs.atlassian.net/browse/DPE-5462) - fix: handle NoNodeError during relation-broken [#168](https://github.com/canonical/zookeeper-operator/pull/#168)
 - [DPE-6157](https://warthogs.atlassian.net/browse/DPE-6157) - fix: don't erase previous records from /etc/hosts [#175](https://github.com/canonical/zookeeper-operator/pull/#175)
+
+## Compatibility
+
+Principal charms support the latest LTS series “22.04” only.
+
+| Charm | Revision | Hardware architecture | Juju version | Artefacts |
+|---|---|---|---|---|
+| Charmed Apache Kafka K8s | [82](https://github.com/canonical/kafka-k8s-operator/tree/rev82) | AMD64 | 2.9.45+, Juju 3.1+ | Distribution: [3.9.0-ubuntu1](https://launchpad.net/kafka-releases/3.x/3.9.0-ubuntu1). <br> `charmed-kafka` rock: [{spellexception}`sha256:fa919f`](https://github.com/canonical/charmed-kafka-rock/pkgs/container/charmed-kafka/370866723). |
+| Charmed Apache ZooKeeper K8s | [51](https://github.com/canonical/zookeeper-k8s-operator/tree/rev51) | AMD64 | 2.9.45+, Juju 3.1+ | Distribution: [3.8.2-ubuntu0](https://launchpad.net/zookeeper-releases/3.x/3.8.2-ubuntu0). <br> `charmed-zookeeper` rock: [{spellexception}`sha256:a7a004`](https://github.com/canonical/charmed-zookeeper-rock/pkgs/container/charmed-zookeeper/169796097). |
+
+Apache Kafka release notes: [3.7.0](https://archive.apache.org/dist/kafka/3.7.0/RELEASE_NOTES.html), [3.8.0](https://archive.apache.org/dist/kafka/3.8.0/RELEASE_NOTES.html), [3.9.0](https://archive.apache.org/dist/kafka/3.9.0/RELEASE_NOTES.html).
+
+Apache ZooKeeper release notes: [3.9.0](https://zookeeper.apache.org/doc/r3.9.0/releasenotes.html), [3.9.1](https://zookeeper.apache.org/doc/r3.9.1/releasenotes.html), [3.9.2](https://zookeeper.apache.org/doc/r3.9.2/releasenotes.html).
