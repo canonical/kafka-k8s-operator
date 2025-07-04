@@ -18,7 +18,7 @@ Together, they are used for cluster->cluster replication of topics, consumer gro
 In short, MirrorMaker runs as a distributed service on the new cluster that may not yet be serving traffic to external clients. MirrorMaker consumes all topics, groups and offsets from the still-active original cluster in production to produce them one way on the new one.
 
 The original, in-production cluster is referred to as an ‘active’ cluster, and the new cluster still waiting to serve external clients is ‘passive’. The MirrorMaker service can be configured using a configuration similar to the one available for Kafka Connect.
-========
+
 ```{note}
 For a brief explanation of how MirrorMaker works, see the [MirrorMaker explanation](explanation-mirrormaker2-0) page.
 ```
@@ -28,7 +28,7 @@ For a brief explanation of how MirrorMaker works, see the [MirrorMaker explanati
 To migrate a cluster we need:
 
 - An "old" existing Apache Kafka cluster to migrate from.
-  - The cluster needs to be reachable from/to the new Apache Kafka cluster. 
+  - The cluster needs to be reachable from/to the new Apache Kafka cluster.
 - A bootstrapped Juju VM cloud running Charmed Apache Kafka to migrate to. For guidance on how to deploy a new Charmed Apache Kafka, see:
   - The [Charmed Apache Kafka K8s Tutorial](tutorial-introduction)
   - The [How to deploy guide](how-to-deploy-deploy-anywhere) for Charmed Apache Kafka
