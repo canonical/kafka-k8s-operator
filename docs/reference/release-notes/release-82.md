@@ -1,6 +1,10 @@
 (reference-release-notes-release-82)=
 # Release 82
 
+This release upgrades workload versions for Apache Kafka to `3.9.0` and for Apache ZooKeeper to `3.9.2`, as well as adds support for: Cruise Control partition rebalancing, KRaft consensus protocol, Karapace, and backup/restore using S3.
+
+[Charmhub](https://charmhub.io/kafka) | [Deploy guide](how-to-deploy-index) | [Upgrade instructions](how-to-upgrade) | [System requirements](reference-requirements)
+
 ## Charmed Apache Kafka
 
 New revisions of [Charmed Apache Kafka](http://charmhub.io/kafka) and [Charmed Apache Kafka K8s](http://charmhub.io/kafka-k8s) have been published to their `3/stable` channels.
@@ -59,7 +63,7 @@ New revisions of [Charmed Apache Kafka](http://charmhub.io/kafka) and [Charmed A
 
 ## Charmed Apache ZooKeeper
 
-New revisions of [Charmed Apache ZooKeeper](http://charmhub.io/zookeeper) and [Charmed Apache ZooKeeper K8s](http://charmhub.io/zookeeper-k8s) have been published to their `3/stable` channels.
+New features and bug fixes in the Charmed Apache Kafka bundle:
 
 ### Features
 
