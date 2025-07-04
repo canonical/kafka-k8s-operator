@@ -6,7 +6,7 @@ For specific guides, see: [AKS](how-to-deploy-deploy-on-aks) and [EKS](how-to-de
 (how-to-deploy-deploy-anywhere)=
 
 ```{caution}
-For non-K8s Charmed Apache Apache Kafka, see the [Charmed Apache Kafka documentation](https://charmhub.io/kafka-k8s) instead.
+For non-K8s Charmed Apache Apache Kafka, see the [Charmed Apache Kafka documentation](https://charmhub.io/kafka) instead.
 ```
 
 To deploy a Charmed Apache Kafka K8s cluster:
@@ -67,23 +67,23 @@ Make sure that the model is of a correct type (`k8s`):
 juju show-model | yq '.[].type'
 ```
 
-## Deploy and relate Charmed Apache Kafka K8s and Charmed Apache ZooKeeper
+## Deploy and relate Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s
 
-Charmed Apache Kafka and Charmed Apache ZooKeeper can both be deployed as follows:
+Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s can both be deployed as follows:
 
 ```shell
 juju deploy kafka-k8s --channel 3/stable -n <kafka-units> --trust
 juju deploy zookeeper-k8s --channel 3/stable -n <zookeeper-units> --trust
 ```
 
-where `<kafka-units>` and `<zookeeper-units>` -- the number of units to deploy for Charmed Apache Kafka and Charmed Apache ZooKeeper. We recommend values of at least `3` and `5` respectively.
+where `<kafka-units>` and `<zookeeper-units>` -- the number of units to deploy for Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s. We recommend values of at least `3` and `5` respectively.
 
 ```{note}
 The `--trust` option is needed for the Apache Kafka application to work properly, e.g., use NodePort or `juju refresh`. 
 For more information about the trust options usage, see the [Juju documentation](https://documentation.ubuntu.com/juju/latest/reference/juju-cli/list-of-juju-cli-commands/trust/). 
 ```
 
-Connect Charmed Apache ZooKeeper and Charmed Apache Kafka by relating/integrating them:
+Connect Charmed Apache ZooKeeper K8s and Charmed Apache Kafka K8s by relating/integrating them:
 
 ```shell
 juju integrate kafka-k8s zookeeper-k8s
@@ -99,7 +99,7 @@ The deployment should be complete once all the units show `active` or `idle` sta
 
 ## (Optional) Create an external admin users
 
-Charmed Apache Kafka aims to follow the _secure by default_ paradigm. As a consequence, after being deployed the Apache Kafka cluster
+Charmed Apache Kafka K8s aims to follow the _secure by default_ paradigm. As a consequence, after being deployed the Apache Kafka cluster
 won't expose any external listener.
 In fact, ports are only opened when client applications are related, also
 depending on the protocols to be used.

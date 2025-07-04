@@ -10,7 +10,7 @@ For more details, see [Security topic overview](explanation-security) and [Crypt
 
 ## Cluster configuration
 
-See the [Cluster configuration](explanation-cluster-configuration) page for explanation of the Apache ZooKeeper role in Charmed Apache Kafka.
+See the [Cluster configuration](explanation-cluster-configuration) page for explanation of the Apache ZooKeeper role in Charmed Apache Kafka K8s.
 
 Check the [MirrorMaker explanation](explanation-mirrormaker2-0) page for more context in to how MirrorMaker replicates and migrates Apache Kafka clusters.
 

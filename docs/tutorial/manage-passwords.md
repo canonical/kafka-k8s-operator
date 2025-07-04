@@ -91,7 +91,7 @@ Unlike Admin management, the password management for external Apache Kafka users
 
 #### Retrieve the password
 
-Similarly to the Charmed Apache Kafka, the `data-integrator` also exposes an action to retrieve the credentials, e.g.:
+Similarly to the Charmed Apache Kafka K8s, the `data-integrator` also exposes an action to retrieve the credentials, e.g.:
 
 ```shell
 juju run data-integrator/leader get-credentials

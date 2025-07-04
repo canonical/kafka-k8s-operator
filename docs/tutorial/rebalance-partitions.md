@@ -19,7 +19,7 @@ At a high level, Cruise Control is made up of the following five components:
 
 ### Deploying partition balancer
 
-The Charmed Apache Kafka charm has a configuration option `roles`, which takes a list of possible values.
+The Charmed Apache Kafka K8s charm has a configuration option `roles`, which takes a list of possible values.
 Different roles can be configured to run on the same machine, or as separate Juju applications.
 
 The two necessary roles for cluster rebalancing are:
@@ -31,7 +31,7 @@ The two necessary roles for cluster rebalancing are:
 It is recommended to deploy a separate Juju application for running Cruise Control in production environments.
 ```
 
-For the purposes of this tutorial, we will be deploying a single Charmed Apache Kafka unit to serve as the `balancer`:
+For the purposes of this tutorial, we will be deploying a single Charmed Apache Kafka K8s unit to serve as the `balancer`:
 
 ```bash
 juju deploy kafka-k8s --trust --config roles=balancer -n 1 cruise-control

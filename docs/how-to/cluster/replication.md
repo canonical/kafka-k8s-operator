@@ -11,7 +11,7 @@ For a brief explanation of how MirrorMaker works, see the [MirrorMaker explanati
 
 To set up cluster replication we need:
 
-- Two Charmed Apache Kafka clusters:
+- Two Charmed Apache Kafka K8s clusters:
   - A source cluster to replicate from.
   - A target cluster to replicate to.
 - A Charmed Kafka Connect cluster to run the MirrorMaker connectors.
@@ -20,10 +20,10 @@ To set up cluster replication we need:
 The best practice is to co-locate the Kafka Connect cluster with the target Apache Kafka cluster, for example, in the same cloud region.
 ```
 
-For guidance on how to set up Charmed Apache Kafka, please refer to the following resources:
+For guidance on how to set up Charmed Apache Kafka K8s, please refer to the following resources:
 
 - The [Charmed Apache Kafka K8s Tutorial](tutorial-introduction)
-- The [How to deploy guide](how-to-deploy-deploy-anywhere) for Charmed Apache Kafka
+- The [How to deploy guide](how-to-deploy-deploy-anywhere) for Charmed Apache Kafka K8s
 
 ## Set up active-passive replication
 

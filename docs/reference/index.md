@@ -3,7 +3,7 @@
 
 This section contains the following reference materials.
 
-[Release notes](reference-release-notes-index) for all stable releases of Charmed Apache Kafka.
+[Release notes](reference-release-notes-index) for all stable releases of Charmed Apache Kafka K8s.
 
 Charmhub generated content:
 

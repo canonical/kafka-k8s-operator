@@ -1,7 +1,7 @@
 (reference-release-notes-index)=
 # Releases
 
-Charmed Apache Kafka has the following stable revisions:
+Charmed Apache Kafka K8s has the following stable revisions:
 
 <!-- Add additional information regarding version compatibility of different revisions here -->
 

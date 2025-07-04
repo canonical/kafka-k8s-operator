@@ -1,7 +1,7 @@
 (tutorial-cleanup)=
 # 7. Cleanup your environment
 
-This is a part of the [Charmed Apache Kafka Tutorial](index.md).
+This is a part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 (remove-kafka-and-juju)=
 ## Remove Charmed Apache Kafka K8s and Juju

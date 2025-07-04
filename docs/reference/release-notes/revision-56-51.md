@@ -2,7 +2,7 @@
 # Revision 56/51
 <sub>Wednesday, February 28, 2024</sub>
 
-Charmed Apache Kafka and Charmed Apache ZooKeeper have been released for General Availability.
+Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s have been released for General Availability.
 
 [Charmhub](https://charmhub.io/kafka) | [Deploy guide](how-to-deploy-index) | [Upgrade instructions](how-to-upgrade) | [System requirements](reference-requirements)
 

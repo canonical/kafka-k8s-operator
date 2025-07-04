@@ -6,14 +6,14 @@ For general Juju unit management process, see the [Juju documentation](https://j
 ## Scaling
 
 ```{note}
-Scaling a Charmed Apache Kafka cluster does not automatically rebalance existing topics and partitions. Rebalancing must be performed manually—before scaling in or after scaling out.
+Scaling a Charmed Apache Kafka K8s cluster does not automatically rebalance existing topics and partitions. Rebalancing must be performed manually—before scaling in or after scaling out.
 ```
 
 ```{caution}
 Reassign partitions **before** scaling in to ensure that decommissioned units do not hold any data. Failing to do so may lead to data loss.
 ```
 
-To scale the Charmed Apache Kafka application, use the `juju scale-application` command with the name of the app and the desired number of units:
+To scale the Charmed Apache Kafka K8s application, use the `juju scale-application` command with the name of the app and the desired number of units:
 
 ```shell
 juju scale-application kafka-k8s <units>

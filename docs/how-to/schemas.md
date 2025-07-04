@@ -1,11 +1,11 @@
 (how-to-manage-message-schemas)=
 # How to manage message schemas
 
-Message schemas in Apache Kafka define the structure and format of data exchanged between producers and consumers. This guide provides instructions on managing schemas in Charmed Apache Kafka using Karapace. Karapace is a drop-in replacement, open-source implementation of Confluent's Schema Registry, and supports the storing of schemas in a central repository, which clients can access to serialise and deserialise messages written to Apache Kafka.
+Message schemas in Apache Kafka define the structure and format of data exchanged between producers and consumers. This guide provides instructions on managing schemas in Charmed Apache Kafka K8s using Karapace. Karapace is a drop-in replacement, open-source implementation of Confluent's Schema Registry, and supports the storing of schemas in a central repository, which clients can access to serialise and deserialise messages written to Apache Kafka.
 
 ## Prerequisites
 
-Follow the steps of the [How to deploy Charmed Apache Kafka K8s](https://discourse.charmhub.io/t/charmed-kafka-k8s-documentation-how-to-deploy/13266) guide to set up the environment. For this guide, we will need an active Charmed Apache Kafka application, related to an active Charmed Apache ZooKeeper application.
+Follow the steps of the [How to deploy Charmed Apache Kafka K8s](https://discourse.charmhub.io/t/charmed-kafka-k8s-documentation-how-to-deploy/13266) guide to set up the environment. For this guide, we will need an active Charmed Apache Kafka K8s application, related to an active Charmed Apache ZooKeeper K8s application.
 
 ## Deploy and set up Karapace
 

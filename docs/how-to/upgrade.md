@@ -34,7 +34,7 @@ When performing an in-place upgrade process, the full process is composed of the
 
 ### Step 1: Collect
 
-The first step is to record the revisions of the running application, as a safety measure for a rollback action if needed. To accomplish this, simply run the `juju status` command and look for the revisions of the deployed Charmed Apache Kafka and Charmed Apache ZooKeeper applications. You can also retrieve this with the following command (that requires [`yq`](https://snapcraft.io/install/yq/ubuntu) to be installed):
+The first step is to record the revisions of the running application, as a safety measure for a rollback action if needed. To accomplish this, simply run the `juju status` command and look for the revisions of the deployed Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s applications. You can also retrieve this with the following command (that requires [`yq`](https://snapcraft.io/install/yq/ubuntu) to be installed):
 
 ```shell
 KAFKA_CHARM_REVISION=$(juju status --format json | yq .applications.<KAFKA_APP_NAME>.charm-rev)
@@ -55,7 +55,7 @@ juju run kafka/leader pre-upgrade-check --format yaml
 Make sure that the output of the action is successful.
 
 ```{note}
-This action must be run before Charmed Apache Kafka upgrades.
+This action must be run before Charmed Apache Kafka K8s upgrades.
 ```
 
 The action will also configure the charm to minimise high-availability reduction and ensure a safe upgrade process. After successful execution, the charm is ready to be upgraded.
@@ -143,4 +143,4 @@ We strongly recommend to also retrieve the full set of logs with `juju debug-log
 
 ## Combined upgrades
 
-If Charmed Apache Kafka and Charmed Apache ZooKeeper both need to be upgraded, we recommend starting the upgrade from the Charmed Apache ZooKeeper. As outlined above, the two upgrades should **NEVER** be done concurrently.
+If Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s both need to be upgraded, we recommend starting the upgrade from the Charmed Apache ZooKeeper. As outlined above, the two upgrades should **NEVER** be done concurrently.

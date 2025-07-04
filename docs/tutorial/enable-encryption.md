@@ -5,9 +5,9 @@ This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 ## Transport Layer Security (TLS)
 
-[TLS](https://en.wikipedia.org/wiki/Transport_Layer_Security) is used to encrypt data exchanged between two applications; it secures data transmitted over the network. Typically, enabling TLS within a highly available database, and between a highly available database and client/server applications, requires domain-specific knowledge and a high level of expertise. Fortunately, the domain-specific knowledge has been encoded into Charmed Apache Kafka. This means (re-)configuring TLS on Charmed Apache Kafka is readily available and requires minimal effort on your end.
+[TLS](https://en.wikipedia.org/wiki/Transport_Layer_Security) is used to encrypt data exchanged between two applications; it secures data transmitted over the network. Typically, enabling TLS within a highly available database, and between a highly available database and client/server applications, requires domain-specific knowledge and a high level of expertise. Fortunately, the domain-specific knowledge has been encoded into Charmed Apache Kafka K8s. This means (re-)configuring TLS on Charmed Apache Kafka K8s is readily available and requires minimal effort on your end.
 
-Again, relations come in handy here as TLS is enabled via relations; i.e. by relating Charmed Apache Kafka to the [Self-signed Certificates Charm](https://charmhub.io/self-signed-certificates) via the [`tls-certificates`](https://github.com/canonical/charm-relation-interfaces/blob/main/interfaces/tls_certificates/v1/README.md) charm relations. The `tls-certificates` relation centralises TLS certificate management in a consistent manner and handles providing, requesting, and renewing TLS certificates, making it possible to use different providers, like the self-signed certificates but also other services, e.g. Let's Encrypt.
+Again, relations come in handy here as TLS is enabled via relations; i.e. by relating Charmed Apache Kafka K8s to the [Self-signed Certificates Charm](https://charmhub.io/self-signed-certificates) via the [`tls-certificates`](https://github.com/canonical/charm-relation-interfaces/blob/main/interfaces/tls_certificates/v1/README.md) charm relations. The `tls-certificates` relation centralises TLS certificate management in a consistent manner and handles providing, requesting, and renewing TLS certificates, making it possible to use different providers, like the self-signed certificates but also other services, e.g. Let's Encrypt.
 
 ```{note}
 In this tutorial, we will distribute [self-signed certificates](https://en.wikipedia.org/wiki/Self-signed_certificate) to all charms (Apache Kafka, Apache ZooKeeper, and client applications) that are signed using a root self-signed CA
@@ -16,7 +16,7 @@ that is also trusted by all applications. This setup is only for show-casing pur
 
 ### Configure TLS
 
-Before enabling TLS on Charmed Apache Kafka we must first deploy the `self-signed-certificates` charm:
+Before enabling TLS on Charmed Apache Kafka K8s we must first deploy the `self-signed-certificates` charm:
 
 ```shell
 juju deploy self-signed-certificates --config ca-common-name="Tutorial CA"
@@ -59,7 +59,7 @@ telnet <IP> 9093
 
 Once TLS is configured on the cluster side, client applications should be configured as well to connect to the correct port and trust the self-signed CA provided by the `self-signed-certificates` charm. 
 
-Make sure that the `kafka-test-app` is not connected to the Charmed Apache Kafka, by removing the relation if it exists:
+Make sure that the `kafka-test-app` is not connected to the Charmed Apache Kafka K8s, by removing the relation if it exists:
 
 ```shell
 juju remove-relation kafka-test-app kafka-k8s

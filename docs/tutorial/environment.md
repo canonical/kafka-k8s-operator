@@ -1,7 +1,7 @@
 (tutorial-environment)=
 # 1. Set up the environment
 
-This is part of the [Charmed Apache Kafka Tutorial](index.md).
+This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 ## Setup the environment
 
