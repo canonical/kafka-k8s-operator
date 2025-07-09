@@ -274,7 +274,9 @@ class BrokerOperator(Object):
             self.config_manager.set_server_properties()
 
         if properties_changed:
-            if isinstance(event, StorageEvent) and self.charm.substrate == "vm":  # to get new storages
+            if (
+                isinstance(event, StorageEvent) and self.charm.substrate == "vm"
+            ):  # to get new storages
                 self.controller_manager.format_storages(
                     uuid=self.charm.state.peer_cluster.cluster_uuid,
                     internal_user_credentials=self.charm.state.cluster.internal_user_credentials,
