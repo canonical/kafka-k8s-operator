@@ -43,7 +43,6 @@ Both migrating and replicating Apache Kafka cluster can be done with MirrorMaker
 See the guides for more details:
 
 * [Cluster migration](how-to-cluster-replication-migrate-a-cluster)
-* [Replication](how-to-cluster-replication-cluster-replication)
 
 ## Advanced
 
@@ -62,7 +61,7 @@ Manage applications<manage-applications.md>
 Encryption<enable-encryption.md>
 Upgrade<upgrade.md>
 Monitoring<monitoring.md>
-Migrate a cluster<cluster.md>
+Migrate a cluster<migrate.md>
 external-k8s-connection.md
 Back up and restore<back-up-and-restore.md>
 Manage message schemas<schemas.md>
