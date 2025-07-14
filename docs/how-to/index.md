@@ -62,7 +62,7 @@ Manage applications<manage-applications.md>
 Encryption<enable-encryption.md>
 Upgrade<upgrade.md>
 Monitoring<monitoring.md>
-cluster/index.md
+Migrate a cluster<cluster.md>
 external-k8s-connection.md
 Back up and restore<back-up-and-restore.md>
 Manage message schemas<schemas.md>

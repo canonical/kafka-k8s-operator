@@ -37,11 +37,11 @@ To migrate a cluster we need:
 
 ## Get cluster details and admin credentials
 
-By design, the `kafka` charm will not expose any available connections until related by a client. In this case, we deploy `data-integrator` charms and relate them to each `kafka` application, requesting `admin` level privileges:
+By design, the `kafka` charm will not expose any available connections until related by a client. In this case, we deploy `data-integrator` charms and integrate them to each `kafka` application, requesting `admin` level privileges:
 
 ```bash
 juju deploy data-integrator --channel=edge -n 1 --config extra-user-roles="admin" --config topic-name="default"
-juju relate kafka-k8s data-integrator
+juju integrate kafka-k8s data-integrator
 ```
 <!-- Do we need the `edge` track in the above? -->
 
