@@ -25,7 +25,7 @@ juju offer prometheus:receive-remote-write prometheus-receive-remote-write
 
 ### Consume offers via the Apache Kafka model
 
-Switch back to the Charmed Apache Kafka K8s model, find offers and relate with them:
+Switch back to the Charmed Apache Kafka K8s model, find offers and integrate with them:
 
 ```shell
 juju switch <machine_controller_name>:<kafka_model_name>
@@ -51,23 +51,39 @@ juju consume <k8s_controller>:admin/<cos_model_name>.loki-logging
 juju consume <k8s_controller>:admin/<cos_model_name>.grafana-dashboards
 ```
 
-Now, deploy `grafana-agent` (subordinate charm) and relate it with Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s:
+### Deploy and integrate Grafana
+
+Deploy `grafana-agent-k8s`:
 
 ```shell
-juju deploy grafana-agent
-juju relate kafka:cos-agent grafana-agent
-juju relate zookeeper:cos-agent grafana-agent
+juju deploy grafana-agent-k8s --trust
 ```
 
-Finally, relate `grafana-agent` with consumed COS offers:
+Integrate it with consumed COS offers:
 
 ```shell
-juju relate grafana-agent grafana-dashboards
-juju relate grafana-agent loki-logging
-juju relate grafana-agent prometheus-receive-remote-write
+juju integrate grafana-agent-k8s grafana-dashboards
+juju integrate grafana-agent-k8s loki-logging
+juju integrate grafana-agent-k8s prometheus-receive-remote-write
 ```
 
-Wait for all components to settle down on a `active/idle` state on both models, e.g. `<kafka_model_name>` and `<cos_model_name>`.
+Finally, integrate `grafana-agent` it with Charmed Apache Kafka K8s:
+
+```shell
+juju integrate grafana-agent-k8s kafka-k8s:grafana-dashboard
+juju integrate grafana-agent-k8s kafka-k8s:logging
+juju integrate grafana-agent-k8s kafka-k8s:metrics-endpoint
+```
+
+and Charmed Apache ZooKeeper K8s:
+
+```shell
+juju integrate grafana-agent-k8s zookeeper-k8s:grafana-dashboard
+juju integrate grafana-agent-k8s zookeeper-k8s:logging
+juju integrate grafana-agent-k8s zookeeper-k8s:metrics-endpoint
+```
+
+Wait for all components to settle down to the `active/idle` state on both models.
 
 After this is complete, the monitoring COS stack should be up and running and ready to be used.
 
@@ -120,13 +136,13 @@ This guide will refer to the models that charms are deployed into as:
 
 * `<cos-model>` for the model containing observability charms (and deployed on K8s)
 * `<apps-model>` for the model containing Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s
-* `<apps-model>` for other optional charms (e.g. TLS-certificates operators, `grafana-agent`, `data-integrator`, etc.).
+* `<apps-model>` for other optional charms (e.g. TLS certificates operators, `grafana-agent`, `data-integrator`, etc.).
 
 ### Create a repository with a custom monitoring setup
 
 Create an empty git repository, or in an existing one, save your alert rules and dashboard models under the `<path_to_prom_rules>`, `<path_to_loki_rules>` and `<path_to_models>` folders.
 
-If you want a primer to rule writing, refer to the [Prometheus documentation](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/).  
+If you want an example of rule writing, refer to the [Prometheus documentation](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/).  
 You may also find an example in the [`kafka-test-app` repository](https://github.com/canonical/kafka-test-app).
 
 Then, push your changes to the remote repository.
