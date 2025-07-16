@@ -3,8 +3,6 @@
 
 This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
-## Deploy Charmed Apache Kafka K8s (and Charmed Apache ZooKeeper K8s)
-
 To deploy Charmed Apache Kafka K8s, all you need to do is run the following commands, which will automatically fetch [Apache Kafka](https://charmhub.io/kafka-k8s?channel=3/stable) and [Apache ZooKeeper](https://charmhub.io/zookeeper-k8s?channel=3/stable) charms from [Charmhub](https://charmhub.io/) and deploy them to your model. For example, to deploy a cluster of five Apache Zookeeper units and three Apache Kafka units, you can simply run:
 
 ```shell
@@ -46,6 +44,7 @@ zookeeper-k8s/0   active    idle   10.1.36.84
 zookeeper-k8s/1*  active    idle   10.1.36.86
 zookeeper-k8s/2   active    idle   10.1.36.85
 ```
+
 To exit the screen with `juju status --watch 1s`, enter `Ctrl+c`.
 
 ## Access Apache Kafka cluster

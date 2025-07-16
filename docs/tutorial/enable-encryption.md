@@ -1,9 +1,7 @@
 (tutorial-enable-encryption)=
-# 5. Enable Encryption
+# 5. Enable encryption
 
 This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
-
-## Transport Layer Security (TLS)
 
 [TLS](https://en.wikipedia.org/wiki/Transport_Layer_Security) is used to encrypt data exchanged between two applications; it secures data transmitted over the network. Typically, enabling TLS within a highly available database, and between a highly available database and client/server applications, requires domain-specific knowledge and a high level of expertise. Fortunately, the domain-specific knowledge has been encoded into Charmed Apache Kafka K8s. This means (re-)configuring TLS on Charmed Apache Kafka K8s is readily available and requires minimal effort on your end.
 
@@ -14,7 +12,7 @@ In this tutorial, we will distribute [self-signed certificates](https://en.wikip
 that is also trusted by all applications. This setup is only for show-casing purposes and self-signed certificates should **never** be used in a production cluster. For more information about which charm may better suit your use case, please refer to [this post](https://charmhub.io/topics/security-with-x-509-certificates).
 ```
 
-### Configure TLS
+## Configure TLS
 
 Before enabling TLS on Charmed Apache Kafka K8s we must first deploy the `self-signed-certificates` charm:
 
@@ -40,7 +38,7 @@ self-signed-certificates/0*   active    idle   10.1.36.91
 ```
 
 To enable TLS on Charmed Apache Kafka K8s, relate the both the `kafka-k8s` and `zookeeper-k8s` charms with the
-` self-signed-certificates` charm:
+`self-signed-certificates` charm:
 
 ```shell
 juju relate zookeeper-k8s self-signed-certificates
@@ -55,9 +53,9 @@ telnet <IP> 9092
 telnet <IP> 9093
 ```
 
-### Enable TLS encrypted connection
+## Enable TLS encrypted connection
 
-Once TLS is configured on the cluster side, client applications should be configured as well to connect to the correct port and trust the self-signed CA provided by the `self-signed-certificates` charm. 
+Once TLS is configured on the cluster side, client applications should be configured as well to connect to the correct port and trust the self-signed CA provided by the `self-signed-certificates` charm.
 
 Make sure that the `kafka-test-app` is not connected to the Charmed Apache Kafka K8s, by removing the relation if it exists:
 
@@ -65,7 +63,7 @@ Make sure that the `kafka-test-app` is not connected to the Charmed Apache Kafka
 juju remove-relation kafka-test-app kafka-k8s
 ```
 
-Then enable encryption on the `kafka-test-app` by relating with the ` self-signed-certificates` charm:
+Then enable encryption on the `kafka-test-app` by relating with the `self-signed-certificates` charm:
 
 ```shell
 juju relate kafka-test-app  self-signed-certificates
@@ -94,7 +92,7 @@ Note that if the `kafka-test-app` was running before, there may be multiple logs
 runs. Refer to the latest logs produced and also check that in the logs the connection is indeed established
 with the encrypted port `9093`.
 
-### Remove external TLS certificate
+## Remove external TLS certificate
 
 To remove the external TLS and return to the locally generated one, remove relation with certificates provider:
 
