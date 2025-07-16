@@ -130,7 +130,7 @@ PASSWORD=$(juju run data-integrator/leader get-credentials --format yaml | yq .k
 
 Then copy the `/etc/kafka/client.properties` and substitute the following lines:
 
-```shell
+```ini
 ...
 sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="<USERNAME>" password="<PASSWORD>";
 ...
