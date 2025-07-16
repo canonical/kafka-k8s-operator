@@ -89,7 +89,7 @@ For more information on how to refresh the charm, see the [how-to refresh](how-t
 ### Encryption
 
 Charmed Apache Kafka K8s must be deployed with encryption enabled.
-To do that, you need to relate Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s charms to one of the TLS certificate operator charms.
+To do that, you need to integrate Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s charms with one of the TLS certificate operator charms.
 Please refer to the [Charming Security page](https://charmhub.io/topics/security-with-x-509-certificates) for more information on how to select the right certificate
 provider for your use case.
 

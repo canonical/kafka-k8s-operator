@@ -13,7 +13,7 @@ juju deploy kafka-k8s -n 3 --trust
 After this, it is necessary to connect them:
 
 ```shell
-juju relate kafka-k8s zookeeper-k8s
+juju integrate kafka-k8s zookeeper-k8s
 ```
 
 Juju will now fetch Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s and begin deploying them to the local MicroK8s. This process can take several minutes depending on how provisioned (RAM, CPU, etc) your machine is. You can track the progress by running:
@@ -74,7 +74,7 @@ username: admin
 Providing you the `username` and `password` of the Apache Kafka cluster admin user. 
 
 ```{caution}
-When no other application is related to Apache Kafka, the cluster is secured-by-default and external listeners (bound to port `9092`) are disabled, thus preventing any external incoming connection. 
+When no other application is integrated with Apache Kafka, the cluster is secured-by-default and external listeners (bound to port `9092`) are disabled, thus preventing any external incoming connection. 
 ```
 
 Nevertheless, it is still possible to run a command from within the Apache Kafka cluster. To do so, log in to one of the Apache Kafka containers in one of the units:
@@ -91,7 +91,7 @@ Within the image you can also find a `client.properties` file that already provi
 export CLIENT_PROPERTIES=/etc/kafka/client.properties
 ```
 
-Since we don't have any client applications related yet and therefore external listeners are initially closed, if you wish to run a command from the cluster you ought to use the internal listeners exposed at ports `19092`. 
+Since we don't have any client applications integrated yet and therefore external listeners are initially closed, if you wish to run a command from the cluster you ought to use the internal listeners exposed at ports `19092`. 
 
 ```shell
 export INTERNAL_LISTENERS=kafka-k8s-1.kafka-k8s-endpoints:19092,kafka-k8s-2.kafka-k8s-endpoints:19092,kafka-k8s-0.kafka-k8s-endpoints:19092
@@ -130,4 +130,4 @@ You can finally delete the topic:
 
 However, although the commands above can run within the cluster, it is generally recommended during operations
 to enable external listeners and use these for running the admin commands from outside the cluster. 
-To do so, as we will see in the next section, we will deploy a [data-integrator](https://charmhub.io/data-integrator) charm and relate it to Charmed Apache Kafka K8s.
+To do so, as we will see in the next section, we will deploy a [data-integrator](https://charmhub.io/data-integrator) charm and integrate it with Charmed Apache Kafka K8s.

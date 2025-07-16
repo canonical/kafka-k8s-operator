@@ -5,7 +5,7 @@ Message schemas in Apache Kafka define the structure and format of data exchange
 
 ## Prerequisites
 
-Follow the steps of the [How to deploy Charmed Apache Kafka K8s](https://discourse.charmhub.io/t/charmed-kafka-k8s-documentation-how-to-deploy/13266) guide to set up the environment. For this guide, we will need an active Charmed Apache Kafka K8s application, related to an active Charmed Apache ZooKeeper K8s application.
+Follow the steps of the [How to deploy Charmed Apache Kafka K8s](https://discourse.charmhub.io/t/charmed-kafka-k8s-documentation-how-to-deploy/13266) guide to set up the environment. For this guide, we will need an active Charmed Apache Kafka K8s application, integrated with an active Charmed Apache ZooKeeper K8s application.
 
 ## Deploy and set up Karapace
 

@@ -37,12 +37,12 @@ self-signed-certificates/0*   active    idle   10.1.36.91
 ...
 ```
 
-To enable TLS on Charmed Apache Kafka K8s, relate the both the `kafka-k8s` and `zookeeper-k8s` charms with the
+To enable TLS on Charmed Apache Kafka K8s, integrate the both the `kafka-k8s` and `zookeeper-k8s` charms with the
 `self-signed-certificates` charm:
 
 ```shell
-juju relate zookeeper-k8s self-signed-certificates
-juju relate kafka-k8s:certificates self-signed-certificates
+juju integrate zookeeper-k8s self-signed-certificates
+juju integrate kafka-k8s:certificates self-signed-certificates
 ```
 
 After the charms settle into `active/idle` states, the Apache Kafka listeners should now have been swapped to the 
@@ -66,7 +66,7 @@ juju remove-relation kafka-test-app kafka-k8s
 Then enable encryption on the `kafka-test-app` by relating with the `self-signed-certificates` charm:
 
 ```shell
-juju relate kafka-test-app  self-signed-certificates
+juju integrate kafka-test-app  self-signed-certificates
 ```
 
 We can then set up the `kafka-test-app` to produce messages with the usual configuration (note that there is no difference 
@@ -76,10 +76,10 @@ here with the unencrypted workflow):
 juju config kafka-test-app topic_name=test_encryption_topic role=producer num_messages=25
 ```
 
-and then relate with the `kafka-k8s` cluster:
+and then integrate with the `kafka-k8s` cluster:
 
 ```shell
-juju relate kafka-k8s kafka-test-app
+juju integrate kafka-k8s kafka-test-app
 ```
 
 As before, you can check that the messages are pushed into the Apache Kafka cluster by inspecting the logs:
@@ -88,7 +88,7 @@ As before, you can check that the messages are pushed into the Apache Kafka clus
 juju exec --application kafka-test-app "tail /tmp/*.log"
 ```
 
-Note that if the `kafka-test-app` was running before, there may be multiple logs related to the different
+Note that if the `kafka-test-app` was running before, there may be multiple logs integrated with the different
 runs. Refer to the latest logs produced and also check that in the logs the connection is indeed established
 with the encrypted port `9093`.
 
