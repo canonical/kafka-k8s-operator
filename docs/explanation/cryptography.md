@@ -51,13 +51,11 @@ for:
 * Apache ZooKeeper connection
 * External client connection 
 
-To set up a secure connection Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s need to be integrated with TLS Certificate Provider charms, e.g. 
-`self-signed-certificates` operator. Certificate Singing Requests (CSRs) are generated for every unit using the `tls_certificates_interface` library that uses the `cryptography` 
-Python library to create X.509 compatible certificates. The CSR is signed by the TLS Certificate Provider, returned to the units, and 
-stored in a password-protected Keystore file. The password of the Keystore is stored in Juju secrets starting from revision 168 of Charmed Apache Kafka K8s 
-and revision 130 of Charmed Apache ZooKeeper K8s. The relation also provides the CA certificate, which is loaded into a password-protected Truststore file.
-
-<!-- Update revision numbers for K8s-specific revision numbers -->
+To set up a secure connection Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s need to be integrated with TLS Certificate Provider charms, e.g., 
+`self-signed-certificates` operator. Certificate Singing Requests (CSRs) are generated for every unit using the `tls_certificates_interface` library that uses the `cryptography` Python library to create X.509 compatible certificates.
+The CSR is signed by the TLS Certificate Provider, returned to the units, and stored in a password-protected Keystore file.
+The password of the Keystore is stored in Juju secrets.
+The relation also provides the CA certificate, which is loaded into a password-protected Truststore file.
 
 When encryption is enabled, hostname verification is turned on for client connections, including inter-broker communication. The cipher suite can be customised by specifying a list of allowed cipher suites for external clients and Apache ZooKeeper connections. This is done using the charm configuration options `ssl_cipher_suites` and `zookeeper_ssl_cipher_suites`, respectively (see [reference documentation](https://charmhub.io/kafka-k8s/configurations)).
 
@@ -68,7 +66,7 @@ Encryption at rest is currently not supported, although it can be provided by th
 In Charmed Apache Kafka K8s, authentication layers can be enabled for:
 
 1. Apache ZooKeeper connections
-2. Apache Kafka inter-broker communication 
+2. Apache Kafka inter-broker communication
 3. Apache Kafka clients
 
 ### Apache Kafka authentication to Apache ZooKeeper
@@ -76,16 +74,14 @@ In Charmed Apache Kafka K8s, authentication layers can be enabled for:
 Authentication to Apache ZooKeeper is based on Simple Authentication and Security Layer (SASL) using digested MD5 hashes of
 username and password, and implemented both for client-server (with Apache Kafka) and server-server communication.
 Username and passwords are exchanged using peer relations among Apache ZooKeeper units and using normal relations between Apache Kafka and Apache ZooKeeper.
-Juju secrets are used for exchanging credentials starting from revision 168 of Apache Kafka and revision 130 of Apache ZooKeeper.
+Juju secrets are used for exchanging credentials.
 
 Usernames and passwords for different users are stored in Apache ZooKeeper servers in a [JAAS](https://docs.oracle.com/en/java/javase/11/security/java-authentication-and-authorization-service-jaas-reference-guide.html) configuration file in plain text format. 
 Permissions on the file are restricted to the root user only.
 
 ### Apache Kafka interbroker authentication
 
-Authentication among brokers is based on the SCRAM-SHA-512 protocol. Usernames and passwords are exchanged via peer relations, using Juju secrets from revision 168 of Charmed Apache Kafka K8s.
-
-<!-- Update revision numbers -->
+Authentication among brokers is based on the SCRAM-SHA-512 protocol. Usernames and passwords are exchanged via peer relations, using Juju secrets.
 
 The Apache Kafka username and password, used by brokers to authenticate each other, are stored both in an Apache ZooKeeper znode and in a JAAS configuration file on the Apache Kafka server in plain text format.
 
@@ -99,9 +95,7 @@ Clients can authenticate to Kafka using:
 When using SCRAM, usernames and passwords are stored in Apache ZooKeeper to be used by the Apache Kafka processes, 
 in peer-relation data to be used by the Apache Kafka charm 
 and in external relation to be shared with client applications. 
-Starting from revision 168 of Charmed Apache Kafka K8s, Juju secrets are used for storing the credentials instead of plain text.
-
-<!-- Update revision numbers -->
+Juju secrets are used for storing the credentials.
 
 When using mTLS, client certificates are loaded into a `tls-certificates` operator and provided to the Charmed Apache Kafka K8s via the plain-text unencrypted 
 relation. Certificates are stored in the password-protected Truststore file.
