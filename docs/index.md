@@ -16,7 +16,7 @@ Charmed Apache Kafka K8s operates Apache Kafka on different Kubernetes distribut
 Charmed Apache Kafka K8s is a solution designed and developed to help ops teams and
 administrators to automate Apache Kafka operations from [Day 0 to Day 2](https://codilime.com/blog/day-0-day-1-day-2-the-software-lifecycle-in-the-cloud-age/), across multiple cloud environments and platforms.
 
-Canonical has also developed the [Charmed Apache Kafka operator](https://charmhub.io/kafka) to support Apache Kafka in VM/IAAS environments.
+Canonical has also developed the [Charmed Apache Kafka operator](https://charmhub.io/kafka-k8s) to support Apache Kafka in VM/IAAS environments.
 
 Charmed Apache Kafka K8s is developed and supported by [Canonical](https://canonical.com/), as part of its commitment to 
 provide open-source, self-driving solutions, seamlessly integrated using the Operator Framework Juju. Please 
@@ -26,8 +26,8 @@ refer to [Charmhub.io](https://charmhub.io/), for more Charmed operators that ca
 
 | | |
 |--|--|
-|  [Tutorials](tutorial-index)</br>  Get started - a hands-on introduction to using Charmed Apache Kafka K8s operator for new users </br> |  [How-to guides](how-to-index) </br> Step-by-step guides covering key operations and common tasks |
-| [Reference](reference-index) </br> Technical information - specifications, APIs, architecture | [Explanation](explanation-index) </br> Concepts - discussion and clarification of key topics  |
+|  [Tutorial](tutorial-introduction)</br>  Get started - a hands-on introduction to using Charmed Apache Kafka K8s operator for new users </br> |  [How-to guides](how-to/manage-units) </br> Step-by-step guides covering key operations and common tasks |
+| [Reference](reference/file-system-paths) </br> Technical information - specifications, APIs, architecture | [Explanation](explanation/security) </br> Concepts - discussion and clarification of key topics  |
 
 ## Project and community
 

@@ -1,13 +1,14 @@
 (how-to-upgrade)=
-# How to upgrade between minor versions
+# How to upgrade between versions
 
-```{note}
-This feature is available on Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s from revisions 53 and 49, respectively. Upgrade from previous versions is **not supported**.
+This guide applies for in-place upgrades that involve (at most) minor version upgrade of Apache Kafka workload, e.g. between Apache Kafka 3.4.x to 3.5.x.
+
+```{warning}
+In-place upgrades across major workload versions are **NOT SUPPORTED*.
+See [full cluster-to-cluster migrations](how-to-cluster-replication-migrate-a-cluster) for major version upgrades (for example, from Apache Kafka 3.x to 4.x).
 ```
 
-Charm upgrades can include both upgrades of operator code (e.g. the revision used by the charm) and/or the workload version. Note that since the charm code pins a particular version of the workload, a charm upgrade may or may not involve also a workload version upgrade.
-
-In general, the following guide only applies for in-place upgrades that involve (at most) minor version upgrades of Apache Kafka workload, e.g. between Apache Kafka 3.4.x to 3.5.x. Major workload upgrades are generally **NOT SUPPORTED**, and they should be carried out using [full cluster-to-cluster migrations](how-to-migrate-a-cluster).
+Since the charm's code pins a specific workload version, upgrading the charm's revision may include updates to the operator code and/or a minor workload version upgrade.
 
 While upgrading an Apache Kafka cluster, do not perform any other major operations, including, but not limited to, the following:
 
@@ -29,7 +30,7 @@ When performing an in-place upgrade process, the full process is composed of the
 
 ### Step 1: Collect
 
-The first step is to record the revisions of the running application, as a safety measure for a rollback action if needed. To accomplish this, simply run the `juju status` command and look for the revisions of the deployed Charmed Apache Kafka and Charmed Apache ZooKeeper applications. You can also retrieve this with the following command (that requires [`yq`](https://snapcraft.io/install/yq/ubuntu) to be installed):
+The first step is to record the revisions of the running application, as a safety measure for a rollback action if needed. To accomplish this, simply run the `juju status` command and look for the revisions of the deployed Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s applications. You can also retrieve this with the following command (that requires [`yq`](https://snapcraft.io/install/yq/ubuntu) to be installed):
 
 ```shell
 KAFKA_CHARM_REVISION=$(juju status --format json | yq .applications.<KAFKA_APP_NAME>.charm-rev)
@@ -50,7 +51,7 @@ juju run kafka/leader pre-upgrade-check --format yaml
 Make sure that the output of the action is successful.
 
 ```{note}
-This action must be run before Charmed Apache Kafka upgrades.
+This action must be run before Charmed Apache Kafka K8s upgrades.
 ```
 
 The action will also configure the charm to minimise high-availability reduction and ensure a safe upgrade process. After successful execution, the charm is ready to be upgraded.
@@ -138,4 +139,4 @@ We strongly recommend to also retrieve the full set of logs with `juju debug-log
 
 ## Combined upgrades
 
-If Charmed Apache Kafka and Charmed Apache ZooKeeper both need to be upgraded, we recommend starting the upgrade from the Charmed Apache ZooKeeper. As outlined above, the two upgrades should **NEVER** be done concurrently.
+If Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s both need to be upgraded, we recommend starting the upgrade from the Charmed Apache ZooKeeper. As outlined above, the two upgrades should **NEVER** be done concurrently.

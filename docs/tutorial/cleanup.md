@@ -1,18 +1,33 @@
 (tutorial-cleanup)=
-# 8. Cleanup your environment
+# 7. Cleanup your environment
 
-This is part of the [Charmed Apache Kafka K8s Tutorial](index.md). Please refer to this page for more information and an overview of the content.
+This is a part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
-## Remove Multipass VM
+(remove-kafka-and-juju)=
+## Remove Charmed Apache Kafka K8s and Juju
+
+If you're done using Charmed Apache Kafka K8s and Juju and would like to free up resources on your machine, you can remove Charmed Apache Kafka K8s, Charmed Apache Zookeeper K8s and Juju.
 
 ```{caution}
-Removing Multipass VM as shown below you will delete all the data in Apache Kafka and any other applications inside it!
+Removing Charmed Apache Kafka K8s as shown below will delete all the data in the Apache Kafka. Further, when you remove Juju as shown below you lose access to any other applications you have hosted on Juju.
 ```
 
-To remove Multipass VM:
+To remove Charmed Apache Kafka K8s and the model it is hosted on run the command:
 
 ```shell
-multipass delete --purge my-vm
+juju destroy-model tutorial
+```
+
+Next step is to remove the Juju controller. You can see all of the available controllers by entering `juju controllers`. To remove the controller enter:
+
+```shell
+juju destroy-controller overlord
+```
+
+Finally to remove Juju altogether, enter:
+
+```shell
+sudo snap remove juju --purge
 ```
 
 ## What's next?

@@ -193,7 +193,7 @@ juju model-config logging-config='<root>=INFO;unit=DEBUG'
 ```
 ```
 
-Then, Charmed Apache Kafka can be deployed as usual:
+Then, Charmed Apache Kafka K8s can be deployed as usual:
 
 ```shell
 juju deploy zookeeper-k8s -n3 --channel 3/stable --trust

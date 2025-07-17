@@ -1,7 +1,7 @@
-(reference-apache-kafka-listeners)=
+(reference-broker-listeners)=
 # Apache Kafka Listeners
 
-Charmed Apache Kafka comes with a set of listeners that can be enabled to allow for
+Charmed Apache Kafka K8s comes with a set of listeners that can be enabled to allow for
 inter- and intracluster communication.
 
 - **Internal listeners** are used for internal traffic and exchange of information between Apache Kafka brokers

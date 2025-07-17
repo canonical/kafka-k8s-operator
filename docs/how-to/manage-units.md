@@ -6,14 +6,14 @@ For general Juju unit management process, see the [Juju documentation](https://j
 ## Scaling
 
 ```{note}
-Scaling a Charmed Apache Kafka cluster does not automatically rebalance existing topics and partitions. Rebalancing must be performed manually—before scaling in or after scaling out.
+Scaling a Charmed Apache Kafka K8s cluster does not automatically rebalance existing topics and partitions. Rebalancing must be performed manually—before scaling in or after scaling out.
 ```
 
 ```{caution}
 Reassign partitions **before** scaling in to ensure that decommissioned units do not hold any data. Failing to do so may lead to data loss.
 ```
 
-To scale the Charmed Apache Kafka application, use the `juju scale-application` command with the name of the app and the desired number of units:
+To scale the Charmed Apache Kafka K8s application, use the `juju scale-application` command with the name of the app and the desired number of units:
 
 ```shell
 juju scale-application kafka-k8s <units>
@@ -57,7 +57,7 @@ Before running bash scripts, make sure that some listeners have been correctly
 opened by creating appropriate integrations. 
 ```
 
-For more information about listeners opened based on integrations, see the [Listeners](reference-apache-kafka-listeners) reference page.
+For more information about listeners opened based on integrations, see the [Listeners](reference-broker-listeners) reference page.
 For example, to open a SASL/SCRAM listener, integrate a client application using the data integrator, as described in the [How to manage app guide](how-to-manage-applications).
 
 To run most of the scripts, you need to provide:
@@ -130,7 +130,7 @@ PASSWORD=$(juju run data-integrator/leader get-credentials --format yaml | yq .k
 
 Then copy the `/etc/kafka/client.properties` and substitute the following lines:
 
-```text
+```ini
 ...
 sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="<USERNAME>" password="<PASSWORD>";
 ...
