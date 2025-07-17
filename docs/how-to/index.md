@@ -65,5 +65,4 @@ Migrate a cluster<migrate.md>
 external-k8s-connection.md
 Back up and restore<back-up-and-restore.md>
 Manage message schemas<schemas.md>
-Use Kafka Connect<kafka-connect.md>
 ```
