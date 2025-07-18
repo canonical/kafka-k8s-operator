@@ -13,7 +13,7 @@ To deploy a Charmed Apache Kafka K8s cluster:
 
 1. Set up a Juju Controller
 2. Set up a Juju Model
-3. Deploy and relate Apache Kafka K8s and Apache ZooKeeper K8s charms.
+3. Deploy and integrate Apache Kafka K8s and Apache ZooKeeper K8s charms.
 4. (Optionally) Create an external admin user
 
 In the next subsections, we will cover these steps separately by referring to
@@ -67,7 +67,7 @@ Make sure that the model is of a correct type (`k8s`):
 juju show-model | yq '.[].type'
 ```
 
-## Deploy and relate Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s
+## Deploy and integrate Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s
 
 Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s can both be deployed as follows:
 
@@ -101,7 +101,7 @@ The deployment should be complete once all the units show `active` or `idle` sta
 
 Charmed Apache Kafka K8s aims to follow the _secure by default_ paradigm. As a consequence, after being deployed the Apache Kafka cluster
 won't expose any external listener.
-In fact, ports are only opened when client applications are related, also
+In fact, ports are only opened when client applications are integrated, also
 depending on the protocols to be used.
 
 ```{note}

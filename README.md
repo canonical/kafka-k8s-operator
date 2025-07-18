@@ -103,7 +103,7 @@ juju deploy data-integrator
 juju config data-integrator topic-name=test-topic extra-user-roles=producer,consumer
 ```
 
-To relate the two applications:
+To integrate the two applications:
 
 ```shell
 juju integrate data-integrator kafka-k8s
@@ -218,9 +218,9 @@ micro  admin/cos.prometheus  admin   prometheus_scrape:metrics-endpoint
 Now, integrate kafka with the `metrics-endpoint`, `grafana-dashboard` and `logging` relations:
 
 ```shell
-juju relate micro:admin/cos.prometheus kafka-k8s
-juju relate micro:admin/cos.grafana kafka-k8s
-juju relate micro:admin/cos.loki kafka-k8s
+juju integrate micro:admin/cos.prometheus kafka-k8s
+juju integrate micro:admin/cos.grafana kafka-k8s
+juju integrate micro:admin/cos.loki kafka-k8s
 ```
 
 After this is complete, Grafana will show a new dashboard: `Kafka JMX Metrics`.

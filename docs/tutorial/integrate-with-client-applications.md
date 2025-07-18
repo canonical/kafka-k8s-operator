@@ -19,6 +19,14 @@ The [Data Integrator charm](https://charmhub.io/data-integrator) is a bare-bones
 juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=producer,consumer
 ```
 
+### Data Integrator charm
+
+The [Data Integrator charm](https://charmhub.io/data-integrator) is a bare-bones charm for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Apache Kafka, OpenSearch, etc.) with a consistent, opinionated and robust user experience. To deploy the Data Integrator charm we can use the command `juju deploy` we have learned above:
+
+```shell
+juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=producer,consumer
+```
+
 ### Data Integrator Charm
 
 The [Data Integrator Charm](https://charmhub.io/data-integrator) is a bare-bones charm that can be used for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Apache Kafka, OpenSearch, etc) with a consistent, opinionated and robust user experience. To deploy the Data Integrator Charm we can use the command `juju deploy` we have learned above:
@@ -27,12 +35,12 @@ The [Data Integrator Charm](https://charmhub.io/data-integrator) is a bare-bones
 juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=admin
 ```
 
-### Relate to Charmed Apache Kafka K8s
+### Integrate with Charmed Apache Kafka K8s
 
-Now that the Database Integrator Charm has been set up, we can relate it to Charmed Apache Kafka K8s. This will automatically create a username, password, and database for the Database Integrator Charm. Relate the two applications with:
+Now that the Database Integrator Charm has been set up, we can integrate it with Charmed Apache Kafka K8s. This will automatically create a username, password, and database for the Database Integrator Charm. Integrate the two applications with:
 
 ```shell
-juju relate data-integrator kafka-k8s
+juju integrate data-integrator kafka-k8s
 ```
 Wait for `juju status --watch 1s` to show:
 
@@ -176,10 +184,10 @@ To produce messages to Apache Kafka, we need to configure the `kafka-test-app` t
 juju config kafka-test-app topic_name=test_kafka_app_topic role=producer num_messages=20
 ```
 
-To start to produce messages to Apache Kafka, we **JUST** simply relate the Apache Kafka Test App with Kafka:
+To start to produce messages to Apache Kafka, we **JUST** simply integrate the Apache Kafka Test App with `kafka-k8s`:
 
 ```shell
-juju relate kafka-test-app kafka-k8s
+juju integrate kafka-test-app kafka-k8s
 ```
 
 ```{note}
@@ -223,7 +231,7 @@ Note that the `kafka-test-app` charm can also similarly be used to consume messa
 juju config kafka-test-app topic_name=test_kafka_app_topic role=consumer consumer_group_prefix=cg
 ```
 
-After configuring the Apache Kafka Test App, just relate it again with the Charmed Apache Kafka K8s. This will again create a new user and start the consumer process. 
+After configuring the Apache Kafka Test App, just integrate it again with the Charmed Apache Kafka K8s. This will again create a new user and start the consumer process. 
 
 ## What's next?
 

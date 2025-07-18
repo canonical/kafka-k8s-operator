@@ -46,8 +46,8 @@ juju deploy zookeeper-k8s --channel edge -n 3
 # Deploy the charm
 juju deploy ./*.charm -n 3
 
-# After Apache ZooKeeper has initialised, relate the applications
-juju relate kafka-k8s zookeeper-k8s
+# After Apache ZooKeeper has initialised, integrate the applications
+juju integrate kafka-k8s zookeeper-k8s
 ```
 
 ## Developing

@@ -30,14 +30,14 @@ To migrate a cluster we need:
 - An "old" existing Apache Kafka cluster to migrate from.
   - The cluster needs to be reachable from/to the new Apache Kafka cluster.
 - A bootstrapped Juju K8s cloud running Charmed Apache Kafka K8s to migrate to. For guidance on how to deploy a new Charmed Apache Kafka K8s, see:
-  - The [Charmed Apache Kafka K8s Tutorial](tutorial-introduction)
+  - The [Charmed Apache Kafka K8s Tutorial](tutorial-index)
   - The [How to deploy guide](how-to-deploy-deploy-anywhere) for Charmed Apache Kafka K8s
 - The CLI tool `yq` - [GitHub repository](https://github.com/mikefarah/yq)
   - `snap install yq --channel=v3/stable`
 
 ## Get cluster details and admin credentials
 
-By design, the `kafka` charm will not expose any available connections until related by a client. In this case, we deploy `data-integrator` charms and integrate them to each `kafka` application, requesting `admin` level privileges:
+By design, the `kafka` charm will not expose any available connections until integrated with a client. In this case, we deploy `data-integrator` charms and integrate them to each `kafka` application, requesting `admin` level privileges:
 
 ```bash
 juju deploy data-integrator --channel=edge -n 1 --config extra-user-roles="admin" --config topic-name="default"
@@ -45,7 +45,7 @@ juju integrate kafka-k8s data-integrator
 ```
 <!-- Do we need the `edge` track in the above? -->
 
-When the `data-integrator` charm relates to a `kafka` application on the `kafka-client` relation interface, passing `extra-user-roles=admin`, a new user with `super.user` permissions will be created on that cluster, with the charm passing back the credentials and broker addresses in the relation data to the `data-integrator`.
+When the `data-integrator` charm integrates with a `kafka` application on the `kafka-client` relation interface, passing `extra-user-roles=admin`, a new user with `super.user` permissions will be created on that cluster, with the charm passing back the credentials and broker addresses in the relation data to the `data-integrator`.
 As we will need full access to both clusters, we must grab these newly generated authorisation credentials from the `data-integrator`.
 
 SASL credentials to connect to the target Charmed Apache Kafka K8s cluster:

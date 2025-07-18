@@ -3,8 +3,6 @@
 
 This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
-## Deploy Charmed Apache Kafka K8s (and Charmed Apache ZooKeeper K8s)
-
 To deploy Charmed Apache Kafka K8s, all you need to do is run the following commands, which will automatically fetch [Apache Kafka](https://charmhub.io/kafka-k8s?channel=3/stable) and [Apache ZooKeeper](https://charmhub.io/zookeeper-k8s?channel=3/stable) charms from [Charmhub](https://charmhub.io/) and deploy them to your model. For example, to deploy a cluster of five Apache Zookeeper units and three Apache Kafka units, you can simply run:
 
 ```shell
@@ -15,7 +13,7 @@ juju deploy kafka-k8s -n 3 --trust
 After this, it is necessary to connect them:
 
 ```shell
-juju relate kafka-k8s zookeeper-k8s
+juju integrate kafka-k8s zookeeper-k8s
 ```
 
 Juju will now fetch Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s and begin deploying them to the local MicroK8s. This process can take several minutes depending on how provisioned (RAM, CPU, etc) your machine is. You can track the progress by running:
@@ -46,6 +44,7 @@ zookeeper-k8s/0   active    idle   10.1.36.84
 zookeeper-k8s/1*  active    idle   10.1.36.86
 zookeeper-k8s/2   active    idle   10.1.36.85
 ```
+
 To exit the screen with `juju status --watch 1s`, enter `Ctrl+c`.
 
 ## Access Apache Kafka cluster
@@ -75,7 +74,7 @@ username: admin
 Providing you the `username` and `password` of the Apache Kafka cluster admin user. 
 
 ```{caution}
-When no other application is related to Apache Kafka, the cluster is secured-by-default and external listeners (bound to port `9092`) are disabled, thus preventing any external incoming connection. 
+When no other application is integrated with Apache Kafka, the cluster is secured-by-default and external listeners (bound to port `9092`) are disabled, thus preventing any external incoming connection. 
 ```
 
 Nevertheless, it is still possible to run a command from within the Apache Kafka cluster. To do so, log in to one of the Apache Kafka containers in one of the units:
@@ -92,7 +91,7 @@ Within the image you can also find a `client.properties` file that already provi
 export CLIENT_PROPERTIES=/etc/kafka/client.properties
 ```
 
-Since we don't have any client applications related yet and therefore external listeners are initially closed, if you wish to run a command from the cluster you ought to use the internal listeners exposed at ports `19092`. 
+Since we don't have any client applications integrated yet and therefore external listeners are initially closed, if you wish to run a command from the cluster you ought to use the internal listeners exposed at ports `19092`. 
 
 ```shell
 export INTERNAL_LISTENERS=kafka-k8s-1.kafka-k8s-endpoints:19092,kafka-k8s-2.kafka-k8s-endpoints:19092,kafka-k8s-0.kafka-k8s-endpoints:19092
@@ -131,4 +130,4 @@ You can finally delete the topic:
 
 However, although the commands above can run within the cluster, it is generally recommended during operations
 to enable external listeners and use these for running the admin commands from outside the cluster. 
-To do so, as we will see in the next section, we will deploy a [data-integrator](https://charmhub.io/data-integrator) charm and relate it to Charmed Apache Kafka K8s.
+To do so, as we will see in the next section, we will deploy a [data-integrator](https://charmhub.io/data-integrator) charm and integrate it with Charmed Apache Kafka K8s.

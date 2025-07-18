@@ -13,7 +13,7 @@ Deploy the `cos-lite` bundle in a Kubernetes environment. This can be done by fo
 
 ### Offer interfaces via the COS controller
 
-Switch to COS K8s environment and offer COS interfaces to be cross-model related with Charmed Apache Kafka K8s model:
+Switch to COS K8s environment and offer COS interfaces to be cross-model integrated with Charmed Apache Kafka K8s model:
 
 ```shell
 juju switch <k8s_controller>:<cos_model_name>
