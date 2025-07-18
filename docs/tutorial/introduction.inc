@@ -1,5 +1,3 @@
-# Tutorial
-
 The Charmed Apache Kafka K8s Operator delivers automated operations management from [Day 0 to Day 2](https://codilime.com/blog/day-0-day-1-day-2-the-software-lifecycle-in-the-cloud-age/) on the [Apache Kafka](https://kafka.apache.org/) event streaming platform. 
 It is an open-source, end-to-end, production-ready data platform [on top of Juju](https://juju.is/). As a first step, this tutorial shows you how to get Charmed Apache Kafka K8s up and running, but the tutorial does not stop there. 
 As currently Apache Kafka requires a paired [Apache ZooKeeper](https://zookeeper.apache.org/) deployment in production, this operator makes use of the [Apache ZooKeeper Operator](https://github.com/canonical/zookeeper-operator) for various essential functions.
