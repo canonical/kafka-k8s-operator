@@ -16,7 +16,7 @@ The charm helps ops teams and administrators automate Apache Kafka operations fr
 
 | | |
 |--|--|
-|  [Tutorial](tutorial-index)</br>  Learn how to deploy, configure, and use the charm with our step-by-step guidance. Get started from [step one](tutorial-environment). </br> |  [How-to guides](how-to/manage-units) </br> Practical instructions for key tasks, like [deploy](how-to-deploy-index) on different platforms, [manage](how-to-manage-units) Juju units, [Monitor](how-to-monitoring-enable-monitoring) metrics, [back up and restore](how-to-back-up-and-restore). |
+|  [Tutorial](tutorial-index)</br>  Learn how to deploy, configure, and use the charm with our step-by-step guidance. Get started from [step one](tutorial-environment). </br> |  [How-to guides](how-to/manage-units) </br> Practical instructions for key tasks, like [deploy](how-to-deploy-index) on different platforms, [manage](how-to-manage-units) Juju units, [monitor](how-to-monitoring-enable-monitoring) metrics, [back up and restore](how-to-back-up-and-restore). |
 | [Reference](reference/file-system-paths) </br> Technical information, for example: charm's [actions](https://charmhub.io/kafka-k8s/actions?channel=3/edge), [configuration parameters](https://charmhub.io/kafka-k8s/configurations?channel=3/edge), [libraries](https://charmhub.io/kafka-k8s/libraries/kafka?channel=3/edge), [statuses](reference-statuses), as well as [requirements](reference-requirements), and [file system paths](reference-file-system-paths). | [Explanation](explanation/security) </br> Explore and grow your understanding of key topics, such as: [security](explanation-security) and [cryptography](explanation-cryptography), [Apache ZooKeeper](explanation-cluster-configuration) and [MirrorMaker](explanation-mirrormaker2-0) usage. |
 
 ## Project and community
@@ -27,7 +27,7 @@ It’s an open-source project developed and supported by [Canonical](https://can
 
 - [Read our Code of Conduct](https://ubuntu.com/community/code-of-conduct)
 - [Join the Discourse forum](https://discourse.charmhub.io/tag/kafka)
-- [Contribute](https://github.com/canonical/kafka-operator/blob/main/CONTRIBUTING.md) and report [issues](https://github.com/canonical/kafka-k8s-operator/issues/new)
+- [Contribute](https://github.com/canonical/kafka-k8s-operator/blob/main/CONTRIBUTING.md) and report [issues](https://github.com/canonical/kafka-k8s-operator/issues/new)
 - Explore [Canonical Data Fabric solutions](https://canonical.com/data)
 - [Contact us](reference-contact) for all further questions
 
