@@ -10,15 +10,7 @@ import pytest
 import requests
 from pytest_operator.plugin import OpsTest
 
-from literals import (
-    DEPENDENCIES,
-    PEER_CLUSTER_ORCHESTRATOR_RELATION,
-    PEER_CLUSTER_RELATION,
-    REL_NAME,
-    SECURITY_PROTOCOL_PORTS,
-)
-
-from .helpers import (
+from integration.helpers.pytest_operator import (
     APP_NAME,
     DUMMY_NAME,
     REL_NAME_ADMIN,
@@ -29,6 +21,13 @@ from .helpers import (
     get_address,
     netcat,
     run_client_properties,
+)
+from literals import (
+    DEPENDENCIES,
+    PEER_CLUSTER_ORCHESTRATOR_RELATION,
+    PEER_CLUSTER_RELATION,
+    REL_NAME,
+    SECURITY_PROTOCOL_PORTS,
 )
 
 logger = logging.getLogger(__name__)

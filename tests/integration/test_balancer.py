@@ -13,13 +13,7 @@ from tenacity import Retrying
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_fixed
 
-from literals import (
-    PEER_CLUSTER_ORCHESTRATOR_RELATION,
-    PEER_CLUSTER_RELATION,
-    TLS_RELATION,
-)
-
-from .helpers import (
+from integration.helpers.pytest_operator import (
     APP_NAME,
     CONTROLLER_NAME,
     KAFKA_CONTAINER,
@@ -28,6 +22,11 @@ from .helpers import (
     balancer_is_running,
     balancer_is_secure,
     get_replica_count_by_broker_id,
+)
+from literals import (
+    PEER_CLUSTER_ORCHESTRATOR_RELATION,
+    PEER_CLUSTER_RELATION,
+    TLS_RELATION,
 )
 
 logger = logging.getLogger(__name__)

@@ -8,9 +8,7 @@ import logging
 import pytest
 from pytest_operator.plugin import OpsTest
 
-from literals import TLS_RELATION
-
-from .helpers import (
+from integration.helpers.pytest_operator import (
     APP_NAME,
     DUMMY_NAME,
     KAFKA_CONTAINER,
@@ -19,6 +17,7 @@ from .helpers import (
     ZK_NAME,
     check_logs,
 )
+from literals import TLS_RELATION
 
 logger = logging.getLogger(__name__)
 
