@@ -74,6 +74,7 @@ jobs:
           - integration-balancer-multi
           - integration-kraft
           - integration-ha
+          - integration-ha-controller
           # - integration-upgrade
         kraft-mode:
           - single
@@ -82,6 +83,8 @@ jobs:
           - tox-environments: integration-balancer-single
             kraft-mode: single
           - tox-environments: integration-balancer-multi
+            kraft-mode: single
+          - tox-environments: integration-ha-controller
             kraft-mode: single   
     name: ${{ matrix.tox-environments }} | ${{ matrix.kraft-mode }}
     needs:
