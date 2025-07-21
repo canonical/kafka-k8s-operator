@@ -52,13 +52,13 @@ Learn more:
 
 Workload logs are stored on units and can be accessed in the following directories:
 
-* Apache Kafka -- `/var/snap/charmed-kafka/common/var/log/kafka/`
-* Apache ZooKeeper -- `/var/snap/charmed-zookeeper/common/var/log/zookeeper/`
+* Apache Kafka -- `/var/log/kafka/`
+* Apache ZooKeeper -- `/var/log/zookeeper/`
 
 Use `juju ssh` command to connect to a unit and access logs directly, for example:
 
 ```shell
-juju ssh <unit-name> 'sudo tail -f /var/snap/charmed-kafka/common/var/log/kafka/server.log'
+juju ssh <unit-name> 'sudo tail -f /var/log/kafka/server.log'
 ```
 
 Some of the most useful log files for Apache Kafka:
@@ -74,7 +74,7 @@ Some of the most useful log files for Apache Kafka:
 ```{note}
 Learn more: 
 
-* Charmed Apache Kafka [file system paths reference](reference-file-system-paths).
+* Charmed Apache Kafka K8s [file system paths reference](reference-file-system-paths).
 * `juju ssh` command [reference](https://documentation.ubuntu.com/juju/3.6/reference/juju-cli/list-of-juju-cli-commands/ssh/)
 ```
 
@@ -94,7 +94,7 @@ Learn more:
 ## Partition rebalancing
 
 ```{warning}
-Scaling a Charmed Apache Kafka cluster does not automatically rebalance existing topics and partitions. Rebalancing must be performed manually—before scaling in or after scaling out.
+Scaling a Charmed Apache Kafka K8s cluster does not automatically rebalance existing topics and partitions. Rebalancing must be performed manually—before scaling in or after scaling out.
 ```
 
 See the [Partition reassignment](how-to-partitions-reassignment) section of the How-to manage units guide for details on how to rebalance Apache Kafka partitions between units.
@@ -116,7 +116,7 @@ We recommend the following minimum configuration for production environments:
   * `5` units of Apache ZooKeeper
 
 For very high numbers of topics, partitions and brokers, consider scaling the Apache ZooKeeper cluster out to `5` or up to `7` units.
-For brokers, start with a minimum estimated number of Charmed Apache Kafka units, scaling out the number of units to meet desired throughput.
+For brokers, start with a minimum estimated number of Charmed Apache Kafka K8s units, scaling out the number of units to meet desired throughput.
 
 ```{warning}
 Scaling an Apache ZooKeeper cluster out to higher numbers does not provide linear growth in performance.
@@ -132,5 +132,5 @@ Learn more:
 
 ## Contact us
 
-If you encountered an undocumented or unexpected behaviour of the Charmed Apache Kafka, feel free to create an [issue on GitHub](https://github.com/canonical/kafka-operator/issues) or contact us directly.
+If you encountered an undocumented or unexpected behaviour of the Charmed Apache Kafka K8s, feel free to create an [issue on GitHub](https://github.com/canonical/kafka-operator/issues) or contact us directly.
 See the (reference-contact) page for contact details.
