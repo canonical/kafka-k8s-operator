@@ -7,6 +7,7 @@ import os
 import re
 import string
 import tempfile
+import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
@@ -14,15 +15,28 @@ from subprocess import PIPE, CalledProcessError, check_output
 from typing import Literal
 
 import jubilant
+from tenacity import RetryError, Retrying, stop_after_attempt, wait_fixed
 
 from integration.ha.continuous_writes import ContinuousWritesResult
 from integration.helpers import (
     APP_NAME,
+    CONTROLLER_NAME,
+    KRaftMode,
+    KRaftUnitStatus,
+    check_socket,
     get_bootstrap_servers,
     get_k8s_host_from_unit,
     get_unit_address_map,
 )
-from literals import BROKER, CONTAINER
+from integration.helpers.jubilant import get_unit_ipv4_address, kraft_quorum_status
+from literals import (
+    BROKER,
+    CONTAINER,
+    CONTROLLER_PORT,
+    KRAFT_NODE_ID_OFFSET,
+    PATHS,
+    SECURITY_PROTOCOL_PORTS,
+)
 
 PROCESS = "kafka.Kafka"
 SERVICE = "kafka"
@@ -226,7 +240,7 @@ def isolate_instance_from_cluster(juju: jubilant.Juju, unit_name: str) -> None:
 
     Args:
         juju: jubilant.Juju fixture
-        unit_name: the Juju unit running the ZooKeeper process
+        unit_name: the Juju unit running the process
     """
     with tempfile.NamedTemporaryFile() as temp_file:
         with open(
@@ -301,3 +315,179 @@ def assert_continuous_writes_consistency(result: ContinuousWritesResult):
     assert (
         result.count - 1 == result.last_expected_message
     ), f"Last expected message {result.last_expected_message} doesn't match count {result.count}"
+
+
+def all_listeners_up(
+    juju: jubilant.Juju, app_name: str, listener_port: int, timeout_seconds: int = 600
+) -> None:
+    """Waits until listeners on all units of the provided app `app_name` are up.
+
+    Args:
+        juju (jubilant.Juju): Jubilant juju fixture.
+        app_name (str): Application name.
+        listener_port (int): Listener port to check.
+        timeout_seconds (int, optional): Wait timeout in seconds. Defaults to 600.
+    """
+    for _ in range(timeout_seconds // 30):
+        all_up = True
+        for unit in juju.status().apps[app_name].units:
+            unit_ip = get_unit_ipv4_address(juju.model, unit)
+
+            if not unit_ip:
+                all_up = False
+                continue
+
+            if not check_socket(unit_ip, port=listener_port):
+                logger.info(f"{unit} - {unit_ip}:{listener_port} not up yet...")
+                all_up = False
+
+        if all_up:
+            return
+
+        time.sleep(30)
+
+    raise TimeoutError()
+
+
+def assert_all_brokers_up(juju: jubilant.Juju, timeout_seconds: int = 600) -> None:
+    """Waits until client listeners are up on all broker units."""
+    return all_listeners_up(
+        juju=juju,
+        app_name=APP_NAME,
+        listener_port=SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client,
+        timeout_seconds=timeout_seconds,
+    )
+
+
+def assert_all_controllers_up(
+    juju: jubilant.Juju, controller_app: str, timeout_seconds: int = 600
+) -> None:
+    """Waits until client listeners are up on all controller units."""
+    return all_listeners_up(
+        juju=juju,
+        app_name=controller_app,
+        listener_port=CONTROLLER_PORT,
+        timeout_seconds=timeout_seconds,
+    )
+
+
+def assert_quorum_healthy(juju: jubilant.Juju, kraft_mode: KRaftMode):
+    """Asserts KRaft Quorum is healthy, meaning all controller units are either LEADER or FOLLOWER, and all broker units are OBSERVERS.
+
+    Args:
+        juju (jubilant.Juju): Jubilant juju fixture.
+        kraft_mode (KRaftMode): KRaft mode, either "single" or "multi".
+    """
+    logger.info("Asserting quorum is healthy...")
+    app_name = CONTROLLER_NAME if kraft_mode == "multi" else APP_NAME
+    address = get_unit_ipv4_address(juju.model, f"{app_name}/0")
+    controller_port = CONTROLLER_PORT
+    bootstrap_controller = f"{address}:{controller_port}"
+
+    unit_status = kraft_quorum_status(juju, f"{app_name}/0", bootstrap_controller)
+
+    offset = KRAFT_NODE_ID_OFFSET if kraft_mode == "single" else 0
+
+    for unit_id, status in unit_status.items():
+        if unit_id < offset + 100:
+            assert status in (KRaftUnitStatus.FOLLOWER, KRaftUnitStatus.LEADER)
+        else:
+            assert status == KRaftUnitStatus.OBSERVER
+
+
+def get_kraft_leader(juju: jubilant.Juju, unstable_unit: str | None = None) -> str:
+    """Gets KRaft leader by querying metadata on one of the available controller units.
+
+    Args:
+        juju (jubilant.Juju): Jubilant juju fixture.
+        unstable_unit (str | None, optional): The unit which is unstable (if any) and should be avoided to be used as bootstrap-controller. Defaults to None.
+
+    Raises:
+        Exception: If can not find the leader unit.
+
+    Returns:
+        str: The KRaft leader unit name.
+    """
+    status = {}
+    for unit in juju.status().apps[CONTROLLER_NAME].units:
+        if unit == unstable_unit:
+            continue
+
+        try:
+            unit_ip = get_unit_ipv4_address(juju.model, unit)
+            bootstrap_controller = f"{unit_ip}:{CONTROLLER_PORT}"
+            status = kraft_quorum_status(
+                juju, unit_name=unit, bootstrap_controller=bootstrap_controller
+            )
+            break
+        except CalledProcessError:
+            continue
+
+    if not status:
+        raise Exception("Can't find the KRaft leader.")
+
+    for unit_id in status:
+        if status[unit_id] == KRaftUnitStatus.LEADER:
+            return f"{CONTROLLER_NAME}/{unit_id}"
+
+    raise Exception("Can't find the KRaft leader.")
+
+
+def get_kraft_quorum_lags(juju: jubilant.Juju) -> list[int]:
+    """Gets KRaft units lags by querying metadata on one of the available controller units.
+
+    Args:
+        juju (jubilant.Juju): Jubilant juju fixture.
+
+    Raises:
+        Exception: If no controller unit is accessible or the metadata-quorum command fails.
+
+    Returns:
+        list[int]: list of lags on all brokers and controllers.
+    """
+    logger.info("Querying KRaft unit lags...")
+    result = ""
+    for unit in juju.status().apps[CONTROLLER_NAME].units:
+        try:
+            unit_ip = get_unit_ipv4_address(juju.model, unit)
+            bootstrap_controller = f"{unit_ip}:{CONTROLLER_PORT}"
+            result = check_output(
+                f"JUJU_MODEL={juju.model} juju ssh --container {CONTAINER} {unit} '{BROKER.paths['BIN']}/bin/kafka-metadata-quorum.sh --command-config {PATHS['kafka']['CONF']}/server.properties --bootstrap-controller {bootstrap_controller} describe --replication'",
+                stderr=PIPE,
+                shell=True,
+                universal_newlines=True,
+            )
+            break
+        except CalledProcessError:
+            continue
+
+    if not result:
+        raise Exception("Can't query KRaft quorum status.")
+
+    # parse `kafka-metadata-quorum.sh` output
+    # NodeId  DirectoryId  LogEndOffset  Lag  LastFetchTimestamp  LastCaughtUpTimestamp  Status
+    lags = []
+    for line in result.split("\n"):
+        fields = [c.strip() for c in line.split("\t")]
+        if len(fields) < 7 or fields[3] == "Lag":
+            continue
+
+        lags.append(int(fields[3]))
+
+    logger.info(f"Lags: {lags}")
+    return lags
+
+
+def is_down(juju: jubilant.Juju, unit: str, port: int = CONTROLLER_PORT) -> bool:
+    """Check if a unit's kafka process is down."""
+    try:
+        for attempt in Retrying(stop=stop_after_attempt(10), wait=wait_fixed(5)):
+            with attempt:
+                unit_ip = get_unit_ipv4_address(juju.model, unit)
+                assert unit_ip
+                assert not check_socket(unit_ip, port)
+                logger.info(f"{unit_ip}:{port} is down")
+    except RetryError:
+        return False
+
+    return True
