@@ -10,9 +10,7 @@ from typing import Set
 import pytest
 from pytest_operator.plugin import OpsTest
 
-from literals import TLS_RELATION
-
-from .helpers import (
+from integration.helpers.pytest_operator import (
     APP_NAME,
     REL_NAME_ADMIN,
     check_user,
@@ -24,6 +22,7 @@ from .helpers import (
     load_super_users,
     netcat,
 )
+from literals import TLS_RELATION
 
 logger = logging.getLogger(__name__)
 

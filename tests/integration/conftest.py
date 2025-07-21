@@ -7,6 +7,7 @@ import pathlib
 import subprocess
 import typing
 
+import jubilant
 import pytest
 from pytest_operator.plugin import OpsTest
 
@@ -106,3 +107,30 @@ async def _build_charm(self, charm_path: typing.Union[str, os.PathLike]) -> path
         raise ValueError(
             f"Unable to find .charm file for {architecture=} and Ubuntu 22.04 at {charm_path=}"
         )
+
+
+# -- Jubilant --
+
+
+# logging.getLogger("jubilant.wait").setLevel(logging.WARNING)
+
+
+@pytest.fixture(scope="module")
+def juju(request: pytest.FixtureRequest):
+    model = request.config.getoption("--model")
+    keep_models = typing.cast(bool, request.config.getoption("--keep-models"))
+
+    if model is None:
+        with jubilant.temp_model(keep=keep_models) as juju:
+            juju.wait_timeout = 10 * 60
+            juju.model_config({"update-status-hook-interval": "90s"})
+            yield juju
+
+            log = juju.debug_log(limit=1000)
+    else:
+        juju = jubilant.Juju(model=model)
+        yield juju
+        log = juju.debug_log(limit=1000)
+
+    if request.session.testsfailed:
+        print(log, end="")
