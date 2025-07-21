@@ -8,6 +8,7 @@ import logging
 import os
 from subprocess import CalledProcessError
 
+from ops.pebble import ExecError
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from core.cluster import ClusterState
@@ -118,7 +119,7 @@ class ControllerManager:
                 ],
             )
             logger.debug(result)
-        except CalledProcessError as e:
+        except (CalledProcessError, ExecError) as e:
             error_details = f"{e.stdout} {e.stderr}"
             if "DuplicateVoterException" not in error_details:
                 raise e
@@ -156,7 +157,7 @@ class ControllerManager:
                     controller_metadata_directory_id,
                 ],
             )
-        except CalledProcessError as e:
+        except (CalledProcessError, ExecError) as e:
             error_details = f"{e.stdout} {e.stderr}"
             if "VoterNotFoundException" in error_details or "TimeoutException" in error_details:
                 # successful
@@ -181,8 +182,8 @@ class ControllerManager:
                     "--replication",
                 ],
             )
-        except CalledProcessError as e:
-            error_details = e.stderr
+        except (CalledProcessError, ExecError) as e:
+            error_details = f"{e.stdout} {e.stderr}"
             logger.error(error_details)
             return {}
 
