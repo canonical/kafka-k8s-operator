@@ -1,7 +1,9 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import socket
 import subprocess
+from contextlib import closing
 from enum import Enum
 from pathlib import Path
 from typing import Literal
@@ -37,6 +39,11 @@ class KRaftUnitStatus(Enum):
     LEADER = "Leader"
     FOLLOWER = "Follower"
     OBSERVER = "Observer"
+
+
+def check_socket(host: str, port: int) -> bool:
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+        return sock.connect_ex((host, port)) == 0
 
 
 def get_unit_address_map(model: str, app_name: str = APP_NAME) -> dict[str, str]:
@@ -94,6 +101,23 @@ def get_k8s_host_from_unit(unit_name: str, app_name: str = APP_NAME) -> str:
     broker_id = unit_name.split("/")[1]
 
     return f"{app_name}-{broker_id}.{app_name}-endpoints"
+
+
+def get_unit_host(model: str, unit_name: str, app_name: str = APP_NAME, port: int = 9097) -> str:
+    f"""Gets server address for a given unit name.
+
+    Args:
+        model: Juju model name
+        unit_name: the Juju unit to get host from
+        app_name: the Juju application the unit belongs to
+            Defaults to {app_name}
+        port: the desired port.
+            Defaults to `9097`
+
+    Returns:
+        String of the server address and port
+    """
+    return f"{get_unit_address_map(model, app_name)[unit_name]}:{port}"
 
 
 def unit_id_to_broker_id(unit_id: int) -> int:
