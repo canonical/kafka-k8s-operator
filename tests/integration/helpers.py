@@ -9,7 +9,6 @@ import socket
 import subprocess
 import tempfile
 from contextlib import closing
-from enum import Enum
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
 from typing import Any, List, Literal, Optional, Set
@@ -34,6 +33,7 @@ from literals import (
     PEER_CLUSTER_ORCHESTRATOR_RELATION,
     PEER_CLUSTER_RELATION,
     SECURITY_PROTOCOL_PORTS,
+    KRaftUnitStatus,
 )
 from managers.auth import Acl, AuthManager
 
@@ -61,12 +61,6 @@ DUMMY_NAME = "app"
 
 
 KRaftMode = Literal["single", "multi"]
-
-
-class KRaftUnitStatus(Enum):
-    LEADER = "Leader"
-    FOLLOWER = "Follower"
-    OBSERVER = "Observer"
 
 
 async def deploy_cluster(
@@ -911,7 +905,7 @@ def kraft_quorum_status(
     """Returns a dict mapping of unit ID to KRaft unit status based on `kafka-metadata-quorum.sh` utility's output."""
     try:
         result = check_output(
-            f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} '{BROKER.paths['BIN']}/bin/kafka-metadata-quorum.sh --command-config {BROKER.paths['CONF']}/server.properties --bootstrap-controller {bootstrap_controller} describe --replication'",
+            f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} '{BROKER.paths['BIN']}/bin/kafka-metadata-quorum.sh --command-config {BROKER.paths['CONF']}/kraft-client.properties --bootstrap-controller {bootstrap_controller} describe --replication'",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,

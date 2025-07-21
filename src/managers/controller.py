@@ -8,11 +8,12 @@ import logging
 import os
 from subprocess import CalledProcessError
 
+from ops.pebble import ExecError
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from core.cluster import ClusterState
 from core.workload import WorkloadBase
-from literals import GROUP, KRAFT_VERSION, USER_ID
+from literals import GROUP, KRAFT_VERSION, USER_ID, KRaftQuorumInfo, KRaftUnitStatus
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,14 @@ class ControllerManager:
     def __init__(self, state: ClusterState, workload: WorkloadBase):
         self.state = state
         self.workload = workload
+
+    @staticmethod
+    def _parse_lag_col(_str: str) -> int:
+        """Parses the lag column from metadata-quorum output, returns -1 if unsuccessful."""
+        try:
+            return int(_str)
+        except (ValueError, TypeError):
+            return -1
 
     def format_storages(
         self,
@@ -105,12 +114,12 @@ class ControllerManager:
                     "--bootstrap-controller",
                     bootstrap_node,
                     "--command-config",
-                    self.workload.paths.server_properties,
+                    self.workload.paths.kraft_client_properties,
                     "add-controller",
                 ],
             )
             logger.debug(result)
-        except CalledProcessError as e:
+        except (CalledProcessError, ExecError) as e:
             error_details = f"{e.stdout} {e.stderr}"
             if "DuplicateVoterException" not in error_details:
                 raise e
@@ -140,7 +149,7 @@ class ControllerManager:
                     "--bootstrap-controller",
                     bootstrap_node,
                     "--command-config",
-                    self.workload.paths.server_properties,
+                    self.workload.paths.kraft_client_properties,
                     "remove-controller",
                     "--controller-id",
                     str(controller_id),
@@ -148,9 +157,68 @@ class ControllerManager:
                     controller_metadata_directory_id,
                 ],
             )
-        except CalledProcessError as e:
+        except (CalledProcessError, ExecError) as e:
             error_details = f"{e.stdout} {e.stderr}"
             if "VoterNotFoundException" in error_details or "TimeoutException" in error_details:
                 # successful
                 return
             raise e
+
+    def quorum_status(self) -> dict[int, KRaftQuorumInfo]:
+        """Returns a mapping of controller id to KRaftQuorumInfo."""
+        bootstrap_controller = self.state.peer_cluster.bootstrap_controller
+        if not bootstrap_controller:
+            return {}
+
+        try:
+            result = self.workload.run_bin_command(
+                bin_keyword="metadata-quorum",
+                bin_args=[
+                    "--bootstrap-controller",
+                    bootstrap_controller,
+                    "--command-config",
+                    self.workload.paths.kraft_client_properties,
+                    "describe",
+                    "--replication",
+                ],
+            )
+        except (CalledProcessError, ExecError) as e:
+            error_details = f"{e.stdout} {e.stderr}"
+            logger.error(error_details)
+            return {}
+
+        status: dict[int, KRaftQuorumInfo] = {}
+        for line in result.split("\n"):
+            fields = [c.strip() for c in line.split("\t")]
+            try:
+                status[int(fields[0])] = KRaftQuorumInfo(
+                    directory_id=fields[1],
+                    lag=self._parse_lag_col(fields[3]),
+                    status=KRaftUnitStatus(fields[6]),
+                )
+            except (ValueError, IndexError):
+                continue
+
+        logger.debug(f"Latest quorum status: {status}")
+        return status
+
+    def broker_active(self) -> bool:
+        """Checks if broker id is recognised as active by the controller. This is a live check."""
+        quorum_status = self.quorum_status()
+        broker_id = self.state.unit_broker.broker_id
+
+        if broker_id not in quorum_status:
+            return False
+
+        expected_statuses = (
+            (KRaftUnitStatus.LEADER, KRaftUnitStatus.FOLLOWER)
+            if self.state.runs_controller
+            else (KRaftUnitStatus.OBSERVER,)
+        )
+
+        return all(
+            [
+                quorum_status[broker_id].status in expected_statuses,
+                quorum_status[broker_id].lag >= 0,
+            ]
+        )
