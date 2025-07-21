@@ -169,12 +169,13 @@ class TestKRaft:
         if self.deployment_strat == "multi":
             await ops_test.model.applications[APP_NAME].add_units(count=2)
 
-        await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, self.controller_app}),
-            status="active",
-            timeout=1200,
-            idle_period=20,
-        )
+        async with ops_test.fast_forward(fast_interval="60s"):
+            await ops_test.model.wait_for_idle(
+                apps=list({APP_NAME, self.controller_app}),
+                status="active",
+                timeout=1200,
+                idle_period=40,
+            )
 
         address = await get_address(ops_test=ops_test, app_name=self.controller_app)
         bootstrap_controller = f"{address}:{CONTROLLER_PORT}"
@@ -204,16 +205,17 @@ class TestKRaft:
     @pytest.mark.abort_on_fail
     async def test_scale_in(self, ops_test: OpsTest):
         await ops_test.model.applications[self.controller_app].scale(scale=3)
-        await ops_test.model.wait_for_idle(
-            apps=[self.controller_app],
-            status="active",
-            timeout=600,
-            idle_period=20,
-            wait_for_exact_units=3,
-        )
 
-        async with ops_test.fast_forward(fast_interval="30s"):
-            await asyncio.sleep(120)
+        await asyncio.sleep(120)
+
+        async with ops_test.fast_forward(fast_interval="60s"):
+            await ops_test.model.wait_for_idle(
+                apps=[self.controller_app],
+                status="active",
+                timeout=1200,
+                idle_period=40,
+                wait_for_exact_units=3,
+            )
 
         address = await get_address(ops_test=ops_test, app_name=self.controller_app, unit_num=0)
         bootstrap_controller = f"{address}:{CONTROLLER_PORT}"
