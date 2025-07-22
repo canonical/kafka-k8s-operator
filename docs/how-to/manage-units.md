@@ -3,6 +3,7 @@
 
 For general Juju unit management process, see the [Juju documentation](https://juju.is/docs/juju/manage-units).
 
+(how-to-scaling)=
 ## Scaling
 
 ```{note}
@@ -23,6 +24,7 @@ See the `scale-application` [command reference](https://documentation.ubuntu.com
 
 Make sure to reassign partitions and topics to use newly added units. See below for guidance.
 
+(how-to-partitions-reassignment)=
 ### Partition reassignment
 
 When brokers are added or removed, Apache Kafka does not automatically rebalance existing topics and partitions across the new set of brokers.
