@@ -58,7 +58,7 @@ Workload logs are stored on units and can be accessed in the following directori
 Use `juju ssh` command to connect to a unit and access logs directly, for example:
 
 ```shell
-juju ssh <unit-name> 'sudo tail -f /var/log/kafka/server.log'
+juju ssh --container kafka <unit-name> 'tail -f /var/log/kafka/server.log'
 ```
 
 Some of the most useful log files for Apache Kafka:
