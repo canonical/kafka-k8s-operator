@@ -7,7 +7,7 @@ import logging
 import pytest
 from pytest_operator.plugin import OpsTest
 
-from .helpers import (
+from integration.helpers.pytest_operator import (
     TEST_SECRET_NAME,
     deploy_cluster,
     get_user,

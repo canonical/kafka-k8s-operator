@@ -14,7 +14,6 @@ from charms.kafka.client import KafkaClient
 from kafka.admin import NewTopic
 from kafka.consumer.fetcher import ConsumerRecord
 from kafka.errors import KafkaError
-from pytest_operator.plugin import OpsTest
 from tenacity import (
     RetryError,
     Retrying,
@@ -24,7 +23,8 @@ from tenacity import (
     wait_random,
 )
 
-from integration.helpers import APP_NAME, DUMMY_NAME, get_provider_data
+from integration.helpers import APP_NAME, DUMMY_NAME
+from integration.helpers.jubilant import get_provider_data
 
 logger = logging.getLogger(__name__)
 logging.getLogger("kafka.conn").disabled = True
@@ -43,8 +43,8 @@ class ContinuousWrites:
     TOPIC_NAME = "ha-test-topic"
     LAST_WRITTEN_VAL_PATH = "/tmp/last_written_value"
 
-    def __init__(self, ops_test: OpsTest, app: str):
-        self._ops_test = ops_test
+    def __init__(self, model: str, app: str):
+        self._model = model
         self._app = app
         self._is_stopped = True
         self._event = None
@@ -74,7 +74,7 @@ class ContinuousWrites:
 
     def update(self):
         """Update cluster related conf. Useful in cases such as scaling, pwd change etc."""
-        self._queue.put(SimpleNamespace(model_full_name=self._ops_test.model.info.name))
+        self._queue.put(SimpleNamespace(model_full_name=self._model))
 
     @retry(
         wait=wait_fixed(wait=5) + wait_random(0, 5),
@@ -147,7 +147,7 @@ class ContinuousWrites:
         self._process = Process(
             target=ContinuousWrites._run_async,
             name="continuous_writes",
-            args=(self._event, self._queue, 0, self._ops_test),
+            args=(self._event, self._queue, 0, self._model),
         )
 
     def _stop_process(self):
@@ -159,7 +159,7 @@ class ContinuousWrites:
     def _client(self):
         """Build a Kafka client."""
         relation_data = get_provider_data(
-            ops_test=self._ops_test,
+            model=self._model,
             unit_name=f"{DUMMY_NAME}/0",
             owner=APP_NAME,
         )
@@ -172,14 +172,14 @@ class ContinuousWrites:
 
     @staticmethod
     async def _run(
-        event: Event, data_queue: Queue, starting_number: int, ops_test: OpsTest
+        event: Event, data_queue: Queue, starting_number: int, model: str
     ) -> None:  # noqa: C901
         """Continuous writing."""
 
         def _client():
             """Build a Kafka client."""
             relation_data = get_provider_data(
-                ops_test=ops_test,
+                model=model,
                 unit_name=f"{DUMMY_NAME}/0",
                 owner=APP_NAME,
             )
@@ -234,6 +234,6 @@ class ContinuousWrites:
                 time.sleep(0.1)
 
     @staticmethod
-    def _run_async(event: Event, data_queue: Queue, starting_number: int, ops_test: OpsTest):
+    def _run_async(event: Event, data_queue: Queue, starting_number: int, model: str):
         """Run async code."""
-        asyncio.run(ContinuousWrites._run(event, data_queue, starting_number, ops_test))
+        asyncio.run(ContinuousWrites._run(event, data_queue, starting_number, model))
