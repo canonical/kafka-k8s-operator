@@ -37,6 +37,8 @@ from literals import (
 )
 from managers.auth import Acl, AuthManager
 
+from . import get_k8s_host_from_unit
+
 logger = logging.getLogger(__name__)
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
@@ -135,7 +137,8 @@ async def deploy_cluster(
 
 
 def load_acls(model_full_name: str | None) -> Set[Acl]:
-    container_command = f"{BROKER.paths['BIN']}/bin/kafka-acls.sh --command-config {BROKER.paths['CONF']}/client.properties --bootstrap-server localhost:19092 --list"
+    bootstrap_server = f'{get_k8s_host_from_unit("kafka-k8s/0")}:19093'
+    container_command = f"{BROKER.paths['BIN']}/bin/kafka-acls.sh --command-config {BROKER.paths['CONF']}/client.properties --bootstrap-server {bootstrap_server} --list"
 
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
@@ -164,7 +167,8 @@ def load_super_users(model_full_name: str | None) -> List[str]:
 
 
 def check_user(model_full_name: str | None, username: str) -> None:
-    container_command = f"{BROKER.paths['BIN']}/bin/kafka-configs.sh --bootstrap-server localhost:19092 --describe --entity-type users --entity-name {username} --command-config {BROKER.paths['CONF']}/client.properties"
+    bootstrap_server = f'{get_k8s_host_from_unit("kafka-k8s/0")}:19093'
+    container_command = f"{BROKER.paths['BIN']}/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --entity-type users --entity-name {username} --command-config {BROKER.paths['CONF']}/client.properties"
     result = check_output(
         f"JUJU_MODEL={model_full_name} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
         stderr=PIPE,
@@ -222,7 +226,7 @@ def extract_private_key(ops_test: OpsTest, unit_name: str) -> str | None:
         owner=unit_name,
     )
 
-    return user_secret.get("private-key")
+    return user_secret.get("client-private-key")
 
 
 def extract_ca(ops_test: OpsTest, unit_name: str) -> str | None:
@@ -387,11 +391,7 @@ def check_logs(ops_test: OpsTest, kafka_unit_name: str, topic: str) -> None:
 
 async def run_client_properties(ops_test: OpsTest) -> str:
     """Runs command requiring admin permissions, authenticated with bootstrap-server."""
-    bootstrap_server = (
-        await get_address(ops_test=ops_test)
-        + f":{SECURITY_PROTOCOL_PORTS['SASL_PLAINTEXT', 'SCRAM-SHA-512'].client}"
-    )
-
+    bootstrap_server = f'{get_k8s_host_from_unit("kafka-k8s/0")}:19093'
     container_command = f"{BROKER.paths['BIN']}/bin/kafka-configs.sh --bootstrap-server {bootstrap_server} --describe --all --command-config {BROKER.paths['CONF']}/client.properties --entity-type users"
 
     result = check_output(
@@ -672,22 +672,6 @@ def get_bootstrap_servers(ops_test: OpsTest, app_name: str = APP_NAME, port: int
     return ",".join(f"{host}:{port}" for host in get_unit_address_map(ops_test, app_name).values())
 
 
-def get_k8s_host_from_unit(unit_name: str, app_name: str = APP_NAME) -> str:
-    """Builds K8s host address for a given unit.
-
-    Args:
-        unit_name: name of the Juju unit
-        app_name: the Juju application the Kafka server belongs to
-            Defaults to `kafka-k8s`
-
-    Returns:
-        String of k8s host address
-    """
-    broker_id = unit_name.split("/")[1]
-
-    return f"{app_name}-{broker_id}.{app_name}-endpoints"
-
-
 def balancer_is_running(model_full_name: str | None, app_name: str) -> bool:
     check_output(
         f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:9090/kafkacruisecontrol/state'",
@@ -852,8 +836,9 @@ def check_external_access_non_tls(ops_test: OpsTest, unit_name: str):
     )
     client.create_topic(topic=topic_config)
 
+    internal_bootstrap_server = f"{get_k8s_host_from_unit(unit_name=unit_name)}:19093"
     topics_list = check_output(
-        f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} '/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --command-config /etc/kafka/client.properties --list'",
+        f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} '/opt/kafka/bin/kafka-topics.sh --bootstrap-server {internal_bootstrap_server} --command-config /etc/kafka/client.properties --list'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -966,7 +951,7 @@ async def list_truststore_aliases(ops_test: OpsTest, unit: str = f"{APP_NAME}/0"
 
     try:
         result = check_output(
-            f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit} 'keytool -list -keystore /etc/kafka/truststore.jks -storepass {truststore_password}'",
+            f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit} 'keytool -list -keystore /etc/kafka/client-truststore.jks -storepass {truststore_password}'",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,

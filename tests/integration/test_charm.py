@@ -88,7 +88,7 @@ async def test_remove_controller_relation_relate(ops_test: OpsTest, kraft_mode, 
 async def test_listeners(ops_test: OpsTest, app_charm, kafka_apps):
     address = await get_address(ops_test=ops_test)
     assert netcat(
-        address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].internal
+        address, SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].internal
     )  # Internal listener
     # Client listener should not be enable if there is no relations
     assert not netcat(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client)
@@ -124,13 +124,13 @@ async def test_listeners(ops_test: OpsTest, app_charm, kafka_apps):
 async def test_client_properties_makes_admin_connection(ops_test: OpsTest, kafka_apps, kraft_mode):
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
-    async with ops_test.fast_forward(fast_interval="60s"):
+    async with ops_test.fast_forward(fast_interval="90s"):
         await ops_test.model.wait_for_idle(
-            apps=[*kafka_apps, DUMMY_NAME], idle_period=30, status="active", timeout=800
+            apps=[*kafka_apps, DUMMY_NAME], idle_period=60, status="active", timeout=800
         )
 
     result = await run_client_properties(ops_test=ops_test)
-    assert result
+    logger.info(result)
     # single mode: admin, sync, relation-# => 3
     # multi mode: admin, relation-# => 2
     assert len(result.strip().split("\n")) == 2 + int(kraft_mode == "single")
@@ -147,9 +147,9 @@ async def test_client_properties_makes_admin_connection(ops_test: OpsTest, kafka
 async def test_logs_write_to_storage(ops_test: OpsTest, kafka_apps):
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
-    async with ops_test.fast_forward(fast_interval="60s"):
+    async with ops_test.fast_forward(fast_interval="90s"):
         await ops_test.model.wait_for_idle(
-            apps=[*kafka_apps, DUMMY_NAME], idle_period=30, status="active", timeout=800
+            apps=[*kafka_apps, DUMMY_NAME], idle_period=60, status="active", timeout=800
         )
 
     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("produce")

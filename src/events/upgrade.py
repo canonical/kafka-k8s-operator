@@ -87,9 +87,9 @@ class KafkaUpgrade(DataUpgrade):
         # need to manually add-back key/truststores
         if (
             self.charm.state.cluster.tls_enabled
-            and self.charm.state.unit_broker.certificate
-            and self.charm.state.unit_broker.ca
-            and self.charm.state.unit_broker.chain
+            and self.charm.state.unit_broker.client_certs.certificate
+            and self.charm.state.unit_broker.client_certs.ca
+            and self.charm.state.unit_broker.client_certs.chain
         ):  # TLS is probably completed
             self.dependent.tls_manager.set_server_key()
             self.dependent.tls_manager.set_ca()
@@ -193,18 +193,21 @@ class KafkaUpgrade(DataUpgrade):
         # Rev.78 - TLS chain not yet set to peer relation data
         if (
             tls_relation := self.charm.model.get_relation(TLS_RELATION)
-        ) and not self.charm.state.unit_broker.chain:
+        ) and not self.charm.state.unit_broker.client_certs.chain:
             all_certificates = json.loads(
                 tls_relation.data[tls_relation.app].get("certificates", "[]")
             )
             for certificate in all_certificates:
-                if certificate["certificate"] == self.charm.state.unit_broker.certificate:
+                if (
+                    certificate["certificate"]
+                    == self.charm.state.unit_broker.client_certs.certificate
+                ):
                     logger.info("Saving new bundle...")
                     self.charm.state.unit_broker.update(
                         {"chain": json.dumps(certificate["chain"])}
                     )
 
-            if not self.charm.state.unit_broker.chain:
+            if not self.charm.state.unit_broker.client_certs.chain:
                 logger.error("Unable to find valid chain")
 
         # Rev.66 - broker_capacities needs setting if not already set

@@ -32,7 +32,6 @@ from integration.helpers.jubilant import get_unit_ipv4_address, kraft_quorum_sta
 from literals import (
     BROKER,
     CONTAINER,
-    CONTROLLER_PORT,
     KRAFT_NODE_ID_OFFSET,
     PATHS,
     SECURITY_PROTOCOL_PORTS,
@@ -40,6 +39,7 @@ from literals import (
 
 PROCESS = "kafka.Kafka"
 SERVICE = "kafka"
+CONTROLLER_PORT = SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].controller
 
 
 logger = logging.getLogger(__name__)
