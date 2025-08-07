@@ -54,7 +54,7 @@ async def test_consistency_between_workload_and_metadata(ops_test: OpsTest):
 
 
 @pytest.mark.abort_on_fail
-async def test_remove_zk_relation_relate(ops_test: OpsTest, kraft_mode, controller_app):
+async def test_remove_controller_relation_relate(ops_test: OpsTest, kraft_mode, controller_app):
     if kraft_mode == "single":
         logger.info(f"Skipping because we're using {kraft_mode} mode.")
         return
@@ -115,7 +115,7 @@ async def test_listeners(ops_test: OpsTest, app_charm, kafka_apps):
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME}:{REL_NAME_ADMIN}"
     )
     await ops_test.model.wait_for_idle(
-        apps=kafka_apps, idle_period=30, status="active", timeout=600
+        apps=kafka_apps, idle_period=60, status="active", timeout=600
     )
 
     assert not netcat(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client)
@@ -140,7 +140,7 @@ async def test_client_properties_makes_admin_connection(ops_test: OpsTest, kafka
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME}:{REL_NAME_ADMIN}"
     )
     await ops_test.model.wait_for_idle(
-        apps=kafka_apps, idle_period=30, status="active", timeout=600
+        apps=kafka_apps, idle_period=60, status="active", timeout=600
     )
 
 
