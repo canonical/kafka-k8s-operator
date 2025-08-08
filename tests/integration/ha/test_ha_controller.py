@@ -289,6 +289,7 @@ def test_pod_reschedule(
     assert not any(get_kraft_quorum_lags(juju))
 
 
+@pytest.mark.skip(reason="deploy_chaos_mesh.sh fails on SH runners, needs investigation.")
 @pytest.mark.abort_on_fail
 def test_network_cut_without_ip_change(
     juju: jubilant.Juju,
