@@ -192,10 +192,10 @@ def test_healthy_fails_if_not_ready_to_start(
 
 
 def test_healthy_fails_if_snap_not_active(
-    ctx: Context, base_state: State, passwords_data: dict[str, str]
+    ctx: Context, base_state: State, passwords_data: dict[str, str], kraft_data: dict[str, str]
 ) -> None:
     # Given
-    cluster_peer = PeerRelation(PEER, PEER, local_app_data=passwords_data)
+    cluster_peer = PeerRelation(PEER, PEER, local_app_data=passwords_data | kraft_data)
     state_in = dataclasses.replace(base_state, relations=[cluster_peer])
 
     # When
@@ -344,7 +344,6 @@ def test_update_status_blocks_if_broker_not_active(
     # When
     with (
         patch("workload.KafkaWorkload.active", return_value=True),
-        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch(
             "managers.controller.ControllerManager.broker_active", return_value=False
         ) as patched_broker_active,
@@ -369,7 +368,6 @@ def test_update_status_blocks_if_machine_not_configured(
     with (
         patch("health.KafkaHealth.machine_configured", side_effect=SnapError()),
         patch("events.broker.BrokerOperator.healthy", return_value=True),
-        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
     ):
         state_out = ctx.run(ctx.on.update_status(), state_in)
 
@@ -389,7 +387,6 @@ def test_update_status_sets_sysconf_warning(
     with (
         patch("workload.KafkaWorkload.active", return_value=True),
         patch("health.KafkaHealth.machine_configured", return_value=False),
-        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
     ):
         state_out = ctx.run(ctx.on.update_status(), state_in)
 
@@ -409,10 +406,7 @@ def test_update_status_sets_active(
     state_in = dataclasses.replace(base_state, relations=[cluster_peer])
 
     # When
-    with (
-        patch("workload.KafkaWorkload.active", return_value=True),
-        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
-    ):
+    with patch("workload.KafkaWorkload.active", return_value=True):
         state_out = ctx.run(ctx.on.update_status(), state_in)
 
     # Then
@@ -478,7 +472,6 @@ def test_storage_add(
     with (
         patch("workload.KafkaWorkload.active", return_value=True),
         patch("events.broker.BrokerOperator.healthy", return_value=True),
-        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("managers.config.ConfigManager.set_server_properties"),
         patch("managers.config.ConfigManager.set_client_properties"),
         patch("managers.config.ConfigManager.set_environment"),
@@ -518,7 +511,6 @@ def test_config_changed_updates_server_properties(
             return_value=["gandalf=white"],
         ),
         patch("events.broker.BrokerOperator.healthy", return_value=True),
-        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("workload.KafkaWorkload.read", return_value=["gandalf=grey"]),
         patch("managers.config.ConfigManager.set_server_properties") as set_server_properties,
         patch("managers.config.ConfigManager.set_client_properties"),
@@ -550,7 +542,6 @@ def test_config_changed_requests_new_certificate(ctx: Context, base_state: State
             return_value=["gandalf=white"],
         ),
         patch("events.broker.BrokerOperator.healthy", return_value=True),
-        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("workload.KafkaWorkload.read", return_value=["gandalf=grey"]),
         patch("managers.config.ConfigManager.set_client_properties"),
         patch("events.tls.TLSHandler._request_certificate_renewal") as request_certificate_renewal,
@@ -592,7 +583,6 @@ def test_config_changed_does_not_request_new_certificate_for_slashes(
             return_value=["gandalf=white"],
         ),
         patch("events.broker.BrokerOperator.healthy", return_value=True),
-        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("workload.KafkaWorkload.read", return_value=["gandalf=grey"]),
         patch("managers.config.ConfigManager.set_client_properties"),
         patch("events.tls.TLSHandler._request_certificate_renewal") as request_certificate_renewal,
@@ -634,7 +624,6 @@ def test_config_changed_updates_client_properties(ctx: Context, base_state: Stat
             return_value=["sauron=bad"],
         ),
         patch("events.broker.BrokerOperator.healthy", return_value=True),
-        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("workload.KafkaWorkload.read", return_value=["gandalf=grey"]),
         patch("managers.config.ConfigManager.set_server_properties"),
         patch("managers.config.ConfigManager.set_client_properties") as set_client_properties,
@@ -664,7 +653,6 @@ def test_config_changed_updates_client_data(ctx: Context, base_state: State) -> 
             return_value=["gandalf=white"],
         ),
         patch("events.broker.BrokerOperator.healthy", return_value=True),
-        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("workload.KafkaWorkload.read", return_value=["gandalf=white"]),
         patch("events.broker.BrokerOperator.update_client_data") as patched_update_client_data,
         patch(
@@ -696,7 +684,6 @@ def test_config_changed_restarts(ctx: Context, base_state: State) -> None:
         ),
         patch("events.broker.BrokerOperator.healthy", return_value=True),
         patch("workload.KafkaWorkload.read", return_value=["gandalf=white"]),
-        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
         patch("managers.auth.AuthManager.add_user"),
         patch("managers.config.ConfigManager.set_server_properties"),
         patch(
@@ -721,39 +708,3 @@ def test_on_remove_sysctl_is_deleted(ctx: Context, base_state: State):
 
     # Then
     patched_sysctl_remove.assert_called_once()
-
-
-def test_workload_version_is_setted(ctx: Context, base_state: State):
-    # Given
-    output_bin_install = "3.6.0-ubuntu0"
-    output_bin_changed = "3.6.1-ubuntu0"
-    expected_version_installed = "3.6.0"
-    expected_version_changed = "3.6.1"
-    restart_peer = PeerRelation("restart", "rolling_op")
-    state_in = dataclasses.replace(base_state, relations=[restart_peer])
-
-    # When
-    with (
-        patch(
-            "managers.config.ConfigManager.server_properties",
-            new_callable=PropertyMock,
-            return_value=["gandalf=grey"],
-        ),
-        patch("events.broker.BrokerOperator.healthy", return_value=True),
-        patch("workload.KafkaWorkload.read", return_value=["gandalf=white"]),
-        patch("workload.KafkaWorkload.install", return_value=True),
-        patch(
-            "workload.KafkaWorkload.run_bin_command",
-            side_effect=[output_bin_install, output_bin_changed],
-        ),
-        patch("events.upgrade.KafkaUpgrade.idle", return_value=True),
-        patch(
-            "charms.rolling_ops.v0.rollingops.RollingOpsManager._on_run_with_lock", autospec=True
-        ),
-    ):
-        state_intermediary = ctx.run(ctx.on.install(), state_in)
-        state_out = ctx.run(ctx.on.config_changed(), state_intermediary)
-
-    # Then
-    assert ctx.workload_version_history == [expected_version_installed]
-    assert state_out.workload_version == expected_version_changed
