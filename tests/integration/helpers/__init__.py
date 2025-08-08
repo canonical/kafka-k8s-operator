@@ -71,7 +71,7 @@ def get_unit_address_map(model: str, app_name: str = APP_NAME) -> dict[str, str]
     return dict(zip(hosts, ips))
 
 
-def get_bootstrap_servers(model: str, app_name: str = APP_NAME, port: int = 9092) -> str:
+def get_bootstrap_servers(model: str, app_name: str = APP_NAME, port: int = 19093) -> str:
     """Gets all Kafka server addresses for a given application.
 
     Args:
@@ -103,7 +103,7 @@ def get_k8s_host_from_unit(unit_name: str, app_name: str = APP_NAME) -> str:
     return f"{app_name}-{broker_id}.{app_name}-endpoints"
 
 
-def get_unit_host(model: str, unit_name: str, app_name: str = APP_NAME, port: int = 9097) -> str:
+def get_unit_host(model: str, unit_name: str, app_name: str = APP_NAME, port: int = 9098) -> str:
     f"""Gets server address for a given unit name.
 
     Args:
