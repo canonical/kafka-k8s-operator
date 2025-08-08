@@ -12,10 +12,12 @@ from integration.helpers import (
     sign_manual_certs,
 )
 from integration.helpers.ha import (
+    add_k8s_hosts,
     assert_all_brokers_up,
     assert_all_controllers_up,
     assert_continuous_writes_consistency,
     assert_quorum_healthy,
+    remove_k8s_hosts,
 )
 from integration.helpers.jubilant import (
     all_active_idle,
@@ -38,6 +40,13 @@ TLS_APP_CONTROLLER = "ca-three"
 def tls_apps(kraft_mode):
     apps = [TLS_APP_CLIENT, TLS_APP_BROKER]
     return apps if kraft_mode == "single" else apps + [TLS_APP_CONTROLLER]
+
+
+@pytest.fixture
+def k8s_hosts(juju: jubilant.Juju):
+    add_k8s_hosts(juju=juju)
+    yield
+    remove_k8s_hosts(juju=juju)
 
 
 @pytest.mark.skip_if_deployed
@@ -92,7 +101,7 @@ def test_integrate_client_tls(juju: jubilant.Juju, kafka_apps, tls_apps):
 
 
 def test_integrate_internal_tls(
-    juju: jubilant.Juju, controller_app, kafka_apps, tls_apps, kraft_mode
+    juju: jubilant.Juju, controller_app, kafka_apps, tls_apps, kraft_mode, k8s_hosts
 ):
     assert juju.model  # this is to silent the linter
     c_writes = ContinuousWrites(model=juju.model, app=DUMMY_NAME)
