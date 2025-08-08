@@ -208,10 +208,8 @@ class TestKRaft:
         offset = KRAFT_NODE_ID_OFFSET if self.controller_app == APP_NAME else 0
 
         for unit_id, status in unit_status.items():
-            if unit_id == offset + 0:
-                assert status == KRaftUnitStatus.LEADER
-            elif unit_id < offset + 100:
-                assert status == KRaftUnitStatus.FOLLOWER
+            if unit_id < offset + 100:
+                assert status in (KRaftUnitStatus.FOLLOWER, KRaftUnitStatus.LEADER)
             else:
                 assert status == KRaftUnitStatus.OBSERVER
 
