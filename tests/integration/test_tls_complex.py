@@ -53,7 +53,7 @@ def test_build_and_deploy(
         num_broker=3,
         num_controller=3,
     )
-    juju.deploy(app_charm, app=DUMMY_NAME, num_units=1, base=BASE)
+    juju.deploy(app_charm, app=DUMMY_NAME, num_units=1)
     juju.deploy(TLS_NAME, app=TLS_APP_CLIENT, to="0")
     juju.deploy(MANUAL_TLS_NAME, app=TLS_APP_BROKER, to="1", channel="1/stable")
     juju.deploy(TLS_NAME, app=TLS_APP_CONTROLLER, to="2")
