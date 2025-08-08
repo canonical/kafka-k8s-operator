@@ -56,9 +56,12 @@ class SecretsHandler(Object):
         if not self.model.unit.is_leader():
             return
 
+        if not (credentials := self.load_auth_secret()):
+            return
+
         if not all(
             [
-                self.dependent.upgrade.idle,
+                not self.charm.refresh_not_ready,
                 self.dependent.healthy,
                 self.workload.container_can_connect,
             ]
@@ -66,7 +69,6 @@ class SecretsHandler(Object):
             event.defer()
             return
 
-        credentials = self.load_auth_secret()
         saved_state = self.state.cluster.internal_user_credentials
         changed = {u for u in credentials if credentials[u] != saved_state.get(u)}
 

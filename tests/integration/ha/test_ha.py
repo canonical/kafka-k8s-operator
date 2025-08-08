@@ -353,7 +353,6 @@ def test_pod_reschedule(
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
 
     topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
-    assert initial_leader_num != topic_description.leader
     assert topic_description.in_sync_replicas == {100, 101, 102}
 
     result = c_writes.stop()

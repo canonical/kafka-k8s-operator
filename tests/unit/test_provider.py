@@ -229,7 +229,13 @@ def test_mtls_without_tls_relation(ctx: Context, base_state: State) -> None:
 
 
 @pytest.mark.parametrize("tls_artifacts", [False, True], indirect=True)
-def test_mtls_setup(ctx: Context, base_state: State, tls_artifacts: TLSArtifacts) -> None:
+def test_mtls_setup(
+    ctx: Context,
+    base_state: State,
+    tls_artifacts: TLSArtifacts,
+    kraft_data: dict[str, str],
+    passwords_data: dict[str, str],
+) -> None:
     # Given
     restart_relation = PeerRelation("restart", "rolling_op")
     client_rel_id = 21
@@ -251,7 +257,9 @@ def test_mtls_setup(ctx: Context, base_state: State, tls_artifacts: TLSArtifacts
     cluster_peer = PeerRelation(
         PEER,
         PEER,
-        local_app_data={f"relation-{client_relation.id}": "password", "tls": "enabled"},
+        local_app_data={f"relation-{client_relation.id}": "password", "tls": "enabled"}
+        | kraft_data
+        | passwords_data,
         local_unit_data={"certificate": "cert", "ca-cert": "ca"},
     )
     state_in = dataclasses.replace(
