@@ -256,8 +256,30 @@ class BrokerOperator(Object):
         self.config_manager.set_environment()
         self.charm.unit.set_workload_version(self.workload.get_version())
 
-        # Update peer-cluster trusted certs and check for TLS rotation
+        # Update peer-cluster trusted certs and check for TLS rotation on the other side.
+        old_peer_certs = self.tls_manager.peer_trusted_certificates.values()
         self.tls_manager.update_peer_cluster_trust()
+        new_peer_certs = self.tls_manager.peer_trusted_certificates.values()
+        peer_cluster_tls_rotate = set(new_peer_certs) - set(old_peer_certs)
+
+        if (
+            self.charm.state.tls_rotate
+            and not self.tls_manager.peer_cluster_app_trusts_new_bundle()
+        ):
+            # Basically we should defer and wait for the other side
+            # to complete its rolling restart and then begin our rolling restart.
+            # However, if both sides are rotating, we should prevent deadlock by
+            # forcing one side (BROKER here) to restart anyway.
+            should_defer = True
+            if self.charm.state.both_sides_rotating and self.charm.state.runs_broker:
+                logger.debug(
+                    "Both sides are rotating TLS certificates, initiating rolling restart..."
+                )
+                should_defer = False
+
+            if should_defer:
+                event.defer()
+                return
 
         if sans_ip_changed or sans_dns_changed:
             logger.info(
@@ -285,7 +307,7 @@ class BrokerOperator(Object):
             )
             self.config_manager.set_server_properties()
 
-        if properties_changed or self.charm.state.tls_rotate:
+        if any([properties_changed, self.charm.state.tls_rotate, peer_cluster_tls_rotate]):
             if isinstance(event, StorageEvent):  # to get new storages
                 self.controller_manager.format_storages(
                     uuid=self.charm.state.peer_cluster.cluster_uuid,
@@ -311,6 +333,7 @@ class BrokerOperator(Object):
             )
 
         # Update truststore if needed.
+        self.update_peer_truststore_state()
         self.charm.tls.update_truststore()
 
         if self.charm.state.tls_rotate:
@@ -320,6 +343,10 @@ class BrokerOperator(Object):
 
             # Reset TLS rotation state
             self.charm.state.tls_rotate = False
+
+        # Turn off peer-cluster TLS rotate if all units are done, only run on leader unit
+        if not any(unit.peer_certs.rotate for unit in self.charm.state.brokers):
+            self.charm.state.peer_cluster_tls_rotate = False
 
         if self.charm.unit.is_leader():
             self.update_credentials_cache()
@@ -339,6 +366,15 @@ class BrokerOperator(Object):
         # NOTE for situations like IP change and late integration with rack-awareness charm.
         # If properties have changed, the broker will restart.
         self.charm.on.config_changed.emit()
+
+        # remove temporary trust aliases if they're no longer needed.
+        if (
+            self.tls_manager.peer_truststore_has_temporary_aliases
+            and self.tls_manager.both_apps_trust_new_bundle()
+        ):
+            logger.info("Removing decommissioned CA from truststore.")
+            self.tls_manager.rebuild_truststore()
+            self.charm.on[f"{self.charm.restart.name}"].acquire_lock.emit()
 
         try:
             if self.health and not self.health.machine_configured():
@@ -524,3 +560,30 @@ class BrokerOperator(Object):
                 continue
 
             self.auth_manager.add_user(client.username, client.password)
+
+    def update_peer_truststore_state(self, force: bool = False) -> None:
+        """Updates the relation data reflecting the unit/app truststore state on respective data bags.
+
+        Args:
+            force (bool, optional): Bypass the check of whether a restart is performed after truststore modification time. Defaults to False.
+        """
+        truststore_path = self.workload.root / self.workload.paths.peer_truststore
+
+        if not truststore_path.exists():
+            return
+
+        if not force and self.workload.last_restart <= self.workload.modify_time(
+            self.workload.paths.peer_truststore
+        ):
+            # We shouldn't update the relation data, because we need a restart first.
+            return
+
+        trusted_certs = [
+            self.tls_manager.bytes_to_keytool_hash(_hash, sep="")
+            for _hash in self.tls_manager.peer_trusted_certificates.values()
+        ]
+
+        self.charm.state.unit_broker.peer_certs.trusted_certificates = trusted_certs
+
+        if self.charm.unit.is_leader():
+            self.charm.state.refresh_peer_cluster_trust_state()

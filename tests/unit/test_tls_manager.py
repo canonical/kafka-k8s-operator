@@ -10,7 +10,7 @@ import os
 import ssl
 import subprocess
 from multiprocessing import Process
-from typing import Mapping
+from typing import Any, Mapping
 from unittest.mock import MagicMock
 
 import pytest
@@ -36,7 +36,7 @@ def _exec(
     command: list[str] | str,
     env: Mapping[str, str] | None = None,
     working_dir: str | None = None,
-    _: bool = False,
+    **kwargs: Any,
 ) -> str:
     _command = " ".join(command) if isinstance(command, list) else command
 
@@ -376,7 +376,8 @@ def test_peer_cluster_trust(tls_manager: TLSManager):
 
     tls_manager.update_peer_cluster_trust()
     trusted_certs = tls_manager.peer_trusted_certificates
+    # we should have both certificates
     assert f"{tls_manager.PEER_CLUSTER_ALIAS}0" in trusted_certs
-    assert len(trusted_certs) == 1
-    new_fingerprint = next(iter(trusted_certs.values()))
-    assert new_fingerprint != fingerprint
+    assert f"{tls_manager.NEW_PREFIX}{tls_manager.PEER_CLUSTER_ALIAS}0" in trusted_certs
+    assert len(trusted_certs) == 2
+    assert fingerprint in tls_manager.peer_trusted_certificates.values()

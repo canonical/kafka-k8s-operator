@@ -39,6 +39,7 @@ from literals import (
 
 PROCESS = "kafka.Kafka"
 SERVICE = "kafka"
+BROKER_PORT = SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client
 CONTROLLER_PORT = SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].controller
 
 
@@ -349,12 +350,14 @@ def all_listeners_up(
     raise TimeoutError()
 
 
-def assert_all_brokers_up(juju: jubilant.Juju, timeout_seconds: int = 600) -> None:
+def assert_all_brokers_up(
+    juju: jubilant.Juju, timeout_seconds: int = 600, port: int = BROKER_PORT
+) -> None:
     """Waits until client listeners are up on all broker units."""
     return all_listeners_up(
         juju=juju,
         app_name=APP_NAME,
-        listener_port=SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client,
+        listener_port=port,
         timeout_seconds=timeout_seconds,
     )
 
