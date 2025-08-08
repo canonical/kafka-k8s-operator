@@ -28,14 +28,12 @@ from events.actions import ActionEvents
 from events.controller import KRaftHandler
 from events.oauth import OAuthHandler
 from events.provider import KafkaProvider
-from events.upgrade import KafkaDependencyModel, KafkaUpgrade
 from events.user_secrets import SecretsHandler
 from health import KafkaHealth
 from literals import (
     BROKER,
     CONTAINER,
     CONTROLLER,
-    DEPENDENCIES,
     GROUP,
     PEER,
     PROFILE_TESTING,
@@ -83,13 +81,6 @@ class BrokerOperator(Object):
             return
 
         self.health = KafkaHealth(self) if self.charm.substrate == "vm" else None
-        self.upgrade = KafkaUpgrade(
-            self,
-            substrate=self.charm.substrate,
-            dependency_model=KafkaDependencyModel(
-                **DEPENDENCIES  # pyright: ignore[reportArgumentType]
-            ),
-        )
         self.action_events = ActionEvents(self)
         self.user_secrets = SecretsHandler(self)
 
@@ -103,7 +94,6 @@ class BrokerOperator(Object):
             state=self.charm.state,
             workload=self.workload,
             config=self.charm.config,
-            current_version=self.upgrade.current_version,
         )
         self.auth_manager = AuthManager(
             state=self.charm.state,
@@ -141,7 +131,6 @@ class BrokerOperator(Object):
             event.defer()
             return
 
-        self.charm.unit.set_workload_version(self.workload.get_version())
         self.config_manager.set_environment()
 
         # any external services must be created before setting of properties
@@ -156,7 +145,7 @@ class BrokerOperator(Object):
 
     def _on_start(self, event: StartEvent | PebbleReadyEvent) -> None:  # noqa: C901
         """Handler for `start` or `pebble-ready` events."""
-        if not self.workload.container_can_connect:
+        if not self.workload.container_can_connect or not self.charm.refresh:
             event.defer()
             return
 
@@ -166,7 +155,7 @@ class BrokerOperator(Object):
             )
 
         # don't want to run default start/pebble-ready events during upgrades
-        if not self.upgrade.idle:
+        if self.charm.refresh.in_progress:
             return
 
         # Internal TLS setup required?
@@ -220,7 +209,7 @@ class BrokerOperator(Object):
     def _on_config_changed(self, event: EventBase) -> None:  # noqa: C901
         """Generic handler for most `config_changed` events across relations."""
         # only overwrite properties if service is already active
-        if not self.upgrade.idle or not self.healthy:
+        if self.charm.refresh_not_ready or not self.healthy:
             event.defer()
             return
 
@@ -254,7 +243,6 @@ class BrokerOperator(Object):
 
         # update environment
         self.config_manager.set_environment()
-        self.charm.unit.set_workload_version(self.workload.get_version())
 
         # Update peer-cluster trusted certs and check for TLS rotation on the other side.
         old_peer_certs = self.tls_manager.peer_trusted_certificates.values()
@@ -361,7 +349,7 @@ class BrokerOperator(Object):
 
     def _on_update_status(self, _: UpdateStatusEvent) -> None:
         """Handler for `update-status` events."""
-        if not self.upgrade.idle or not self.healthy:
+        if self.charm.refresh_not_ready or not self.healthy:
             return
 
         # NOTE for situations like IP change and late integration with rack-awareness charm.

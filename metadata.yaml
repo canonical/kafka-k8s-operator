@@ -23,18 +23,18 @@ maintainers:
 assumes:
   - k8s-api
 
+resources:
+  kafka-image:
+    type: oci-image
+    description: OCI Image for Apache Kafka
+    upstream-source: ghcr.io/canonical/charmed-kafka@sha256:af527f478762db35dfde6f7299c34eb663e0769f813780e48b420f9eae8f1012
+
 containers:
   kafka:
     resource: kafka-image
     mounts:
       - storage: data
         location: /var/lib/kafka/data
-
-resources:
-  kafka-image:
-    type: oci-image
-    description: OCI Image for Apache Kafka
-    upstream-source: ghcr.io/canonical/charmed-kafka@sha256:af527f478762db35dfde6f7299c34eb663e0769f813780e48b420f9eae8f1012
 
 peers:
   cluster:
@@ -43,6 +43,8 @@ peers:
     interface: rolling_op
   upgrade:
     interface: upgrade
+  refresh-v-three:
+    interface: refresh
 
 provides:
   kafka-client:

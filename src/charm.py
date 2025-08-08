@@ -6,16 +6,19 @@
 
 import logging
 
+import charm_refresh
 from charms.data_platform_libs.v0.data_models import TypedCharmBase
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from ops import (
+    ActiveStatus,
     CollectStatusEvent,
     EventBase,
     StatusBase,
 )
+from ops.log import JujuLogHandler
 from ops.main import main
 
 from core.cluster import ClusterState
@@ -23,6 +26,7 @@ from core.structured_config import CharmConfig
 from events.balancer import BalancerOperator
 from events.broker import BrokerOperator
 from events.peer_cluster import PeerClusterEventsHandler
+from events.refresh import KubernetesKafkaRefresh
 from events.tls import TLSHandler
 from literals import (
     CHARM_KEY,
@@ -39,6 +43,8 @@ from literals import (
 from workload import KafkaWorkload
 
 logger = logging.getLogger(__name__)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 
 class KafkaCharm(TypedCharmBase[CharmConfig]):
@@ -48,6 +54,13 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
     def __init__(self, *args):
         super().__init__(*args)
+
+        # Show logger name (module name) in logs
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers:
+            if isinstance(handler, JujuLogHandler):
+                handler.setFormatter(logging.Formatter("{name}:{message}", style="{"))
+
         self.name = CHARM_KEY
         self.substrate: Substrates = SUBSTRATE
         self.pending_inactive_statuses: list[Status] = []
@@ -73,6 +86,22 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.balancer = BalancerOperator(self)
 
         self.tls = TLSHandler(self)
+
+        try:
+            self.refresh = charm_refresh.Kubernetes(
+                KubernetesKafkaRefresh(
+                    workload_name="Kafka",
+                    charm_name="kafka-k8s",
+                    oci_resource_name="kafka-image",
+                    _charm=self,
+                )
+            )
+        except (charm_refresh.PeerRelationNotReady, charm_refresh.UnitTearingDown):
+            self.refresh = None
+
+        # Implement refresh logic if refresh is available
+        if self.refresh:
+            self._handle_refresh_coordination()
 
         self.metrics_endpoint = MetricsEndpointProvider(
             self,
@@ -141,8 +170,102 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.pending_inactive_statuses.append(key)
 
     def _on_collect_status(self, event: CollectStatusEvent):
-        for status in self.pending_inactive_statuses + [Status.ACTIVE]:
-            event.add_status(status.value.status)
+        status = self._determine_unit_status()
+        if isinstance(status, list):
+            for s in status:
+                event.add_status(s.value.status)
+        else:
+            event.add_status(status)
+
+    def _determine_unit_status(self) -> StatusBase | list[Status]:
+        """Determine the unit status, respecting refresh higher priority statuses."""
+        if self.refresh and self.refresh.unit_status_higher_priority:
+            return self.refresh.unit_status_higher_priority
+
+        # Check for pending inactive statuses (charm-specific logic)
+        # Remove active status if present, will be added as default at the end
+        charm_statuses_to_check = [
+            s
+            for s in self.pending_inactive_statuses + [self.state.ready_to_start]
+            if s != Status.ACTIVE
+        ]
+        if charm_statuses_to_check:
+            return charm_statuses_to_check
+
+        # Lower priority status from refresh
+        if self.refresh and (
+            refresh_status := self.refresh.unit_status_lower_priority(
+                workload_is_running=self.workload.active()
+            )
+        ):
+            return refresh_status
+
+        # Default to active if no other status is set
+        return ActiveStatus()
+
+    def _handle_refresh_coordination(self) -> None:
+        """Handle workload-allowed-to-start and next-unit-allowed-to-refresh hooks."""
+        if not self.refresh or not self.workload.container_can_connect:
+            return
+
+        # Only proceed with coordination if workload is allowed to start
+        if not self.refresh.workload_allowed_to_start:
+            return
+
+        # Handle next-unit-allowed-to-refresh logic
+        if not self.refresh.next_unit_allowed_to_refresh:
+            # required settings given zookeeper connection config has been created
+            self.broker.config_manager.set_environment()
+            self.broker.config_manager.set_server_properties()
+            self.broker.config_manager.set_client_properties()
+
+            # during pod-reschedules (e.g upgrades or otherwise) we lose all files
+            # need to manually add-back key/truststores
+            if (
+                self.state.cluster.tls_enabled
+                and self.state.unit_broker.certificate
+                and self.state.unit_broker.ca
+                and self.state.unit_broker.chain
+            ):  # TLS is probably completed
+                self.broker.tls_manager.set_server_key()
+                self.broker.tls_manager.set_ca()
+                self.broker.tls_manager.set_chain()
+                self.broker.tls_manager.set_certificate()
+                self.broker.tls_manager.set_bundle()
+                self.broker.tls_manager.set_truststore()
+                self.broker.tls_manager.set_keystore()
+
+            # start kafka service
+            self.broker.workload.start()
+
+            # Check if workload is ready and healthy before allowing next unit to refresh
+            if self._is_workload_healthy():
+                self.refresh.next_unit_allowed_to_refresh = True
+                logger.info("Unit is healthy, allowing next unit to refresh")
+            else:
+                logger.debug("Unit not yet healthy, delaying next unit refresh")
+
+    def _is_workload_healthy(self) -> bool:
+        """Check if the workload is healthy and ready for next unit to refresh.
+
+        Returns:
+            True if all relevant workloads are healthy and active, False otherwise.
+        """
+        # Check if workload is active first
+        if not self.workload.active():
+            return False
+
+        # For broker role, check broker health
+        if self.state.runs_broker or self.state.runs_controller:
+            if not self.broker.healthy:
+                return False
+
+        return True
+
+    @property
+    def refresh_not_ready(self) -> bool:
+        """Check if refresh is not available or currently in progress."""
+        return not self.refresh or self.refresh.in_progress
 
 
 if __name__ == "__main__":

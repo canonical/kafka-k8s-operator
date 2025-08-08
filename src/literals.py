@@ -317,13 +317,3 @@ class Status(Enum):
     WAITING_FOR_REBALANCE = StatusLevel(
         WaitingStatus("awaiting completion of rebalance task"), "DEBUG"
     )
-
-
-DEPENDENCIES = {
-    "kafka_service": {
-        "dependencies": {},
-        "name": "kafka",
-        "upgrade_supported": "^4",  # zk support removed in 4.0
-        "version": "4.0.0",
-    },
-}
