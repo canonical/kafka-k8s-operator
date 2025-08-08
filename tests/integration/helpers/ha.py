@@ -211,6 +211,7 @@ def deploy_chaos_mesh(namespace: str) -> None:
     check_output(
         " ".join(
             [
+                "sudo",
                 "tests/integration/ha/scripts/deploy_chaos_mesh.sh",
                 namespace,
             ]
@@ -230,7 +231,7 @@ def destroy_chaos_mesh(namespace: str) -> None:
     env["KUBECONFIG"] = os.path.expanduser("~/.kube/config")
 
     check_output(
-        f"tests/integration/ha/scripts/destroy_chaos_mesh.sh {namespace}",
+        f"sudo tests/integration/ha/scripts/destroy_chaos_mesh.sh {namespace}",
         shell=True,
         env=env,
     )

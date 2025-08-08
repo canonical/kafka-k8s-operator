@@ -18,7 +18,6 @@ from integration.helpers.ha import (
     assert_quorum_healthy,
 )
 from integration.helpers.jubilant import (
-    BASE,
     all_active_idle,
     deploy_cluster,
 )

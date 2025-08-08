@@ -277,7 +277,7 @@ def test_pod_reschedule(
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
 
     logger.info("Checking leader re-election...")
-    new_leader_name = get_kraft_leader(juju)
+    new_leader_name = get_kraft_leader(juju, unstable_unit=leader_name)
     assert new_leader_name != leader_name
 
     logger.info("Stopping continuous_writes...")
