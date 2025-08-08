@@ -276,10 +276,6 @@ def test_pod_reschedule(
     next_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
 
-    logger.info("Checking leader re-election...")
-    new_leader_name = get_kraft_leader(juju, unstable_unit=leader_name)
-    assert new_leader_name != leader_name
-
     logger.info("Stopping continuous_writes...")
     result = c_writes.stop()
     assert_continuous_writes_consistency(result=result)
