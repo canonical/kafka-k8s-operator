@@ -344,9 +344,10 @@ class BrokerOperator(Object):
             # Reset TLS rotation state
             self.charm.state.tls_rotate = False
 
-        # Turn off peer-cluster TLS rotate if all units are done, only run on leader unit
-        if not any(unit.peer_certs.rotate for unit in self.charm.state.brokers):
-            self.charm.state.peer_cluster_tls_rotate = False
+        # Turn on/off peer-cluster TLS rotate if all units are done, only run on leader unit
+        self.charm.state.peer_cluster_tls_rotate = any(
+            unit.peer_certs.rotate for unit in self.charm.state.brokers
+        )
 
         if self.charm.unit.is_leader():
             self.update_credentials_cache()

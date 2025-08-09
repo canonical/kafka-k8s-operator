@@ -756,7 +756,6 @@ class ClusterState(Object):
         if not (relation := self.kraft_cluster.relation):
             return False
 
-        return (
-            relation.data[relation.app].get("peer-cluster-rotate") == "true"
-            and self.cluster.relation_data.get("peer-cluster-rotate") == "true"
+        return relation.data[relation.app].get("peer-cluster-rotate") == "true" and any(
+            unit.peer_certs.rotate for unit in self.brokers
         )
