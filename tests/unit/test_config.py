@@ -139,19 +139,20 @@ def test_listeners_in_server_properties(charm_configuration: dict, base_state: S
 
     host = "treebeard" if SUBSTRATE == "vm" else "kafka-k8s-0.kafka-k8s-endpoints"
     sasl_pm = "SASL_PLAINTEXT_SCRAM_SHA_512"
+    ssl_pm = "SASL_SSL_SCRAM_SHA_512"
 
     expected_listeners = [
-        f"INTERNAL_{sasl_pm}://0.0.0.0:19092",
+        f"INTERNAL_{ssl_pm}://0.0.0.0:19093",
         f"CLIENT_{sasl_pm}://0.0.0.0:9092",
     ]
     expected_advertised_listeners = [
-        f"INTERNAL_{sasl_pm}://{host}:19092",
+        f"INTERNAL_{ssl_pm}://{host}:19093",
         f"CLIENT_{sasl_pm}://{host}:9092",
     ]
     if SUBSTRATE == "k8s":
         expected_listeners += [f"EXTERNAL_{sasl_pm}://0.0.0.0:29092"]
         expected_advertised_listeners += [
-            f"EXTERNAL_{sasl_pm}://1234:20000"  # values for nodeip:nodeport in conftest
+            f"EXTERNAL_{sasl_pm}://10.30.30.10:20000"  # values for nodeip:nodeport in conftest
         ]
 
     # When
@@ -205,7 +206,7 @@ def test_extra_listeners_in_server_properties(charm_configuration: dict, base_st
         KafkaCharm, meta=METADATA, config=charm_configuration, actions=ACTIONS, unit_id=0
     )
     expected_listener_names = {
-        "INTERNAL_SASL_PLAINTEXT_SCRAM_SHA_512",
+        "INTERNAL_SASL_SSL_SCRAM_SHA_512",
         "CLIENT_SASL_PLAINTEXT_SCRAM_SHA_512",
         "CLIENT_SSL_SSL",
         "EXTRA_SASL_PLAINTEXT_SCRAM_SHA_512_0",
@@ -302,7 +303,7 @@ def test_oauth_client_listeners_in_server_properties(ctx: Context, base_state: S
     )
 
     host = "treebeard" if SUBSTRATE == "vm" else "kafka-k8s-0.kafka-k8s-endpoints"
-    internal_protocol, internal_port = "INTERNAL_SASL_PLAINTEXT_SCRAM_SHA_512", "19092"
+    internal_protocol, internal_port = "INTERNAL_SASL_SSL_SCRAM_SHA_512", "19093"
     scram_client_protocol, scram_client_port = "CLIENT_SASL_PLAINTEXT_SCRAM_SHA_512", "9092"
     oauth_client_protocol, oauth_client_port = "CLIENT_SASL_PLAINTEXT_OAUTHBEARER", "9095"
 
@@ -333,7 +334,7 @@ def test_ssl_listeners_in_server_properties(ctx: Context, base_state: State, pat
     cluster_peer = PeerRelation(
         PEER,
         PEER,
-        local_unit_data={"private-address": "treebeard", "certificate": "keepitsecret"},
+        local_unit_data={"private-address": "treebeard", "client-certificate": "keepitsecret"},
         local_app_data={"tls": "enabled", "mtls": "enabled"},
     )
     # Simulate data-integrator relation
@@ -534,7 +535,7 @@ def test_ssl_principal_mapping_rules(charm_configuration: dict, base_state: Stat
     # Given
     charm_configuration["options"]["ssl_principal_mapping_rules"][
         "default"
-    ] = "RULE:^(erebor)$/$1,DEFAULT"
+    ] = "RULE:^(erebor)$/$1/,DEFAULT"
     cluster_peer = PeerRelation(PEER, PEER)
     state_in = dataclasses.replace(base_state, relations=[cluster_peer])
     ctx = Context(
@@ -554,7 +555,7 @@ def test_ssl_principal_mapping_rules(charm_configuration: dict, base_state: Stat
 
         # Then
         assert (
-            "ssl.principal.mapping.rules=RULE:^(erebor)$/$1,DEFAULT"
+            "ssl.principal.mapping.rules=RULE:^(erebor)$/$1/,DEFAULT"
             in charm.broker.config_manager.server_properties
         )
 

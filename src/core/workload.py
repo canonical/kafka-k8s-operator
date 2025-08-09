@@ -6,13 +6,15 @@
 
 import re
 import secrets
+import socket
 import string
 from abc import ABC, abstractmethod
+from contextlib import closing
 
 from charmlibs import pathops
 from ops.pebble import Layer
 
-from literals import BALANCER, BROKER, Role
+from literals import BALANCER, BROKER, Role, TLSScope
 
 
 class CharmedKafkaPaths:
@@ -56,13 +58,23 @@ class CharmedKafkaPaths:
 
     @property
     def keystore(self):
-        """The Java Keystore containing service private-key and signed certificates."""
-        return f"{self.conf_path}/keystore.p12"
+        """The Java Keystore containing service private-key and signed certificates for clients."""
+        return f"{self.conf_path}/{TLSScope.CLIENT.value}-keystore.p12"
 
     @property
     def truststore(self):
-        """The Java Truststore containing trusted CAs + certificates."""
-        return f"{self.conf_path}/truststore.jks"
+        """The Java Truststore containing trusted CAs + certificates for clients."""
+        return f"{self.conf_path}/{TLSScope.CLIENT.value}-truststore.jks"
+
+    @property
+    def peer_keystore(self):
+        """The Java Keystore containing service private-key and signed certificates for internal peer communications."""
+        return f"{self.conf_path}/{TLSScope.PEER.value}-keystore.p12"
+
+    @property
+    def peer_truststore(self):
+        """The Java Truststore containing trusted CAs + certificates for internal peer communications."""
+        return f"{self.conf_path}/{TLSScope.PEER.value}-truststore.jks"
 
     @property
     def log4j_properties(self):
@@ -164,6 +176,7 @@ class WorkloadBase(ABC):
         command: list[str] | str,
         env: dict[str, str] | None = None,
         working_dir: str | None = None,
+        log_on_error: bool = True,
     ) -> str:
         """Runs a command on the workload substrate."""
         ...
@@ -171,6 +184,11 @@ class WorkloadBase(ABC):
     @abstractmethod
     def active(self) -> bool:
         """Checks that the workload is active."""
+        ...
+
+    @abstractmethod
+    def modify_time(self, file: str) -> float:
+        """Returns the last modify time of a file on the workload in UNIX timestamp format."""
         ...
 
     @abstractmethod
@@ -221,6 +239,12 @@ class WorkloadBase(ABC):
         """Flag to check if workload container can connect."""
         ...
 
+    @property
+    @abstractmethod
+    def last_restart(self) -> float:
+        """Returns a UNIX timestamp of last time the service was restarted."""
+        ...
+
     @staticmethod
     def generate_password() -> str:
         """Creates randomized string for use as app passwords.
@@ -229,3 +253,24 @@ class WorkloadBase(ABC):
             String of 32 randomized letter+digit characters
         """
         return "".join([secrets.choice(string.ascii_letters + string.digits) for _ in range(32)])
+
+    @staticmethod
+    def ping(bootstrap_nodes: str) -> bool:
+        """Check if any socket in `bootstrap_nodes` is available or not.
+
+        Args:
+            bootstrap_nodes (str): A string representation of bootstrap nodes, in the format: host1:port1,host2:port2,...
+
+        Returns:
+            bool: True if any socket is open.
+        """
+        for host_port in bootstrap_nodes.split(","):
+            if ":" not in host_port:
+                continue
+
+            host, port = host_port.split(":")
+            with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+                if sock.connect_ex((host, int(port))) == 0:
+                    return True
+
+        return False

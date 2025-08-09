@@ -128,6 +128,9 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         self.broker.update_credentials_cache()
 
+        # Force update our trusted certs relation data.
+        self.broker.update_peer_truststore_state(force=True)
+
     def _set_status(self, key: Status) -> None:
         """Sets charm status."""
         status: StatusBase = key.value.status

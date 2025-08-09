@@ -170,6 +170,9 @@ class ControllerManager:
         if not bootstrap_controller:
             return {}
 
+        if not self.workload.ping(bootstrap_controller):
+            return {}
+
         try:
             result = self.workload.run_bin_command(
                 bin_keyword="metadata-quorum",

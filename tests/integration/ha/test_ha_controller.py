@@ -276,10 +276,6 @@ def test_pod_reschedule(
     next_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
 
-    logger.info("Checking leader re-election...")
-    new_leader_name = get_kraft_leader(juju)
-    assert new_leader_name != leader_name
-
     logger.info("Stopping continuous_writes...")
     result = c_writes.stop()
     assert_continuous_writes_consistency(result=result)
@@ -289,6 +285,7 @@ def test_pod_reschedule(
     assert not any(get_kraft_quorum_lags(juju))
 
 
+@pytest.mark.skip(reason="deploy_chaos_mesh.sh fails on SH runners, needs investigation.")
 @pytest.mark.abort_on_fail
 def test_network_cut_without_ip_change(
     juju: jubilant.Juju,

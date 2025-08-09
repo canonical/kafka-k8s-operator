@@ -4,13 +4,16 @@
 
 """KafkaSnap class and methods."""
 
+import csv
+import datetime
 import logging
 import re
+from io import StringIO
 
 from charmlibs import pathops
 from ops import Container, pebble
 from ops.pebble import ExecError
-from typing_extensions import override
+from typing_extensions import cast, override
 
 from core.workload import CharmedKafkaPaths, WorkloadBase
 from literals import BALANCER, BROKER, CHARM_KEY, GROUP, JMX_CC_PORT, JMX_EXPORTER_PORT, USER_NAME
@@ -31,6 +34,15 @@ class Workload(WorkloadBase):
         self.container = container
         self.root = pathops.ContainerPath("/", container=self.container)
 
+    @override
+    def modify_time(self, file: str) -> float:
+        path = cast(pathops.ContainerPath, self.root / file)
+
+        if not path.exists() or not (file_info := path._try_get_fileinfo()):
+            return 0.0
+
+        return file_info.last_modified.timestamp()
+
     @property
     @override
     def container_can_connect(self) -> bool:
@@ -40,6 +52,35 @@ class Workload(WorkloadBase):
     @override
     def installed(self) -> bool:
         return self.container_can_connect
+
+    @property
+    @override
+    def last_restart(self) -> float:
+        raw = self.exec(["pebble", "services", "--abs-time"])
+
+        # convert multiple spaces to tab
+        raw = re.sub(r" {2,}", "\t", raw)
+
+        # Format of pebble services output:
+        # Service  Startup  Current  Since
+        f = StringIO(raw)
+        output = list(iter(csv.DictReader(f, delimiter="\t")))
+
+        # Convert datetime strings to pythonic objects
+        for item in output:
+            item["Since"] = datetime.datetime.fromisoformat(item["Since"])
+
+        # Changes are ordered ASC by time, so reverse the list
+        service = [
+            item
+            for item in output
+            if item["Current"].lower() == "active" and item["Service"] == self.service
+        ]
+
+        if not service:
+            return 0.0
+
+        return cast(datetime.datetime, service[0]["Since"]).timestamp()
 
     @override
     def start(self) -> None:
@@ -66,7 +107,11 @@ class Workload(WorkloadBase):
 
     @override
     def exec(
-        self, command: list[str], env: dict[str, str] | None = None, working_dir: str | None = None
+        self,
+        command: list[str],
+        env: dict[str, str] | None = None,
+        working_dir: str | None = None,
+        log_on_error: bool = True,
     ) -> str:
         try:
             process = self.container.exec(
@@ -78,7 +123,8 @@ class Workload(WorkloadBase):
             output, _ = process.wait_output()
             return output
         except ExecError as e:
-            logger.debug(e)
+            if log_on_error:
+                logger.error(f"cmd failed - cmd={command}, stdout={e.stdout}, stderr={e.stderr}")
             raise e
 
     @override

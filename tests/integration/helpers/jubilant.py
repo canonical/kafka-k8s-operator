@@ -230,8 +230,8 @@ def check_logs(juju: jubilant.Juju, kafka_unit_name: str, topic: str) -> None:
 
 
 @retry(
-    wait=wait_fixed(20),
-    stop=stop_after_attempt(6),
+    wait=wait_fixed(10),
+    stop=stop_after_attempt(3),
     reraise=True,
 )
 def kraft_quorum_status(

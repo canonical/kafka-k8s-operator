@@ -13,6 +13,7 @@ import pytest
 from charms.tls_certificates_interface.v3.tls_certificates import generate_private_key
 from pytest_operator.plugin import OpsTest
 
+from integration.helpers import sign_manual_certs
 from integration.helpers.pytest_operator import (
     APP_NAME,
     DUMMY_NAME,
@@ -30,7 +31,6 @@ from integration.helpers.pytest_operator import (
     list_truststore_aliases,
     search_secrets,
     set_tls_private_key,
-    sign_manual_certs,
 )
 from literals import CERTIFICATE_TRANSFER_RELATION, SECURITY_PROTOCOL_PORTS, TLS_RELATION
 
@@ -138,7 +138,7 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm, kafka_apps):
     )
 
     assert private_key != private_key_2
-    assert private_key_2 == new_private_key
+    assert private_key_2 == new_private_key.strip()
 
 
 @pytest.mark.abort_on_fail
@@ -204,7 +204,7 @@ async def test_certificate_transfer(ops_test: OpsTest, kafka_apps):
         "cert": search_secrets(ops_test=ops_test, owner=requirer, search_key="certificate"),
         "ca_cert": search_secrets(ops_test=ops_test, owner=requirer, search_key="ca-certificate"),
         "broker_ca": search_secrets(
-            ops_test=ops_test, owner=f"{APP_NAME}/0", search_key="ca-cert"
+            ops_test=ops_test, owner=f"{APP_NAME}/0", search_key="client-ca-cert"
         ),
     }
 
@@ -215,7 +215,7 @@ async def test_certificate_transfer(ops_test: OpsTest, kafka_apps):
     )
 
     address = await get_address(ops_test, app_name=APP_NAME, unit_num=0)
-    sasl_port = SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].client
+    sasl_port = SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].internal
     sasl_bootstrap_server = f"{address}:{sasl_port}"
     ssl_port = SECURITY_PROTOCOL_PORTS["SSL", "SSL"].external
     ssl_bootstrap_server = f"{address}:{ssl_port}"
@@ -313,7 +313,7 @@ async def test_tls_removed(ops_test: OpsTest, kafka_apps):
         f"{APP_NAME}:certificates", f"{TLS_NAME}:certificates"
     )
 
-    # ensuring enough update-status to unblock ZK
+    # ensuring enough update-status
     async with ops_test.fast_forward(fast_interval="60s"):
         await asyncio.sleep(180)
 
@@ -362,7 +362,7 @@ async def test_manual_tls_chain(ops_test: OpsTest, kafka_apps):
             apps=[*kafka_apps, MANUAL_TLS_NAME], idle_period=30, timeout=1000
         )
 
-    sign_manual_certs(ops_test)
+    sign_manual_certs(ops_test.model_full_name)
 
     # verifying brokers + servers can communicate with one-another
     await ops_test.model.wait_for_idle(
