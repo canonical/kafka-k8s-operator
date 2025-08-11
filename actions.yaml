@@ -1,11 +1,5 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
-pre-upgrade-check:
-  description: Run necessary pre-upgrade checks before executing a charm upgrade.
-
-resume-upgrade:
-  description: Resume a rolling upgrade after asserting successful upgrade of a new revision.
-
 set-tls-private-key:
   description: Sets the private key identifying the target unit, which will be used for certificate signing requests (CSR).
     When updated, certificates will be reissued to the unit.

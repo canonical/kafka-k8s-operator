@@ -79,7 +79,7 @@ jobs:
           - integration-kraft
           - integration-kraft-tls
           - integration-ha
-          # - integration-upgrade
+          # - integration-refresh
         kraft-mode:
           - single
     name: ${{ matrix.tox-environments }} | ${{ matrix.kraft-mode }}

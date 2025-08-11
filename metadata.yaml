@@ -41,8 +41,6 @@ peers:
     interface: cluster
   restart:
     interface: rolling_op
-  upgrade:
-    interface: upgrade
   refresh-v-three:
     interface: refresh
 
