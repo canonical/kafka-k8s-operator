@@ -1,9 +1,7 @@
 (tutorial-integrate-with-client-applications)=
 # 3. Integrate with client applications
 
-This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
-
-## Integrate with client applications
+This is a part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 As mentioned in the previous section of the Tutorial, the recommended way to create and manage users is by means of another charm: the [Data Integrator Charm](https://charmhub.io/data-integrator). This will let us encode users directly in the Juju model, and - as shown in the following - rotate user credentials rotations with and without application downtime using Relations.
 
@@ -11,7 +9,7 @@ As mentioned in the previous section of the Tutorial, the recommended way to cre
 Relations, or what Juju documentation describes also as [Integrations](https://documentation.ubuntu.com/juju/3.6/reference/relation/), let two charms to exchange information and interact with one another. Creating a relation between Apache Kafka and the Data Integrator will automatically generate a username, password, and assign read/write permissions on a given topic. This is the simplest method to create and manage users in Charmed Apache Kafka K8s.
 ```
 
-### Data Integrator charm
+## Data Integrator charm
 
 The [Data Integrator charm](https://charmhub.io/data-integrator) is a bare-bones charm for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Apache Kafka, OpenSearch, etc.) with a consistent, opinionated and robust user experience. To deploy the Data Integrator charm we can use the command `juju deploy` we have learned above:
 
@@ -19,29 +17,14 @@ The [Data Integrator charm](https://charmhub.io/data-integrator) is a bare-bones
 juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=producer,consumer
 ```
 
-### Data Integrator charm
-
-The [Data Integrator charm](https://charmhub.io/data-integrator) is a bare-bones charm for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Apache Kafka, OpenSearch, etc.) with a consistent, opinionated and robust user experience. To deploy the Data Integrator charm we can use the command `juju deploy` we have learned above:
-
-```shell
-juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=producer,consumer
-```
-
-### Data Integrator Charm
-
-The [Data Integrator Charm](https://charmhub.io/data-integrator) is a bare-bones charm that can be used for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Apache Kafka, OpenSearch, etc) with a consistent, opinionated and robust user experience. To deploy the Data Integrator Charm we can use the command `juju deploy` we have learned above:
-
-```shell
-juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=admin
-```
-
-### Integrate with Charmed Apache Kafka K8s
+## Integrate with Charmed Apache Kafka K8s
 
 Now that the Database Integrator Charm has been set up, we can integrate it with Charmed Apache Kafka K8s. This will automatically create a username, password, and database for the Database Integrator Charm. Integrate the two applications with:
 
 ```shell
 juju integrate data-integrator kafka-k8s
 ```
+
 Wait for `juju status --watch 1s` to show:
 
 ```shell
@@ -88,7 +71,7 @@ ok: "True"
 
 Save the value listed under `bootstrap-server`, `username` and `password`. *(Note: your hostname, usernames, and passwords will likely be different.)*
 
-### Produce/consume messages
+## Produce/consume messages
 
 We will now use the username and password to produce some messages to Apache Kafka. To do so, we will first deploy the Apache Kafka Test App (available [here](https://charmhub.io/kafka-test-app)): a test charm that also bundles some Python scripts to push data to Apache Kafka, e.g.:
 
@@ -170,13 +153,13 @@ python3 -m charms.kafka.v0.client \
   -c "cg"
 ```
 
-### Charm client applications
+## Charm client applications
 
 Actually, the Data Integrator is only a very special client charm,  that implements the `kafka_client` relation for exchanging data with Charmed Apache Kafka K8s and user management via relations. 
 
 For example, the steps above for producing and consuming messages to Apache Kafka have also been implemented in the `kafka-test-app` charm (that also implements the `kafka_client` relation) providing a fully integrated charmed user experience, where producing/consuming messages can simply be achieved using relations.  
 
-#### Producing messages
+### Producing messages
 
 To produce messages to Apache Kafka, we need to configure the `kafka-test-app` to act as a producer, publishing messages to a specific topic:
 
@@ -223,7 +206,7 @@ To stop the process (although it is very likely that the process has already sto
 juju remove-relation kafka-test-app kafka-k8s
 ```
 
-#### Consuming messages
+### Consuming messages
 
 Note that the `kafka-test-app` charm can also similarly be used to consume messages by changing its configuration to
 
