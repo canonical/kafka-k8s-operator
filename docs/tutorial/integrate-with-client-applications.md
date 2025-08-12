@@ -1,9 +1,7 @@
 (tutorial-integrate-with-client-applications)=
 # 3. Integrate with client applications
 
-This is part of the [Charmed Apache Kafka K8s Tutorial](index.md).
-
-## Integrate with client applications
+This is a part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 As mentioned in the previous section of the Tutorial, the recommended way to create and manage users is by means of another charm: the [Data Integrator Charm](https://charmhub.io/data-integrator). This will let us encode users directly in the Juju model, and - as shown in the following - rotate user credentials rotations with and without application downtime using Relations.
 
@@ -19,22 +17,6 @@ The [Data Integrator charm](https://charmhub.io/data-integrator) is a bare-bones
 juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=producer,consumer
 ```
 
-### Data Integrator charm
-
-The [Data Integrator charm](https://charmhub.io/data-integrator) is a bare-bones charm for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Apache Kafka, OpenSearch, etc.) with a consistent, opinionated and robust user experience. To deploy the Data Integrator charm we can use the command `juju deploy` we have learned above:
-
-```shell
-juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=producer,consumer
-```
-
-### Data Integrator Charm
-
-The [Data Integrator Charm](https://charmhub.io/data-integrator) is a bare-bones charm that can be used for central management of database users, providing support for different kinds of data platforms (e.g. MongoDB, MySQL, PostgreSQL, Apache Kafka, OpenSearch, etc) with a consistent, opinionated and robust user experience. To deploy the Data Integrator Charm we can use the command `juju deploy` we have learned above:
-
-```shell
-juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=admin
-```
-
 ### Integrate with Charmed Apache Kafka K8s
 
 Now that the Database Integrator Charm has been set up, we can integrate it with Charmed Apache Kafka K8s. This will automatically create a username, password, and database for the Database Integrator Charm. Integrate the two applications with:
@@ -42,6 +24,7 @@ Now that the Database Integrator Charm has been set up, we can integrate it with
 ```shell
 juju integrate data-integrator kafka-k8s
 ```
+
 Wait for `juju status --watch 1s` to show:
 
 ```shell
