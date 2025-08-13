@@ -2,10 +2,13 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-from unittest.mock import mock_open, patch
+import datetime
+import inspect
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
+from core.workload import WorkloadBase
 from literals import SUBSTRATE
 from workload import KafkaWorkload
 
@@ -14,19 +17,45 @@ if SUBSTRATE == "vm":
 
 pytestmark = [
     pytest.mark.broker,
-    pytest.mark.skipif(SUBSTRATE == "k8s", reason="workload tests not needed for K8s"),
 ]
 
 
+@pytest.fixture()
+def fake_workload(tmp_path_factory, monkeypatch) -> WorkloadBase:
+    monkeypatch.undo()
+    workload = KafkaWorkload(MagicMock())
+    workload.paths.conf_path = tmp_path_factory.mktemp("workload")
+    return workload
+
+
+def test_last_restart_parses_correctly(patched_exec, monkeypatch):
+    monkeypatch.undo()
+    patched_exec.return_value = inspect.cleandoc(
+        """
+        Service  Startup  Current  Since
+        kafka    enabled  active   2025-08-08T08:22:37Z
+    """
+    )
+
+    assert (
+        KafkaWorkload(MagicMock()).last_restart
+        == datetime.datetime(2025, 8, 8, 8, 22, 37, tzinfo=datetime.timezone.utc).timestamp()
+    )
+
+
+@pytest.mark.skip(reason="workload tests not needed for K8s")
 def test_run_bin_command_args(patched_exec):
     """Checks KAFKA_OPTS env-var and zk-tls flag present in all snap commands."""
-    KafkaWorkload().run_bin_command(bin_keyword="configs", bin_args=["--list"], opts=["-Djava"])
+    KafkaWorkload(MagicMock()).run_bin_command(
+        bin_keyword="configs", bin_args=["--list"], opts=["-Djava"]
+    )
 
     assert "charmed-kafka.configs" in patched_exec.call_args.args[0].split()
     assert "-Djava" == patched_exec.call_args.args[0].split()[0]
     assert "--list" == patched_exec.call_args.args[0].split()[-1]
 
 
+@pytest.mark.skip(reason="workload tests not needed for K8s")
 def test_get_service_pid_raises(monkeypatch):
     """Checks get_service_pid raises if PID cannot be found."""
     monkeypatch.undo()
@@ -39,9 +68,10 @@ def test_get_service_pid_raises(monkeypatch):
         patch("subprocess.check_output", return_value="123"),
         pytest.raises(SnapError),
     ):
-        KafkaWorkload().get_service_pid()
+        KafkaWorkload(MagicMock()).get_service_pid()
 
 
+@pytest.mark.skip(reason="workload tests not needed for K8s")
 def test_get_service_pid_raises_no_pid(monkeypatch):
     """Checks get_service_pid raises if PID cannot be found."""
     monkeypatch.undo()
@@ -49,4 +79,4 @@ def test_get_service_pid_raises_no_pid(monkeypatch):
         patch("subprocess.check_output", return_value=""),
         pytest.raises(SnapError),
     ):
-        KafkaWorkload().get_service_pid()
+        KafkaWorkload(MagicMock()).get_service_pid()
