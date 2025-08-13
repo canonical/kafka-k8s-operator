@@ -223,9 +223,9 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             # need to manually add-back key/truststores
             if (
                 self.state.cluster.tls_enabled
-                and self.state.unit_broker.certificate
-                and self.state.unit_broker.ca
-                and self.state.unit_broker.chain
+                and self.state.unit_broker.client_certs.certificate
+                and self.state.unit_broker.client_certs.ca
+                and self.state.unit_broker.client_certs.chain
             ):  # TLS is probably completed
                 self.broker.tls_manager.set_server_key()
                 self.broker.tls_manager.set_ca()
