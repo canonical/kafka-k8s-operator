@@ -52,7 +52,9 @@ mTLS
 unencrypted
 unrelate
 truststore
+truststores
 keystore
+keystores
 SHA
 SASL
 hostname
@@ -171,3 +173,6 @@ yaml
 yq
 znode
 znodes
+CA
+CAs
+PKI
