@@ -209,7 +209,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             return
 
         # Only proceed with coordination if workload is allowed to start
-        if not self.refresh.workload_allowed_to_start:
+        if not self.refresh.in_progress or not self.refresh.workload_allowed_to_start:
             return
 
         # Handle next-unit-allowed-to-refresh logic
