@@ -61,7 +61,7 @@ class SecretsHandler(Object):
 
         if not all(
             [
-                self.dependent.upgrade.idle,
+                not self.charm.refresh_not_ready,
                 self.dependent.healthy,
                 self.workload.container_can_connect,
             ]

@@ -380,25 +380,16 @@ def test_network_cut_without_ip_change(
     )
     time.sleep(REELECTION_TIME * 2)
 
-    available_unit = f"{APP_NAME}/{next(iter({0, 1, 2} - {initial_leader_num}))}"
     # verify replica is not in sync
-    topic_description = get_topic_description(
-        juju=juju, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
-    )
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     assert topic_description.in_sync_replicas == {100, 101, 102} - {initial_leader_num}
     assert initial_leader_num != topic_description.leader
 
     # verify new writes are continuing. Also, check that leader changed
-    topic_description = get_topic_description(
-        juju=juju, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
-    )
-    initial_offsets = get_topic_offsets(
-        juju=juju, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
-    )
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
+    initial_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     time.sleep(CLIENT_TIMEOUT * 2)
-    next_offsets = get_topic_offsets(
-        juju=juju, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
-    )
+    next_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
 
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
 
