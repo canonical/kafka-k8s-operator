@@ -65,5 +65,6 @@ Migrate a cluster<migrate.md>
 external-k8s-connection.md
 Back up and restore<back-up-and-restore.md>
 Manage message schemas<schemas.md>
+Create mTLS client credentials<create-mtls-client-credentials.md>
 Troubleshoot<troubleshooting.md>
 ```
