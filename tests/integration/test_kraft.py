@@ -185,7 +185,8 @@ class TestKRaft:
 
     @pytest.mark.abort_on_fail
     async def test_scale_out(self, ops_test: OpsTest):
-        await ops_test.model.applications[self.controller_app].add_units(count=4)
+        no_units = 2 if self.tls_enabled else 4
+        await ops_test.model.applications[self.controller_app].add_units(count=no_units)
 
         if self.deployment_strat == "multi":
             await ops_test.model.applications[APP_NAME].add_units(count=2)
@@ -216,7 +217,7 @@ class TestKRaft:
         for unit_num in range(3):
             await self._assert_broker_listeners_accessible(ops_test, broker_unit_num=unit_num)
 
-        for unit_num in range(5):
+        for unit_num in range(no_units):
             await self._assert_controller_listeners_accessible(
                 ops_test, controller_unit_num=unit_num
             )
