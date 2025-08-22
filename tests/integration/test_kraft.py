@@ -190,7 +190,7 @@ class TestKRaft:
         if self.deployment_strat == "multi":
             await ops_test.model.applications[APP_NAME].add_units(count=2)
 
-        async with ops_test.fast_forward(fast_interval="60s"):
+        async with ops_test.fast_forward(fast_interval="90s"):
             await ops_test.model.wait_for_idle(
                 apps=list({APP_NAME, self.controller_app}),
                 status="active",
@@ -267,7 +267,7 @@ class TestKRaft:
             apps=[self.controller_app, TLS_NAME], idle_period=60, timeout=1200
         )
 
-        async with ops_test.fast_forward(fast_interval="90s"):
+        async with ops_test.fast_forward(fast_interval="120s"):
             await asyncio.sleep(180)
             await ops_test.model.wait_for_idle(
                 apps={self.controller_app, APP_NAME, TLS_NAME},
@@ -300,7 +300,7 @@ class TestKRaft:
     async def test_remove_peer_tls_relation(self, ops_test: OpsTest):
         await ops_test.juju("remove-relation", self.controller_app, TLS_NAME)
 
-        async with ops_test.fast_forward(fast_interval="90s"):
+        async with ops_test.fast_forward(fast_interval="120s"):
             await asyncio.sleep(180)
             await ops_test.model.wait_for_idle(
                 apps={self.controller_app, APP_NAME, TLS_NAME},

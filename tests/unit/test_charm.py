@@ -336,10 +336,16 @@ def test_start_does_not_start_if_leader_has_not_set_creds(ctx: Context, base_sta
 
 
 def test_update_status_blocks_if_broker_not_active(
-    ctx: Context, base_state: State, kraft_data: dict[str, str], passwords_data: dict[str, str]
+    ctx: Context,
+    base_state: State,
+    kraft_data: dict[str, str],
+    passwords_data: dict[str, str],
+    unit_peer_tls_data: dict[str, str],
 ):
     # Given
-    cluster_peer = PeerRelation(PEER, PEER, local_app_data=kraft_data | passwords_data)
+    cluster_peer = PeerRelation(
+        PEER, PEER, local_unit_data=unit_peer_tls_data, local_app_data=kraft_data | passwords_data
+    )
     state_in = dataclasses.replace(base_state, relations=[cluster_peer])
 
     # When
@@ -400,10 +406,13 @@ def test_update_status_sets_active(
     base_state: State,
     kraft_data: dict[str, str],
     passwords_data: dict[str, str],
+    unit_peer_tls_data: dict[str, str],
     patched_health_machine_configured,
 ) -> None:
     # Given
-    cluster_peer = PeerRelation(PEER, PEER, local_app_data=passwords_data | kraft_data)
+    cluster_peer = PeerRelation(
+        PEER, PEER, local_unit_data=unit_peer_tls_data, local_app_data=passwords_data | kraft_data
+    )
     state_in = dataclasses.replace(base_state, relations=[cluster_peer])
 
     # When
