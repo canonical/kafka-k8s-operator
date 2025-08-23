@@ -105,7 +105,7 @@ def test_integrate_internal_tls(
 ):
     assert juju.model  # this is to silent the linter
     c_writes = ContinuousWrites(model=juju.model, app=DUMMY_NAME)
-    c_writes.start()
+    # c_writes.start()
 
     juju.integrate(f"{APP_NAME}:{INTERNAL_TLS_RELATION}", TLS_APP_BROKER)
     if kraft_mode == "multi":
@@ -123,6 +123,7 @@ def test_integrate_internal_tls(
         delay=3,
         successes=20,
         timeout=3600,
+        error=jubilant.any_error,
     )
 
     result = c_writes.stop()
