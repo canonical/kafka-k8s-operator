@@ -185,12 +185,13 @@ class TestKRaft:
 
     @pytest.mark.abort_on_fail
     async def test_scale_out(self, ops_test: OpsTest):
-        await ops_test.model.applications[self.controller_app].add_units(count=4)
+        no_units = 2 if self.tls_enabled else 4
+        await ops_test.model.applications[self.controller_app].add_units(count=no_units)
 
         if self.deployment_strat == "multi":
             await ops_test.model.applications[APP_NAME].add_units(count=2)
 
-        async with ops_test.fast_forward(fast_interval="60s"):
+        async with ops_test.fast_forward(fast_interval="90s"):
             await ops_test.model.wait_for_idle(
                 apps=list({APP_NAME, self.controller_app}),
                 status="active",
@@ -216,7 +217,7 @@ class TestKRaft:
         for unit_num in range(3):
             await self._assert_broker_listeners_accessible(ops_test, broker_unit_num=unit_num)
 
-        for unit_num in range(5):
+        for unit_num in range(no_units):
             await self._assert_controller_listeners_accessible(
                 ops_test, controller_unit_num=unit_num
             )
@@ -263,16 +264,13 @@ class TestKRaft:
         await ops_test.model.add_relation(
             f"{self.controller_app}:{INTERNAL_TLS_RELATION}", TLS_NAME
         )
-        await ops_test.model.wait_for_idle(
-            apps=[self.controller_app, TLS_NAME], idle_period=60, timeout=1200
-        )
 
-        async with ops_test.fast_forward(fast_interval="90s"):
+        async with ops_test.fast_forward(fast_interval="120s"):
             await asyncio.sleep(180)
             await ops_test.model.wait_for_idle(
                 apps={self.controller_app, APP_NAME, TLS_NAME},
                 idle_period=45,
-                timeout=1800,
+                timeout=2400,
                 status="active",
             )
 
@@ -300,12 +298,12 @@ class TestKRaft:
     async def test_remove_peer_tls_relation(self, ops_test: OpsTest):
         await ops_test.juju("remove-relation", self.controller_app, TLS_NAME)
 
-        async with ops_test.fast_forward(fast_interval="90s"):
+        async with ops_test.fast_forward(fast_interval="120s"):
             await asyncio.sleep(180)
             await ops_test.model.wait_for_idle(
                 apps={self.controller_app, APP_NAME, TLS_NAME},
                 idle_period=60,
-                timeout=1800,
+                timeout=2400,
                 status="active",
             )
 

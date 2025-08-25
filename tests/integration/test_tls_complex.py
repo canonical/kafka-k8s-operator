@@ -123,6 +123,7 @@ def test_integrate_internal_tls(
         delay=3,
         successes=20,
         timeout=3600,
+        error=jubilant.any_error,
     )
 
     result = c_writes.stop()
