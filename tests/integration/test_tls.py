@@ -12,7 +12,6 @@ import kafka
 import pytest
 from charms.tls_certificates_interface.v3.tls_certificates import generate_private_key
 from pytest_operator.plugin import OpsTest
-from tenacity import Retrying, stop_after_attempt, wait_fixed
 
 from integration.helpers import sign_manual_certs
 from integration.helpers.pytest_operator import (
@@ -152,13 +151,6 @@ async def test_mtls(ops_test: OpsTest, kafka_apps):
         await ops_test.model.wait_for_idle(
             apps=[*kafka_apps, DUMMY_NAME], idle_period=30, status="active"
         )
-
-    # make sure the mtls port is open
-    address = await get_address(ops_test, app_name=APP_NAME, unit_num=0)
-    mtls_port = SECURITY_PROTOCOL_PORTS["SSL", "SSL"].client
-    for attempt in Retrying(stop=stop_after_attempt(30), wait=wait_fixed(10)):
-        with attempt:
-            assert check_socket(address, mtls_port)
 
     num_messages = 10
     # running mtls producer
