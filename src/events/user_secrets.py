@@ -61,7 +61,7 @@ class SecretsHandler(Object):
 
         if not all(
             [
-                self.dependent.upgrade.idle,
+                not self.charm.refresh_not_ready,
                 self.dependent.healthy,
                 self.workload.container_can_connect,
             ]
@@ -76,6 +76,11 @@ class SecretsHandler(Object):
             return
 
         logger.info(f"Credentials change detected for {changed}")
+
+        if not self.charm.workload.ping(self.charm.state.bootstrap_server_internal):
+            logging.debug("Broker/Controller not up yet...")
+            event.defer()
+            return
 
         # Store the password on application databag
         for username in changed:

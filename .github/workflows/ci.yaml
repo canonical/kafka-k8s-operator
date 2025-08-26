@@ -61,10 +61,9 @@ jobs:
           - .
           - tests/integration/app-charm
     name: Build charm | ${{ matrix.path }}
-    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v29.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v32.2.2
     with:
       path-to-charm-directory: ${{ matrix.path }}
-      cache: false # TODO: fix after added to the charmcraftcache
 
   integration-test-github:
     strategy:
@@ -79,7 +78,7 @@ jobs:
           - integration-kraft
           - integration-kraft-tls
           - integration-ha
-          # - integration-upgrade
+          - integration-refresh
         kraft-mode:
           - single
     name: ${{ matrix.tox-environments }} | ${{ matrix.kraft-mode }}
@@ -116,10 +115,9 @@ jobs:
             echo "mark_expression=not unstable" >> $GITHUB_OUTPUT
           fi
       - name: Run integration tests
-        run: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}' --kraft-mode ${{ matrix.kraft-mode }}
+        run: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}' --keep-models --kraft-mode ${{ matrix.kraft-mode }}
         env:
           CI_PACKED_CHARMS: ${{ needs.build.outputs.charms }}
-
 
   integration-test-self-hosted:
     strategy:
@@ -137,7 +135,7 @@ jobs:
           - integration-kraft-tls
           - integration-ha
           - integration-ha-controller
-          # - integration-upgrade
+          - integration-refresh
         kraft-mode:
           - multi
     name: ${{ matrix.tox-environments }} | ${{ matrix.kraft-mode }}
@@ -200,6 +198,6 @@ jobs:
             echo "mark_expression=not unstable" >> $GITHUB_OUTPUT
           fi
       - name: Run integration tests
-        run: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}' --kraft-mode ${{ matrix.kraft-mode }}
+        run: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}' --keep-models --kraft-mode ${{ matrix.kraft-mode }}
         env:
           CI_PACKED_CHARMS: ${{ needs.build.outputs.charms }}

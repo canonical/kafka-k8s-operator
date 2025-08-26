@@ -46,6 +46,16 @@ def kraft_data() -> dict[str, str]:
 
 
 @pytest.fixture(scope="module")
+def unit_peer_tls_data() -> dict[str, str]:
+    tls_data = generate_tls_artifacts()
+    return {
+        "peer-ca-cert": tls_data.ca,
+        "peer-certificate": tls_data.certificate,
+        "peer-private-key": tls_data.private_key,
+    }
+
+
+@pytest.fixture(scope="module")
 def peer_cluster_rel() -> Relation:
     return Relation(PEER_CLUSTER_RELATION, "peer_cluster")
 
@@ -218,3 +228,26 @@ def patched_snap(monkeypatch):
 @pytest.fixture
 def tls_artifacts(request: pytest.FixtureRequest) -> TLSArtifacts:
     return generate_tls_artifacts(with_intermediate=bool(request.param))
+
+
+@pytest.fixture(autouse=True)
+def mock_refresh():
+    """Fixture to shunt refresh logic and events."""
+    refresh_mock = Mock()
+    refresh_mock.in_progress = False
+    refresh_mock.unit_status_higher_priority = None
+    refresh_mock.unit_status_lower_priority.return_value = None
+    refresh_mock.next_unit_allowed_to_refresh = True
+    refresh_mock.workload_allowed_to_start = True
+
+    # Mock the _RefreshVersions class to avoid KeyError when charm key is missing
+    versions_mock = Mock()
+    versions_mock.charm = "v1/4.0.0"
+    versions_mock.workload = "4.0.0"
+
+    with (
+        patch("charm_refresh.Kubernetes", Mock(return_value=refresh_mock)),
+        patch("charm.KubernetesKafkaRefresh", Mock(return_value=None)),
+        patch("charm_refresh._main._RefreshVersions", Mock(return_value=versions_mock)),
+    ):
+        yield

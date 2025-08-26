@@ -69,7 +69,6 @@ def get_topic_description(
     Args:
         juju: jubilant.Juju fixture
         topic: the desired topic to check
-        unit_name: unit to run the command on
     """
     bootstrap_servers = get_bootstrap_servers(f"{juju.model}")
 

@@ -194,16 +194,6 @@ class KafkaWorkload(Workload):
         self.paths = CharmedKafkaPaths(BROKER)
         self.service = BROKER.service
 
-    @override
-    def get_version(self) -> str:
-        if not self.active:
-            return ""
-        try:
-            version = re.split(r"[\s\-]", self.run_bin_command("topics", ["--version"]))[0]
-        except:  # noqa: E722
-            version = ""
-        return version
-
     @property
     @override
     def layer(self) -> pebble.Layer:
@@ -271,10 +261,6 @@ class BalancerWorkload(Workload):
 
         command = f"{BROKER.paths['BIN']}/bin/kafka-{bin_keyword}.sh {' '.join(bin_args)}"
         return self.exec(command=command.split(), env=parsed_opts or None)
-
-    @override
-    def get_version(self) -> str:
-        raise NotImplementedError
 
     @property
     @override
