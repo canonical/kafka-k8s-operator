@@ -295,6 +295,7 @@ class TLSHandler(Object):
         if not all(
             [
                 self.charm.broker.healthy,
+                self.charm.state.has_mtls_clients,
                 self.charm.state.cluster.tls_enabled,
                 self.charm.state.unit_broker.client_certs.certificate,
                 self.charm.state.unit_broker.client_certs.ca,
