@@ -262,6 +262,10 @@ async def test_connection_updated_on_tls_enabled(
     async with ops_test.fast_forward(fast_interval="30s"):
         await asyncio.sleep(60)
 
+    await ops_test.model.wait_for_idle(
+        apps=[TLS_NAME], idle_period=30, timeout=1800, status="active"
+    )
+
     # Check that related application has updated information
     provider_data = get_provider_data(
         ops_test=ops_test,
