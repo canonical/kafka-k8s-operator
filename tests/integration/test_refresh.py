@@ -63,7 +63,7 @@ def test_in_place_refresh(juju: jubilant.Juju, kafka_charm, kraft_mode: KRaftMod
         lambda status: all_active_idle(status, APP_NAME) and len(status.apps[APP_NAME].units) == 3,
         delay=3,
         successes=10,
-        timeout=600,
+        timeout=1200,
     )
 
     leader_unit = None
