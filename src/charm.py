@@ -5,6 +5,7 @@
 """Charmed Machine Operator for Apache Kafka."""
 
 import logging
+import time
 
 import charm_refresh
 from charms.data_platform_libs.v0.data_models import TypedCharmBase
@@ -77,6 +78,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.framework.observe(getattr(self.on, "config_changed"), self._on_roles_changed)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_status)
         self.framework.observe(self.on.collect_app_status, self._on_collect_status)
+        self.framework.observe(self.on.stop, self._on_stop)
 
         # peer-cluster events are shared between all roles, so necessary to init here to avoid instantiating multiple times
         self.peer_cluster = PeerClusterEventsHandler(self)
@@ -168,6 +170,13 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         getattr(logger, log_level.lower())(status.message)
         # self.unit.status = status
         self.pending_inactive_statuses.append(key)
+
+    def _on_stop(self, _):
+        """handler for `stop` hook."""
+        self.unit.status = ActiveStatus("Rebalance in progress, unit might go into ERROR state which is expected.")
+        time.sleep(100000)
+        # This will mimic a defer...
+        # raise Exception("Rebalance in Progress.")
 
     def _on_collect_status(self, event: CollectStatusEvent):
         status = self._determine_unit_status()
