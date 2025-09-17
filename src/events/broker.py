@@ -6,6 +6,7 @@
 
 import json
 import logging
+import time
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
@@ -331,6 +332,12 @@ class BrokerOperator(Object):
         if self.charm.state.peer_cluster_orchestrator_relation and self.charm.unit.is_leader():
             self.update_peer_cluster_data()
 
+        if self.charm.unit.is_leader() and self.charm.state.runs_broker:
+            for broker in self.charm.state.brokers:
+                self.charm.state.cluster.add_broker(broker)
+
+        self.reconcile_autobalance()
+
     def _on_update_status(self, _: UpdateStatusEvent) -> None:
         """Handler for `update-status` events."""
         if self.charm.refresh_not_ready or not self.healthy:
@@ -406,6 +413,50 @@ class BrokerOperator(Object):
 
         self.charm.state.unit_broker.update({"storages": self.balancer_manager.storages})
         self.charm.on.config_changed.emit()
+
+        if not self.charm.config.auto_balance:
+            return
+
+        while not self.workload.all_storages_drained(
+            self.charm.state.bootstrap_server_internal,
+            self.charm.state.unit_broker.broker_id,
+        ):
+            time.sleep(30)
+
+    def reconcile_autobalance(self) -> None:
+        """Reconcile method to handle the cluster auto-balance state and emit rebalance events if required."""
+        if not all(
+            [
+                self.charm.config.auto_balance,
+                self.charm.state.runs_broker,
+                self.charm.unit.is_leader(),
+            ]
+        ):
+            return
+
+        # brokers waiting to be drained:
+        departing_brokers = self.kraft.controller_manager.departing_brokers
+
+        # brokers which have been successfully removed,
+        # we will remove these from the ClusterState, and capacityJBOD.json file
+        removed_brokers = (
+            set(self.charm.state.cluster.broker_capacities_snapshot)
+            - self.kraft.controller_manager.online_brokers
+        )
+        for broker_id in removed_brokers:
+            self.charm.state.cluster.remove_broker(broker_id)
+
+        if not departing_brokers:
+            return
+
+        for broker_id in departing_brokers:
+            self.charm.balancer.on.rebalance.emit(
+                self.charm.state.cluster.relation,
+                "remove",
+                broker_id,
+                app=self.charm.app,
+                unit=self.charm.unit,
+            )
 
     def setup_internal_tls(self) -> None:
         """Generates a self-signed certificate if required and writes all necessary TLS configuration for internal TLS."""
