@@ -177,7 +177,9 @@ class ControllerManager:
         if not bootstrap_controller:
             return {}
 
-        if not self.workload.ping(bootstrap_controller):
+        if not all(
+            [self.workload.container_can_connect, self.workload.ping(bootstrap_controller)]
+        ):
             return {}
 
         try:
