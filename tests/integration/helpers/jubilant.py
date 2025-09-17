@@ -15,6 +15,7 @@ from tenacity import retry
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_fixed
 
+from core.workload import WorkloadBase
 from literals import (
     BROKER,
     PATHS,
@@ -28,6 +29,7 @@ from . import (
     KAFKA_CONTAINER,
     KRaftMode,
     KRaftUnitStatus,
+    get_k8s_host_from_unit,
 )
 
 logger = logging.getLogger(__name__)
@@ -58,6 +60,8 @@ def deploy_cluster(
 
     base = "ubuntu@24.04" if series == "noble" else "ubuntu@22.04"
 
+    _config = {"auto-balance": False} if num_broker < 3 else {}
+
     juju.deploy(
         charm,
         app=app_name_broker,
@@ -68,6 +72,7 @@ def deploy_cluster(
             "roles": "broker,controller" if kraft_mode == "single" else "broker",
             "profile": "testing",
         }
+        | _config
         | config_broker,
         resources={"kafka-image": KAFKA_CONTAINER},
         trust=True,
@@ -83,6 +88,7 @@ def deploy_cluster(
                 "roles": "controller",
                 "profile": "testing",
             }
+            | _config
             | config_controller,
             resources={"kafka-image": KAFKA_CONTAINER},
             trust=True,
@@ -258,3 +264,17 @@ def kraft_quorum_status(
         print(unit_status)
 
     return unit_status
+
+
+def check_log_dirs(model: str | None):
+    bootstrap_server = f'{get_k8s_host_from_unit("kafka-k8s/0")}:19093'
+    container_command = f"{BROKER.paths['BIN']}/bin/kafka-log-dirs.sh --command-config {BROKER.paths['CONF']}/client.properties --bootstrap-server {bootstrap_server} --describe"
+
+    result = check_output(
+        f"JUJU_MODEL={model} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+
+    return WorkloadBase._parse_log_dirs_output(result)
