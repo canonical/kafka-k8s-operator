@@ -7,13 +7,14 @@
 import json
 import logging
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import requests
 from tenacity import retry, retry_if_result, stop_after_attempt, wait_fixed
 
 from core.models import JSON, BrokerCapacities, BrokerCapacity
 from literals import BALANCER, BALANCER_TOPICS, MODE_FULL, STORAGE
+from managers.config import BalancerConfigManager
 
 if TYPE_CHECKING:
     from charm import KafkaCharm
@@ -132,6 +133,7 @@ class BalancerManager:
     def __init__(self, dependent: "BrokerOperator | BalancerOperator") -> None:
         self.dependent = dependent
         self.charm: "KafkaCharm" = dependent.charm
+        self.config_manager = cast(BalancerConfigManager, dependent.config_manager)
 
     @property
     def cruise_control(self) -> CruiseControlClient:
@@ -331,3 +333,46 @@ class BalancerManager:
         ]
 
         return deleted, added
+
+    def config_change_detected(self) -> bool:
+        """Check if written balancer config is different from the current state."""
+        changed_map = [
+            (
+                "properties",
+                self.dependent.workload.paths.cruise_control_properties,
+                self.config_manager.cruise_control_properties,
+            ),
+        ]
+
+        content_changed = False
+        for kind, path, state_content in changed_map:
+            file_content = self.dependent.workload.read(path)
+            if set(file_content) ^ set(state_content):
+                logger.info(
+                    (
+                        f"Balancer {self.charm.unit.name.split('/')[1]} updating config - "
+                        f"OLD {kind.upper()} = {set(map(str.strip, file_content)) - set(map(str.strip, state_content))}, "
+                        f"NEW {kind.upper()} = {set(map(str.strip, state_content)) - set(map(str.strip, file_content))}"
+                    )
+                )
+                content_changed = True
+
+        # On k8s, adding/removing a broker does not change the bootstrap server property if exposed by nodeport
+        broker_capacities = self.charm.state.peer_cluster.broker_capacities
+        if (
+            file_content := json.loads(
+                "".join(
+                    self.dependent.workload.read(self.dependent.workload.paths.capacity_jbod_json)
+                )
+            )
+        ) != broker_capacities:
+            deleted, added = self.compare_capacities_files(file_content, broker_capacities)
+            logger.info(
+                f"Balancer {self.charm.unit.name.split('/')[1]} updating capacity config - "
+                f"ADDED {added}, "
+                f"DELETED {deleted}"
+            )
+
+            content_changed = True
+
+        return content_changed
