@@ -10,7 +10,14 @@ import time
 from typing import TYPE_CHECKING, Any, cast
 
 import requests
-from tenacity import retry, retry_if_result, stop_after_attempt, wait_fixed
+from tenacity import (
+    retry,
+    retry_any,
+    retry_if_exception,
+    retry_if_result,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 from core.models import JSON, BrokerCapacities, BrokerCapacity
 from literals import BALANCER, BALANCER_TOPICS, MODE_FULL, STORAGE
@@ -90,7 +97,9 @@ class CruiseControlClient:
     @retry(
         wait=wait_fixed(5),
         stop=stop_after_attempt(3),
-        retry=retry_if_result(lambda res: res is False),
+        retry=retry_any(
+            retry_if_result(lambda res: res is False), retry_if_exception(lambda _: True)
+        ),
         retry_error_callback=lambda _: False,
     )
     def monitoring(self) -> bool:
@@ -105,6 +114,12 @@ class CruiseControlClient:
         )
 
     @property
+    @retry(
+        wait=wait_fixed(1),
+        stop=stop_after_attempt(3),
+        retry=retry_if_exception(lambda _: True),
+        retry_error_callback=lambda _: False,
+    )
     def executing(self) -> bool:
         """Flag to confirm that the CruiseControl Executor is currently executing a task."""
         return (
@@ -116,6 +131,12 @@ class CruiseControlClient:
         )
 
     @property
+    @retry(
+        wait=wait_fixed(1),
+        stop=stop_after_attempt(3),
+        retry=retry_if_exception(lambda _: True),
+        retry_error_callback=lambda _: False,
+    )
     def ready(self) -> bool:
         """Flag to confirm that the CruiseControl Analyzer is ready to generate proposals."""
         monitor_state = self.get(endpoint="state", verbose="True").json().get("MonitorState", "")
