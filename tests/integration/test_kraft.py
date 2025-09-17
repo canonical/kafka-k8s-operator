@@ -101,6 +101,7 @@ class TestKRaft:
                 config={
                     "roles": "broker,controller" if self.controller_app == APP_NAME else "broker",
                     "profile": "testing",
+                    "auto-balance": False,
                 },
                 resources={"kafka-image": KAFKA_CONTAINER},
                 trust=True,
@@ -130,6 +131,7 @@ class TestKRaft:
                 config={
                     "roles": self.controller_app,
                     "profile": "testing",
+                    "auto-balance": False,
                 },
                 resources={"kafka-image": KAFKA_CONTAINER},
                 trust=True,
