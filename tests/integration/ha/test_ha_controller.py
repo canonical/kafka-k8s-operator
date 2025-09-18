@@ -22,9 +22,9 @@ from integration.helpers.ha import (
     assert_all_controllers_up,
     assert_continuous_writes_consistency,
     assert_quorum_healthy,
+    assert_quorum_lag_is_zero,
     delete_pod,
     get_kraft_leader,
-    get_kraft_quorum_lags,
     get_topic_offsets,
     is_down,
     isolate_instance_from_cluster,
@@ -115,7 +115,7 @@ def test_kill_leader_process(
 
     assert_quorum_healthy(juju=juju, kraft_mode="multi")
     # Assert all controllers & brokers have caught up. (all lags == 0)
-    assert not any(get_kraft_quorum_lags(juju))
+    assert_quorum_lag_is_zero(juju=juju)
 
 
 @pytest.mark.abort_on_fail
@@ -146,7 +146,7 @@ def test_restart_leader_process(
 
     assert_quorum_healthy(juju=juju, kraft_mode="multi")
     # Assert all controllers & brokers have caught up (all lags == 0).
-    assert not any(get_kraft_quorum_lags(juju))
+    assert_quorum_lag_is_zero(juju=juju)
 
 
 @pytest.mark.abort_on_fail
@@ -182,7 +182,7 @@ def test_freeze_leader_process(
 
     assert_quorum_healthy(juju=juju, kraft_mode="multi")
     # Assert all controllers & brokers have caught up. (all lags == 0)
-    assert not any(get_kraft_quorum_lags(juju))
+    assert_quorum_lag_is_zero(juju=juju)
 
 
 def test_full_cluster_crash(
@@ -216,7 +216,7 @@ def test_full_cluster_crash(
 
     assert_quorum_healthy(juju=juju, kraft_mode="multi")
     # Assert all controllers & brokers have caught up. (all lags == 0)
-    assert not any(get_kraft_quorum_lags(juju))
+    assert_quorum_lag_is_zero(juju=juju)
 
 
 def test_full_cluster_restart(
@@ -241,7 +241,7 @@ def test_full_cluster_restart(
 
     assert_quorum_healthy(juju=juju, kraft_mode="multi")
     # Assert all controllers & brokers have caught up. (all lags == 0)
-    assert not any(get_kraft_quorum_lags(juju))
+    assert_quorum_lag_is_zero(juju=juju)
 
 
 @flaky(max_runs=5, min_passes=1)
@@ -282,7 +282,7 @@ def test_pod_reschedule(
 
     assert_quorum_healthy(juju=juju, kraft_mode="multi")
     # Assert all controllers & brokers have caught up. (all lags == 0)
-    assert not any(get_kraft_quorum_lags(juju))
+    assert_quorum_lag_is_zero(juju=juju)
 
 
 @pytest.mark.skip(reason="deploy_chaos_mesh.sh fails on SH runners, needs investigation.")
@@ -323,4 +323,4 @@ def test_network_cut_without_ip_change(
 
     assert_quorum_healthy(juju=juju, kraft_mode="multi")
     # Assert all controllers & brokers have caught up. (all lags == 0)
-    assert not any(get_kraft_quorum_lags(juju))
+    assert_quorum_lag_is_zero(juju=juju)

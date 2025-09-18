@@ -54,6 +54,7 @@ def deploy_cluster(
     storage_broker: dict = {},
     app_name_broker: str = str(APP_NAME),
     app_name_controller: str = CONTROLLER_NAME,
+    channel: str | None = None,
 ):
     """Deploys an Apache Kafka cluster using the Charmed Apache Kafka operator in KRaft mode."""
     logger.info(f"Deploying Kafka cluster in '{kraft_mode}' mode")
@@ -61,6 +62,7 @@ def deploy_cluster(
     base = "ubuntu@24.04" if series == "noble" else "ubuntu@22.04"
 
     _config = {"auto-balance": False} if num_broker < 3 else {}
+    _kwargs = {"channel": channel} if channel else {}
 
     juju.deploy(
         charm,
@@ -76,6 +78,7 @@ def deploy_cluster(
         | config_broker,
         resources={"kafka-image": KAFKA_CONTAINER},
         trust=True,
+        **_kwargs,
     )
 
     if kraft_mode == "multi":
@@ -92,6 +95,7 @@ def deploy_cluster(
             | config_controller,
             resources={"kafka-image": KAFKA_CONTAINER},
             trust=True,
+            **_kwargs,
         )
 
     assert_status_func = jubilant.all_active if kraft_mode == "single" else jubilant.all_blocked
