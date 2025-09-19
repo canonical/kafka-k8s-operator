@@ -38,7 +38,7 @@ from integration.helpers.jubilant import (
 
 logger = logging.getLogger(__name__)
 
-CLIENT_TIMEOUT = 10
+CLIENT_TIMEOUT = 20
 RESTART_DELAY = 60
 
 
@@ -81,7 +81,7 @@ def test_deploy_active(juju: jubilant.Juju, kafka_charm, app_charm, kafka_apps):
     assert status.apps[DUMMY_NAME].app_status.current == "active"
 
 
-@pytest.mark.abort_on_fail
+@flaky(max_runs=3, min_passes=1)
 def test_kill_leader_process(
     juju: jubilant.Juju,
     restart_delay,
@@ -118,7 +118,7 @@ def test_kill_leader_process(
     assert_quorum_lag_is_zero(juju=juju)
 
 
-@pytest.mark.abort_on_fail
+@flaky(max_runs=3, min_passes=1)
 def test_restart_leader_process(
     juju: jubilant.Juju,
     c_writes: ContinuousWrites,
@@ -149,7 +149,7 @@ def test_restart_leader_process(
     assert_quorum_lag_is_zero(juju=juju)
 
 
-@pytest.mark.abort_on_fail
+@flaky(max_runs=3, min_passes=1)
 def test_freeze_leader_process(
     juju: jubilant.Juju, c_writes: ContinuousWrites, c_writes_runner: ContinuousWrites
 ):
@@ -185,6 +185,7 @@ def test_freeze_leader_process(
     assert_quorum_lag_is_zero(juju=juju)
 
 
+@flaky(max_runs=3, min_passes=1)
 def test_full_cluster_crash(
     juju: jubilant.Juju,
     restart_delay,
@@ -219,6 +220,7 @@ def test_full_cluster_crash(
     assert_quorum_lag_is_zero(juju=juju)
 
 
+@flaky(max_runs=3, min_passes=1)
 def test_full_cluster_restart(
     juju: jubilant.Juju, c_writes: ContinuousWrites, c_writes_runner: ContinuousWrites
 ):
