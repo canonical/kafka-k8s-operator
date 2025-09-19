@@ -32,6 +32,7 @@ from events.provider import KafkaProvider
 from events.user_secrets import SecretsHandler
 from health import KafkaHealth
 from literals import (
+    BALANCER_WEBSERVER_PORT,
     BROKER,
     CONTAINER,
     CONTROLLER,
@@ -175,7 +176,7 @@ class BrokerOperator(Object):
             self.charm.state.internal_ca_key = generated_ca.ca_key
 
         # Now generate unit's self-signed certs
-        self.setup_internal_tls()
+        self.setup_internal_tls(event)
 
         current_status = self.charm.state.ready_to_start
         if current_status is not Status.ACTIVE:
@@ -226,6 +227,18 @@ class BrokerOperator(Object):
             event.defer()
             return
 
+        # Start balancer service if everything is in place,
+        # and not started before.
+        if all(
+            [
+                self.charm.unit.is_leader(),
+                self.charm.state.runs_balancer,
+                self.charm.state.balancer_status is Status.ACTIVE,
+                not self.workload.ping(f"localhost:{BALANCER_WEBSERVER_PORT}"),
+            ]
+        ):
+            self.charm.balancer._on_start(event)
+
         # update environment
         self.config_manager.set_environment()
 
@@ -264,7 +277,7 @@ class BrokerOperator(Object):
         if self.tls_manager.sans_changed(TLSScope.PEER):
             self.charm.state.unit_broker.peer_certs.certificate = ""
             if self.charm.state.use_internal_tls:
-                self.setup_internal_tls()
+                self.setup_internal_tls(event)
             else:
                 self.charm.tls.refresh_tls_certificates.emit()
 
@@ -458,7 +471,7 @@ class BrokerOperator(Object):
                 unit=self.charm.unit,
             )
 
-    def setup_internal_tls(self) -> None:
+    def setup_internal_tls(self, event: EventBase) -> None:
         """Generates a self-signed certificate if required and writes all necessary TLS configuration for internal TLS."""
         if self.charm.state.unit_broker.peer_certs.ready:
             self.tls_manager.configure()
@@ -469,7 +482,11 @@ class BrokerOperator(Object):
             return
 
         self.charm.state.unit_broker.peer_certs.set_self_signed(self_signed_cert)
-        self.charm.state.unit_broker.peer_certs.rotate = True
+
+        # No need to toggle TLS rotate on start.
+        if not any([isinstance(event, StartEvent), isinstance(event, PebbleReadyEvent)]):
+            self.charm.state.unit_broker.peer_certs.rotate = True
+
         self.tls_manager.configure()
 
         if self.charm.unit.is_leader():
