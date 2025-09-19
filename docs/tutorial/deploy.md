@@ -19,13 +19,13 @@ juju integrate kafka-k8s zookeeper-k8s
 Juju will now fetch Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s and begin deploying them to the local MicroK8s. This process can take several minutes depending on how provisioned (RAM, CPU, etc) your machine is. You can track the progress by running:
 
 ```shell
-juju status --watch 1s
+watch -c juju status --color
 ```
 
 This command is useful for checking the status of Charmed Apache ZooKeeper K8s and Charmed Apache Kafka K8s. Some of the helpful information it displays includes pods' IP addresses, ports, state, etc. 
 The command updates the status of the cluster every second and as the application starts you can watch the status and messages of Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s change. 
 
-Wait until the application is ready - when it is ready, `juju status --watch 1s` will show:
+Wait until the application is ready - when it is ready, `watch -c juju status --color` will show:
 
 ```shell
 ...
@@ -45,7 +45,7 @@ zookeeper-k8s/1*  active    idle   10.1.36.86
 zookeeper-k8s/2   active    idle   10.1.36.85
 ```
 
-To exit the screen with `juju status --watch 1s`, enter `Ctrl+c`.
+To exit the screen with `watch -c juju status --color`, enter `Ctrl+c`.
 
 ## Access Apache Kafka cluster
 
