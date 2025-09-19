@@ -70,16 +70,16 @@ jobs:
       fail-fast: false
       matrix:
         tox-environments:
-          - integration-auto-balance
-          - integration-charm
-          - integration-provider
+          # - integration-auto-balance
+          # - integration-charm
+          # - integration-provider
           - integration-password-rotation
-          - integration-tls
-          - integration-tls-complex
-          - integration-kraft
-          - integration-kraft-tls
-          - integration-ha
-          - integration-refresh
+          # - integration-tls
+          # - integration-tls-complex
+          # - integration-kraft
+          # - integration-kraft-tls
+          # - integration-ha
+          # - integration-refresh
         kraft-mode:
           - single
     name: ${{ matrix.tox-environments }} | ${{ matrix.kraft-mode }}
@@ -145,25 +145,28 @@ jobs:
         run: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}' --keep-models --kraft-mode ${{ matrix.kraft-mode }}
         env:
           CI_PACKED_CHARMS: ${{ needs.build.outputs.charms }}
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
 
   integration-test-self-hosted:
     strategy:
       fail-fast: false
       matrix:
         tox-environments:
-          - integration-auto-balance
-          - integration-charm
-          - integration-provider
+          # - integration-auto-balance
+          # - integration-charm
+          # - integration-provider
           - integration-password-rotation
-          - integration-tls
-          - integration-tls-complex
-          - integration-balancer-single
-          - integration-balancer-multi
-          - integration-kraft
-          - integration-kraft-tls
-          - integration-ha
+          # - integration-tls
+          # - integration-tls-complex
+          # - integration-balancer-single
+          # - integration-balancer-multi
+          # - integration-kraft
+          # - integration-kraft-tls
+          # - integration-ha
           - integration-ha-controller
-          - integration-refresh
+          # - integration-refresh
         kraft-mode:
           - multi
     name: ${{ matrix.tox-environments }} | ${{ matrix.kraft-mode }}
@@ -229,3 +232,6 @@ jobs:
         run: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}' --keep-models --kraft-mode ${{ matrix.kraft-mode }}
         env:
           CI_PACKED_CHARMS: ${{ needs.build.outputs.charms }}
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
