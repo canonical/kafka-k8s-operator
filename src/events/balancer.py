@@ -15,8 +15,6 @@ from ops import (
     EventSource,
     InstallEvent,
     Object,
-    PebbleReadyEvent,
-    StartEvent,
 )
 from ops.pebble import ExecError
 from requests import Response
@@ -30,6 +28,7 @@ from literals import (
     CONTAINER,
     MODE_ADD,
     MODE_REMOVE,
+    PEER,
     PROFILE_TESTING,
     Status,
 )
@@ -98,6 +97,7 @@ class BalancerOperator(Object):
         # ensures data updates, eventually
         self.framework.observe(self.charm.on.update_status, self._on_config_changed)
         self.framework.observe(self.charm.on.config_changed, self._on_config_changed)
+        self.framework.observe(self.charm.on[PEER].relation_changed, self._on_config_changed)
 
         self.framework.observe(self.on.rebalance, self._on_rebalance_event)
 
@@ -116,12 +116,11 @@ class BalancerOperator(Object):
                 f"{CRUISE_CONTROL_TESTING_OPTIONS}"
             )
 
-    def _on_start(self, event: StartEvent | PebbleReadyEvent) -> None:
+    def _on_start(self, event: EventBase) -> None:
         """Handler for `start` or `pebble-ready` events."""
         current_status = self.charm.state.balancer_status
         if current_status is not Status.ACTIVE:
             self.charm._set_status(current_status)
-            event.defer()
             return
 
         if not self.charm.state.cluster.balancer_password:
