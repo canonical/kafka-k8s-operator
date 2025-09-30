@@ -13,6 +13,7 @@ resource "juju_application" "kafka" {
   units       = var.units
   constraints = var.constraints
   config      = var.config
+  trust       = true
 
   storage_directives = var.storage
 
