@@ -15,11 +15,11 @@ output "provides_endpoints" {
 output "offers" {
   description = "offers created by this charm"
   value = {
-    kafka-client = juju_offer.kafka_client.url
+    kafka-client = juju_offer.kafka_client[*].url
   }
 }
 
 output "kafka_client_offer" {
   description = "Kafka client offer URL for external applications"
-  value       = juju_offer.kafka_client.url
+  value       = juju_offer.kafka_client[*].url
 }

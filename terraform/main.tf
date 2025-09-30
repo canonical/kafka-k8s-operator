@@ -21,6 +21,7 @@ resource "juju_application" "kafka" {
 
 # Kafka client offer - Single mode
 resource "juju_offer" "kafka_client" {
+  count            = strcontains(lookup(var.config, "roles", "broker"), "broker") ? 1 : 0
   model            = var.model
   application_name = juju_application.kafka.name
   endpoints        = ["kafka-client"]
