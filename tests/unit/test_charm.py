@@ -414,7 +414,8 @@ def test_update_status_sets_active(
         PEER, PEER, local_unit_data=unit_peer_tls_data, local_app_data=passwords_data | kraft_data
     )
     state_in = dataclasses.replace(
-        base_state, relations=[cluster_peer], config=base_state.config | {"auto-balance": False}
+        base_state,
+        relations=[cluster_peer],
     )
 
     # When
