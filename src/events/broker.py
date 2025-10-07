@@ -441,7 +441,6 @@ class BrokerOperator(Object):
         if not all(
             [
                 self.charm.state.runs_balancer,
-                self.charm.state.runs_broker,
                 self.charm.unit.is_leader(),
             ]
         ):
@@ -456,8 +455,9 @@ class BrokerOperator(Object):
             set(self.charm.state.cluster.broker_capacities_snapshot)
             - self.kraft.controller_manager.online_brokers
         )
-        for broker_id in removed_brokers:
-            self.charm.state.cluster.remove_broker(broker_id)
+        if self.charm.state.runs_broker:
+            for broker_id in removed_brokers:
+                self.charm.state.cluster.remove_broker(broker_id)
 
         if not departing_brokers:
             return
