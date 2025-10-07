@@ -211,7 +211,7 @@ class BalancerOperator(Object):
             event.mode == "remove"
             and event.broker_id
             and self.kafka_workload.all_storages_drained(
-                self.charm.state.bootstrap_server_internal, event.broker_id
+                self.charm.state.peer_cluster.broker_uris, event.broker_id
             )
         ):
             # We have nothing to do...
@@ -236,7 +236,7 @@ class BalancerOperator(Object):
             )
         except RebalanceError as e:
             logger.error(f"{e}")
-            event.defer()
+            # No need to defer.
             return
 
         if event.mode == "remove" and event.broker_id:
