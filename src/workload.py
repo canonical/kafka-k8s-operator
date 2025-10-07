@@ -68,7 +68,10 @@ class Workload(WorkloadBase):
 
         # Convert datetime strings to pythonic objects
         for item in output:
-            item["Since"] = datetime.datetime.fromisoformat(item["Since"])
+            try:
+                item["Since"] = datetime.datetime.fromisoformat(item["Since"])
+            except ValueError:
+                item["Since"] = datetime.datetime.min
 
         # Changes are ordered ASC by time, so reverse the list
         service = [
