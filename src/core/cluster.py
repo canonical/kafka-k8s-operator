@@ -560,9 +560,6 @@ class ClusterState(Object):
     @property
     def runs_balancer(self) -> bool:
         """Is the charm enabling the balancer?"""
-        if all([self.config.auto_balance, self.runs_broker]):
-            return True
-
         return BALANCER.value in self.roles
 
     @property

@@ -186,7 +186,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         if all(
             [
                 self.state.runs_broker,
-                self.config.auto_balance,
+                self.state.runs_balancer,
                 self.broker.kraft.controller_manager.departing_brokers,
             ]
         ):

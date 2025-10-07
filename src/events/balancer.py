@@ -169,10 +169,6 @@ class BalancerOperator(Object):
 
             self.charm.on.start.emit()
 
-        # Auto-balance
-        if not self.charm.config.auto_balance:
-            return
-
         partition_assignment = self.kafka_workload.get_partition_assignment(
             self.charm.state.bootstrap_server_internal
         )

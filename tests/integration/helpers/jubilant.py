@@ -61,7 +61,6 @@ def deploy_cluster(
 
     base = "ubuntu@24.04" if series == "noble" else "ubuntu@22.04"
 
-    _config = {"auto-balance": False} if num_broker < 3 else {}
     _kwargs = {"channel": channel} if channel else {}
 
     juju.deploy(
@@ -74,7 +73,6 @@ def deploy_cluster(
             "roles": "broker,controller" if kraft_mode == "single" else "broker",
             "profile": "testing",
         }
-        | _config
         | config_broker,
         resources={"kafka-image": KAFKA_CONTAINER},
         trust=True,
@@ -91,7 +89,6 @@ def deploy_cluster(
                 "roles": "controller",
                 "profile": "testing",
             }
-            | _config
             | config_controller,
             resources={"kafka-image": KAFKA_CONTAINER},
             trust=True,

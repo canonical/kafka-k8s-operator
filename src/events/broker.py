@@ -427,7 +427,7 @@ class BrokerOperator(Object):
         self.charm.state.unit_broker.update({"storages": self.balancer_manager.storages})
         self.charm.on.config_changed.emit()
 
-        if not self.charm.config.auto_balance:
+        if not self.charm.state.runs_balancer:
             return
 
         while not self.workload.all_storages_drained(
@@ -440,7 +440,7 @@ class BrokerOperator(Object):
         """Reconcile method to handle the cluster auto-balance state and emit rebalance events if required."""
         if not all(
             [
-                self.charm.config.auto_balance,
+                self.charm.state.runs_balancer,
                 self.charm.state.runs_broker,
                 self.charm.unit.is_leader(),
             ]
