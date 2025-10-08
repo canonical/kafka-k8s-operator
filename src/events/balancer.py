@@ -170,7 +170,7 @@ class BalancerOperator(Object):
             self.charm.on.start.emit()
 
         partition_assignment = self.kafka_workload.get_partition_assignment(
-            self.charm.state.bootstrap_server_internal
+            self.charm.state.peer_cluster.broker_uris
         )
         for _id, partitions in partition_assignment.items():
             broker_id = int(_id.split("/")[0])
@@ -235,12 +235,8 @@ class BalancerOperator(Object):
                 trigger="event", mode=event.mode, broker_id=event.broker_id, dryrun=False
             )
         except RebalanceError as e:
-            logger.error(f"{e}")
             # No need to defer.
-            return
-
-        if event.mode == "remove" and event.broker_id:
-            self.charm.state.cluster.remove_broker(event.broker_id)
+            logger.error(f"{e}")
 
     def rebalance(
         self,
