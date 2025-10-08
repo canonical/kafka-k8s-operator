@@ -349,6 +349,7 @@ class BrokerOperator(Object):
             for broker in self.charm.state.brokers:
                 self.charm.state.cluster.add_broker(broker)
 
+        self.update_brokers_state()
         self.reconcile_autobalance()
 
     def _on_update_status(self, _: UpdateStatusEvent) -> None:
@@ -427,7 +428,7 @@ class BrokerOperator(Object):
         self.charm.state.unit_broker.update({"storages": self.balancer_manager.storages})
         self.charm.on.config_changed.emit()
 
-        if not self.charm.state.runs_balancer:
+        if not self.charm.state.balancer_exists:
             return
 
         while not self.workload.all_storages_drained(
@@ -448,16 +449,6 @@ class BrokerOperator(Object):
 
         # brokers waiting to be drained:
         departing_brokers = self.kraft.controller_manager.departing_brokers
-
-        # brokers which have been successfully removed,
-        # we will remove these from the ClusterState, and capacityJBOD.json file
-        removed_brokers = (
-            set(self.charm.state.cluster.broker_capacities_snapshot)
-            - self.kraft.controller_manager.online_brokers
-        )
-        if self.charm.state.runs_broker:
-            for broker_id in removed_brokers:
-                self.charm.state.cluster.remove_broker(broker_id)
 
         if not departing_brokers:
             return
@@ -648,3 +639,20 @@ class BrokerOperator(Object):
                 continue
 
             self.charm.state.unit_broker.update_relation_ip_address(client.relation, client.ip)
+
+    def update_brokers_state(self) -> None:
+        """Update the current state of online brokers on relation data."""
+        if not all([self.charm.unit.is_leader(), self.charm.state.runs_broker]):
+            return
+
+        for broker in self.charm.state.brokers:
+            self.charm.state.cluster.add_broker(broker)
+
+        # brokers which have been successfully removed,
+        # we will remove these from the ClusterState, and capacityJBOD.json file
+        removed_brokers = (
+            set(self.charm.state.cluster.broker_capacities_snapshot)
+            - self.kraft.controller_manager.online_brokers
+        )
+        for broker_id in removed_brokers:
+            self.charm.state.cluster.remove_broker(broker_id)
