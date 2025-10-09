@@ -345,10 +345,6 @@ class BrokerOperator(Object):
         if self.charm.state.peer_cluster_orchestrator_relation and self.charm.unit.is_leader():
             self.update_peer_cluster_data()
 
-        if self.charm.unit.is_leader() and self.charm.state.runs_broker:
-            for broker in self.charm.state.brokers:
-                self.charm.state.cluster.add_broker(broker)
-
         self.update_brokers_state()
         self.reconcile_autobalance()
 
@@ -655,4 +651,5 @@ class BrokerOperator(Object):
             - self.kraft.controller_manager.online_brokers
         )
         for broker_id in removed_brokers:
-            self.charm.state.cluster.remove_broker(broker_id)
+            if broker_id not in self.charm.state.active_brokers_on_relation:
+                self.charm.state.cluster.remove_broker(broker_id)
