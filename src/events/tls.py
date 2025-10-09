@@ -176,7 +176,7 @@ class TLSHandler(Object):
 
         if state.scope == TLSScope.PEER:
             # switch back to internal TLS
-            self.charm.broker.setup_internal_tls()
+            self.charm.broker.setup_internal_tls(event)
 
             # Keep the old bundle
             for dependent in ["broker", "balancer"]:
