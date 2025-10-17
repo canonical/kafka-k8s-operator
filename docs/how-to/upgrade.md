@@ -1,61 +1,81 @@
 (how-to-upgrade)=
-# How to upgrade between minor versions
+# How to upgrade between versions
 
-```{note}
-This feature is available on Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s from revisions 53 and 49, respectively. Upgrade from previous versions is **not supported**.
+This guide applies for in-place upgrades that involve (at most) minor version upgrade of Apache Kafka workload, e.g. between Apache Kafka 4.0.x to 4.1.x.
+
+```{warning}
+In-place upgrades across major workload versions are **NOT SUPPORTED*.
+See [full cluster-to-cluster migrations](how-to-cluster-migration) for major version upgrades (for example, from Apache Kafka 3.x to 4.x).
 ```
 
-Charm upgrades can include both upgrades of operator code (e.g. the revision used by the charm) and/or the workload version. Note that since the charm code pins a particular version of the workload, a charm upgrade may or may not involve also a workload version upgrade.
+Since the charm's code pins a specific workload version, upgrading the charm's revision may include updates to the operator code and/or a minor workload version upgrade.
 
-In general, the following guide only applies for in-place upgrades that involve (at most) minor version upgrades of Apache Kafka workload, e.g. between Apache Kafka 3.4.x to 3.5.x. Major workload upgrades are generally **NOT SUPPORTED**, and they should be carried out using [full cluster-to-cluster migrations](how-to-migrate-a-cluster).
-
-While upgrading an Apache Kafka cluster, do not perform any other major operations, including, but not limited to, the following:
+When upgrading a Charmed Apache Kafka cluster, ensure that no other major operations are performed until the upgrade is complete. This includes, but is not limited to, the following:
 
 1. Adding or removing units
 2. Creating or destroying new relations
 3. Changes in workload configuration
-4. Upgrading other connected applications (e.g. Charmed Apache ZooKeeper)
+4. Upgrading other connected applications
 
 The concurrency with other operations is not supported, and it can lead the cluster into inconsistent states.
 
-## Minor upgrade process overview
+## Minor upgrade process
 
 When performing an in-place upgrade process, the full process is composed of the following high-level steps:
 
-1. **Collect** all necessary pre-upgrade information, necessary for a rollback (if ever needed)
-2. **Prepare** the charm for the in-place upgrade, by running some preparatory tasks 
-3. **Upgrade** the charm and/or the workload. Once started, all units in a cluster will refresh the charm code and undergo a workload restart/update. The upgrade will be aborted if the unit upgrade has failed, requiring the admin user to roll back.
-4. **Post-upgrade checks** to make sure all units are in the proper state and the cluster is healthy.
+1. **Configure** desired refresh behavior with `pause-after-unit-refresh`
+2. **Collect** all necessary pre-upgrade information, necessary for a rollback (if ever needed)
+3. **Prepare** the charm for the in-place upgrade, by running some preparatory tasks 
+4. **Upgrade** the charm and/or the workload. Once started, all units in a cluster will refresh the charm code and undergo a workload restart/update. The upgrade will be halted if the unit upgrade has failed, requiring the admin user to roll back.
 
-### Step 1: Collect
+### Step 1. Configure
 
-The first step is to record the revisions of the running application, as a safety measure for a rollback action if needed. To accomplish this, simply run the `juju status` command and look for the revisions of the deployed Charmed Apache Kafka and Charmed Apache ZooKeeper applications. You can also retrieve this with the following command (that requires [`yq`](https://snapcraft.io/install/yq/ubuntu) to be installed):
+For highly available, stateful applications, it is often desirable to upgrade a single unit first, then pause to perform manual validations before continuing. If the upgrade fails, for example, due to a bug or an unforeseen version incompatibility, the impact is limited to that single unit. When the application is replicated across multiple nodes, this approach ensures no measurable disruption to the production service.
+
+Charmed Apache Kafka exposes the `pause-after-unit-refresh` configuration option to help control this pausing behavior. By default, this option is set to `none`, meaning that a refresh will complete without a pause for manual checks.
+
+To change refresh pausing behavior, set this configuration option **before** triggering a Juju refresh:
+
+```shell
+juju config kafka pause-after-unit-refresh="all"
+```
+
+This will now pause the refresh after each unit has upgraded, before waiting for confirmation.
+
+If you only wish to pause once, before letting the refresh proceed unhindered, set:
+
+```shell
+juju config kafka pause-after-unit-refresh="first"
+```
+
+This will only pause after the first unit has completed it's upgrade.
+
+(step-2-collect)=
+### Step 2: Collect
+
+The second step is to record the revisions of the running application as a safety measure in case a rollback is needed. To check the revisions, run the `juju status` command and find the required Charmed Apache Kafka application. Alternatively, you can retrieve this information with the following command using [yq](https://snapcraft.io/install/yq/ubuntu):
 
 ```shell
 KAFKA_CHARM_REVISION=$(juju status --format json | yq .applications.<KAFKA_APP_NAME>.charm-rev)
-ZOOKEEPER_CHARM_REVISION=$(juju status --format json | yq .applications.<ZOOKEEPER_APP_NAME>.charm-rev)
 ```
 
-Please fill `<KAFKA_APP_NAME>` and `<ZOOKEEPER_APP_NAME>}` placeholder appropriately, e.g. `kafka-k8s` and `zookeeper-k8s`.
+### Step 3: Prepare
 
-### Step 2: Prepare
+Next, perform preparatory tasks to define the upgrade plan, ensuring the process can proceed safely.
 
-Before upgrading, the charm needs to perform some preparatory tasks to define the upgrade plan.  
 To do so, run the `pre-upgrade-check` action against the leader unit:
 
 ```shell
-juju run kafka/leader pre-upgrade-check --format yaml
+juju run kafka/leader pre-upgrade-check 
 ```
 
 Make sure that the output of the action is successful.
 
 ```{note}
-This action must be run before Charmed Apache Kafka upgrades.
+Although optional, this action should always be run before Charmed Apache Kafka upgrades for production deployments.
 ```
 
-The action will also configure the charm to minimise high-availability reduction and ensure a safe upgrade process. After successful execution, the charm is ready to be upgraded.
-
-### Step 3: Upgrade
+### Step 4: Upgrade
 
 Use the [`juju refresh`](https://juju.is/docs/juju/juju-refresh) command to trigger the charm upgrade process.
 Note that the upgrade can be performed against:
@@ -63,79 +83,53 @@ Note that the upgrade can be performed against:
 * selected channel/track, therefore upgrading to the latest revision published on that track:
 
   ```shell
-  juju refresh kafka-k8s --channel 3/edge
+  juju refresh kafka --channel 4/edge
   ```
-
 * selected revision:
 
   ```shell
-  juju refresh kafka-k8s --revision=<REVISION>
+  juju refresh kafka --revision=<REVISION>
   ```
-
 * a local charm file:
 
   ```shell
-  juju refresh kafka-k8s --path ./kafka_ubuntu-22.04-amd64.charm
+  juju refresh kafka --path ./kafka_ubuntu-24.04-amd64.charm
   ```
 
-When issuing the commands, only the unit with the largest ordinal number will refresh (i.e. receive new charm content).
-A new pod will be rescheduled with the new image and/or the new charm revision.
-As the Pod starts, the upgrade charm event will be fired on the pod, running 
-any custom logic required during the upgrade. 
+When issuing the commands, all units will refresh (i.e. receive new charm content), and the upgrade charm event will be fired. The charm will take care of executing an update (if required) and a restart of the workload one unit at a time to not lose high availability. 
 
-Once the unit is returned active and healthy, the charm will block the upgrade process, to provide 
-a way for the user to manually check that the new version works properly 
-and make sure everything is fine before rolling out the upgrade also on the remaining units. 
+If the `pause-after-unit-refresh` configuration is either `all` or `first`, at some point during the refresh, human intervention will be needed in order to resume the upgrade.
 
-If the manual checks are successful, the upgrade process can be resumed with 
+Once all checks, both from the charm and any additional checks determined by the administrator have successfully completed, resume the upgrade by running a Juju action:
 
-```
-juju run kafka-k8s/leader resume-upgrade --format yaml  --wait=1m 
+```shell
+juju run kafka/<unit-id> resume-refresh
 ```
 
 ```{note}
-Even though the process will not stop anymore on each upgrade, 
-the charm will take care of coordinating the pod updates by restarting one unit at a time to not lose high availability. 
-This generally keeps the Apache Kafka service up and running during an upgrade, although downtime should be tolerated during upgrades.
+Run this action on the next unit scheduled for refresh, as indicated in the application status.
 ```
 
 The upgrade process can be monitored using `juju status` command, where the message of the units will provide information about which units have been upgraded already, which unit is currently upgrading and which units are waiting for the upgrade to be triggered, as shown below: 
 
 ```shell
-...
-
 App        Version  Status  Scale  Charm      Channel   Rev  Exposed  Message
-kafka               active      3  kafka      3/stable  147  no
+kafka               active      4  kafka      4/stable  147  no
 
-Unit          Workload  Agent  Address       Ports  Message
-...
-kafka/0       active    idle   10.193.41.131        Other units upgrading first...
-kafka/1*      active    idle   10.193.41.109        Upgrading...
-kafka/2       active    idle   10.193.41.221        Upgrade completed
-...
-
+Unit          Workload  Agent  Machine  Public address  Ports  Message
+kafka/0       active    idle   3        10.193.41.131          Other units upgrading first...
+kafka/1*      active    idle   4        10.193.41.109          Upgrading...
+kafka/2       active    idle   5        10.193.41.221          Upgrade completed
 ```
 
-#### Failing upgrade
+#### Rollbacks
 
-Before upgrading the unit, the charm will check whether the upgrade can be performed, e.g. this may mean:
+At any point in the upgrade, it is possible to safely rollback to the original charm revision.
 
-1. Checking that the upgrade from the previous charm revision and Apache Kafka version is allowed.
-2. Checking that other external applications that Apache Kafka depends on (e.g. Apache ZooKeeper) are running the correct version.
-
-Note that these checks are only possible after a refresh of the charm code, and therefore cannot be done upfront (e.g. during the `pre-upgrade-checks` action).
-If some of these checks fail, the upgrade will be aborted. When this happens, the workload may still be operating (as only the operator may have failed) but we recommend rolling back the upgrade as soon as possible. 
-
-To roll back the upgrade, re-run steps #2 and #3, using the revision taken in step 1:
+To rollback, use the `juju refresh` command with the original charm revision:
 
 ```shell
-juju run kafka-k8s/leader pre-upgrade-check
-
-juju refresh kafka-k8s --revision=${KAFKA_CHARM_REVISION}
+juju refresh kafka --revision KAFKA_CHARM_REVISION
 ```
 
-We strongly recommend to also retrieve the full set of logs with `juju debug-log`, to extract insights on why the upgrade failed. 
-
-## Combined upgrades
-
-If Charmed Apache Kafka and Charmed Apache ZooKeeper both need to be upgraded, we recommend starting the upgrade from the Charmed Apache ZooKeeper. As outlined above, the two upgrades should **NEVER** be done concurrently.
+where `KAFKA_CHARM_REVISION` was obtained earlier in [Step 2: Collect](step-2-collect) before the refresh was triggered.

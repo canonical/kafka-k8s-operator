@@ -1,17 +1,17 @@
 (tutorial-rebalance-partitions)=
-# 7. Rebalance and Reassign Partitions
+# 8. Rebalance and Reassign Partitions
 
-This is part of the [Charmed Apache Kafka K8s Tutorial](index.md). Please refer to the [overview page](introduction.md) for more information and the overview of the content.
+This is a part of the [Charmed Apache Kafka Tutorial](index.md).
 
 ## Partition rebalancing and reassignment
 
-By default, when adding more brokers to an Apache Kafka cluster, the current allocated partitions on the original brokers are not automatically redistributed across the new brokers. This can lead to inefficient resource usage and over-provisioning. On the other hand, when removing brokers to reduce capacity, partitions assigned to the removed brokers are also not redistributed, which can result in under-replicated data at best and permanent data loss at worst.
+By default, when adding more brokers to a Charmed Apache Kafka cluster, the current allocated partitions on the original brokers are not automatically redistributed across the new brokers. This can lead to inefficient resource usage and over-provisioning. On the other hand, when removing brokers to reduce capacity, partitions assigned to the removed brokers are also not redistributed, which can result in under-replicated data at best and permanent data loss at worst.
 
 To address this, we can make use of [LinkedIn's Cruise Control](https://github.com/linkedin/cruise-control), which is bundled as part of the Charmed Apache Kafka [snap](https://github.com/canonical/charmed-kafka-snap) and [rock](https://github.com/canonical/charmed-kafka-rock).
 
 At a high level, Cruise Control is made up of the following five components:
 
-- **Workload Monitor** - responsible for the metrics collection from Apache Kafka
+- **Workload Monitor** - responsible for the metrics collection from Charmed Apache Kafka
 - **Analyser** - generates allocation proposals based on configured [Goals](https://github.com/linkedin/cruise-control?tab=readme-ov-file#goals)
 - **Anomaly Detector** - detects failures in brokers, disks, metrics or goals and (optionally) self-heals
 - **Web server** - a REST API for user operations
@@ -23,7 +23,6 @@ The Charmed Apache Kafka charm has a configuration option `roles`, which takes a
 Different roles can be configured to run on the same machine, or as separate Juju applications.
 
 The two necessary roles for cluster rebalancing are:
-
 - `broker` - running Apache Kafka
 - `balancer` - running Cruise Control
 
@@ -34,7 +33,7 @@ It is recommended to deploy a separate Juju application for running Cruise Contr
 For the purposes of this tutorial, we will be deploying a single Charmed Apache Kafka unit to serve as the `balancer`:
 
 ```bash
-juju deploy kafka-k8s --trust --config roles=balancer -n 1 cruise-control
+juju deploy kafka --config roles=balancer cruise-control
 ```
 
 Earlier in the tutorial, we covered enabling TLS encryption, so we will repeat that step here for the new `cruise-control` application:
@@ -46,27 +45,27 @@ juju integrate cruise-control:certificates self-signed-certificates
 Now, to make the new `cruise-control` application aware of the existing Apache Kafka cluster, we will integrate the two applications using the `peer_cluster` relation interface, ensuring that the `broker` cluster is using the `peer-cluster` relation-endpoint, and the `balancer` cluster is using the `peer-cluster-orchestrator` relation-endpoint:
 
 ```bash
-juju integrate kafka-k8s:peer-cluster-orchestrator cruise-control:peer-cluster
+juju integrate kafka:peer-cluster-orchestrator cruise-control:peer-cluster
 ```
 
 ### Adding new brokers
 
-After completing the steps in the [Integrate with client applications](tutorial-integrate-with-client-applications) tutorial page, you should have three `kafka` units and a client application actively writing messages to an existing topic. Let's scale-out the `kafka` application to four units:
+After completing the steps in the [Integrate with client applications](integrate-with-client-applications) tutorial page, you should have three `kafka` units and a client application actively writing messages to an existing topic. Let's scale-out the `kafka` application to four units:
 
 ```bash
-juju scale-application kafka-k8s 4
+juju add-unit kafka 4
 ```
 
 By default, no partitions are allocated for the new unit `3`. You can see that by checking the log directory assignment:
 
 ```bash
-juju ssh --container kafka kafka-k8s/leader \
-    '/opt/kafka/bin/kafka-log-dirs.sh' \
+juju ssh kafka/leader sudo -i \
+    'charmed-kafka.log-dirs' \
     '--describe' \
     '--bootstrap-server <unit-ip>:9093' \
-    '--command-config /etc/kafka/client.properties' \
+    '--command-config $CONF/client.properties' \
     '2> /dev/null' \
-    | tail -n +1 | jq -c '.brokers[] | select(.broker == 3)' | jq
+    | tail -1 | jq -c '.brokers[] | select(.broker == 3)' | jq
 ```
 
 This should produce output similar to the result seen below, with no partitions allocated by default:
@@ -77,7 +76,7 @@ This should produce output similar to the result seen below, with no partitions 
   "logDirs": [
     {
       "error": null,
-      "logDir": "/var/lib/kafka/data",
+      "logDir": "/var/snap/charmed-kafka/common/var/lib/kafka/data",
       "partitions": []
     }
   ]
@@ -135,13 +134,13 @@ unit-cruise-control-0: 22:19:12 INFO unit.cruise-control/0.juju-log Waiting for 
 Once the action is complete, verify the partitions using the same commands as before:
 
 ```bash
-juju ssh --container kafka kafka-k8s/leader \
-    '/opt/kafka/bin/kafka-log-dirs.sh' \
+juju ssh kafka/leader sudo -i \
+    'charmed-kafka.log-dirs' \
     '--describe' \
     '--bootstrap-server <unit-ip>:9093' \
-    '--command-config /etc/kafka/client.properties' \
+    '--command-config $CONF/client.properties' \
     '2> /dev/null' \
-    | tail -n +1 | jq -c '.brokers[] | select(.broker == 3)' | jq
+    | tail -1 | jq -c '.brokers[] | select(.broker == 3)' | jq
 ```
 
 This should produce an output similar to the result seen below, with broker `3` now having assigned partitions present, completing the adding of a new broker to the cluster:
@@ -159,9 +158,7 @@ This should produce an output similar to the result seen below, with broker `3` 
           "isFuture": false
         },
         
-      ]
     }
-  ]
 }
 ```
 
@@ -186,13 +183,13 @@ This does not remove the unit, but moves the partitions from the broker on unit 
 Once the action has been completed, verify that broker `3` no longer has any assigned partitions:
 
 ```bash
-juju ssh --container kafka kafka-k8s/leader \
-    '/opt/kafka/bin/kafka-log-dirs.sh' \
+juju ssh kafka/leader sudo -i \
+    'charmed-kafka.log-dirs' \
     '--describe' \
     '--bootstrap-server <unit-ip>:9093' \
-    '--command-config /etc/kafka/client.properties' \
+    '--command-config $CONF/client.properties' \
     '2> /dev/null' \
-    | tail -n +1 | jq -c '.brokers[] | select(.broker == 3)' | jq
+    | tail -1 | jq -c '.brokers[] | select(.broker == 3)' | jq
 ```
 
 Make sure that broker `3` now has no partitions assigned, for example:
@@ -213,7 +210,7 @@ Make sure that broker `3` now has no partitions assigned, for example:
 Now, it is safe to scale-in the cluster, removing the broker number `3` completely:
 
 ```bash
-juju scale-application kafka-k8s 3
+juju remove-unit kafka/3
 ```
 
 ### Full cluster rebalancing
@@ -243,3 +240,4 @@ To implement the proposed changes, run the same command but with `dryrun=false`:
 ```bash
 juju run cruise-control/0 rebalance mode=full dryrun=false --wait=10m
 ```
+
