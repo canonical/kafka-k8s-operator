@@ -10,7 +10,7 @@ See [full cluster-to-cluster migrations](how-to-cluster-migration) for major ver
 
 Since the charm's code pins a specific workload version, upgrading the charm's revision may include updates to the operator code and/or a minor workload version upgrade.
 
-When upgrading a Charmed Apache Kafka cluster, ensure that no other major operations are performed until the upgrade is complete. This includes, but is not limited to, the following:
+When upgrading a Charmed Apache Kafka K8s cluster, ensure that no other major operations are performed until the upgrade is complete. This includes, but is not limited to, the following:
 
 1. Adding or removing units
 2. Creating or destroying new relations
@@ -32,7 +32,7 @@ When performing an in-place upgrade process, the full process is composed of the
 
 For highly available, stateful applications, it is often desirable to upgrade a single unit first, then pause to perform manual validations before continuing. If the upgrade fails, for example, due to a bug or an unforeseen version incompatibility, the impact is limited to that single unit. When the application is replicated across multiple nodes, this approach ensures no measurable disruption to the production service.
 
-Charmed Apache Kafka exposes the `pause-after-unit-refresh` configuration option to help control this pausing behavior. By default, this option is set to `none`, meaning that a refresh will complete without a pause for manual checks.
+Charmed Apache Kafka K8s exposes the `pause-after-unit-refresh` configuration option to help control this pausing behavior. By default, this option is set to `none`, meaning that a refresh will complete without a pause for manual checks.
 
 To change refresh pausing behavior, set this configuration option **before** triggering a Juju refresh:
 
@@ -53,7 +53,7 @@ This will only pause after the first unit has completed it's upgrade.
 (step-2-collect)=
 ### Step 2: Collect
 
-The second step is to record the revisions of the running application as a safety measure in case a rollback is needed. To check the revisions, run the `juju status` command and find the required Charmed Apache Kafka application. Alternatively, you can retrieve this information with the following command using [yq](https://snapcraft.io/install/yq/ubuntu):
+The second step is to record the revisions of the running application as a safety measure in case a rollback is needed. To check the revisions, run the `juju status` command and find the required Charmed Apache Kafka K8s application. Alternatively, you can retrieve this information with the following command using [yq](https://snapcraft.io/install/yq/ubuntu):
 
 ```shell
 KAFKA_CHARM_REVISION=$(juju status --format json | yq .applications.<KAFKA_APP_NAME>.charm-rev)
@@ -72,7 +72,7 @@ juju run kafka/leader pre-upgrade-check
 Make sure that the output of the action is successful.
 
 ```{note}
-Although optional, this action should always be run before Charmed Apache Kafka upgrades for production deployments.
+Although optional, this action should always be run before Charmed Apache Kafka K8s upgrades for production deployments.
 ```
 
 ### Step 4: Upgrade

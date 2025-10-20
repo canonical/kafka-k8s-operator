@@ -1,7 +1,7 @@
 (reference-performance-tuning)=
 # Performance tuning
 
-This section contains some suggested values to get a better performance from Charmed Apache Kafka.
+This section contains some suggested values to get a better performance from Charmed Apache Kafka K8s.
 
 ## Virtual memory handling (recommended)
 

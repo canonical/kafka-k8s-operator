@@ -1,11 +1,11 @@
 (tutorial-manage-passwords)=
 # 4. Manage passwords
 
-This is a part of the [Charmed Apache Kafka Tutorial](index.md).
+This is a part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 ## Manage passwords
 
-Passwords help to secure the Apache Kafka cluster and are essential for security. Over time it is a good practice to change the password frequently. Here we will go through setting and changing the password both for the `admin` user and external Charmed Apache Kafka users managed by the `data-integrator`.
+Passwords help to secure the Apache Kafka cluster and are essential for security. Over time it is a good practice to change the password frequently. Here we will go through setting and changing the password both for the `admin` user and external Charmed Apache Kafka K8s users managed by the `data-integrator`.
 
 ### The admin user
 
@@ -13,7 +13,7 @@ The admin user password management is handled directly by the charm, by using Ju
 
 #### Retrieve the password
 
-As a reminder, the `admin` password is stored in a Juju secret that was created and managed by the Charmed Apache Kafka application.
+As a reminder, the `admin` password is stored in a Juju secret that was created and managed by the Charmed Apache Kafka K8s application.
 
 Get the current value of the `admin` user password from the secret with following:
 
@@ -23,7 +23,7 @@ juju show-secret --reveal cluster.kafka.app | yq '.. | ."admin-password"? // emp
 
 #### Change the password
 
-You can change the admin password to a new password by creating a new Juju secret, and updating the Charmed Apache Kafka application of the correct secret to use.
+You can change the admin password to a new password by creating a new Juju secret, and updating the Charmed Apache Kafka K8s application of the correct secret to use.
 
 First, create the Juju secret with the new password you wish to use:
 
@@ -33,19 +33,19 @@ juju add-secret internal-kafka-users admin=mynewpassword
 
 Note the generated secret ID that you see as a response. It will look something like `secret:d2lkl00co3bs3dacm300`.
 
-Now, grant Charmed Apache Kafka access to the new secret:
+Now, grant Charmed Apache Kafka K8s access to the new secret:
 
 ```shell
 juju grant-secret internal-kafka-users kafka
 ```
 
-Finally, inform Charmed Apache Kafka of the new secret to use for it's internal system users using the secret ID saved earlier:
+Finally, inform Charmed Apache Kafka K8s of the new secret to use for it's internal system users using the secret ID saved earlier:
 
 ```shell
 juju config kafka system-users=secret:d2lkl00co3bs3dacm300
 ```
 
-Now, Charmed Apache Kafka will be able to read the new `admin` password from the correct secret, and will proceed to apply the new password on each unit with a rolling-restart of the services with the new configuration.
+Now, Charmed Apache Kafka K8s will be able to read the new `admin` password from the correct secret, and will proceed to apply the new password on each unit with a rolling-restart of the services with the new configuration.
 
 ### External Apache Kafka users
 
@@ -68,7 +68,6 @@ kafka:
   tls: disabled
   topic: test-topic
   username: relation-6
-  zookeeper-uris: 10.244.26.121:2181,10.244.26.129:2181,10.244.26.174:2181,10.244.26.251:2181,10.244.26.28:2181/kafka
 ok: "True"
 ```
 
@@ -99,7 +98,6 @@ kafka:
   tls: disabled
   topic: test-topic
   username: relation-11
-  zookeeper-uris: 10.244.26.121:2181,10.244.26.129:2181,10.244.26.174:2181,10.244.26.251:2181,10.244.26.28:2181/kafka
 ok: "True"
 ```
 

@@ -1,7 +1,7 @@
 (tutorial-kafka-connect)=
 # 6. Use Kafka Connect for ETL
 
-This is a part of the [Charmed Apache Kafka Tutorial](index.md).
+This is a part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 ## Using Kafka Connect for ETL
 
@@ -20,7 +20,7 @@ We will be deploying different charmed data solutions including PostgreSQL and O
 
 ### Check current deployment
 
-Up to this point, we should have three units of Charmed Apache Kafka application. That means the `juju status` command should show an output similar to the following:
+Up to this point, we should have three units of Charmed Apache Kafka K8s application. That means the `juju status` command should show an output similar to the following:
 
 ```text
 Model     Controller        Cloud/Region         Version  SLA          Timestamp

@@ -1,17 +1,17 @@
 (tutorial-rebalance-partitions)=
 # 7. Rebalance and reassign partitions
 
-This is a part of the [Charmed Apache Kafka Tutorial](index.md).
+This is a part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 ## Partition rebalancing and reassignment
 
-By default, when adding more brokers to a Charmed Apache Kafka cluster, the current allocated partitions on the original brokers are not automatically redistributed across the new brokers. This can lead to inefficient resource usage and over-provisioning. On the other hand, when removing brokers to reduce capacity, partitions assigned to the removed brokers are also not redistributed, which can result in under-replicated data at best and permanent data loss at worst.
+By default, when adding more brokers to a Charmed Apache Kafka K8s cluster, the current allocated partitions on the original brokers are not automatically redistributed across the new brokers. This can lead to inefficient resource usage and over-provisioning. On the other hand, when removing brokers to reduce capacity, partitions assigned to the removed brokers are also not redistributed, which can result in under-replicated data at best and permanent data loss at worst.
 
 To address this, we can make use of [LinkedIn's Cruise Control](https://github.com/linkedin/cruise-control), which is bundled as part of the Charmed Apache Kafka [snap](https://github.com/canonical/charmed-kafka-snap) and [rock](https://github.com/canonical/charmed-kafka-rock).
 
 At a high level, Cruise Control is made up of the following five components:
 
-- **Workload Monitor** - responsible for the metrics collection from Charmed Apache Kafka
+- **Workload Monitor** - responsible for the metrics collection from Charmed Apache Kafka K8s
 - **Analyser** - generates allocation proposals based on configured [Goals](https://github.com/linkedin/cruise-control?tab=readme-ov-file#goals)
 - **Anomaly Detector** - detects failures in brokers, disks, metrics or goals and (optionally) self-heals
 - **Web server** - a REST API for user operations
@@ -19,7 +19,7 @@ At a high level, Cruise Control is made up of the following five components:
 
 ### Deploying partition balancer
 
-The Charmed Apache Kafka charm has a configuration option `roles`, which takes a list of possible values.
+The Charmed Apache Kafka K8s charm has a configuration option `roles`, which takes a list of possible values.
 Different roles can be configured to run on the same machine, or as separate Juju applications.
 
 The two necessary roles for cluster rebalancing are:
@@ -30,7 +30,7 @@ The two necessary roles for cluster rebalancing are:
 It is recommended to deploy a separate Juju application for running Cruise Control in production environments.
 ```
 
-For the purposes of this tutorial, we will be deploying a single Charmed Apache Kafka unit to serve as the `balancer`:
+For the purposes of this tutorial, we will be deploying a single Charmed Apache Kafka K8s unit to serve as the `balancer`:
 
 ```bash
 juju deploy kafka --config roles=balancer cruise-control

@@ -9,7 +9,7 @@ The minimum supported Juju version is [Juju 3.5+](https://github.com/juju/juju/r
 
 ## Recommended hardware
 
-The below requirements are a good baseline upon which to size your Charmed Apache Kafka applications, but will not be appropriate for every use-case, based on device, data, network and cost constraints.
+The below requirements are a good baseline upon which to size your Charmed Apache Kafka K8s applications, but will not be appropriate for every use-case, based on device, data, network and cost constraints.
 
 Note that while these requirements are recommended for a broad-range of production use-cases, each component can run with much lower requirements for use in staging or test environments.
 

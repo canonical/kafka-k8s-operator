@@ -9,7 +9,7 @@
 Here’s an overview of the steps required with links to our separate tutorials that deal with each individual step:
 
 - [Set up the environment](tutorial-environment)
-- [Deploy Charmed Apache Kafka](tutorial-deploy)
+- [Deploy Charmed Apache Kafka K8s](tutorial-deploy)
 - [Integrate with client applications](tutorial-integrate-with-client-applications)
 - [Manage passwords](tutorial-manage-passwords)
 - [Enable encryption](tutorial-enable-encryption)

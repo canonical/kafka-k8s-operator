@@ -1,14 +1,14 @@
 (tutorial-integrate-with-client-applications)=
 # 3. Integrate with client applications
 
-This is a part of the [Charmed Apache Kafka Tutorial](index.md).
+This is a part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 ## Integrate with client applications
 
 As mentioned in the previous section of the Tutorial, the recommended way to create and manage users is by means of another charm: the [Data Integrator Charm](https://charmhub.io/data-integrator). This lets us to encode users directly in the Juju model, and - as shown in the following - rotate user credentials with and without application downtime using relations.
 
 ```{note}
-Relations, or what Juju documentation describes also as [Integrations](https://documentation.ubuntu.com/juju/3.6/reference/relation/), let two charms to exchange information and interact with one another. Creating a relation between Charmed Apache Kafka and the Data Integrator will automatically generate a username, password, and assign relevant permissions on a given topic. This is the simplest method to create and manage users in Charmed Apache Kafka.
+Relations, or what Juju documentation describes also as [Integrations](https://documentation.ubuntu.com/juju/3.6/reference/relation/), let two charms to exchange information and interact with one another. Creating a relation between Charmed Apache Kafka K8s and the Data Integrator will automatically generate a username, password, and assign relevant permissions on a given topic. This is the simplest method to create and manage users in Charmed Apache Kafka K8s.
 ```
 
 ### Data Integrator charm
@@ -26,9 +26,9 @@ Located charm "data-integrator" in charm-hub, revision 11
 Deploying "data-integrator" from charm-hub charm "data-integrator", revision 11 in channel stable on noble
 ```
 
-### Relate to Charmed Apache Kafka
+### Relate to Charmed Apache Kafka K8s
 
-Now that the Database Integrator charm has been set up, we can relate it to Charmed Apache Kafka. This will automatically create a username, password, and database for the Database Integrator charm. Relate the two applications with:
+Now that the Database Integrator charm has been set up, we can relate it to Charmed Apache Kafka K8s. This will automatically create a username, password, and database for the Database Integrator charm. Relate the two applications with:
 
 ```shell
 juju integrate data-integrator kafka
@@ -177,11 +177,11 @@ python3 -m charms.kafka.v0.client \
   --consumer \
 ```
 
-Now you know how to use credentials provided by related charms to successfully read/write data from Charmed Apache Kafka!
+Now you know how to use credentials provided by related charms to successfully read/write data from Charmed Apache Kafka K8s!
 
 ### Charm client applications
 
-Actually, the Data Integrator is only a very special client charm, that implements the `kafka_client` relation interface for exchanging data with Charmed Apache Kafka and user management via relations. 
+Actually, the Data Integrator is only a very special client charm, that implements the `kafka_client` relation interface for exchanging data with Charmed Apache Kafka K8s and user management via relations. 
 
 For example, the steps above for producing and consuming messages to Apache Kafka have also been implemented in the `kafka-test-app` charm (that also implements the `kafka_client` relation) providing a fully integrated charmed user experience, where producing/consuming messages can simply be achieved using relations.  
 
@@ -240,7 +240,7 @@ Note that the `kafka-test-app` charm can also similarly be used to consume messa
 juju config kafka-test-app topic_name=TOP-PICK role=consumer consumer_group_prefix=cg
 ```
 
-After configuring the Apache Kafka Test App, just relate it again with the Charmed Apache Kafka. This will again create a new user and start the consumer process. 
+After configuring the Apache Kafka Test App, just relate it again with the Charmed Apache Kafka K8s. This will again create a new user and start the consumer process. 
 
 ## What's next?
 

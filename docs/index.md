@@ -29,7 +29,7 @@ easy-to-use application integration, and monitoring.
 
 ## Project and community
 
-Charmed Apache Kafka is a distribution of Apache Kafka. It’s an open-source project that welcomes community contributions, suggestions, fixes and constructive feedback.
+Charmed Apache Kafka K8s is a distribution of Apache Kafka. It’s an open-source project that welcomes community contributions, suggestions, fixes and constructive feedback.
 
 - [Read our Code of Conduct](https://ubuntu.com/community/code-of-conduct)
 - [Join the Discourse forum](https://discourse.charmhub.io/tag/kafka)
@@ -41,7 +41,7 @@ Apache®, Apache Kafka, Kafka®, and the Apache Kafka logo are either registered
 
 ## License
 
-The Charmed Apache Kafka Operator is free software, distributed under the Apache Software License, version 2.0. See [LICENSE](https://github.com/canonical/kafka-operator/blob/main/LICENSE) for more information.
+The Charmed Apache Kafka K8s Operator is free software, distributed under the Apache Software License, version 2.0. See [LICENSE](https://github.com/canonical/kafka-operator/blob/main/LICENSE) for more information.
 
 ```{toctree}
 :titlesonly:

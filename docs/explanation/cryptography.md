@@ -93,7 +93,7 @@ Authentication between brokers and between brokers and KRaft controllers are bas
 on the SCRAM-SHA-512 protocol. Usernames and passwords are exchanged via Juju secrets.
 
 The Apache Kafka username and password, used by brokers and controllers to authenticate one another,
-are stored in JAAS configuration files on the Charmed Apache Kafka units in plain text format.
+are stored in JAAS configuration files on the Charmed Apache Kafka K8s units in plain text format.
 
 These files are readable and writable by `root` (as it is created by the charm) and readable
 by the snap-internal `_daemon_` user running the Apache Kafka server snap commands.

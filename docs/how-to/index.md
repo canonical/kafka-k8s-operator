@@ -1,7 +1,7 @@
 (how-to-index)=
 # How-to guides
 
-The following guides cover key processes and common tasks for Charmed Apache Kafka. If you are missing a particular how-to guide, feel free to leave us feedback via button above, or [contact](reference-contact) directly.
+The following guides cover key processes and common tasks for Charmed Apache Kafka K8s. If you are missing a particular how-to guide, feel free to leave us feedback via button above, or [contact](reference-contact) directly.
 
 ## Deployment
 
@@ -14,7 +14,7 @@ Deployment follows a broadly similar pattern on all platforms, but due to differ
 
 ## Management
 
-For guidance on managing your deployed Charmed Apache Kafka, see:
+For guidance on managing your deployed Charmed Apache Kafka K8s, see:
 
 * [How to manage units](how-to-manage-units)
 * [How to manage client connections](how-to-client-connections)
@@ -31,7 +31,7 @@ See also: our [security overview](explanation-security) page.
 
 ## Monitoring
 
-Monitoring Charmed Apache Kafka is typically done with the [Canonical Observability Stack](https://charmhub.io/topics/canonical-observability-stack).
+Monitoring Charmed Apache Kafka K8s is typically done with the [Canonical Observability Stack](https://charmhub.io/topics/canonical-observability-stack).
 See our How to set up monitoring guide for the following topics:
 
 * [Enable monitoring](how-to-monitoring-enable-monitoring)
@@ -47,7 +47,7 @@ See the guides for more details:
 
 ## Advanced
 
-Advanced features of Charmed Apache Kafka include:
+Advanced features of Charmed Apache Kafka K8s include:
 
 * [Schemas and serialisation](how-to-schemas-serialisation)
 * [Kafka Connect usage](how-to-use-kafka-connect)
@@ -55,7 +55,7 @@ Advanced features of Charmed Apache Kafka include:
 <!-- Alternative landing page prototype
 | | |
 |--|--|
-| **Deployment** </br> Deployment follows a broadly similar pattern on all platforms, but due to differences in the platforms, configuration and deployment must be approached differently in each case. </br> [Common deployment guide](how-to-deploy-deploy-anywhere), [AWS](how-to-deploy-deploy-on-aws), [Azure](how-to-deploy-deploy-on-azure) |**Management** </br> For guidance on managing your deployed Charmed Apache Kafka, see: [How to manage units](how-to-manage-units), [How to manage related applications](how-to-client-connections), [How to Upgrade](how-to-upgrade) | -->
+| **Deployment** </br> Deployment follows a broadly similar pattern on all platforms, but due to differences in the platforms, configuration and deployment must be approached differently in each case. </br> [Common deployment guide](how-to-deploy-deploy-anywhere), [AWS](how-to-deploy-deploy-on-aws), [Azure](how-to-deploy-deploy-on-azure) |**Management** </br> For guidance on managing your deployed Charmed Apache Kafka K8s, see: [How to manage units](how-to-manage-units), [How to manage related applications](how-to-client-connections), [How to Upgrade](how-to-upgrade) | -->
 
 ```{toctree}
 :titlesonly:

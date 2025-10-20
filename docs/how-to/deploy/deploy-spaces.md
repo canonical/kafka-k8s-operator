@@ -1,13 +1,13 @@
 # Deploy on Juju spaces
 
-The Charmed Apache Kafka operator supports [Juju spaces](https://documentation.ubuntu.com/juju/latest/reference/space/index.html) to separate network traffic for:
+The Charmed Apache Kafka K8s operator supports [Juju spaces](https://documentation.ubuntu.com/juju/latest/reference/space/index.html) to separate network traffic for:
 
 - **Internal communications**, including inter-broker and broker-to-controller communications.
 - **Client**, including traffic between broker and clients (producers and consumers).
 
 ## Prerequisites
 
-* Charmed Apache Kafka 4
+* Charmed Apache Kafka K8s 4
 * Configured network spaces
   * See [Juju | `add-space` command reference](https://documentation.ubuntu.com/juju/latest/reference/juju-cli/list-of-juju-cli-commands/add-space/)
 
@@ -24,7 +24,7 @@ client    1         10.0.0.0/24
 peers     2         10.10.10.0/24
 ```
 
-The space `alpha` is the default and cannot be removed. Two other spaces are configured for client and peer (internal) communications. To deploy Charmed Apache Kafka using the mentioned spaces:
+The space `alpha` is the default and cannot be removed. Two other spaces are configured for client and peer (internal) communications. To deploy Charmed Apache Kafka K8s using the mentioned spaces:
 
 ```bash
 juju deploy kafka --channel 4/edge \

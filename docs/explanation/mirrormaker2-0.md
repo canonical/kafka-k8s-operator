@@ -17,6 +17,6 @@ In addition to the [MirrorMaker-specific configuration](https://kafka.apache.org
 
 ## Charmed MirrorMaker integrator
 
-The [MirrorMaker Integrator charm](https://charmhub.io/mirrormaker-connect-integrator) enables the management of Apache Kafka Connect tasks to mirror and replicate topics from one Charmed Apache Kafka application to another.
+The [MirrorMaker Integrator charm](https://charmhub.io/mirrormaker-connect-integrator) enables the management of Apache Kafka Connect tasks to mirror and replicate topics from one Charmed Apache Kafka K8s application to another.
 
 The MirrorMaker application has two endpoints that can be used with a Kafka cluster: `source` and `target`. The `source` endpoint is used to integrate with the active cluster, while the `target` endpoint is used to integrate with the passive cluster.

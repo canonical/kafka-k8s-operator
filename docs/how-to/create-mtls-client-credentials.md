@@ -3,17 +3,17 @@
 
 Requirements:
 
-- Charmed Apache Kafka cluster up and running
+- Charmed Apache Kafka K8s cluster up and running
 - [Encryption enabled](how-to-tls-encryption)
 - [{spellexception}`Java Runtime Environment (JRE)`](https://ubuntu.com/tutorials/install-jre#1-overview) installed
 - [`charmed-kafka` snap](https://snapcraft.io/charmed-kafka) installed
 - [jq](https://snapcraft.io/jq) installed
 
-This guide includes step-by-step instructions on how to create mTLS credentials for a client application to be able to connect to a Charmed Apache Kafka cluster.
+This guide includes step-by-step instructions on how to create mTLS credentials for a client application to be able to connect to a Charmed Apache Kafka K8s cluster.
 
 ## Create mTLS client credentials
 
-Each Apache Kafka mTLS client needs its own TLS certificate, which should be trusted by the Charmed Apache Kafka application. In a typical production environment, certificates are issued either by the organisation's PKI infrastructure, or trusted Certificate Authorities (CAs).
+Each Apache Kafka mTLS client needs its own TLS certificate, which should be trusted by the Charmed Apache Kafka K8s application. In a typical production environment, certificates are issued either by the organisation's PKI infrastructure, or trusted Certificate Authorities (CAs).
 
 To generate a self-signed certificate in one prompt, use the following command:
 
@@ -35,7 +35,7 @@ juju deploy tls-certificates-operator \
     mtls-app
 ```
 
-Next, integrate the operator application with the Charmed Apache Kafka application via the `trusted-certificate` interface:
+Next, integrate the operator application with the Charmed Apache Kafka K8s application via the `trusted-certificate` interface:
 
 ```bash
 juju integrate kafka:trusted-certificate mtls-app
@@ -139,13 +139,13 @@ keytool -list -keystore client.truststore.jks -storepass $KAFKA_CLIENT_TRUSTSTOR
 
 Since you are using TLS certificates for authentication, you need to provide a way to map the client's certificate to usernames defined on the Apache Kafka cluster.
 
-In Charmed Apache Kafka, this is done using the `ssl_principal_mapping_rules` configuration option, which defines how the certificate's common name is translated into a username, using a regex (see [Apache Kafka's official documentation](https://kafka.apache.org/documentation/#security_authz_ssl) for more details on the syntax):
+In Charmed Apache Kafka K8s, this is done using the `ssl_principal_mapping_rules` configuration option, which defines how the certificate's common name is translated into a username, using a regex (see [Apache Kafka's official documentation](https://kafka.apache.org/documentation/#security_authz_ssl) for more details on the syntax):
 
 ```bash
 juju config kafka ssl_principal_mapping_rules='RULE:^.*[Cc][Nn]=([a-zA-Z0-9\.-]*).*$/$1/L,DEFAULT'
 ```
 
-This command will trigger a rolling restart of the charmed Apache Kafka application. Once the application settles to `active|idle` status, you can proceed to the next step.
+This command will trigger a rolling restart of the Charmed Apache Kafka K8s application. Once the application settles to `active|idle` status, you can proceed to the next step.
 
 ## Add authorisation rules via ACLs for the client
 

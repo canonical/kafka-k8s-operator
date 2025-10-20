@@ -1,4 +1,4 @@
-# How to deploy Charmed Apache Kafka
+# How to deploy Charmed Apache Kafka K8s
 
 This guide provides platform-independent deployment instructions.
 For specific guides, see: [AWS](how-to-deploy-deploy-on-aws) and [Azure](how-to-deploy-deploy-on-azure).
@@ -6,18 +6,18 @@ For specific guides, see: [AWS](how-to-deploy-deploy-on-aws) and [Azure](how-to-
 (how-to-deploy-deploy-anywhere)=
 
 ```{caution}
-For K8s Charmed Apache Kafka, see the [Charmed Apache Kafka K8s documentation](https://charmhub.io/kafka-k8s) instead.
+For Charmed Apache Kafka on machine cloud (VM), see the [Charmed Apache Kafka documentation](https://documentation.ubuntu.com/charmed-kafka/4/) instead.
 ```
 
-To deploy a Charmed Apache Kafka cluster on a bare environment, it is necessary to:
+To deploy a Charmed Apache Kafka K8s cluster on a bare environment, it is necessary to:
 
 1. Set up a Juju Controller
 2. Set up a Juju Model
-3. Deploy Charmed Apache Kafka
+3. Deploy Charmed Apache Kafka K8s
 4. Create an external admin user
 
-In the next subsections, we will cover these steps separately by referring to 
-relevant Juju documentation and providing details on the Charmed Apache Kafka specifics.
+In the next subsections, we will cover these steps separately by referring to
+relevant Juju documentation and providing details on the Charmed Apache Kafka K8s specifics.
 If you already have a Juju controller and/or a Juju model, you can skip the associated steps.
 
 ## Juju controller setup
@@ -69,16 +69,16 @@ Make sure that the model is of a correct type (not `k8s`):
 juju show-model | yq '.[].type'
 ```
 
-## Deploy Charmed Apache Kafka for production
+## Deploy Charmed Apache Kafka K8s for production
 
-Charmed Apache Kafka for production use-cases is deployed as follows:
+Charmed Apache Kafka K8s for production use-cases is deployed as follows:
 
 ```shell
 juju deploy kafka -n <broker-units> --config roles=broker --channel 4/edge
 juju deploy kafka -n <controller-units> --config roles=controller --channel 4/edge controller
 ```
 
-- `<broker-units>` -- the number of units to deploy for Charmed Apache Kafka brokers
+- `<broker-units>` -- the number of units to deploy for Charmed Apache Kafka K8s brokers
 - `<controller-units>` -- the number of units to deploy for KRaft controllers
 
 To maintain high-availability of topic partitions, `3+` broker units and `3` or `5` controller units are recommended.
@@ -97,7 +97,7 @@ juju status
 
 The deployment should be complete once all the units show `active` and `idle` status.
 
-## (Alternative) Deploy Charmed Apache Kafka for testing
+## (Alternative) Deploy Charmed Apache Kafka K8s for testing
 
 In order to save resources for very-small, non-production test and staging clusters, it is possible to co-locate both the KRaft controller services and the broker services in to a single application.
 
@@ -105,13 +105,13 @@ In order to save resources for very-small, non-production test and staging clust
 This is not recommended for any production deployments. Apache Kafka brokers rely on the KRaft controllers to coordinate -- if both services go down at the same time, the risk of cluster instability increases
 ```
 
-Charmed Apache Kafka for testing use-cases is deployed as follows:
+Charmed Apache Kafka K8s for testing use-cases is deployed as follows:
 
 ```shell
 juju deploy kafka -n <kafka-units> --config roles=broker,controller --channel 4/edge
 ```
 
-- `<kafka-units>` -- the number of units to deploy for Charmed Apache Kafka
+- `<kafka-units>` -- the number of units to deploy for Charmed Apache Kafka K8s
 
 Check the status of the deployment:
 
@@ -123,7 +123,7 @@ The deployment should be complete once all the units show `active` or `idle` sta
 
 ## (Optional) Create an external admin user
 
-Charmed Apache Kafka aims to follow the _secure by default_ paradigm. As a consequence, after being deployed the Apache Kafka cluster
+Charmed Apache Kafka K8s aims to follow the _secure by default_ paradigm. As a consequence, after being deployed the Apache Kafka cluster
 won't expose any external listeners -- the cluster will be unreachable. Ports are only opened when client applications are integrated.
 
 ```{note}

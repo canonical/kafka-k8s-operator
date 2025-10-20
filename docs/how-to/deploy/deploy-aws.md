@@ -104,7 +104,7 @@ juju model-config logging-config='<root>=INFO;unit=DEBUG'
 ```
 ```
 
-Deploy Charmed Apache Kafka:
+Deploy Charmed Apache Kafka K8s:
 
 ```shell
 juju deploy kafka -n 3 --config roles=broker,controller [--constraints "instance-type=<INSTANCE_TYPE>"]

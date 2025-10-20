@@ -6,12 +6,12 @@ For general Juju unit management process, see the [Juju documentation](https://j
 ## Scaling
 
 ```{note}
-Scaling a Charmed Apache Kafka cluster does not automatically rebalance existing topics and partitions. Rebalancing must be performed manually—before scaling in or after scaling out.
+Scaling a Charmed Apache Kafka K8s cluster does not automatically rebalance existing topics and partitions. Rebalancing must be performed manually—before scaling in or after scaling out.
 ```
 
 ### Add units
 
-To scale-out Charmed Apache Kafka application, add more units:
+To scale-out Charmed Apache Kafka K8s application, add more units:
 
 ```shell
 juju add-unit kafka -n <num_brokers_to_add>
@@ -27,7 +27,7 @@ Make sure to reassign partitions and topics to use newly added units. See below 
 Reassign partitions **before** scaling in to ensure that decommissioned units do not hold any data. Failing to do so may lead to data loss.
 ```
 
-To decrease the number of Apache Kafka brokers, remove some existing units from the Charmed Apache Kafka application:
+To decrease the number of Apache Kafka brokers, remove some existing units from the Charmed Apache Kafka K8s application:
 
 ```shell
 juju remove-unit kafka/1 kafka/2
@@ -45,10 +45,10 @@ Without reassignment or rebalancing:
 * Removing a broker can result in permanent data loss if the partitions are not replicated on another broker.
 
 Partition reassignment can still be done manually by the admin user by using the 
-`charmed-kafka.reassign-partitions` Charmed Apache Kafka bin utility script. 
+`charmed-kafka.reassign-partitions` Charmed Apache Kafka K8s bin utility script. 
 For more information on the script usage, refer to [Apache Kafka documentation](https://kafka.apache.org/documentation/#basic_ops_partitionassignment). 
 
-[LinkedIn’s Cruise Control](https://github.com/linkedin/cruise-control) can be used for semi-automatic rebalancing. For guidance on how to use it with Charmed Apache Kafka, see our [Tutorial](tutorial-rebalance-partitions).
+[LinkedIn’s Cruise Control](https://github.com/linkedin/cruise-control) can be used for semi-automatic rebalancing. For guidance on how to use it with Charmed Apache Kafka K8s, see our [Tutorial](tutorial-rebalance-partitions).
 
 ## Admin utility scripts
 
