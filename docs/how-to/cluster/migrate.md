@@ -17,7 +17,7 @@ To migrate a cluster we need:
   - The cluster needs to be reachable from/to the new Charmed Apache Kafka Connect cluster. 
 - A bootstrapped Juju VM cloud
 - A Charmed Apache Kafka Connect cluster to run the MirrorMaker tasks. For guidance on how to deploy a new Charmed Apache Kafka Connect cluster, see:
-    - The [How-to use Kafka Connect for ETL workloads guide](how-to-use-kafka-connect-for-etl-workloads)
+    - The [How-to use Kafka Connect for ETL workloads guide](how-to-use-kafka-connect)
 - A Charmed Apache Kafka to migrate data to. For guidance on how to deploy a new Charmed Apache Kafka, see:
   - The [Charmed Apache Kafka Tutorial](tutorial-introduction)
   - The [How to deploy guide](how-to-deploy-deploy-anywhere) for Charmed Apache Kafka

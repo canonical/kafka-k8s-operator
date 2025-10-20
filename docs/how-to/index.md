@@ -50,7 +50,7 @@ See the guides for more details:
 Advanced features of Charmed Apache Kafka include:
 
 * [Schemas and serialisation](how-to-schemas-serialisation)
-* [Kafka Connect usage](how-to-use-kafka-connect-for-etl-workloads)
+* [Kafka Connect usage](how-to-use-kafka-connect)
 
 <!-- Alternative landing page prototype
 | | |
