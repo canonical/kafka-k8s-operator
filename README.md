@@ -40,8 +40,8 @@ For more information on how to perform typical tasks, see the How to guides sect
 Charmed Apache Kafka K8s can be deployed as follows:
 
 ```bash
-juju deploy kafka-k8s -n 5 --config roles="controller" controller
-juju deploy kafka-k8s -n 3 --config roles="broker"
+juju deploy kafka-k8s -n 5 --config roles="controller" controller --trust
+juju deploy kafka-k8s -n 3 --config roles="broker" --trust
 ```
 
 After this, it is necessary to integrate them:

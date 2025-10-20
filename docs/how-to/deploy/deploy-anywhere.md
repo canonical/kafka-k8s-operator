@@ -108,7 +108,7 @@ This is not recommended for any production deployments. Apache Kafka brokers rel
 Charmed Apache Kafka K8s for testing use-cases is deployed as follows:
 
 ```shell
-juju deploy kafka-k8s -n <kafka-units> --config roles=broker,controller --channel 4/edge
+juju deploy kafka-k8s -n <kafka-units> --config roles=broker,controller --channel 4/edge --trust
 ```
 
 - `<kafka-units>` -- the number of units to deploy for Charmed Apache Kafka K8s

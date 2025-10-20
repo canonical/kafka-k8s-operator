@@ -41,7 +41,7 @@ juju model-config logging-config="<root>=INFO;unit=DEBUG"
 charmcraft pack
 
 # Deploy the charm
-juju deploy ./*.charm -n 3 --config roles=broker,controller
+juju deploy ./*.charm -n 3 --config roles=broker,controller --trust
 ```
 
 ## Developing
