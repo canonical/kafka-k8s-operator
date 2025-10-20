@@ -27,7 +27,7 @@ juju deploy self-signed-certificates --config ca-common-name="Test CA"
 To enable TLS encryption for client connections with Charmed Apache Kafka K8s, integrate the Charmed Apache Kafka K8s application to the `tls-certificates` provider application via the `certificates` relation interface:
 
 ```bash
-juju integrate kafka:certificates self-signed-certificates
+juju integrate kafka-k8s:certificates self-signed-certificates
 ```
 
 ## (Optional) Trust external CAs for mTLS authentication
@@ -40,7 +40,7 @@ See the [mTLS client encryption](how-to-create-mtls-client-credentials) guide.
 To replace the auto-generated self-signed certificates used for inter-broker and broker-controller communication, integrate the Charmed Apache Kafka K8s applications to the `tls-certificates` provider application via the `peer-certificates` relation interface:
 
 ```bash
-juju integrate kafka:peer-certificates <TLS-provider-charm>
+juju integrate kafka-k8s:peer-certificates <TLS-provider-charm>
 ```
 
 The old self-signed certificates will be removed, and new certificates will be issued using the certificate authority in the provider application. See [Security with x.509 certificates](https://charmhub.io/topics/security-with-x-509-certificates) topic for more information and guidance on selecting a TLS provider charm.
@@ -49,7 +49,7 @@ The old self-signed certificates will be removed, and new certificates will be i
 
 By default, Charmed Apache Kafka K8s applications will generate their own internal private key for identifying brokers for client connections. While this is secure for most production deployments, you may wish to specify your own private key to use. [Juju secrets](https://documentation.ubuntu.com/juju/3.6/reference/secret/) can be provided by users to specify external private keys for certificate signing requests (CSRs) and generated certificates.
 
-First, generate (or otherwise obtain) a private keys for each Charmed Apache Kafka K8s unit. For example, if you have three `kafka` units, generate external private keys for each one:
+First, generate (or otherwise obtain) a private keys for each Charmed Apache Kafka K8s unit. For example, if you have three `kafka-k8s` units, generate external private keys for each one:
 
 ```bash
 openssl genrsa -out kafka-0.key 4096
@@ -88,7 +88,7 @@ secret:d2k6hv8co3bs4tge0c8g
 Finally, update the Charmed Apache Kafka K8s application configuration to notify it of the new secret:
 
 ```bash
-juju config kafka tls-private-key=secret:d2k6hv8co3bs4tge0c8g
+juju config kafka-k8s tls-private-key=secret:d2k6hv8co3bs4tge0c8g
 ```
 
 Charmed Apache Kafka K8s will read the new secret, and re-request new TLS certificates using the externally provided private key created earlier.
@@ -98,5 +98,5 @@ Charmed Apache Kafka K8s will read the new secret, and re-request new TLS certif
 To disable TLS encryption, remove the relation with the `tls-certificates` provider application:
 
 ```bash
-juju remove-relation kafka <tls-certificates>
+juju remove-relation kafka-k8s <tls-certificates>
 ```

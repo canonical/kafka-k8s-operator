@@ -14,7 +14,7 @@ Scaling a Charmed Apache Kafka K8s cluster does not automatically rebalance exis
 To scale-out Charmed Apache Kafka K8s application, add more units:
 
 ```shell
-juju add-unit kafka -n <num_brokers_to_add>
+juju add-unit kafka-k8s -n <num_brokers_to_add>
 ```
 
 See the `juju add-unit` [command reference](https://documentation.ubuntu.com/juju/latest/reference/juju-cli/list-of-juju-cli-commands/add-unit/).
@@ -30,7 +30,7 @@ Reassign partitions **before** scaling in to ensure that decommissioned units do
 To decrease the number of Apache Kafka brokers, remove some existing units from the Charmed Apache Kafka K8s application:
 
 ```shell
-juju remove-unit kafka/1 kafka/2
+juju remove-unit kafka-k8s/1 kafka-k8s/2
 ```
 
 See the `juju remove-unit` [command reference](https://documentation.ubuntu.com/juju/latest/reference/juju-cli/list-of-juju-cli-commands/remove-unit/).
@@ -85,7 +85,7 @@ For Juju admins of the Apache Kafka deployment, the bootstrap servers informatio
 be obtained using:
 
 ```shell
-BOOTSTRAP_SERVERS=$(juju run kafka/leader get-admin-credentials | grep "bootstrap.servers" | cut -d "=" -f 2)
+BOOTSTRAP_SERVERS=$(juju run kafka-k8s/leader get-admin-credentials | grep "bootstrap.servers" | cut -d "=" -f 2)
 ```
 
 Admin client authentication information is stored in the
@@ -93,7 +93,7 @@ Admin client authentication information is stored in the
 The content of the file can be accessed using `juju ssh` command:
 
 ```shell
-juju ssh kafka/leader `cat /etc/kafka/client.properties`
+juju ssh kafka-k8s/leader `cat /etc/kafka/client.properties`
 ```
 
 This file can be provided to the Apache Kafka bin commands via the `--command-config`
@@ -109,7 +109,7 @@ already present. For example, see below.
 To list the current topics on the Apache Kafka cluster, using credentials from inside the cluster, run:
 
 ```shell
-juju ssh kafka/leader 'charmed-kafka.topics --bootstrap-server $BOOTSTRAP_SERVERS --list --command-config /var/snap/charmed-kafka/common/etc/kafka/client.properties'
+juju ssh kafka-k8s/leader 'charmed-kafka.topics --bootstrap-server $BOOTSTRAP_SERVERS --list --command-config /var/snap/charmed-kafka/common/etc/kafka/client.properties'
 ```
 
 The `BOOTSTRAP_SERVERS` variable contains the information we retrieved earlier in the previous section.

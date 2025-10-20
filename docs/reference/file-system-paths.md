@@ -15,7 +15,7 @@ All of the environment variables (`$CONF`, `$BIN`, `$LOGS` and `$DATA`) are writ
 For example, to list the files and directories in the `$LOGS` directory on a particular unit, simply do:
 
 ```shell
-juju ssh kafka/0 sudo -i 'ls $LOGS'
+juju ssh kafka-k8s/0 sudo -i 'ls $LOGS'
 ```
 
 ## Configuration
@@ -48,4 +48,4 @@ juju ssh kafka/0 sudo -i 'ls $LOGS'
 
 - **`$DATA/data/*`** - the `data` storage directory where the raw Apache Kafka message data is persisted to disk
     - Each Juju mounted JBOD storage directory will have an integer identifier matching a subdirectory in `$DATA/data/`
-    - Find these directories with `juju status --storage kafka | grep data/`
+    - Find these directories with `juju status --storage kafka-k8s | grep data/`

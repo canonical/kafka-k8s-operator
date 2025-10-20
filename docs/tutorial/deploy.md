@@ -10,7 +10,7 @@ To deploy Charmed Apache Kafka K8s, all you need to do is run the following comm
 For example, to deploy a cluster of three Apache Kafka brokers, you can simply run:
 
 ```shell
-juju deploy kafka -n 3 --channel 4/edge --roles=broker
+juju deploy kafka-k8s -n 3 --channel 4/edge --roles=broker --trust
 ```
 
 Apache Kafka also uses the KRaft consensus protocol for coordinating broker information, topic + partition metadata and Access Control Lists (ACLs), ran as a quorum of controller nodes using the Raft consensus algorithm.
@@ -24,13 +24,13 @@ Charmed Apache Kafka K8s can run both with `roles=broker` and/or `roles=controll
 To deploy a cluster of three KRaft controllers, run:
 
 ```shell
-juju deploy kafka -n 3 --channel 4/edge --roles=controller kraft
+juju deploy kafka -n 3 --channel 4/edge --roles=controller kraft --trust
 ```
 
 After this, it is necessary to connect the two clusters, taking care to specify which cluster is the orchestrator:
 
 ```shell
-juju integrate kafka:peer-cluster-orchestrator kraft:peer-cluster
+juju integrate kafka-k8s:peer-cluster-orchestrator kraft:peer-cluster
 ```
 
 Juju will now fetch Charmed Apache Kafka K8s and begin deploying both applications to the LXD cloud before connecting them to exchange access credentials and machine endpoints. This process can take several minutes depending on the resources available on your machine. You can track the progress by running:
@@ -49,13 +49,13 @@ Model     Controller        Cloud/Region         Version  SLA          Timestamp
 tutorial  overlord          localhost/localhost  3.6.8    unsupported  15:53:00Z
 
 App    Version  Status  Scale  Charm  Channel  Rev  Exposed  Message
-kafka  4.0.0    active      3  kafka  4/edge   226  no       
-kraft  4.0.0    active      3  kafka  4/edge   226  no       
+kafka-k8s  4.0.0    active      3  kafka-k8s  4/edge   226  no       
+kraft  4.0.0    active      3  kafka-k8s  4/edge   226  no       
 
 Unit      Workload  Agent  Machine  Public address  Ports      Message
-kafka/0*  active    idle   0        10.233.204.241  19093/tcp  
-kafka/1   active    idle   1        10.233.204.196  19093/tcp  
-kafka/2   active    idle   2        10.233.204.148  19093/tcp  
+kafka-k8s/0*  active    idle   0        10.233.204.241  19093/tcp  
+kafka-k8s/1   active    idle   1        10.233.204.196  19093/tcp  
+kafka-k8s/2   active    idle   2        10.233.204.148  19093/tcp  
 kraft/0   active    idle   3        10.233.204.125  9098/tcp   
 kraft/1*  active    idle   4        10.233.204.36   9098/tcp   
 kraft/2   active    idle   5        10.233.204.225  9098/tcp   
@@ -116,10 +116,10 @@ When no other application is integrated to Charmed Apache Kafka K8s, the cluster
 
 We will also need a bootstrap server Apache Kafka broker address and port to initially connect to. When any application connects for the first time to a `bootstrap-server`, the client will automatically make a metadata request that returns the full set of Apache Kafka brokers with their addresses and ports.
 
-To use `kafka/0` as the `bootstrap-server`, retrieve its IP address and add a port with:
+To use `kafka-k8s/0` as the `bootstrap-server`, retrieve its IP address and add a port with:
 
 ```shell
-bootstrap_address=$(juju show-unit kafka/0 | yq '.. | ."public-address"? // empty' | tr -d '"')
+bootstrap_address=$(juju show-unit kafka-k8s/0 | yq '.. | ."public-address"? // empty' | tr -d '"')
 
 export BOOTSTRAP_SERVER=$bootstrap_address:19093
 ```
@@ -131,10 +131,10 @@ It is always possible to run a command from within the Apache Kafka cluster usin
 To jump in to a running Charmed Apache Kafka K8s unit and run a command, for example listing files in a directory, you can do the following:
 
 ```shell
-juju ssh kafka/leader sudo -i "ls \$BIN/bin"
+juju ssh kafka-k8s/leader sudo -i "ls \$BIN/bin"
 ```
 
-where the printed result will be the output from the `ls \$BIN/bin` command being executed on the `kafka` leader unit.
+where the printed result will be the output from the `ls \$BIN/bin` command being executed on the `kafka-k8s` leader unit.
 
 ```{note}
 Charmed Apache Kafka K8s exports (among others) four different environment variables for conveniently referencing various file-system directories relevant to the workload, `$BIN`, `$LOGS`, `$CONF` and `$DATA` - more information on these directories can be found in [File system paths](reference-file-system-paths).
@@ -147,7 +147,7 @@ Within the machine, Charmed Apache Kafka K8s also creates a `$CONF/client.proper
 For example, in order to create a topic, you can run:
 
 ```shell
-juju ssh kafka/0 sudo -i \
+juju ssh kafka-k8s/0 sudo -i \
     "charmed-kafka.topics \
         --create \
         --topic test-topic \
@@ -158,7 +158,7 @@ juju ssh kafka/0 sudo -i \
 You can similarly then list the topic, using:
 
 ```shell
-juju ssh kafka/0 sudo -i \
+juju ssh kafka-k8s/0 sudo -i \
     "charmed-kafka.topics \
         --list \
         --bootstrap-server $BOOTSTRAP_SERVER \
@@ -170,7 +170,7 @@ making sure the topic was successfully created.
 You can finally delete the topic, using:
 
 ```shell
-juju ssh kafka/0 sudo -i \
+juju ssh kafka-k8s/0 sudo -i \
     "charmed-kafka.topics \
         --delete \
         --topic test-topic \

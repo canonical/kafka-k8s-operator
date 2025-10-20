@@ -156,23 +156,22 @@ juju run data-integrator/leader get-credentials --wait
 The output looks like this:
 
 ```yaml
-unit-data-integrator-0:                                                         
-  UnitId: data-integrator/0                                                     
-  id: "4"                                                                       
-  results:                                                                      
-    kafka:                                                                      
-      consumer-group-prefix: relation-27-                                       
-      endpoints: 10.123.8.133:19092                                             
-      password: ejMp4SblzxkMCF0yUXjaspneflXqcyXK                                
-      tls: disabled                                                             
-      username: relation-27                                                     
-      zookeeper-uris: 10.123.8.154:2181,10.123.8.181:2181,10.123.8.61:2181/kafka
-    ok: "True"                                                                  
-  status: completed                                                             
-  timing:                                                                       
-    completed: 2023-01-27 14:22:51 +0000 UTC                                    
-    enqueued: 2023-01-27 14:22:50 +0000 UTC                                     
-    started: 2023-01-27 14:22:51 +0000 UTC                                      
+unit-data-integrator-0:
+  UnitId: data-integrator/0
+  id: "4"
+  results:
+    kafka:
+      consumer-group-prefix: relation-27- 
+      endpoints: 10.123.8.133:19092
+      password: ejMp4SblzxkMCF0yUXjaspneflXqcyXK 
+      tls: disabled 
+      username: relation-27 
+    ok: "True"
+  status: completed
+  timing:
+    completed: 2023-01-27 14:22:51 +0000 UTC 
+    enqueued: 2023-01-27 14:22:50 +0000 UTC
+    started: 2023-01-27 14:22:51 +0000 UTC
 ```
 
 ### The tls-certificates interface
@@ -248,7 +247,7 @@ After this is complete, Grafana will show two new dashboards: `Kafka Metrics` an
 ## Security
 
 For an overview of security features of the Charmed Apache Kafka K8s,
-see the [Security page](https://canonical.com/data/docs/kafka/k8s/e-security)
+see the [Security page](https://documentation.ubuntu.com/charmed-kafka-k8s/4/explanation/security/)
 in the Explanation section of the documentation.
 
 Security issues in the Charmed Apache Kafka K8s can be reported through

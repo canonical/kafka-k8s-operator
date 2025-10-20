@@ -40,7 +40,7 @@ When the `data-integrator` charm integrates to a `kafka-k8s` application on the 
 Kafka Connect also needs to be integrated to the `kafka-k8s` application to be granted permissions and endpoints to connect to Charmed Apache Kafka K8s:
 
 ```bash
-juju integrate kafka-connect kafka
+juju integrate kafka-connect kafka-k8s
 ```
 
 As we will need full access to both Kafka clusters, we will use credentials provided to the `data-integrator`. Get the SASL credentials to connect to the target Apache Kafka cluster:

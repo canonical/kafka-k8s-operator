@@ -45,7 +45,7 @@ Machine  State    Address         Inst id        Base          AZ  Message
 To enable TLS on Charmed Apache Kafka K8s, integrate with `self-signed-certificates` charm:
 
 ```shell
-juju integrate kafka:certificates self-signed-certificates
+juju integrate kafka-k8s:certificates self-signed-certificates
 ```
 
 After the charms settle into `active/idle` states, the Apache Kafka listeners should now have been swapped to the 
@@ -64,7 +64,7 @@ the correct port and trust the self-signed CA provided by the `self-signed-certi
 Make sure that the `kafka-test-app` is not connected to the Charmed Apache Kafka K8s, by removing the relation if it exists:
 
 ```shell
-juju remove-relation kafka-test-app kafka
+juju remove-relation kafka-test-app kafka-k8s
 ```
 
 Then, enable encryption on the `kafka-test-app` by relating with the `self-signed-certificates` charm:
@@ -80,7 +80,7 @@ here with the unencrypted workflow):
 juju config kafka-test-app topic_name=HOT-TOPIC role=producer num_messages=25
 ```
 
-Then integrate with the `kafka` cluster:
+Then integrate with the `kafka-k8s` cluster:
 
 ```shell
 juju integrate kafka-k8s kafka-test-app
@@ -101,7 +101,7 @@ with the encrypted port `9093`.
 To remove the external TLS and return to the locally generated one, remove relation with certificates provider:
 
 ```shell
-juju remove-relation kafka self-signed-certificates
+juju remove-relation kafka-k8s self-signed-certificates
 ```
 
 The Charmed Apache Kafka K8s application is not using TLS anymore for client connections.

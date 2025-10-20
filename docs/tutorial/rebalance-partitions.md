@@ -33,7 +33,7 @@ It is recommended to deploy a separate Juju application for running Cruise Contr
 For the purposes of this tutorial, we will be deploying a single Charmed Apache Kafka K8s unit to serve as the `balancer`:
 
 ```bash
-juju deploy kafka --config roles=balancer cruise-control
+juju deploy kafka-k8s --config roles=balancer cruise-control --trust
 ```
 
 Earlier in the tutorial, we covered enabling TLS encryption, so we will repeat that step here for the new `cruise-control` application:
@@ -45,21 +45,21 @@ juju integrate cruise-control:certificates self-signed-certificates
 Now, to make the new `cruise-control` application aware of the existing Apache Kafka cluster, we will integrate the two applications using the `peer_cluster` relation interface, ensuring that the `broker` cluster is using the `peer-cluster` relation-endpoint, and the `balancer` cluster is using the `peer-cluster-orchestrator` relation-endpoint:
 
 ```bash
-juju integrate kafka:peer-cluster-orchestrator cruise-control:peer-cluster
+juju integrate kafka-k8s:peer-cluster-orchestrator cruise-control:peer-cluster
 ```
 
 ### Adding new brokers
 
-After completing the steps in the [Integrate with client applications](integrate-with-client-applications) tutorial page, you should have three `kafka` units and a client application actively writing messages to an existing topic. Let's scale-out the `kafka` application to four units:
+After completing the steps in the [Integrate with client applications](integrate-with-client-applications) tutorial page, you should have three `kafka-k8s` units and a client application actively writing messages to an existing topic. Let's scale-out the `kafka-k8s` application to four units:
 
 ```bash
-juju add-unit kafka 4
+juju scale-application kafka-k8s 4
 ```
 
 By default, no partitions are allocated for the new unit `3`. You can see that by checking the log directory assignment:
 
 ```bash
-juju ssh kafka/leader sudo -i \
+juju ssh kafka-k8s/leader sudo -i \
     'charmed-kafka.log-dirs' \
     '--describe' \
     '--bootstrap-server <unit-ip>:9093' \
@@ -134,7 +134,7 @@ unit-cruise-control-0: 22:19:12 INFO unit.cruise-control/0.juju-log Waiting for 
 Once the action is complete, verify the partitions using the same commands as before:
 
 ```bash
-juju ssh kafka/leader sudo -i \
+juju ssh kafka-k8s/leader sudo -i \
     'charmed-kafka.log-dirs' \
     '--describe' \
     '--bootstrap-server <unit-ip>:9093' \
@@ -183,7 +183,7 @@ This does not remove the unit, but moves the partitions from the broker on unit 
 Once the action has been completed, verify that broker `3` no longer has any assigned partitions:
 
 ```bash
-juju ssh kafka/leader sudo -i \
+juju ssh kafka-k8s/leader sudo -i \
     'charmed-kafka.log-dirs' \
     '--describe' \
     '--bootstrap-server <unit-ip>:9093' \
@@ -210,7 +210,7 @@ Make sure that broker `3` now has no partitions assigned, for example:
 Now, it is safe to scale-in the cluster, removing the broker number `3` completely:
 
 ```bash
-juju remove-unit kafka/3
+juju remove-unit kafka-k8s/3
 ```
 
 ### Full cluster rebalancing

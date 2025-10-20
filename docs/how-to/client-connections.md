@@ -8,13 +8,13 @@ Relations to new applications are supported via the "[{spellexception}`kafka_cli
 If the charm supports the `kafka_client` relation interface, just create an integration between the two charms:
 
 ```shell
-juju integrate kafka application
+juju integrate kafka-k8s application
 ```
 
 To remove a relation:
 
 ```shell
-juju remove-relation kafka application
+juju remove-relation kafka-k8s application
 ```
 
 ## Non-charmed applications and external clients
@@ -31,7 +31,7 @@ juju config data-integrator topic-name=test-topic extra-user-roles=producer,cons
 Integrate the two applications with:
 
 ```shell
-juju integrate data-integrator kafka
+juju integrate data-integrator kafka-k8s
 ```
 
 To retrieve information, enter:
@@ -63,13 +63,13 @@ There are two ways to rotate credentials of an external client. One is simply to
 #### With client application downtime
 
 The easiest way to rotate user credentials of client applications is by removing and then re-relating 
-the application (either a charm supporting the `kafka-client` interface or a `data-integrator`) with the `kafka` charm:
+the application (either a charm supporting the `kafka-client` interface or a `data-integrator`) with the `kafka-k8s` charm:
 
 ```shell
-juju remove-relation kafka <charm-or-data-integrator>
+juju remove-relation kafka-k8s <charm-or-data-integrator>
 
 # wait for the relation to be torn down 
-juju integrate kafka <charm-or-data-integrator>
+juju integrate kafka-k8s <charm-or-data-integrator>
 ```
 
 The successful credential rotation can be confirmed by retrieving the new password with the action `get-credentials`.

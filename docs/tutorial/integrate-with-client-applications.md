@@ -42,14 +42,14 @@ tutorial  overlord          localhost/localhost  3.6.8    unsupported  17:00:08Z
 
 App              Version  Status  Scale  Charm            Channel        Rev  Exposed  Message
 data-integrator           active      1  data-integrator  latest/stable  180  no       
-kafka            4.0.0    active      3  kafka            4/edge         226  no       
-kraft            4.0.0    active      3  kafka            4/edge         226  no       
+kafka-k8s            4.0.0    active      3  kafka-k8s            4/edge         226  no       
+kraft            4.0.0    active      3  kafka-k8s            4/edge         226  no       
 
 Unit                Workload  Agent  Machine  Public address  Ports           Message
 data-integrator/0*  active    idle   6        10.233.204.111                  
-kafka/0*            active    idle   0        10.233.204.241  9092,19093/tcp  
-kafka/1             active    idle   1        10.233.204.196  9092,19093/tcp  
-kafka/2             active    idle   2        10.233.204.148  9092,19093/tcp  
+kafka-k8s/0*            active    idle   0        10.233.204.241  9092,19093/tcp  
+kafka-k8s/1             active    idle   1        10.233.204.196  9092,19093/tcp  
+kafka-k8s/2             active    idle   2        10.233.204.148  9092,19093/tcp  
 kraft/0             active    idle   3        10.233.204.125  9098/tcp        
 kraft/1*            active    idle   4        10.233.204.36   9098/tcp        
 kraft/2             active    idle   5        10.233.204.225  9098/tcp        
@@ -228,7 +228,7 @@ juju exec --application kafka-test-app "tail /tmp/*.log"
 To stop the process (although it is very likely that the process has already stopped given the low number of messages that were provided) and remove the user, you can just remove the relation:
 
 ```shell
-juju remove-relation kafka-test-app kafka
+juju remove-relation kafka-test-app kafka-k8s
 ```
 
 #### Consuming messages

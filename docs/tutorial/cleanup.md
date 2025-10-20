@@ -41,5 +41,5 @@ If you're looking for what to do next you can:
 - Read about [High Availability Best Practices](https://canonical.com/blog/database-high-availability)
 - [Report](https://github.com/canonical/kafka-operator/issues) any problems you encountered.
 - [Give us your feedback](https://matrix.to/#/#charmhub-data-platform:ubuntu.com).
-- [Contribute to the code base](https://github.com/canonical/kafka-operator)
+- [Contribute to the code base](https://github.com/canonical/kafka-k8s-operator)
 

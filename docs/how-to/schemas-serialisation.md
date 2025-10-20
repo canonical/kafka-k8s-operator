@@ -13,7 +13,7 @@ To deploy Karapace and integrate it with Apache Kafka, use the following command
 
 ```bash
 juju deploy karapace --channel latest/edge
-juju integrate karapace kafka
+juju integrate karapace kafka-k8s
 ```
 
 Once deployed, the password to access the Karapace REST API can be obtained:

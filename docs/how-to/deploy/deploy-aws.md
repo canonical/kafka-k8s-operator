@@ -97,17 +97,17 @@ Create a new Juju model, if needed:
 juju add-model <MODEL_NAME>
 ```
 
-```{caution}
+````{caution}
 (Optional) Increase the debug level if you are troubleshooting charms:
 ```shell
 juju model-config logging-config='<root>=INFO;unit=DEBUG'
 ```
-```
+````
 
 Deploy Charmed Apache Kafka K8s:
 
 ```shell
-juju deploy kafka -n 3 --config roles=broker,controller [--constraints "instance-type=<INSTANCE_TYPE>"]
+juju deploy kafka-k8s -n 3 --config roles=broker,controller [--constraints "instance-type=<INSTANCE_TYPE>"] --trust
 ```
 
 ```{caution}
@@ -127,7 +127,7 @@ juju deploy data-integrator \
 And integrate it with the Kafka application:
 
 ```shell
-juju integrate kafka data-integrator
+juju integrate kafka-k8s data-integrator
 ```
 
 For more information on Data Integrator and how to use it, please refer to the [how-to manage client connections](how-to-client-connections) guide.

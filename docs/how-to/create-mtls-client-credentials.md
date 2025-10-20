@@ -38,7 +38,7 @@ juju deploy tls-certificates-operator \
 Next, integrate the operator application with the Charmed Apache Kafka K8s application via the `trusted-certificate` interface:
 
 ```bash
-juju integrate kafka:trusted-certificate mtls-app
+juju integrate kafka-k8s:trusted-certificate mtls-app
 ```
 
 ## Retrieve broker's CA certificate
@@ -142,7 +142,7 @@ Since you are using TLS certificates for authentication, you need to provide a w
 In Charmed Apache Kafka K8s, this is done using the `ssl_principal_mapping_rules` configuration option, which defines how the certificate's common name is translated into a username, using a regex (see [Apache Kafka's official documentation](https://kafka.apache.org/documentation/#security_authz_ssl) for more details on the syntax):
 
 ```bash
-juju config kafka ssl_principal_mapping_rules='RULE:^.*[Cc][Nn]=([a-zA-Z0-9\.-]*).*$/$1/L,DEFAULT'
+juju config kafka-k8s ssl_principal_mapping_rules='RULE:^.*[Cc][Nn]=([a-zA-Z0-9\.-]*).*$/$1/L,DEFAULT'
 ```
 
 This command will trigger a rolling restart of the Charmed Apache Kafka K8s application. Once the application settles to `active|idle` status, you can proceed to the next step.
@@ -152,7 +152,7 @@ This command will trigger a rolling restart of the Charmed Apache Kafka K8s appl
 To add authorisation rules for the mTLS client, first save the broker's connection information and configuration path into some environment variables:
 
 ```bash
-BROKER_IP=$(juju show-unit kafka/0 --format json | jq -r '."kafka/0"."public-address"')
+BROKER_IP=$(juju show-unit kafka-k8s/0 --format json | jq -r '."kafka-k8s/0"."public-address"')
 KAFKA_SERVERS_SASL="$BROKER_IP:19093"
 KAFKA_SERVERS_MTLS="$BROKER_IP:9094"
 SNAP_KAFKA_PATH=/var/snap/charmed-kafka/current/etc/kafka
@@ -169,7 +169,7 @@ KAFKA_CLIENT_MTLS_CN=testclient
 Finally, grant read and write privileges to the mTLS client user over `--group`, `--topic` and `--transactional-id` resources:
 
 ```bash
-juju ssh kafka/leader "
+juju ssh kafka-k8s/leader "
 sudo charmed-kafka.acls --bootstrap-server $KAFKA_SERVERS_SASL --command-config $SNAP_KAFKA_PATH/client.properties \
 --add --allow-principal User:$KAFKA_CLIENT_MTLS_CN \
 --operation READ --operation DESCRIBE --group='*'

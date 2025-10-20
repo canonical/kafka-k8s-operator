@@ -19,7 +19,7 @@ To deploy [Kafka Connect charm](https://charmhub.io/kafka-connect) and integrate
 
 ```bash
 juju deploy kafka-connect --channel edge
-juju integrate kafka-connect kafka
+juju integrate kafka-connect kafka-k8s
 ```
 
 ## Use REST API
@@ -34,13 +34,13 @@ juju add-secret mysecret admin=<secure-password>
 
 You will receive a secret-id in response. Make sure to note it down, as you will need to configure it for the Kafka Connect charm shortly. It looks like this:
 
-```
+```text
 secret:cvh7kruupa1s46bqvuig
 ```
 
 Now, grant the secret to the Kafka Connect charm using `juju grant-secret` command:
 
-```
+```bash
 juju grant-secret mysecret kafka-connect
 ```
 

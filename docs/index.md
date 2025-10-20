@@ -33,7 +33,7 @@ Charmed Apache Kafka K8s is a distribution of Apache Kafka. It’s an open-sourc
 
 - [Read our Code of Conduct](https://ubuntu.com/community/code-of-conduct)
 - [Join the Discourse forum](https://discourse.charmhub.io/tag/kafka)
-- [Contribute](https://github.com/canonical/kafka-operator/blob/main/CONTRIBUTING.md) and report [issues](https://github.com/canonical/kafka-operator/issues/new)
+- [Contribute](https://github.com/canonical/kafka-k8s-operator/blob/main/CONTRIBUTING.md) and report [issues](https://github.com/canonical/kafka-operator/issues/new)
 - Explore [Canonical Data Fabric solutions](https://canonical.com/data)
 - [Contact us](https://discourse.charmhub.io/t/13107) for all further questions
 
@@ -41,7 +41,7 @@ Apache®, Apache Kafka, Kafka®, and the Apache Kafka logo are either registered
 
 ## License
 
-The Charmed Apache Kafka K8s Operator is free software, distributed under the Apache Software License, version 2.0. See [LICENSE](https://github.com/canonical/kafka-operator/blob/main/LICENSE) for more information.
+The Charmed Apache Kafka K8s Operator is free software, distributed under the Apache Software License, version 2.0. See [LICENSE](https://github.com/canonical/kafka-k8s-operator/blob/main/LICENSE) for more information.
 
 ```{toctree}
 :titlesonly:

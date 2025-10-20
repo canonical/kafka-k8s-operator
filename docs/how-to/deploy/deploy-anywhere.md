@@ -74,8 +74,8 @@ juju show-model | yq '.[].type'
 Charmed Apache Kafka K8s for production use-cases is deployed as follows:
 
 ```shell
-juju deploy kafka -n <broker-units> --config roles=broker --channel 4/edge
-juju deploy kafka -n <controller-units> --config roles=controller --channel 4/edge controller
+juju deploy kafka-k8s -n <broker-units> --config roles=broker --channel 4/edge --trust
+juju deploy kafka-k8s -n <controller-units> --config roles=controller --channel 4/edge controller --trust
 ```
 
 - `<broker-units>` -- the number of units to deploy for Charmed Apache Kafka K8s brokers
@@ -86,7 +86,7 @@ To maintain high-availability of topic partitions, `3+` broker units and `3` or 
 To exchange credentials and endpoints between the two clusters, integrate the broker and controller applications:
 
 ```shell
-juju integrate kafka:peer-cluster-orchestrator controller:peer-cluster
+juju integrate kafka-k8s:peer-cluster-orchestrator controller:peer-cluster
 ```
 
 Check the status of the deployment:
@@ -108,7 +108,7 @@ This is not recommended for any production deployments. Apache Kafka brokers rel
 Charmed Apache Kafka K8s for testing use-cases is deployed as follows:
 
 ```shell
-juju deploy kafka -n <kafka-units> --config roles=broker,controller --channel 4/edge
+juju deploy kafka-k8s -n <kafka-units> --config roles=broker,controller --channel 4/edge
 ```
 
 - `<kafka-units>` -- the number of units to deploy for Charmed Apache Kafka K8s

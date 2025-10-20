@@ -27,9 +27,10 @@ peers     2         10.10.10.0/24
 The space `alpha` is the default and cannot be removed. Two other spaces are configured for client and peer (internal) communications. To deploy Charmed Apache Kafka K8s using the mentioned spaces:
 
 ```bash
-juju deploy kafka --channel 4/edge \
+juju deploy kafka-k8s --channel 4/edge \
   --constraints spaces=client,peers \
-  --bind "cluster=peers kafka-client=clients"
+  --bind "cluster=peers kafka-client=clients" \
+  --trust
 ```
 
 ```{caution}
@@ -47,7 +48,7 @@ juju deploy kafka-test-app \
 The two application can then be integrated using:
 
 ```bash
-juju integrate kafka kafka-test-app
+juju integrate kafka-k8s kafka-test-app
 ```
 
 As a result, the client application will receive network endpoints on the subnets prescribed by the Juju space `client`, while the Apache Kafka cluster will use the `peers` space for internal communications. In the previous example, those are `10.0.0.0/24` and `10.10.10.0/24` subnets respectively. 

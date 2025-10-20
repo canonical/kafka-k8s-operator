@@ -28,15 +28,15 @@ tutorial  overlord          localhost/localhost  3.6.8    unsupported  01:02:27Z
 
 App                       Version  Status  Scale  Charm                     Channel        Rev  Exposed  Message
 data-integrator                    active      1  data-integrator           latest/stable  180  no       
-kafka                     4.0.0    active      3  kafka                     4/edge         226  no       
-kraft                     4.0.0    active      3  kafka                     4/edge         226  no       
+kafka-k8s                     4.0.0    active      3  kafka-k8s                     4/edge         226  no       
+kraft                     4.0.0    active      3  kafka-k8s                     4/edge         226  no       
 self-signed-certificates           active      1  self-signed-certificates  1/edge         336  no       
 
 Unit                         Workload  Agent  Machine  Public address  Ports           Message
 data-integrator/0*           active    idle   6        10.233.204.111                  
-kafka/0*                     active    idle   0        10.233.204.241  9093,19093/tcp  
-kafka/1                      active    idle   1        10.233.204.196  9093,19093/tcp  
-kafka/2                      active    idle   2        10.233.204.148  9093,19093/tcp  
+kafka-k8s/0*                     active    idle   0        10.233.204.241  9093,19093/tcp  
+kafka-k8s/1                      active    idle   1        10.233.204.196  9093,19093/tcp  
+kafka-k8s/2                      active    idle   2        10.233.204.148  9093,19093/tcp  
 kraft/0                      active    idle   3        10.233.204.125  9098/tcp        
 kraft/1*                     active    idle   4        10.233.204.36   9098/tcp        
 kraft/2                      active    idle   5        10.233.204.225  9098/tcp        
@@ -99,7 +99,7 @@ juju integrate opensearch self-signed-certificates
 Then, activate the Kafka Connect application by integrating it with the Apache Kafka application:
 
 ```bash
-juju integrate kafka kafka-connect
+juju integrate kafka-k8s kafka-connect
 ```
 
 Finally, since we will be using TLS on the Kafka Connect interface, integrate the Kafka Connect application with the TLS operator:
@@ -116,8 +116,8 @@ tutorial  overlord          localhost/localhost  3.6.8    unsupported  01:02:27Z
 
 App                       Version  Status  Scale  Charm                     Channel        Rev  Exposed  Message
 data-integrator                    active      1  data-integrator           latest/stable  180  no       
-kafka                     4.0.0    active      3  kafka                     4/edge         226  no       
-kraft                     4.0.0    active      3  kafka                     4/edge         226  no       
+kafka-k8s                     4.0.0    active      3  kafka-k8s                     4/edge         226  no       
+kraft                     4.0.0    active      3  kafka-k8s                     4/edge         226  no       
 opensearch                         active      1  opensearch                2/edge         218  no       
 postgresql                14.15    active      1  postgresql                14/stable      553  no       
 
@@ -127,9 +127,9 @@ Unit                         Workload  Agent  Machine  Public address  Ports    
 data-integrator/0*           active    idle   6        10.233.204.111                  
 opensearch/0*                active    idle   11       10.233.204.172  9200/tcp  
 postgresql/0*                active    idle   12       10.233.204.121  5432/tcp        Primary
-kafka/0*                     active    idle   0        10.233.204.241  9093,19093/tcp  
-kafka/1                      active    idle   1        10.233.204.196  9093,19093/tcp  
-kafka/2                      active    idle   2        10.233.204.148  9093,19093/tcp  
+kafka-k8s/0*                     active    idle   0        10.233.204.241  9093,19093/tcp  
+kafka-k8s/1                      active    idle   1        10.233.204.196  9093,19093/tcp  
+kafka-k8s/2                      active    idle   2        10.233.204.148  9093,19093/tcp  
 kraft/0                      active    idle   3        10.233.204.125  9098/tcp        
 kraft/1*                     active    idle   4        10.233.204.36   9098/tcp        
 kraft/2                      active    idle   5        10.233.204.225  9098/tcp        
