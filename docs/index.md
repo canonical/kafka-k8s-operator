@@ -1,31 +1,31 @@
 (index)=
 
 ```{note}
-This is a **IAAS/VM** operator. To deploy on Kubernetes, see [Charmed Apache Kafka K8s operator](https://charmhub.io/kafka-k8s).
+This is a **Kubernetes** operator.
+To deploy on IAAS/VM, see [Charmed Apache Kafka operator](https://charmhub.io/kafka).
 ```
 
-# Charmed Apache Kafka documentation
+# Charmed Apache Kafka K8s documentation
 
-Charmed Apache Kafka is an open-source operator that makes it easier to manage Apache Kafka, with built-in support for enterprise features. 
+Charmed Apache Kafka K8s is an open-source software operator, packaged as a
+[Juju charm](https://documentation.ubuntu.com/juju/3.6/reference/charm/),
+that simplifies the deployment, scaling, and management of Apache Kafka clusters
+on Kubernetes.
 
-Apache Kafka is a free, open-source software project by the Apache Software Foundation. Users can find out more at the [Apache Kafka project page](https://kafka.apache.org).
+[Apache Kafka](https://kafka.apache.org) is a free, open-source software project
+by the Apache Software Foundation.
 
-Charmed Apache Kafka is built on top of [Juju](https://juju.is/) and reliably simplifies the deployment, scaling, design, and management of [Apache Kafka](https://kafka.apache.org/) in production. Additionally, you can use the charm to manage your Apache Kafka clusters with automation capabilities. It also offers replication, TLS, password rotation, easy-to-use application integration, and monitoring.
-Charmed Apache Kafka operates Apache Kafka on physical systems, Virtual Machines (VM), and a wide range of cloud and cloud-like environments, including AWS, Azure, OpenStack, and VMware. 
-
-Charmed Apache Kafka is a solution designed and developed to help ops teams and 
-administrators automate Apache Kafka operations from [Day 0 to Day 2](https://codilime.com/blog/day-0-day-1-day-2-the-software-lifecycle-in-the-cloud-age/), across multiple cloud environments and platforms.
-
-Charmed Apache Kafka is developed and supported by [Canonical](https://canonical.com/), as part of its commitment to 
-provide open-source, self-driving solutions, seamlessly integrated using the Operator Framework Juju. Please 
-refer to [Charmhub](https://charmhub.io/), for more charmed operators that can be integrated by [Juju](https://juju.is/).
+The charm helps ops teams and administrators automate Apache Kafka operations from
+[Day 0 to Day 2](https://codilime.com/blog/day-0-day-1-day-2-the-software-lifecycle-in-the-cloud-age/)
+with additional capabilities, such as: replication, TLS encryption, password rotation,
+easy-to-use application integration, and monitoring.
 
 ## In this documentation
 
 | | |
 |--|--|
-|  [Tutorial](tutorial-introduction)</br>  Get started - a hands-on introduction to using Charmed Apache Kafka operator for new users </br> |  [How-to guides](how-to/manage-units) </br> Step-by-step guides covering key operations and common tasks |
-| [Reference](reference/file-system-paths) </br> Technical information - specifications, APIs, architecture | [Explanation](explanation/security) </br> Concepts - discussion and clarification of key topics  |
+|  [Tutorial](tutorial-introduction)</br>  Learn how to deploy, configure, and use the charm with our step-by-step guidance. Get started from [step one](tutorial-environment). </br> |  [How-to guides](how-to-index) </br> Practical instructions for key tasks, like [deploy](how-to-deploy-index) on different platforms, [manage](how-to-manage-units) Juju units, [Monitor](how-to-monitoring-enable-monitoring) metrics, use [Kafka Connect](how-to-use-kafka-connect). |
+| [Reference](reference-index) </br> Technical information, for example: charm's [actions](https://charmhub.io/kafka-k8s/actions?channel=4/edge), [configuration parameters](https://charmhub.io/kafka-k8s/configurations?channel=4/edge), [libraries](https://charmhub.io/kafka-k8s/libraries/kafka?channel=4/edge), [statuses](reference-statuses), as well as [requirements](reference-requirements), and [file system paths](reference-file-system-paths). | [Explanation](explanation-index) </br> Explore and grow your understanding of key topics, such as: [security](explanation-security), [cryptography](explanation-cryptography), and [MirrorMaker usage](explanation-mirrormaker2-0). |
 
 ## Project and community
 
