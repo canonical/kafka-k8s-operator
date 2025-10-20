@@ -33,7 +33,7 @@ The charm can be deployed in much smaller environments if needed.
 ## Usage
 
 This section demonstrates basic usage of Charmed Apache Kafka K8s.
-For more information on how to perform typical tasks, see the How to guides section of the [Charmed Apache Kafka K8s documentation](https://canonical.com/data/docs/kafka/k8s).
+For more information on how to perform typical tasks, see the How to guides section of the [Charmed Apache Kafka K8s documentation](https://documentation.ubuntu.com/charmed-kafka-k8s/4/).
 
 ### Deployment
 
@@ -47,7 +47,7 @@ juju deploy kafka-k8s -n 3 --config roles="broker"
 After this, it is necessary to integrate them:
 
 ```bash
-juju integrate kafka:peer-cluster-orchestrator controller:peer-cluster
+juju integrate kafka-k8s:peer-cluster-orchestrator controller:peer-cluster
 ```
 
 To watch the process, the `juju status` command can be used.
@@ -108,8 +108,13 @@ juju config kafka-k8s system-users=secret:cvh7kruupa1s46bqvuig
 ### Storage support
 
 Currently, the Charmed Apache Kafka Operator supports 1 or more storage volumes.
-A 10G storage volume will be installed by default for `log.dirs`.
-This is used for logs storage, mounted on `/var/snap/kafka/common`.
+By default, a 10G storage volume tied to a
+[Kubernetes PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
+is installed.
+
+This storage is mounted on `/var/lib/data/kafka` and used for log-data.
+
+Service logs can be found in `/var/log/kafka`.
 
 When storage is added or removed, the Apache Kafka service will restart
 to ensure it uses the new volumes. Additionally, logs and charm status messages will prompt users
@@ -119,10 +124,11 @@ topic partitions are assigned to it, or a new topic is created.
 
 ## Relations
 
-The Charmed Apache Kafka K8s Operator supports Juju [relations](https://juju.is/docs/olm/relations)
+The Charmed Apache Kafka K8s Operator supports Juju
+[relations](https://documentation.ubuntu.com/juju/3.6/reference/relation/)
 for interfaces listed below.
 
-#### The Kafka_client interface
+### The Kafka_client interface
 
 The `kafka_client` interface is used with the [Data Integrator](https://charmhub.io/data-integrator)
 charm, which upon relation automatically provides credentials and endpoints for connecting
@@ -169,7 +175,7 @@ unit-data-integrator-0:
     started: 2023-01-27 14:22:51 +0000 UTC                                      
 ```
 
-#### The tls-certificates interface
+### The tls-certificates interface
 
 The `tls-certificates` interface is used with the `tls-certificates-operator` charm.
 
