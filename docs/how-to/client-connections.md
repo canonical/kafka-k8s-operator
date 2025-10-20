@@ -28,7 +28,7 @@ juju deploy data-integrator
 juju config data-integrator topic-name=test-topic extra-user-roles=producer,consumer
 ```
 
-Relate the two applications with:
+Integrate the two applications with:
 
 ```shell
 juju integrate data-integrator kafka
@@ -85,10 +85,10 @@ juju deploy data-integrator rotated-user \
   --config extra-user-roles=producer,consumer
 ```
 
-The `data-integrator` charm can then be related to the `kafka` charm to create a new user:
+The `data-integrator` charm can then be integrated to the `kafka-k8s` charm to create a new user:
 
 ```shell
-juju integrate kafka rotated-user
+juju integrate kafka-k8s rotated-user
 ```
 
 At this point, we effectively have two overlapping users, so that applications can swap the password

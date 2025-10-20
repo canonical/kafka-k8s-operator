@@ -26,16 +26,18 @@ To migrate a cluster we need:
 
 ## Get new charm cluster endpoints and credentials
 
-By design, the Charmed Apache Kafka K8s will not expose any available connections until related to by a client. In this guide, we will deploy a `data-integrator` application and integrate it to a `kafka` application, requesting `admin` level privileges:
+By design, the Charmed Apache Kafka K8s will not expose any available connections until integrated to
+by a client. In this guide, we will deploy a `data-integrator` application and integrate it
+to a `kafka-k8s` application, requesting `admin` level privileges:
 
 ```bash
 juju deploy data-integrator --channel=edge -n 1 --config extra-user-roles="admin" --config topic-name="__data-integrator-user"
-juju integrate kafka data-integrator
+juju integrate kafka-k8s data-integrator
 ```
 
-When the `data-integrator` charm relates to a `kafka` application on the `kafka_client` relation interface, passing `extra-user-roles=admin`, a new user with `super.user` permissions will be created on that cluster, with the charm passing back the credentials and broker addresses in the relation data to the `data-integrator`.
+When the `data-integrator` charm integrates to a `kafka-k8s` application on the `kafka_client` relation interface, passing `extra-user-roles=admin`, a new user with `super.user` permissions will be created on that cluster, with the charm passing back the credentials and broker addresses in the relation data to the `data-integrator`.
 
-Kafka Connect also needs to be related to the `kafka` application to be granted permissions and endpoints to connect to Charmed Apache Kafka K8s:
+Kafka Connect also needs to be integrated to the `kafka-k8s` application to be granted permissions and endpoints to connect to Charmed Apache Kafka K8s:
 
 ```bash
 juju integrate kafka-connect kafka

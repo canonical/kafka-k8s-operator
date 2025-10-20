@@ -26,12 +26,12 @@ Located charm "data-integrator" in charm-hub, revision 11
 Deploying "data-integrator" from charm-hub charm "data-integrator", revision 11 in channel stable on noble
 ```
 
-### Relate to Charmed Apache Kafka K8s
+### Integrate to Charmed Apache Kafka K8s
 
-Now that the Database Integrator charm has been set up, we can relate it to Charmed Apache Kafka K8s. This will automatically create a username, password, and database for the Database Integrator charm. Relate the two applications with:
+Now that the Database Integrator charm has been set up, we can integrate it to Charmed Apache Kafka K8s. This will automatically create a username, password, and database for the Database Integrator charm. Integrate the two applications with:
 
 ```shell
-juju integrate data-integrator kafka
+juju integrate data-integrator kafka-k8s
 ```
 
 Wait for `watch -n 1 --color juju status --color` to show:
@@ -87,7 +87,6 @@ ok: "True"
 ```
 
 Make note of the values for `bootstrap-server`, `username` and `password`, we'll be using them later.
-
 
 ### Produce/consume messages
 
@@ -177,7 +176,7 @@ python3 -m charms.kafka.v0.client \
   --consumer \
 ```
 
-Now you know how to use credentials provided by related charms to successfully read/write data from Charmed Apache Kafka K8s!
+Now you know how to use credentials provided by integrated charms to successfully read/write data from Charmed Apache Kafka K8s!
 
 ### Charm client applications
 
@@ -193,10 +192,10 @@ To produce messages to Apache Kafka, we need to configure the `kafka-test-app` t
 juju config kafka-test-app topic_name=TOP-PICK role=producer num_messages=20
 ```
 
-To start producing messages to Apache Kafka, we simply relate the Apache Kafka Test App with Apache Kafka:
+To start producing messages to Apache Kafka, we simply integrate the Apache Kafka Test App with Apache Kafka:
 
 ```shell
-juju integrate kafka-test-app kafka
+juju integrate kafka-test-app kafka-k8s
 ```
 
 ```{note}
@@ -240,7 +239,7 @@ Note that the `kafka-test-app` charm can also similarly be used to consume messa
 juju config kafka-test-app topic_name=TOP-PICK role=consumer consumer_group_prefix=cg
 ```
 
-After configuring the Apache Kafka Test App, just relate it again with the Charmed Apache Kafka K8s. This will again create a new user and start the consumer process. 
+After configuring the Apache Kafka Test App, just integrate it again with the Charmed Apache Kafka K8s. This will again create a new user and start the consumer process.
 
 ## What's next?
 

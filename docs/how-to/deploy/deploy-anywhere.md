@@ -139,10 +139,10 @@ To create an admin user, deploy the [Data Integrator Charm](https://charmhub.io/
 juju deploy data-integrator --config topic-name="__admin-user" --config extra-user-roles="admin"
 ```
 
-Now, relate it to the Apache Kafka charm:
+Now, integrate it to the Apache Kafka charm:
 
 ```shell
-juju integrate data-integrator kafka
+juju integrate data-integrator kafka-k8s
 ```
 
 To retrieve authentication information, such as the username and password, use:

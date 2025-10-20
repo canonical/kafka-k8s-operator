@@ -8,7 +8,7 @@ This is a part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 [TLS](https://en.wikipedia.org/wiki/Transport_Layer_Security) is used to encrypt data exchanged between two applications; it secures data transmitted over the network. Typically, enabling TLS within a highly available database, and between a highly available database and client/server applications, requires domain-specific knowledge and a high level of expertise. Fortunately, the domain-specific knowledge has been encoded into Charmed Apache Kafka K8s. This means (re-)configuring TLS on Charmed Apache Kafka K8s is readily available and requires minimal effort on your end.
 
 Juju relations are particularly useful for enabling TLS.
-For example, you can relate Charmed Apache Kafka K8s to the
+For example, you can integrate Charmed Apache Kafka K8s to the
 [Self-signed Certificates Charm](https://charmhub.io/self-signed-certificates)
 using the [tls-certificates](https://charmhub.io/integrations/tls-certificates) interface. 
 The `tls-certificates` relation centralises TLS certificate management, handling certificate provisioning, requests, and renewal. This approach allows you to use different certificate providers, including self-signed certificates or external services such as Let's Encrypt.
@@ -80,10 +80,10 @@ here with the unencrypted workflow):
 juju config kafka-test-app topic_name=HOT-TOPIC role=producer num_messages=25
 ```
 
-Then relate with the `kafka` cluster:
+Then integrate with the `kafka` cluster:
 
 ```shell
-juju integrate kafka kafka-test-app
+juju integrate kafka-k8s kafka-test-app
 ```
 
 As before, you can check that the messages are pushed into the Charmed Apache Kafka K8s cluster by inspecting the logs:

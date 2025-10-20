@@ -55,10 +55,10 @@ Once all the units are shown as `active|idle`, the credentials to access a broke
 can be set using Juju secrets, discussed in the **Password Rotation** section.
 
 Note that Charmed Apache Kafka cluster is secure-by-default:
-when no other application is related to Charmed Apache Kafka K8s, listeners are disabled,
+when no other application is integrated to Charmed Apache Kafka K8s, listeners are disabled,
 thus preventing any incoming connection.
 If there are no other applications, you can deploy a `data-integrator`
-charm and relate it to Charmed Apache Kafka to enable listeners.
+charm and integrate it to Charmed Apache Kafka to enable listeners.
 
 ### Scaling
 
@@ -135,7 +135,7 @@ juju deploy data-integrator
 juju config data-integrator topic-name=test-topic extra-user-roles=producer,consumer
 ```
 
-To relate the two applications:
+To integrate the two applications:
 
 ```shell
 juju integrate data-integrator kafka-k8s
@@ -229,7 +229,7 @@ can be used, and this step is shown on the COS tutorial.
 
 Next, deploy [Grafana Agent](https://charmhub.io/grafana-agent) and follow the
 [tutorial](https://discourse.charmhub.io/t/using-the-grafana-agent-machine-charm/8896)
-to relate it to the COS Lite offers.
+to integrate it to the COS Lite offers.
 
 Now, integrate Apache Kafka with the Grafana Agent:
 

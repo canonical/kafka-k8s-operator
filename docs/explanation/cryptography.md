@@ -109,4 +109,4 @@ Clients can authenticate to Apache Kafka using:
 When using SCRAM, usernames and passwords are stored in the KRaft controller metadata logs,
 in plain text in configuration files on the broker and controller units, and in Juju secrets.
 When using mTLS, client certificates provided to the Apache Kafka cluster via Juju secrets
-by related charms are stored in password-protected JKS truststores.
+by integrated charms are stored in password-protected JKS truststores.

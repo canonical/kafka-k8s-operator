@@ -183,4 +183,4 @@ For a full list of the available Charmed Kafka command-line tools, please refer 
 ## What's next?
 
 Although the commands above can run within the cluster, it is generally recommended during operations to enable external listeners and use these for running the admin commands from outside the cluster.
-To do so, as we will see in the next section, we will deploy a [data-integrator](https://charmhub.io/data-integrator) charm and relate it to Charmed Apache Kafka K8s.
+To do so, as we will see in the next section, we will deploy a [data-integrator](https://charmhub.io/data-integrator) charm and integrate it to Charmed Apache Kafka K8s.

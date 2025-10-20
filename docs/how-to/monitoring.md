@@ -17,7 +17,7 @@ can be used, and this step is shown in the COS tutorial.
 
 ### Offer interfaces via the COS controller
 
-Switch to COS K8s environment and offer COS interfaces to be cross-model related with Charmed Apache Kafka K8s model:
+Switch to COS K8s environment and offer COS interfaces to be cross-model integrated with Charmed Apache Kafka K8s model:
 
 ```shell
 juju switch <k8s_controller>:<cos_model_name>
@@ -29,7 +29,7 @@ juju offer prometheus:receive-remote-write prometheus-receive-remote-write
 
 ### Consume offers via the Apache Kafka model
 
-Switch back to the Charmed Apache Kafka K8s model, find offers and relate with them:
+Switch back to the Charmed Apache Kafka K8s model, find offers and integrate with them:
 
 ```shell
 juju switch <machine_controller_name>:<kafka_model_name>
@@ -55,14 +55,14 @@ juju consume <k8s_controller>:admin/<cos_model_name>.loki-logging
 juju consume <k8s_controller>:admin/<cos_model_name>.grafana-dashboards
 ```
 
-Now, deploy `grafana-agent` (subordinate charm) and relate it with Charmed Apache Kafka K8s:
+Now, deploy `grafana-agent` (subordinate charm) and integrate it with Charmed Apache Kafka K8s:
 
 ```shell
 juju deploy grafana-agent
-juju integrate kafka:cos-agent grafana-agent
+juju integrate kafka-k8s:cos-agent grafana-agent
 ```
 
-Finally, relate `grafana-agent` with consumed COS offers:
+Finally, integrate `grafana-agent` with consumed COS offers:
 
 ```shell
 juju integrate grafana-agent grafana-dashboards
