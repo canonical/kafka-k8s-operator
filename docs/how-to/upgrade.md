@@ -23,7 +23,7 @@ The concurrency with other operations is not supported, and it can lead the clus
 
 When performing an in-place upgrade process, the full process is composed of the following high-level steps:
 
-1. **Configure** desired refresh behavior with `pause-after-unit-refresh`
+1. **Configure** desired refresh behaviour with `pause-after-unit-refresh`
 2. **Collect** all necessary pre-upgrade information, necessary for a rollback (if ever needed)
 3. **Prepare** the charm for the in-place upgrade, by running some preparatory tasks 
 4. **Upgrade** the charm and/or the workload. Once started, all units in a cluster will refresh the charm code and undergo a workload restart/update. The upgrade will be halted if the unit upgrade has failed, requiring the admin user to roll back.
@@ -32,9 +32,9 @@ When performing an in-place upgrade process, the full process is composed of the
 
 For highly available, stateful applications, it is often desirable to upgrade a single unit first, then pause to perform manual validations before continuing. If the upgrade fails, for example, due to a bug or an unforeseen version incompatibility, the impact is limited to that single unit. When the application is replicated across multiple nodes, this approach ensures no measurable disruption to the production service.
 
-Charmed Apache Kafka K8s exposes the `pause-after-unit-refresh` configuration option to help control this pausing behavior. By default, this option is set to `none`, meaning that a refresh will complete without a pause for manual checks.
+Charmed Apache Kafka K8s exposes the `pause-after-unit-refresh` configuration option to help control this pausing behaviour. By default, this option is set to `none`, meaning that a refresh will complete without a pause for manual checks.
 
-To change refresh pausing behavior, set this configuration option **before** triggering a Juju refresh:
+To change refresh pausing behaviour, set this configuration option **before** triggering a Juju refresh:
 
 ```shell
 juju config kafka-k8s pause-after-unit-refresh="all"
