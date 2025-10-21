@@ -9,8 +9,6 @@ Charmed Apache Kafka K8s has the following stable revisions:
 :titlesonly:
 :maxdepth: 2
 
-205<revision-205.md>
-195/149<revision-195-149.md>
-156/136<revision-156-136.md>
-156/126<revision-156-126.md>
+82<revision-82.md>
+56/51<revision-56-51.md>
 ```
