@@ -1,7 +1,7 @@
 # How to deploy Charmed Apache Kafka K8s
 
 This guide provides platform-independent deployment instructions.
-For specific guides, see: [AWS](how-to-deploy-deploy-on-aws) and [Azure](how-to-deploy-deploy-on-azure).
+For specific guides, see: [AKS](how-to-deploy-on-aks) and [EKS](how-to-deploy-on-eks).
 
 (how-to-deploy-deploy-anywhere)=
 

@@ -9,8 +9,8 @@ Deployment follows a broadly similar pattern on all platforms, but due to differ
 
 * Common [deployment guide](how-to-deploy-deploy-anywhere)
 * Specific deployment guides:
-  * [AWS](how-to-deploy-deploy-on-aws)
-  * [Azure](how-to-deploy-deploy-on-azure)
+  * [AKS](how-to-deploy-on-aks)
+  * [EKS](how-to-deploy-on-eks)
 
 ## Management
 
