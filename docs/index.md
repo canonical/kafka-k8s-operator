@@ -35,7 +35,7 @@ Charmed Apache Kafka K8s is a distribution of Apache Kafka. It’s an open-sourc
 - [Join the Discourse forum](https://discourse.charmhub.io/tag/kafka)
 - [Contribute](https://github.com/canonical/kafka-k8s-operator/blob/main/CONTRIBUTING.md) and report [issues](https://github.com/canonical/kafka-operator/issues/new)
 - Explore [Canonical Data Fabric solutions](https://canonical.com/data)
-- [Contact us](https://discourse.charmhub.io/t/13107) for all further questions
+- [Contact us](reference-contact) for all further questions
 
 Apache®, Apache Kafka, Kafka®, and the Apache Kafka logo are either registered trademarks or trademarks of the Apache Software Foundation in the United States and/or other countries.
 
