@@ -4,7 +4,7 @@
 
 Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s have been released for General Availability.
 
-[Charmhub](https://charmhub.io/kafka) | [Deploy guide](how-to-deploy-index) | [Upgrade instructions](how-to-upgrade) | [System requirements](reference-requirements)
+[Charmhub](https://charmhub.io/kafka-k8s) | [Deploy guide](how-to-deploy-index) | [Upgrade instructions](how-to-upgrade) | [System requirements](reference-requirements)
 
 ## Features
 
