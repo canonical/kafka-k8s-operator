@@ -73,7 +73,7 @@ Save the value listed under `bootstrap-server`, `username` and `password`. *(Not
 
 ## Produce/consume messages
 
-We will now use the username and password to produce some messages to Apache Kafka. To do so, we will first deploy the Apache Kafka Test App (available [here](https://charmhub.io/kafka-test-app)): a test charm that also bundles some Python scripts to push data to Apache Kafka, e.g.:
+We will now use the username and password to produce some messages to Apache Kafka. To do so, we will first deploy the [Apache Kafka Test App](https://charmhub.io/kafka-test-app): a test charm that also bundles some Python scripts to push data to Apache Kafka, e.g.:
 
 ```shell
 juju deploy kafka-test-app -n1 --channel edge
