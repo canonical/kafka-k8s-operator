@@ -2,7 +2,7 @@
 
 ```{note}
 This is a **Kubernetes** operator.
-To deploy on IAAS/VM, see [Charmed Apache Kafka operator](https://charmhub.io/kafka).
+To deploy on IAAS/VM, see [Charmed Apache Kafka operator](https://documentation.ubuntu.com/charmed-kafka/4/).
 ```
 
 # Charmed Apache Kafka K8s documentation

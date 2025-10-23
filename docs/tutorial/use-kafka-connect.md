@@ -84,7 +84,9 @@ juju deploy postgresql --channel 14/stable
 juju deploy opensearch --channel 2/stable --config profile=testing
 ```
 
-OpenSearch charm requires a TLS relation to become active. We will use the [`self-signed-certificates` charm](https://charmhub.io/self-signed-certificates) that was deployed earlier in the [Enable Encryption](https://charmhub.io/kafka/docs/t-enable-encryption) part of this Tutorial.
+OpenSearch charm requires a TLS relation to become active.
+We will use the [`self-signed-certificates` charm](https://charmhub.io/self-signed-certificates)
+that was deployed earlier in the [Enable Encryption](tutorial-enable-encryption) part of this Tutorial.
 
 ### Enable TLS
 
