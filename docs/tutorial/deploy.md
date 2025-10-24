@@ -178,7 +178,7 @@ juju ssh kafka-k8s/0 sudo -i \
         --command-config \$CONF/client.properties"
 ```
 
-For a full list of the available Charmed Kafka command-line tools, please refer to [snap commands](reference-snap-commands).
+<!-- For a full list of the available Charmed Kafka command-line tools, please refer to [snap commands](reference-snap-commands). -->
 
 ## What's next?
 

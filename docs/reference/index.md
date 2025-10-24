@@ -14,15 +14,12 @@ Charmhub generated content:
 Charm-specific reference materials:
 
 * {ref}`reference-file-system-paths`
-* {ref}`reference-snap-commands`
 * {ref}`reference-statuses`
 * {ref}`reference-requirements`
 
 General useful references:
 
 * {ref}`reference-broker-listeners`
-* {ref}`reference-performance-tuning`
-* {ref}`Contact information <reference-contact>`
 
 ```{toctree}
 :titlesonly:
@@ -34,10 +31,8 @@ Actions<https://charmhub.io/kafka-k8s/actions?channel=4/edge>
 Configurations<https://charmhub.io/kafka-k8s/configure?channel=4/edge>
 Libraries<https://charmhub.io/kafka-k8s/libraries/kafka?channel=4/edge>
 file-system-paths.md
-snap-commands.md
 listeners.md
 Statuses<statuses.md>
 requirements.md
-performance-tuning.md
 Contact<contact.md>
 ```
