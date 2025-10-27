@@ -15,13 +15,13 @@ from tenacity import retry
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_fixed
 
-from core.workload import WorkloadBase
 from literals import (
     BROKER,
     PATHS,
     PEER_CLUSTER_ORCHESTRATOR_RELATION,
     PEER_CLUSTER_RELATION,
 )
+from managers.balancer import BalancerManager
 
 from . import (
     APP_NAME,
@@ -278,4 +278,4 @@ def check_log_dirs(model: str | None):
         universal_newlines=True,
     )
 
-    return WorkloadBase._parse_log_dirs_output(result)
+    return BalancerManager._parse_log_dirs_output(result)

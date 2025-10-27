@@ -108,7 +108,7 @@ class BrokerOperator(Object):
         self.k8s_manager = K8sManager(
             pod_name=self.charm.state.unit_broker.pod_name, namespace=self.charm.model.name
         )
-        self.balancer_manager = BalancerManager(self)
+        self.balancer_manager = BalancerManager(self, self.workload)
 
         self.framework.observe(getattr(self.charm.on, "install"), self._on_install)
         self.framework.observe(getattr(self.charm.on, "start"), self._on_start)
@@ -427,7 +427,7 @@ class BrokerOperator(Object):
         if not self.charm.state.balancer_exists:
             return
 
-        while not self.workload.all_storages_drained(
+        while not self.balancer_manager.all_storages_drained(
             self.charm.state.bootstrap_server_internal,
             self.charm.state.unit_broker.broker_id,
         ):

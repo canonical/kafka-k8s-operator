@@ -216,7 +216,7 @@ def test_ready_to_start_ok(
 
     # When
     with (
-        patch("workload.KafkaWorkload.get_partition_assignment", return_value={}),
+        patch("managers.balancer.BalancerManager.get_partition_assignment", return_value={}),
         patch("workload.BalancerWorkload.write") as patched_writer,
         patch("workload.BalancerWorkload.read"),
         patch(
