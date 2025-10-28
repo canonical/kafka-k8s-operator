@@ -150,10 +150,13 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         self.broker.workload.restart()
 
-        if self.broker.healthy:
-            logger.info(f'Broker {self.unit.name.split("/")[1]} restarted')
-        else:
-            logger.error(f"Broker {self.unit.name.split('/')[1]} failed to restart")
+        if not self.workload.health_check(
+            host=self.state.unit_broker.internal_address,
+            runs_broker=self.state.runs_broker,
+            runs_controller=self.state.runs_controller,
+        ):
+            event.defer()
+            return
 
         self.broker.update_credentials_cache()
 

@@ -9,9 +9,7 @@ from subprocess import CalledProcessError
 
 import pytest
 from pytest_operator.plugin import OpsTest
-from tenacity import Retrying
-from tenacity.stop import stop_after_attempt
-from tenacity.wait import wait_fixed
+from tenacity import Retrying, stop_after_attempt, wait_fixed
 
 from integration.helpers.pytest_operator import (
     APP_NAME,

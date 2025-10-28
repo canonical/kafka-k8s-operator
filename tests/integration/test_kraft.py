@@ -82,6 +82,8 @@ class TestKRaft:
         unit_status = kraft_quorum_status(
             ops_test, f"{self.controller_app}/0", bootstrap_controller
         )
+        # Assert 1 leader
+        assert len([s for s in unit_status.values() if s == KRaftUnitStatus.LEADER]) == 1
 
         offset = KRAFT_NODE_ID_OFFSET if self.deployment_strat == "single" else 0
 

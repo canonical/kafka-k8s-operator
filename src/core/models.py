@@ -613,6 +613,7 @@ class KafkaCluster(RelationState):
             return
 
         snapshot[broker.broker_id] = dict(updated)
+        # FIXME: not a good place to update relation data, maybe move to handlers
         self.relation_data.update({"broker-capacities-snapshot": json.dumps(snapshot)})
 
     def remove_broker(self, broker_id: int) -> None:
@@ -623,6 +624,7 @@ class KafkaCluster(RelationState):
             return
 
         snapshot.pop(broker_id)
+        # FIXME: not a good place to update relation data, maybe move to handlers
         self.relation_data.update({"broker-capacities-snapshot": json.dumps(snapshot)})
 
 

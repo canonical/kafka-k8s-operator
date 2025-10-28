@@ -215,7 +215,6 @@ class BrokerOperator(Object):
         """Generic handler for most `config_changed` events across relations."""
         # only overwrite properties if service is already active
         if self.charm.refresh_not_ready or not self.healthy:
-            event.defer()
             return
 
         # Load current properties set in the charm workload
@@ -224,7 +223,6 @@ class BrokerOperator(Object):
 
         if not properties:
             # Event fired before charm has properly started
-            event.defer()
             return
 
         # Start balancer service if everything is in place,
@@ -427,6 +425,7 @@ class BrokerOperator(Object):
         if not self.charm.state.balancer_exists:
             return
 
+        # NOTE: block further events executions until scaling down is safe
         while not self.balancer_manager.all_storages_drained(
             self.charm.state.bootstrap_server_internal,
             self.charm.state.unit_broker.broker_id,

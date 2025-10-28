@@ -61,8 +61,6 @@ def deploy_cluster(
 
     base = "ubuntu@24.04" if series == "noble" else "ubuntu@22.04"
 
-    _kwargs = {"channel": channel} if channel else {}
-
     juju.deploy(
         charm,
         app=app_name_broker,
@@ -76,7 +74,7 @@ def deploy_cluster(
         | config_broker,
         resources={"kafka-image": KAFKA_CONTAINER},
         trust=True,
-        **_kwargs,
+        channel=channel if channel else None,
     )
 
     if kraft_mode == "multi":
@@ -92,7 +90,7 @@ def deploy_cluster(
             | config_controller,
             resources={"kafka-image": KAFKA_CONTAINER},
             trust=True,
-            **_kwargs,
+            channel=channel if channel else None,
         )
 
     assert_status_func = jubilant.all_active if kraft_mode == "single" else jubilant.all_blocked
