@@ -33,6 +33,7 @@ from literals import (
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.skip_if_deployed
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, kraft_mode, controller_app):
     await deploy_cluster(

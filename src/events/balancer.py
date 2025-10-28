@@ -8,7 +8,7 @@ import logging
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING, Literal
 
-from lib.charms.data_platform_libs.v0.data_interfaces import RelationEvent
+from charms.data_platform_libs.v0.data_interfaces import RelationEvent
 from ops import (
     ActionEvent,
     Application,

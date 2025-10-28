@@ -87,7 +87,7 @@ jobs:
           - integration-refresh
         kraft-mode:
           - single
-    name: ${{ matrix.tox-environments }} | ${{ matrix.kraft-mode }}
+    name: "${{ matrix.tox-environments }} | ${{ matrix.kraft-mode }}"
     needs:
       - lint
       - unit-test
