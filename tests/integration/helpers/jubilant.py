@@ -21,6 +21,7 @@ from literals import (
     PEER_CLUSTER_ORCHESTRATOR_RELATION,
     PEER_CLUSTER_RELATION,
 )
+from managers.balancer import BalancerManager
 
 from . import (
     APP_NAME,
@@ -28,6 +29,7 @@ from . import (
     KAFKA_CONTAINER,
     KRaftMode,
     KRaftUnitStatus,
+    get_k8s_host_from_unit,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,6 +54,7 @@ def deploy_cluster(
     storage_broker: dict = {},
     app_name_broker: str = str(APP_NAME),
     app_name_controller: str = CONTROLLER_NAME,
+    channel: str | None = None,
 ):
     """Deploys an Apache Kafka cluster using the Charmed Apache Kafka operator in KRaft mode."""
     logger.info(f"Deploying Kafka cluster in '{kraft_mode}' mode")
@@ -71,6 +74,7 @@ def deploy_cluster(
         | config_broker,
         resources={"kafka-image": KAFKA_CONTAINER},
         trust=True,
+        channel=channel if channel else None,
     )
 
     if kraft_mode == "multi":
@@ -86,6 +90,7 @@ def deploy_cluster(
             | config_controller,
             resources={"kafka-image": KAFKA_CONTAINER},
             trust=True,
+            channel=channel if channel else None,
         )
 
     assert_status_func = jubilant.all_active if kraft_mode == "single" else jubilant.all_blocked
@@ -258,3 +263,17 @@ def kraft_quorum_status(
         print(unit_status)
 
     return unit_status
+
+
+def check_log_dirs(model: str | None):
+    bootstrap_server = f'{get_k8s_host_from_unit("kafka-k8s/0")}:19093'
+    container_command = f"{BROKER.paths['BIN']}/bin/kafka-log-dirs.sh --command-config {BROKER.paths['CONF']}/client.properties --bootstrap-server {bootstrap_server} --describe"
+
+    result = check_output(
+        f"JUJU_MODEL={model} juju ssh --container kafka kafka-k8s/0 '{container_command}'",
+        stderr=PIPE,
+        shell=True,
+        universal_newlines=True,
+    )
+
+    return BalancerManager._parse_log_dirs_output(result)

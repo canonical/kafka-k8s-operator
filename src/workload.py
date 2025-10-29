@@ -13,10 +13,28 @@ from io import StringIO
 from charmlibs import pathops
 from ops import Container, pebble
 from ops.pebble import ExecError
+from tenacity import (
+    retry,
+    retry_any,
+    retry_if_exception,
+    retry_if_result,
+    stop_after_attempt,
+    wait_fixed,
+)
 from typing_extensions import cast, override
 
 from core.workload import CharmedKafkaPaths, WorkloadBase
-from literals import BALANCER, BROKER, CHARM_KEY, GROUP, JMX_CC_PORT, JMX_EXPORTER_PORT, USER_NAME
+from literals import (
+    BALANCER,
+    BROKER,
+    CHARM_KEY,
+    GROUP,
+    JMX_CC_PORT,
+    JMX_EXPORTER_PORT,
+    SECURITY_PROTOCOL_PORTS,
+    USER_NAME,
+    AuthMap,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -229,6 +247,45 @@ class KafkaWorkload(Workload):
             },
         }
         return pebble.Layer(layer_config)
+
+    @staticmethod
+    def _parse_metric_value(raw: str, metric: str) -> float | None:
+        """Parse a metric value from the prometheus export output."""
+        val = None
+        for line in raw.split("\n"):
+            if not line.startswith("#"):
+                parts = line.split()
+                if metric.lower() in parts[0]:
+                    val = float(parts[1].strip())
+                    break
+
+        return val
+
+    @retry(
+        wait=wait_fixed(4),
+        stop=stop_after_attempt(5),
+        retry=retry_any(
+            retry_if_result(lambda res: res is False), retry_if_exception(lambda _: True)
+        ),
+        retry_error_callback=lambda _: False,
+    )
+    def health_check(self, host: str, runs_broker: bool, runs_controller: bool) -> bool:
+        """Check overall workload health."""
+        auth_map = AuthMap(protocol="SASL_SSL", mechanism="SCRAM-SHA-512")
+        if runs_controller:
+            assert self.ping(f"{host}:{SECURITY_PROTOCOL_PORTS[auth_map].controller}")
+
+        if not runs_broker:
+            return True
+
+        assert self.ping(f"{host}:{SECURITY_PROTOCOL_PORTS[auth_map].internal}")
+
+        raw = self.exec(["curl", f"http://localhost:{JMX_EXPORTER_PORT}"])
+
+        under_min_isr_count = self._parse_metric_value(raw, "UnderMinIsrPartitionCount")
+        # replica_imbalance_count = self._parse_metric_value(raw, "PreferredReplicaImbalanceCount")
+
+        return under_min_isr_count == 0.0
 
 
 class BalancerWorkload(Workload):

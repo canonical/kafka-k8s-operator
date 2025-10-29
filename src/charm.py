@@ -83,7 +83,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         # Register roles event handlers after global ones, so that they get the priority.
         self.broker = BrokerOperator(self)
-        self.balancer = BalancerOperator(self)
+        self.balancer = BalancerOperator(self, self.workload)
 
         self.tls = TLSHandler(self)
 
@@ -150,10 +150,13 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         self.broker.workload.restart()
 
-        if self.broker.healthy:
-            logger.info(f'Broker {self.unit.name.split("/")[1]} restarted')
-        else:
-            logger.error(f"Broker {self.unit.name.split('/')[1]} failed to restart")
+        if not self.workload.health_check(
+            host=self.state.unit_broker.internal_address,
+            runs_broker=self.state.runs_broker,
+            runs_controller=self.state.runs_controller,
+        ):
+            event.defer()
+            return
 
         self.broker.update_credentials_cache()
 
@@ -181,6 +184,16 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         """Determine the unit status, respecting refresh higher priority statuses."""
         if self.refresh and self.refresh.unit_status_higher_priority:
             return self.refresh.unit_status_higher_priority
+
+        # Scaling warning if auto-balance is set.
+        if all(
+            [
+                self.state.runs_broker,
+                self.state.runs_balancer,
+                self.broker.kraft.controller_manager.departing_brokers,
+            ]
+        ):
+            return Status.SCALING_WARNING.value.status
 
         # Check for pending inactive statuses (charm-specific logic)
         # Remove active status if present, will be added as default at the end
