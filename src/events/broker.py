@@ -241,37 +241,6 @@ class BrokerOperator(Object):
             else:
                 self.charm.on[f"{self.charm.restart.name}"].acquire_lock.emit()
 
-    def _handle_configuration_updates(self, event: EventBase) -> None:
-        """Handle configuration property updates and restart if needed.
-
-        Helper method to config_changed event.
-        """
-        if not self.workload.active():
-            # shouldn't happen, but just in case
-            logger.warning("Kafka service not active during config_changed event. Deferring...")
-            return
-
-        properties_changed = self.config_manager.properties_changed()
-        if properties_changed:
-            logger.info(
-                f'Broker {self.charm.unit.name.split("/")[1]} updating config - '
-                f"PROPERTIES CHANGED = {len(properties_changed)} properties"
-            )
-            self.config_manager.set_server_properties()
-
-        if any([properties_changed, self.charm.state.tls_rotate, self.charm.tls.certs_updated]):
-            if isinstance(event, StorageEvent):  # to get new storages
-                self.controller_manager.format_storages(
-                    uuid=self.charm.state.peer_cluster.cluster_uuid,
-                    internal_user_credentials=self.charm.state.cluster.internal_user_credentials,
-                    initial_controllers=f"{self.charm.state.peer_cluster.bootstrap_unit_id}@{self.charm.state.peer_cluster.bootstrap_controller}:{self.charm.state.peer_cluster.bootstrap_replica_id}",
-                )
-                self.charm.on[f"{self.charm.restart.name}"].acquire_lock.emit(
-                    callback_override="_disable_enable_restart_broker"
-                )
-            else:
-                self.charm.on[f"{self.charm.restart.name}"].acquire_lock.emit()
-
     def _handle_broker_service_updates(self) -> None:
         """Handle updates to broker services, client data, and other post-configuration tasks."""
         # update these whenever possible
