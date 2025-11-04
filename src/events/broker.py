@@ -152,6 +152,9 @@ class BrokerOperator(Object):
             event.defer()
             return
 
+        if self.healthy:
+            return
+
         if self.charm.state.peer_relation:
             self.charm.state.unit_broker.update(
                 {"cores": str(self.balancer_manager.cores), "rack": self.config_manager.rack}
