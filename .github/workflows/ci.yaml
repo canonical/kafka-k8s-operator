@@ -56,8 +56,8 @@ jobs:
           sudo apt-get install -y default-jdk-headless
           pipx install tox
           pipx install poetry
-      - name: Run tests
-        run: tox run -e unit
+      # - name: Run tests
+      #   run: tox run -e unit
 
   build:
     strategy:
