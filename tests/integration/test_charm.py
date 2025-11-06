@@ -104,7 +104,7 @@ async def test_listeners(ops_test: OpsTest, app_charm, kafka_apps):
     )
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
-    async with ops_test.fast_forward(fast_interval="60s"):
+    async with ops_test.fast_forward(fast_interval="120s"):
         await ops_test.model.wait_for_idle(
             apps=[*kafka_apps, DUMMY_NAME], idle_period=30, status="active", timeout=2000
         )
