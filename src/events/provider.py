@@ -257,7 +257,10 @@ class KafkaProvider(Object):
 
         for client in self.charm.state.clients:
 
-            if not all([client.relation, client.relation.units, client.relation.active]):
+            if not client.relation:
+                continue
+
+            if not all([client.relation.units, client.relation.active]):
                 continue
 
             self.handle_client_request(client)

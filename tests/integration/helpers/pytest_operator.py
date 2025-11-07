@@ -18,7 +18,15 @@ from charms.zookeeper.v0.client import QuorumLeaderNotFoundError, ZooKeeperManag
 from kafka.admin import NewTopic
 from kazoo.exceptions import AuthFailedError, NoNodeError
 from pytest_operator.plugin import OpsTest
-from tenacity import retry, retry_if_result, stop_after_attempt, stop_after_delay, wait_fixed, RetryError, Retrying
+from tenacity import (
+    RetryError,
+    Retrying,
+    retry,
+    retry_if_result,
+    stop_after_attempt,
+    stop_after_delay,
+    wait_fixed,
+)
 
 from core.models import JSON
 from literals import (
