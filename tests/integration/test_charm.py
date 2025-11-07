@@ -22,6 +22,7 @@ from integration.helpers.pytest_operator import (
     get_address,
     netcat,
     run_client_properties,
+    wait_for_relation_removed_between,
 )
 from literals import (
     PEER_CLUSTER_ORCHESTRATOR_RELATION,
@@ -119,6 +120,7 @@ async def test_listeners(ops_test: OpsTest, app_charm, kafka_apps):
     await ops_test.model.wait_for_idle(
         apps=kafka_apps, idle_period=60, status="active", timeout=600
     )
+    wait_for_relation_removed_between(ops_test, REL_NAME, REL_NAME_ADMIN)
 
     assert not netcat(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client)
 
@@ -143,6 +145,7 @@ async def test_client_properties_makes_admin_connection(ops_test: OpsTest, kafka
     await ops_test.model.wait_for_idle(
         apps=kafka_apps, idle_period=60, status="active", timeout=600
     )
+    wait_for_relation_removed_between(ops_test, REL_NAME, REL_NAME_ADMIN)
 
 
 @pytest.mark.abort_on_fail
