@@ -6,6 +6,12 @@ import logging
 
 import pytest
 from pytest_operator.plugin import OpsTest
+from tenacity import (
+    RetryError,
+    Retrying,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 from integration.helpers.pytest_operator import (
     TEST_SECRET_NAME,
@@ -15,6 +21,21 @@ from integration.helpers.pytest_operator import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _assert_password_updated(model_full_name: str, old_user: str, expected_password: str):
+    try:
+        for attempt in Retrying(stop=stop_after_attempt(5), wait=wait_fixed(30)):
+            with attempt:
+                new_user = get_user(
+                    username="sync",
+                    model_full_name=model_full_name,
+                )
+                assert old_user != new_user
+                assert expected_password in new_user
+                return
+    except RetryError:
+        assert False, "Password update assertion failed after 5 attempts."
 
 
 @pytest.mark.abort_on_fail
@@ -41,23 +62,20 @@ async def test_password_rotation(ops_test: OpsTest, kafka_apps):
 
     await ops_test.model.wait_for_idle(apps=kafka_apps, status="active", idle_period=30)
 
+    _assert_password_updated(
+        ops_test.model_full_name, old_user=initial_sync_user, expected_password="newpass123"
+    )
+
     new_sync_user = get_user(
         username="sync",
         model_full_name=ops_test.model_full_name,
     )
-
-    assert initial_sync_user != new_sync_user
-    assert "newpass123" in new_sync_user
 
     # Update secret
     await ops_test.model.update_secret(name=TEST_SECRET_NAME, data_args=["sync=updatedpass"])
 
     await ops_test.model.wait_for_idle(apps=kafka_apps, status="active", idle_period=30)
 
-    updated_sync_user = get_user(
-        username="sync",
-        model_full_name=ops_test.model_full_name,
+    _assert_password_updated(
+        ops_test.model_full_name, old_user=new_sync_user, expected_password="updatedpass"
     )
-
-    assert new_sync_user != updated_sync_user
-    assert "updatedpass" in updated_sync_user
