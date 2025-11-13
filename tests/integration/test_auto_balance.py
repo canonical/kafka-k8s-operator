@@ -48,9 +48,11 @@ def _assert_partitions_rebalanced(model: str, num_brokers: int, timeout: int = 1
 
         if len(log_dirs_state) == num_brokers and not empty_storages:
             # all storages have partitions, successful!
-            break
+            return
 
         logger.info(f"Following broker/storages are still empty: {','.join(empty_storages)}")
+
+    raise TimeoutError(f"Partition rebalance assertion failed after {timeout} seconds")
 
 
 @pytest.mark.skip_if_deployed
