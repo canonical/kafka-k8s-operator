@@ -22,6 +22,7 @@ from integration.helpers.pytest_operator import (
     get_address,
     netcat,
     run_client_properties,
+    wait_for_relation_removed_between,
 )
 from literals import (
     PEER_CLUSTER_ORCHESTRATOR_RELATION,
@@ -104,7 +105,7 @@ async def test_listeners(ops_test: OpsTest, app_charm, kafka_apps):
     )
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
-    async with ops_test.fast_forward(fast_interval="60s"):
+    async with ops_test.fast_forward(fast_interval="120s"):
         await ops_test.model.wait_for_idle(
             apps=[*kafka_apps, DUMMY_NAME], idle_period=30, status="active", timeout=2000
         )
@@ -119,6 +120,7 @@ async def test_listeners(ops_test: OpsTest, app_charm, kafka_apps):
     await ops_test.model.wait_for_idle(
         apps=kafka_apps, idle_period=60, status="active", timeout=600
     )
+    wait_for_relation_removed_between(ops_test, REL_NAME, REL_NAME_ADMIN)
 
     assert not netcat(address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client)
 
@@ -127,9 +129,9 @@ async def test_listeners(ops_test: OpsTest, app_charm, kafka_apps):
 async def test_client_properties_makes_admin_connection(ops_test: OpsTest, kafka_apps, kraft_mode):
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
-    async with ops_test.fast_forward(fast_interval="90s"):
+    async with ops_test.fast_forward(fast_interval="120s"):
         await ops_test.model.wait_for_idle(
-            apps=[*kafka_apps, DUMMY_NAME], idle_period=60, status="active", timeout=800
+            apps=[*kafka_apps, DUMMY_NAME], idle_period=40, status="active", timeout=900
         )
 
     result = await run_client_properties(ops_test=ops_test)
@@ -140,18 +142,23 @@ async def test_client_properties_makes_admin_connection(ops_test: OpsTest, kafka
     await ops_test.model.applications[APP_NAME].remove_relation(
         f"{APP_NAME}:{REL_NAME}", f"{DUMMY_NAME}:{REL_NAME_ADMIN}"
     )
+
+    async with ops_test.fast_forward(fast_interval="20s"):
+        await asyncio.sleep(120)
+
     await ops_test.model.wait_for_idle(
-        apps=kafka_apps, idle_period=60, status="active", timeout=600
+        apps=kafka_apps, idle_period=40, status="active", timeout=600
     )
+    wait_for_relation_removed_between(ops_test, REL_NAME, REL_NAME_ADMIN)
 
 
 @pytest.mark.abort_on_fail
 async def test_logs_write_to_storage(ops_test: OpsTest, kafka_apps):
     await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
-    async with ops_test.fast_forward(fast_interval="90s"):
+    async with ops_test.fast_forward(fast_interval="120s"):
         await ops_test.model.wait_for_idle(
-            apps=[*kafka_apps, DUMMY_NAME], idle_period=60, status="active", timeout=800
+            apps=[*kafka_apps, DUMMY_NAME], idle_period=40, status="active", timeout=800
         )
 
     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("produce")

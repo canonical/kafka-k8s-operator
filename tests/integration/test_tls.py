@@ -147,7 +147,7 @@ async def test_mtls(ops_test: OpsTest, kafka_apps):
     action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("create-certificate")
     response = await action.wait()
 
-    async with ops_test.fast_forward(fast_interval="60s"):
+    async with ops_test.fast_forward(fast_interval="120s"):
         await ops_test.model.wait_for_idle(
             apps=[*kafka_apps, DUMMY_NAME], idle_period=30, status="active"
         )
@@ -276,7 +276,7 @@ async def test_kafka_tls_scaling(ops_test: OpsTest, kafka_apps):
 
     # Wait for model to settle
     await ops_test.model.wait_for_idle(
-        apps=kafka_apps, status="active", idle_period=40, timeout=2000, raise_on_error=False
+        apps=kafka_apps, status="active", idle_period=40, timeout=2000
     )
 
     async with ops_test.fast_forward(fast_interval="20s"):
@@ -357,7 +357,7 @@ async def test_manual_tls_chain(ops_test: OpsTest, kafka_apps):
     async with ops_test.fast_forward(fast_interval="30s"):
         await asyncio.sleep(180)
 
-    async with ops_test.fast_forward(fast_interval="60s"):
+    async with ops_test.fast_forward(fast_interval="120s"):
         await ops_test.model.wait_for_idle(
             apps=[*kafka_apps, MANUAL_TLS_NAME], idle_period=30, timeout=1000
         )
