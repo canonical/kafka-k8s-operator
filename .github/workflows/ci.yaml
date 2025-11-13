@@ -78,6 +78,7 @@ jobs:
           - integration-auto-balance
           - integration-charm
           - integration-provider
+          - integration-provider-v1
           - integration-password-rotation
           - integration-tls
           - integration-tls-complex
@@ -159,6 +160,7 @@ jobs:
           - integration-auto-balance
           - integration-charm
           - integration-provider
+          - integration-provider-v1
           - integration-password-rotation
           - integration-tls
           - integration-tls-complex

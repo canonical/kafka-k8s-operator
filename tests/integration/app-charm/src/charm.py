@@ -13,6 +13,12 @@ import subprocess
 from socket import getfqdn
 
 from charms.data_platform_libs.v0.data_interfaces import KafkaRequires, TopicCreatedEvent
+from charms.data_platform_libs.v1.data_interfaces import (
+    EntityPermissionModel,
+    KafkaRequestModel,
+    KafkaResponseModel,
+    ResourceRequirerEventHandler,
+)
 from client import KafkaClient
 from ops.charm import ActionEvent, CharmBase
 from ops.main import main
@@ -68,6 +74,29 @@ class ApplicationCharm(CharmBase):
         )
         self.framework.observe(
             self.kafka_requirer_admin.on.topic_created, self.on_topic_created_admin
+        )
+
+        # Requirer V1
+        self.kafka_requirer_v1 = ResourceRequirerEventHandler(
+            charm=self,
+            relation_name="kafka-client-v1",
+            requests=[
+                KafkaRequestModel(
+                    resource=self.topic_name,
+                    entity_permissions=[
+                        EntityPermissionModel(
+                            resource_type="TOPIC",
+                            resource_name="other",
+                            privileges=["READ"],
+                        )
+                    ],
+                ),
+                KafkaRequestModel(
+                    resource="other",
+                    extra_user_roles="producer",
+                ),
+            ],
+            response_model=KafkaResponseModel,
         )
 
         # this action is needed because hostnames cannot be resolved outside K8s
