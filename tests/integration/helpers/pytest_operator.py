@@ -18,7 +18,15 @@ from charms.zookeeper.v0.client import QuorumLeaderNotFoundError, ZooKeeperManag
 from kafka.admin import NewTopic
 from kazoo.exceptions import AuthFailedError, NoNodeError
 from pytest_operator.plugin import OpsTest
-from tenacity import retry, retry_if_result, stop_after_attempt, wait_fixed
+from tenacity import (
+    RetryError,
+    Retrying,
+    retry,
+    retry_if_result,
+    stop_after_attempt,
+    stop_after_delay,
+    wait_fixed,
+)
 
 from core.models import JSON
 from literals import (
@@ -951,3 +959,31 @@ def unit_id_to_broker_id(unit_id: int) -> int:
 def broker_id_to_unit_id(broker_id: int) -> int:
     """Converts broker id to unit id in KRaft mode."""
     return broker_id - KRAFT_NODE_ID_OFFSET
+
+
+def relation_exited(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> bool:
+    """Returns true if the relation between endpoint_one and endpoint_two has been removed."""
+    for rel in ops_test.model.relations:
+        endpoints = [endpoint.name for endpoint in rel.endpoints]
+        if endpoint_one not in endpoints and endpoint_two not in endpoints:
+            return True
+    return False
+
+
+def wait_for_relation_removed_between(
+    ops_test: OpsTest, endpoint_one: str, endpoint_two: str
+) -> None:
+    """Wait for relation to be removed before checking if it's waiting or idle.
+
+    Args:
+        ops_test: running OpsTest instance
+        endpoint_one: one endpoint of the relation. Doesn't matter if it's provider or requirer.
+        endpoint_two: the other endpoint of the relation.
+    """
+    try:
+        for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
+            with attempt:
+                if relation_exited(ops_test, endpoint_one, endpoint_two):
+                    break
+    except RetryError:
+        assert False, "Relation failed to exit after 3 minutes."
