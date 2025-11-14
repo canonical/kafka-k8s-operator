@@ -6,7 +6,7 @@ For specific guides, see: [AKS](how-to-deploy-deploy-on-aks) and [EKS](how-to-de
 (how-to-deploy-deploy-anywhere)=
 
 ```{caution}
-For non-K8s Charmed Apache Apache Kafka, see the [Charmed Apache Kafka documentation](https://charmhub.io/kafka) instead.
+For non-K8s Charmed Apache Apache Kafka, see the [Charmed Apache Kafka documentation](https://documentation.ubuntu.com/charmed-kafka/3/) instead.
 ```
 
 To deploy a Charmed Apache Kafka K8s cluster:
