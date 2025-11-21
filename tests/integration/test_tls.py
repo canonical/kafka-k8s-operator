@@ -153,7 +153,7 @@ async def test_set_tls_private_key(ops_test: OpsTest):
 
     updated_secret_pk = extract_private_key(ops_test, removed_secret_unit_name.replace("-", "/"))
     updated_actual_pk = get_actual_tls_private_key(
-        ops_test, removed_secret_unit_name.replace("-", "/")
+        ops_test, removed_secret_unit_name.replace("kafka/k8s", APP_NAME)
     )
 
     assert updated_secret_pk == updated_actual_pk
