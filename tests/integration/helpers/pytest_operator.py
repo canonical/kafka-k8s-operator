@@ -249,7 +249,7 @@ async def remove_tls_private_key(ops_test: OpsTest) -> None:
 
 def get_actual_tls_private_key(ops_test: OpsTest, unit_name: str) -> str:
     return check_output(
-        f"JUJU_MODEL={ops_test.model_full_name} juju ssh {unit_name} sudo -i 'cat /var/snap/charmed-kafka/current/etc/kafka/client-server.key'",
+        f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} 'cat /etc/kafka/client-server.key'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
