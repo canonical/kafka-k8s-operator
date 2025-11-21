@@ -31,6 +31,7 @@ from tenacity import (
 
 from core.models import JSON
 from literals import (
+    ADMIN_USER,
     BALANCER_WEBSERVER_USER,
     BROKER,
     CONTROLLER_USER,
@@ -856,12 +857,11 @@ def check_external_access_non_tls(ops_test: OpsTest, unit_name: str):
             admin_password = match.group(1)
             break
 
-    admin_username = "admin"
     bootstrap_server = f"{node_ip}:{bootstrap_node_port}"
 
     client = KafkaClient(
         servers=[bootstrap_server],
-        username=admin_username,
+        username=ADMIN_USER,
         password=admin_password,
         security_protocol="SASL_PLAINTEXT",
     )
