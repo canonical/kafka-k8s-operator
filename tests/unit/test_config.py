@@ -146,7 +146,7 @@ def test_metadata_log_dir_in_server_properties(ctx: Context, base_state: State) 
 def test_listeners_in_server_properties(charm_configuration: dict, base_state: State) -> None:
     """Checks that listeners are split into INTERNAL, CLIENT and EXTERNAL."""
     # Given
-    charm_configuration["options"]["expose_external"]["default"] = "nodeport"
+    charm_configuration["options"]["expose-external"]["default"] = "nodeport"
     cluster_peer = PeerRelation(PEER, PEER, local_unit_data={"private-address": "treebeard"})
     client_relation = Relation(REL_NAME, "app")
     state_in = dataclasses.replace(base_state, relations=[cluster_peer, client_relation])
@@ -211,7 +211,7 @@ def test_listeners_in_server_properties(charm_configuration: dict, base_state: S
 def test_extra_listeners_in_server_properties(charm_configuration: dict, base_state: State):
     """Checks that the extra-listeners are properly set from config."""
     # Given
-    charm_configuration["options"]["extra_listeners"][
+    charm_configuration["options"]["extra-listeners"][
         "default"
     ] = "worker-{unit}.foo.com:30000,worker-{unit}.bar.com:40000"
     cluster_peer = PeerRelation(PEER, PEER, local_unit_data={"private-address": "treebeard"})
@@ -567,9 +567,9 @@ def test_default_replication_properties_more_than_three(ctx: Context, base_state
 
 
 def test_ssl_principal_mapping_rules(charm_configuration: dict, base_state: State) -> None:
-    """Check that a change in ssl_principal_mapping_rules is reflected in server_properties."""
+    """Check that a change in ssl-principal-mapping-rules is reflected in server_properties."""
     # Given
-    charm_configuration["options"]["ssl_principal_mapping_rules"][
+    charm_configuration["options"]["ssl-principal-mapping-rules"][
         "default"
     ] = "RULE:^(erebor)$/$1/,DEFAULT"
     cluster_peer = PeerRelation(PEER, PEER)
