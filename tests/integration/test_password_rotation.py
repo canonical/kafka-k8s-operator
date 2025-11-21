@@ -29,7 +29,7 @@ def _assert_password_updated(model_full_name: str, old_user: str, expected_passw
         for attempt in Retrying(stop=stop_after_attempt(5), wait=wait_fixed(30)):
             with attempt:
                 new_user = get_user(
-                    username="sync",
+                    username=INTER_BROKER_USER,
                     model_full_name=model_full_name,
                 )
                 assert old_user != new_user
