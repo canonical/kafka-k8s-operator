@@ -41,7 +41,7 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, kraft_mode, cont
         ops_test=ops_test,
         charm=kafka_charm,
         kraft_mode=kraft_mode,
-        config_broker={"expose_external": "nodeport"},
+        config_broker={"expose-external": "nodeport"},
     )
 
     assert ops_test.model.applications[APP_NAME].status == "active"

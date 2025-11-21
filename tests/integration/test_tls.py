@@ -221,7 +221,7 @@ async def test_certificate_transfer(ops_test: OpsTest, kafka_apps):
     """Tests truststore live reload functionality using kafka-python client."""
     requirer = "other-req/0"
     test_msg = {"test": 123456}
-    await ops_test.juju("config", APP_NAME, "expose_external=nodeport")
+    await ops_test.juju("config", APP_NAME, "expose-external=nodeport")
 
     await ops_test.model.deploy(
         TLS_NAME,

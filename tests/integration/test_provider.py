@@ -49,7 +49,7 @@ async def test_deploy_charms_relate_active(
             ops_test=ops_test,
             charm=kafka_charm,
             kraft_mode=kraft_mode,
-            config_broker={"expose_external": "nodeport"},
+            config_broker={"expose-external": "nodeport"},
             num_controller=3,
         ),
         ops_test.model.deploy(app_charm, application_name=DUMMY_NAME_1, num_units=1, trust=True),

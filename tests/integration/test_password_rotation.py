@@ -46,7 +46,7 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, kraft_mode):
         ops_test=ops_test,
         charm=kafka_charm,
         kraft_mode=kraft_mode,
-        config_broker={"expose_external": "nodeport"},
+        config_broker={"expose-external": "nodeport"},
         num_broker=3,
         num_controller=3,
     )
