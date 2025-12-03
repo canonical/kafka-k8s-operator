@@ -41,7 +41,7 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, kraft_mode, cont
         ops_test=ops_test,
         charm=kafka_charm,
         kraft_mode=kraft_mode,
-        config_broker={"expose_external": "nodeport"},
+        config_broker={"expose-external": "nodeport"},
     )
 
     assert ops_test.model.applications[APP_NAME].status == "active"
@@ -201,7 +201,7 @@ async def test_log_level_change(ops_test: OpsTest):
         )
         assert total_lines == 0
 
-    await ops_test.model.applications[APP_NAME].set_config({"log_level": "DEBUG"})
+    await ops_test.model.applications[APP_NAME].set_config({"log-level": "DEBUG"})
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME], status="active", timeout=1000, idle_period=30
     )
@@ -216,7 +216,7 @@ async def test_log_level_change(ops_test: OpsTest):
         assert total_lines > 0
 
     # cleanup
-    await ops_test.model.applications[APP_NAME].set_config({"log_level": "INFO"})
+    await ops_test.model.applications[APP_NAME].set_config({"log-level": "INFO"})
     await ops_test.model.wait_for_idle(
         apps=[APP_NAME], status="active", timeout=1000, idle_period=30
     )

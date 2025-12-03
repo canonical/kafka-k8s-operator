@@ -69,7 +69,7 @@ class KRaftHandler(Object):
 
     def _on_start(self, event: StartEvent | PebbleReadyEvent) -> None:  # noqa: C901
         """Handler for `start` or `pebble-ready` events."""
-        if not self.charm.refresh or not self.workload.container_can_connect:
+        if not self.workload.container_can_connect or not self.charm.refresh:
             event.defer()
             return
 
