@@ -28,10 +28,12 @@ from core.models import (
     KafkaBroker,
     KafkaClient,
     KafkaCluster,
+    KafkaRequestModel,
     OAuth,
     PeerCluster,
     PeerClusterData,
     PeerClusterOrchestratorData,
+    RelationStateV1,
 )
 from literals import (
     ADMIN_USER,
@@ -119,7 +121,7 @@ class ClusterState(Object):
                 {
                     "controller_password": self.cluster.controller_password,
                     "bootstrap_controller": self.cluster.bootstrap_controller,
-                    "bootstrap_unit_id": self.cluster.bootstrap_unit_id,
+                    "bootstrap_unit_id": str(self.cluster.bootstrap_unit_id),
                     "bootstrap_replica_id": self.cluster.bootstrap_replica_id,
                 }
             )
@@ -143,7 +145,7 @@ class ClusterState(Object):
                     "balancer_uris": self.cluster.balancer_uris,
                     "controller_password": self.cluster.controller_password,
                     "bootstrap_controller": self.cluster.bootstrap_controller,
-                    "bootstrap_unit_id": self.cluster.bootstrap_unit_id,
+                    "bootstrap_unit_id": str(self.cluster.bootstrap_unit_id),
                     "bootstrap_replica_id": self.cluster.bootstrap_replica_id,
                 }
             )
@@ -261,17 +263,29 @@ class ClusterState(Object):
             if not relation.app:
                 continue
 
-            clients.add(
-                KafkaClient(
-                    relation=relation,
-                    data_interface=self.client_provider_interface,
-                    component=relation.app,
-                    local_app=self.cluster.app,
-                    bootstrap_server=self.bootstrap_server_client(relation),
-                    password=self.cluster.client_passwords.get(f"relation-{relation.id}", ""),
-                    tls="enabled" if self.cluster.tls_enabled else "disabled",
+            state = RelationStateV1(relation, self.model, relation.app)
+            data = state.relation_data
+            version = data.get("version", "v0")
+
+            if version == "v0":
+                requests = [KafkaRequestModel(**state.relation_data)]
+            else:
+                requests = [KafkaRequestModel(**req) for req in data.get("requests", [])]
+
+            for request in requests:
+                username = KafkaClient.generate_username(relation.id, request.request_id)
+                clients.add(
+                    KafkaClient(
+                        relation=relation,
+                        model=self.model,
+                        component=relation.app,
+                        request=request,
+                        local_app=self.cluster.app,
+                        bootstrap_server=self.bootstrap_server_client(relation),
+                        password=self.cluster.client_passwords.get(username, ""),
+                        tls="enabled" if self.cluster.tls_enabled else "disabled",
+                    )
                 )
-            )
 
         return clients
 

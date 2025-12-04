@@ -29,7 +29,7 @@ from events.actions import ActionEvents
 from events.controller import KRaftHandler
 from events.oauth import OAuthHandler
 from events.provider import KafkaProvider
-from events.user_secrets import SecretsHandler
+from events.secrets import SecretsHandler
 from health import KafkaHealth
 from literals import (
     BALANCER_WEBSERVER_PORT,
@@ -39,7 +39,6 @@ from literals import (
     GROUP,
     PEER,
     PROFILE_TESTING,
-    REL_NAME,
     USER_ID,
     Status,
 )
@@ -85,7 +84,7 @@ class BrokerOperator(Object):
         self.health = KafkaHealth(self) if self.charm.substrate == "vm" else None
 
         self.action_events = ActionEvents(self)
-        self.user_secrets = SecretsHandler(self)
+        self.secrets = SecretsHandler(self)
 
         self.provider = KafkaProvider(self)
         self.oauth = OAuthHandler(self)
@@ -208,7 +207,7 @@ class BrokerOperator(Object):
 
         # only log once on successful 'on-start' run
         if not self.charm.pending_inactive_statuses:
-            logger.info(f'Broker {self.charm.unit.name.split("/")[1]} connected')
+            logger.info(f"Broker {self.charm.unit.name.split('/')[1]} connected")
 
     def _handle_configuration_updates(self, event: EventBase) -> None:
         """Handle configuration property updates and restart if needed.
@@ -258,12 +257,10 @@ class BrokerOperator(Object):
         # Update IP addresses based on current network bindings.
         self.update_ip_addresses()
 
-        if self.charm.unit.is_leader():
-            self.update_credentials_cache()
-
-        # If Kafka is related to client charms, update their information.
-        if self.model.relations.get(REL_NAME, None) and self.charm.unit.is_leader():
-            self.update_client_data()
+        # The order is important here, first update the credentials cache,
+        # then the client relation data.
+        self.update_credentials_cache()
+        self.provider.reconcile()
 
         if self.charm.state.peer_cluster_orchestrator_relation and self.charm.unit.is_leader():
             self.update_peer_cluster_data()
@@ -319,6 +316,9 @@ class BrokerOperator(Object):
             self.tls_manager.rebuild_truststore()
             self.charm.on[f"{self.charm.restart.name}"].acquire_lock.emit()
 
+        if self.charm.state.runs_broker and not self.kraft.controller_manager.broker_active():
+            self.charm._set_status(Status.BROKER_NOT_CONNECTED)
+
         try:
             if self.health and not self.health.machine_configured():
                 self.charm._set_status(Status.SYSCONF_NOT_OPTIMAL)
@@ -330,12 +330,12 @@ class BrokerOperator(Object):
 
     def _on_secret_changed(self, event: SecretChangedEvent) -> None:
         """Handler for `secret_changed` events."""
-        if not event.secret.label or not self.charm.state.cluster.relation:
+        if not event.secret.label or not self.charm.state.peer_relation:
             return
 
         if event.secret.label == self.charm.state.cluster.data_interface._generate_secret_label(
             PEER,
-            self.charm.state.cluster.relation.id,
+            self.charm.state.peer_relation.id,
             "extra",  # pyright: ignore[reportArgumentType] -- Changes with the https://github.com/canonical/data-platform-libs/issues/124
         ):
             # TODO: figure out why creating internal credentials setting doesn't trigger changed event here
@@ -452,9 +452,6 @@ class BrokerOperator(Object):
             self.charm._set_status(Status.SERVICE_NOT_RUNNING)
             return False
 
-        if self.charm.state.runs_broker and not self.kraft.controller_manager.broker_active():
-            self.charm._set_status(Status.BROKER_NOT_CONNECTED)
-
         return True
 
     def update_external_services(self) -> None:
@@ -471,30 +468,6 @@ class BrokerOperator(Object):
             for auth in self.charm.state.enabled_auth:
                 listener_service = self.k8s_manager.build_listener_service(auth)
                 self.k8s_manager.apply_service(service=listener_service)
-
-    def update_client_data(self) -> None:
-        """Writes necessary relation data to all related client applications."""
-        if not self.charm.unit.is_leader() or not self.healthy or not self.charm.balancer.healthy:
-            return
-
-        for client in self.charm.state.clients:
-            if not client.password:
-                logger.debug(
-                    f"Skipping update of {client.app.name}, user has not yet been added..."
-                )
-                continue
-
-            client.update(
-                {
-                    "endpoints": client.bootstrap_server,
-                    "consumer-group-prefix": client.consumer_group_prefix,
-                    "topic": client.topic,
-                    "username": client.username,
-                    "password": client.password,
-                    "tls": client.tls,
-                    "tls-ca": self.charm.state.unit_broker.client_certs.ca,
-                }
-            )
 
     def update_peer_cluster_data(self) -> None:
         """Writes updated relation data to other peer_cluster apps."""
@@ -539,7 +512,6 @@ class BrokerOperator(Object):
         self.config_manager.set_client_properties()
 
         for client in self.charm.state.clients:
-
             if not client.password:
                 # client not setup yet.
                 continue

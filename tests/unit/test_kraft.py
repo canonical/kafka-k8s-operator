@@ -16,7 +16,10 @@ from tests.unit.helpers import generate_tls_artifacts
 
 from charm import KafkaCharm
 from literals import (
+    ADMIN_USER,
     CONTAINER,
+    CONTROLLER_USER,
+    INTER_BROKER_USER,
     PEER,
     PEER_CLUSTER_ORCHESTRATOR_RELATION,
     PEER_CLUSTER_RELATION,
@@ -202,9 +205,9 @@ def test_ready_to_start(charm_configuration, base_state: State):
     assert "bootstrap-unit-id" in state_out.get_relations(PEER)[0].local_app_data
     assert "bootstrap-replica-id" in state_out.get_relations(PEER)[0].local_app_data
     # Only the internal users should be created.
-    assert "admin-password" in secret_contents
-    assert "sync-password" in secret_contents
-    assert "controller-password" in secret_contents
+    assert f"{ADMIN_USER}-password" in secret_contents
+    assert f"{CONTROLLER_USER}-password" in secret_contents
+    assert f"{INTER_BROKER_USER}-password" in secret_contents
     assert "internal-ca" in secret_contents
     assert "internal-ca-key" in secret_contents
     assert state_out.unit_status == ActiveStatus()

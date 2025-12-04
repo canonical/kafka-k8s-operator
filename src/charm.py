@@ -45,6 +45,7 @@ from workload import KafkaWorkload
 logger = logging.getLogger(__name__)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("charms.data_platform_libs.v1.data_interfaces").setLevel(logging.WARNING)
 
 
 class KafkaCharm(TypedCharmBase[CharmConfig]):
@@ -186,12 +187,12 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             return self.refresh.unit_status_higher_priority
 
         # Scaling warning if auto-balance is set.
-        if all(
-            [
-                self.state.runs_broker,
-                self.state.runs_balancer,
-                self.broker.kraft.controller_manager.departing_brokers,
-            ]
+        # Since this runs on every hook, we intentionally use and for
+        # less complex checks first and avoid using all
+        if (
+            self.state.runs_broker
+            and self.state.runs_balancer
+            and self.broker.kraft.controller_manager.departing_brokers
         ):
             return Status.SCALING_WARNING.value.status
 

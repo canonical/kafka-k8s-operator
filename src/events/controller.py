@@ -69,7 +69,7 @@ class KRaftHandler(Object):
 
     def _on_start(self, event: StartEvent | PebbleReadyEvent) -> None:  # noqa: C901
         """Handler for `start` or `pebble-ready` events."""
-        if not self.charm.refresh or not self.workload.container_can_connect:
+        if not self.workload.container_can_connect or not self.charm.refresh:
             event.defer()
             return
 
@@ -85,9 +85,6 @@ class KRaftHandler(Object):
             return
 
         self.format_storages()
-
-        # update status to add controller
-        self.charm.on.update_status.emit()
 
     def _on_update_status(self, event: UpdateStatusEvent) -> None:
         """Handler for `update-status` events."""
@@ -152,6 +149,9 @@ class KRaftHandler(Object):
             internal_user_credentials=credentials,
             initial_controllers=f"{self.charm.state.peer_cluster.bootstrap_unit_id}@{self.charm.state.peer_cluster.bootstrap_controller}:{self.charm.state.peer_cluster.bootstrap_replica_id}",
         )
+
+        # update status to add controller
+        self.charm.on.update_status.emit()
 
     def _leader_elected(self, event: LeaderElectedEvent) -> None:
         if (

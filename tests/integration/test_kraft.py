@@ -138,7 +138,7 @@ class TestKRaft:
             )
 
         status = "active" if self.controller_app == APP_NAME else "blocked"
-        async with ops_test.fast_forward(fast_interval="60s"):
+        async with ops_test.fast_forward(fast_interval="120s"):
             await ops_test.model.wait_for_idle(
                 apps=list({APP_NAME, self.controller_app}),
                 idle_period=30,
@@ -163,7 +163,7 @@ class TestKRaft:
             apps=list({APP_NAME, self.controller_app}), idle_period=30
         )
 
-        async with ops_test.fast_forward(fast_interval="40s"):
+        async with ops_test.fast_forward(fast_interval="60s"):
             await asyncio.sleep(120)
 
         assert ops_test.model.applications[APP_NAME].status == "active"
@@ -193,7 +193,7 @@ class TestKRaft:
         if self.deployment_strat == "multi":
             await ops_test.model.applications[APP_NAME].add_units(count=2)
 
-        async with ops_test.fast_forward(fast_interval="90s"):
+        async with ops_test.fast_forward(fast_interval="120s"):
             await ops_test.model.wait_for_idle(
                 apps=list({APP_NAME, self.controller_app}),
                 status="active",
@@ -231,7 +231,7 @@ class TestKRaft:
 
         await asyncio.sleep(120)
 
-        async with ops_test.fast_forward(fast_interval="60s"):
+        async with ops_test.fast_forward(fast_interval="120s"):
             await ops_test.model.wait_for_idle(
                 apps=[self.controller_app],
                 status="active",
