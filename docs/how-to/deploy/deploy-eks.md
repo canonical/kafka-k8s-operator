@@ -1,11 +1,16 @@
-(how-to-deploy-deploy-on-eks)=
+(how-to-deploy-on-eks)=
 # How to deploy on EKS
 
-[Amazon Elastic Kubernetes Service](https://aws.amazon.com/eks/) (EKS) is a popular, fully automated Kubernetes service. To access the EKS Web interface, go to [{spellexception}`console.aws.amazon.com/eks/home`](https://console.aws.amazon.com/eks/home).
+[Amazon Elastic Kubernetes Service](https://aws.amazon.com/eks/) (EKS) is a popular,
+fully automated Kubernetes service.
+To access the EKS Web interface, go to
+[{spellexception}`console.aws.amazon.com/eks/home`](https://console.aws.amazon.com/eks/home).
 
 ## Install EKS and Juju tooling
 
-Install [Juju](https://juju.is/docs/juju/install-juju) and the [`kubectl` CLI tools](https://kubernetes.io/docs/tasks/tools/) (that will be used for managing the Kubernetes cluster) via snap:
+Install [Juju](https://juju.is/docs/juju/install-juju) and the
+[`kubectl` CLI tools](https://kubernetes.io/docs/tasks/tools/)
+(that will be used for managing the Kubernetes cluster) via snap:
 
 ```shell
 sudo snap install juju --channel 3.5/stable
@@ -18,6 +23,8 @@ Follow the installation guides for:
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) - the Amazon Web Services CLI
 
 To check they are all correctly installed, you can run the commands below.
+
+Check Juju client version:
 
 ```shell
 juju version
@@ -33,9 +40,11 @@ juju version
 
 </details>
 
+Check the Kubernetes command-line tool version:
+
 ```shell
 kubectl version --client
-``` 
+```
 
 <details>
 
@@ -47,6 +56,8 @@ Kustomize Version: v5.0.4-0.20230601165947-6ce0bf390ce3
 ```
 
 </details>
+
+Show Amazon Elastic Kubernetes Service (EKS) environment information:
 
 ```shell
 eksctl info
@@ -62,6 +73,8 @@ kubectl version: v1.28.2
 ```
 
 </details>
+
+Display the version of the AWS Command Line Interface (CLI) installed:
 
 ```shell
 aws --version
@@ -118,7 +131,8 @@ Export the deployment name for further use:
 export JUJU_NAME=eks-$USER-$RANDOM
 ```
 
-This following examples in this guide will use the location `eu-west-3` and K8s `v.1.27` - feel free to change this for your own deployment.
+This following examples in this guide will use the location `eu-west-3` and K8s `v.1.27`.
+Feel free to change this for your own deployment.
 
 <details>
 
@@ -203,23 +217,23 @@ Create a new Juju model, if needed:
 juju add-model <MODEL_NAME>
 ```
 
-```{note}
+````{note}
 (Optional) Increase the debug level if you are troubleshooting charms:
 
 ```shell
 juju model-config logging-config='<root>=INFO;unit=DEBUG'
 ```
-```
+
+````
 
 Then, Charmed Apache Kafka can be deployed as usual:
 
 ```shell
-juju deploy zookeeper-k8s -n3 --channel 3/stable --trust
-juju deploy kafka-k8s -n3 --channel 3/stable --trust
-juju integrate kafka-k8s zookeeper-k8s
+juju deploy kafka-k8s -n 3 --channel 4/edge --trust --config roles=broker,controller
 ```
 
-We also recommend to deploy a [Data Integrator](https://charmhub.io/data-integrator) for creating an admin user to manage the content of the Kafka cluster:
+We also recommend to deploy a [Data Integrator](https://charmhub.io/data-integrator)
+for creating an admin user to manage the content of the Kafka cluster:
 
 ```shell
 juju deploy data-integrator admin --channel edge \
@@ -233,7 +247,8 @@ And integrate it with the Kafka application:
 juju integrate kafka-k8s admin
 ```
 
-For more information on Data Integrator and how to use it, please refer to the [how-to manage applications](how-to-manage-applications) user guide.
+For more information on Data Integrator and how to use it, please refer to the
+[how-to manage client connections](how-to-client-connections) user guide.
 
 ## Display deployment information
 
@@ -254,6 +269,8 @@ CoreDNS is running at https://AAAAAAAAAAAAAAAAAAAAAAA.gr7.eu-west-3.eks.amazonaw
 
 </details>
 
+List all Amazon EKS clusters across all regions:
+
 ```shell
 eksctl get cluster -A
 ```
@@ -268,6 +285,8 @@ eks-marc-9587	eu-west-3	True
 ```
 
 </details>
+
+List all the nodes (worker machines) in the Kubernetes cluster:
 
 ```shell
 kubectl get node
@@ -289,10 +308,10 @@ ip-192-168-85-225.eu-west-3.compute.internal   Ready    <none>   5d22h   v1.27.1
 ## Clean up
 
 ```{caution}
-Always clean EKS resources that are no longer necessary -  they could be costly!
+Always clean EKS resources that are no longer necessary - they could be costly!
 ```
 
-To clean the EKS cluster, resources and juju cloud, run the following commands:
+To clean the EKS cluster, resources and Juju cloud, run the following commands:
 
 ```shell
 juju destroy-controller $JUJU_NAME --yes --destroy-all-models --destroy-storage --force
@@ -306,7 +325,8 @@ kubectl get svc --all-namespaces
 kubectl delete svc <service-name> 
 ```
 
-Next, delete the EKS cluster (As described on the [Deleting an Amazon EKS cluster](https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html) page):
+Next, delete the EKS cluster (As described on the
+[Deleting an Amazon EKS cluster](https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html) page):
 
 ```shell
 eksctl get cluster -A
