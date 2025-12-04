@@ -27,7 +27,9 @@ from .helpers import (
     TLS_NAME,
     TLS_REQUIRER,
     ZK_NAME,
+    check_hostname_verification,
     check_tls,
+    copy_file_to_unit,
     create_test_topic,
     delete_pod,
     extract_ca,
@@ -36,6 +38,8 @@ from .helpers import (
     get_address,
     get_kafka_zk_relation_data,
     get_mtls_nodeport,
+    get_secret_by_label,
+    get_unit_hostname,
     list_truststore_aliases,
     search_secrets,
     set_mtls_client_acls,
@@ -448,6 +452,59 @@ async def test_tls_removed(ops_test: OpsTest):
     assert not check_tls(
         ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].client
     )
+
+
+@pytest.mark.abort_on_fail
+async def test_dns_certificate(ops_test: OpsTest):
+    tls_config = {"ca-common-name": "kafka"}
+    # re-set up TLS with DNS-only certs
+    await ops_test.model.applications[APP_NAME].set_config(
+        {"certificate_include_ip_sans": "false"}
+    )
+
+    await ops_test.model.deploy(
+        TLS_NAME, channel="edge", config=tls_config, series="jammy", revision=163
+    )
+
+    async with ops_test.fast_forward(fast_interval="60s"):
+        await ops_test.model.add_relation(ZK_NAME, TLS_NAME)
+        await ops_test.model.add_relation(f"{APP_NAME}:{TLS_RELATION}", TLS_NAME)
+        await ops_test.model.wait_for_idle(
+            apps=[ZK_NAME], idle_period=15, timeout=1000, status="active"
+        )
+
+    # ensuring at least a few update-status
+    async with ops_test.fast_forward(fast_interval="20s"):
+        await asyncio.sleep(60)
+
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=30, timeout=1200, status="active"
+    )
+
+    root_ca = get_secret_by_label(ops_test, label="ca-certificates", owner=TLS_NAME)[
+        "ca-certificate"
+    ]
+
+    test_unit_name = ops_test.model.applications[APP_NAME].units[0].name
+    test_unit_hostname = get_unit_hostname(ops_test=ops_test, unit_name=test_unit_name).strip()
+
+    # copying file to container
+    copy_file_to_unit(
+        ops_test=ops_test,
+        unit_name=test_unit_name,
+        filename="rootca.pem",
+        content=root_ca,
+    )
+
+    output = check_hostname_verification(
+        ops_test=ops_test,
+        hostname=test_unit_hostname,
+        port=SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].internal,
+        cafile_name="rootca.pem",
+        unit_name=test_unit_name,
+    )
+
+    assert f"Verified peername: {test_unit_hostname}" in output
 
 
 @pytest.mark.abort_on_fail
