@@ -44,6 +44,7 @@ lightkube = "0.15.4"
 trustme = "^1.2.0"
 charmlibs-pathops = "^1.0.0"
 charm-refresh = "^3.1.0.0"
+cosl = ">= 0.0.5"
 
 [tool.poetry.group.charm-libs.dependencies]
 # data_platform_libs/v0/data_interfaces.py
