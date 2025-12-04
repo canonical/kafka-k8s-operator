@@ -427,14 +427,7 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
 
 @pytest.mark.abort_on_fail
 async def test_tls_removed(ops_test: OpsTest):
-    await asyncio.gather(
-        ops_test.model.applications[APP_NAME].remove_relation(
-            f"{APP_NAME}:certificates", f"{TLS_NAME}:certificates"
-        ),
-        ops_test.model.applications[APP_NAME].remove_relation(
-            f"{ZK_NAME}:certificates", f"{TLS_NAME}:certificates"
-        ),
-    )
+    await ops_test.model.remove_application(TLS_NAME, block_until_done=True)
 
     # ensuring enough update-status to unblock ZK
     async with ops_test.fast_forward(fast_interval="60s"):
