@@ -11,6 +11,7 @@ import socket
 import string
 from abc import ABC, abstractmethod
 from contextlib import closing
+from typing import Iterable
 
 from charmlibs import pathops
 from ops.pebble import Layer
@@ -29,6 +30,7 @@ class CharmedKafkaPaths:
         self.data_path = role.paths["DATA"]
         self.binaries_path = role.paths["BIN"]
         self.logs_path = role.paths["LOGS"]
+        self.env_path = role.paths["ENV"]
 
     @property
     def server_properties(self):
@@ -275,3 +277,15 @@ class WorkloadBase(ABC):
                     return True
 
         return False
+
+
+def map_env(env: Iterable[str]) -> dict[str, str]:
+    """Parse env var into a dict."""
+    map_env = {}
+    for var in env:
+        key = "".join(var.split("=", maxsplit=1)[0])
+        value = "".join(var.split("=", maxsplit=1)[1:])
+        if key:
+            # only check for keys, as we can have an empty value for a variable
+            map_env[key] = value
+    return map_env

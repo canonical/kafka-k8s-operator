@@ -11,7 +11,7 @@ import re
 import textwrap
 from abc import abstractmethod
 from functools import cached_property
-from typing import Iterable, cast
+from typing import cast
 
 from lightkube.core.exceptions import ApiError
 from typing_extensions import override
@@ -19,7 +19,7 @@ from typing_extensions import override
 from core.cluster import ClusterState
 from core.models import PeerCluster
 from core.structured_config import CharmConfig, LogLevel
-from core.workload import CharmedKafkaPaths, WorkloadBase
+from core.workload import CharmedKafkaPaths, WorkloadBase, map_env
 from literals import (
     ADMIN_USER,
     BALANCER,
@@ -849,12 +849,12 @@ class ConfigManager(CommonConfigManager):
             self.log_level,
         ] + self.auxiliary_paths
 
-        raw_current_env = self.workload.read("/etc/environment")
+        raw_current_env = self.workload.read(self.workload.paths.env_path)
         current_env = map_env(raw_current_env)
 
         updated_env = current_env | map_env(updated_env_list)
         content = "\n".join([f"{key}={value}" for key, value in updated_env.items()])
-        self.workload.write(content=content, path="/etc/environment")
+        self.workload.write(content=content, path=self.workload.paths.env_path)
 
     def properties_changed(self) -> set[str]:
         """Check if server properties have changed since last written.
@@ -1016,7 +1016,7 @@ class BalancerConfigManager(CommonConfigManager):
     def set_environment(self) -> None:
         """Writes the env-vars needed for passing to charmed-kafka service.
 
-        We avoid overwriting KAFKA_OPTS in /etc/environment because it is only used by the broker.
+        We avoid overwriting KAFKA_OPTS in ENV path because it is only used by the broker.
         """
         updated_env_list = [
             self.kafka_jmx_opts,
@@ -1027,14 +1027,14 @@ class BalancerConfigManager(CommonConfigManager):
             self.kafka_opts,
         ] + self.auxiliary_paths
 
-        raw_current_env = self.workload.read("/etc/environment")
+        raw_current_env = self.workload.read(self.workload.paths.env_path)
         current_env = map_env(raw_current_env)
 
         updated_env = current_env | map_env(updated_env_list)
         content = "\n".join([f"{key}={value}" for key, value in updated_env.items()])
 
         if not self.state.runs_broker:
-            self.workload.write(content=content, path="/etc/environment")
+            self.workload.write(content=content, path=self.workload.paths.env_path)
 
     def set_cruise_control_auth(self) -> None:
         """Write the credentials file for Cruise Control authentication."""
@@ -1042,15 +1042,3 @@ class BalancerConfigManager(CommonConfigManager):
             content=f"{self.state.cluster.balancer_username}: {self.state.cluster.balancer_password},ADMIN\n",
             path=self.workload.paths.cruise_control_auth,
         )
-
-
-def map_env(env: Iterable[str]) -> dict[str, str]:
-    """Parse env var into a dict."""
-    map_env = {}
-    for var in env:
-        key = "".join(var.split("=", maxsplit=1)[0])
-        value = "".join(var.split("=", maxsplit=1)[1:])
-        if key:
-            # only check for keys, as we can have an empty value for a variable
-            map_env[key] = value
-    return map_env
