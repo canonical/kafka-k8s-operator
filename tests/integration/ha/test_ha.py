@@ -359,7 +359,6 @@ def test_pod_reschedule(
     assert_continuous_writes_consistency(result=result)
 
 
-@pytest.mark.unstable
 def test_network_cut_without_ip_change(
     juju: jubilant.Juju,
     c_writes: ContinuousWrites,
@@ -399,11 +398,8 @@ def test_network_cut_without_ip_change(
 
     time.sleep(REELECTION_TIME * 2)
 
-    # async with juju.fast_forward(fast_interval="15s"):
-    #     result = c_writes.stop()
-    #     await asyncio.sleep(CLIENT_TIMEOUT * 8)
-
     result = c_writes.stop()
+    time.sleep(CLIENT_TIMEOUT * 8)
 
     # verify the unit is now rejoined the cluster
     topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)

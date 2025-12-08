@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 
 import logging
+from subprocess import CalledProcessError
 
 import jubilant
 import pytest
@@ -52,7 +53,11 @@ def restart_delay(juju: jubilant.Juju):
 @pytest.fixture()
 def chaos_mesh(juju: jubilant.Juju):
     """Deploys chaos mesh to the namespace and uninstalls it at the end."""
-    deploy_chaos_mesh(juju.model)
+    try:
+        deploy_chaos_mesh(juju.model)
+    except CalledProcessError as e:
+        logger.error(f"{e.stdout} {e.stderr}")
+        raise e
 
     yield
 
