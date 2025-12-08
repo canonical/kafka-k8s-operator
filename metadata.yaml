@@ -22,6 +22,7 @@ maintainers:
   - Canonical Data Platform <data-platform@lists.launchpad.net>
 assumes:
   - k8s-api
+charm-user: non-root
 
 containers:
   kafka:
