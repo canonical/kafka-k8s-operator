@@ -26,6 +26,8 @@ charm-user: non-root
 
 containers:
   kafka:
+    gid: 584792
+    uid: 584792
     resource: kafka-image
     mounts:
       - storage: data
@@ -35,7 +37,7 @@ resources:
   kafka-image:
     type: oci-image
     description: OCI Image for Apache Kafka
-    upstream-source: ghcr.io/canonical/charmed-kafka@sha256:67c0916177047b4f6f167e83c9c37fedd74fcc716c6fbb902dc6f848269d7a22
+    upstream-source: ghcr.io/canonical/charmed-kafka@sha256:5ca2e31a4495a3b7adc3e089c10dcd53174be499516dae8629e6a14b2fe55016
 
 peers:
   cluster:
