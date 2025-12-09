@@ -188,6 +188,7 @@ class BrokerOperator(Object):
 
         self.config_manager.set_server_properties()
         self.config_manager.set_client_properties()
+        self.config_manager.set_environment()
 
         # during pod-reschedules (e.g upgrades or otherwise) we lose all files
         # need to manually add-back key/truststores
