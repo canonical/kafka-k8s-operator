@@ -822,6 +822,23 @@ class ConfigManager(CommonConfigManager):
             if value is not None
         ]
 
+    @property
+    def environment(self) -> dict[str, str]:
+        """Return the mapping of environment variables and their values for Apache Kafka service."""
+        updated_env_list = [
+            self.kafka_opts,
+            self.kafka_jmx_opts,
+            self.cc_jmx_opts,
+            self.jvm_performance_opts,
+            self.heap_opts,
+            self.log_level,
+        ] + self.auxiliary_paths
+
+        raw_current_env = self.workload.read(self.workload.paths.env_path)
+        current_env = map_env(raw_current_env)
+
+        return current_env | map_env(updated_env_list)
+
     def set_server_properties(self) -> None:
         """Writes all Kafka config properties to the `server.properties` path."""
         self.workload.write(
@@ -840,20 +857,7 @@ class ConfigManager(CommonConfigManager):
 
     def set_environment(self) -> None:
         """Writes the env-vars needed for passing to charmed-kafka service."""
-        updated_env_list = [
-            self.kafka_opts,
-            self.kafka_jmx_opts,
-            self.cc_jmx_opts,
-            self.jvm_performance_opts,
-            self.heap_opts,
-            self.log_level,
-        ] + self.auxiliary_paths
-
-        raw_current_env = self.workload.read(self.workload.paths.env_path)
-        current_env = map_env(raw_current_env)
-
-        updated_env = current_env | map_env(updated_env_list)
-        content = "\n".join([f"{key}={value}" for key, value in updated_env.items()])
+        content = "\n".join([f"{key}={value}" for key, value in self.environment.items()])
         self.workload.write(content=content, path=self.workload.paths.env_path)
 
     def properties_changed(self) -> set[str]:
@@ -999,6 +1003,22 @@ class BalancerConfigManager(CommonConfigManager):
 
         return properties
 
+    @property
+    def environment(self) -> dict[str, str]:
+        """Return the mapping of environment variables and their values for Apache Kafka service."""
+        updated_env_list = [
+            self.kafka_jmx_opts,
+            self.cc_jmx_opts,
+            self.jvm_performance_opts,
+            self.heap_opts,
+            self.log_level,
+            self.kafka_opts,
+        ] + self.auxiliary_paths
+
+        raw_current_env = self.workload.read(self.workload.paths.env_path)
+        current_env = map_env(raw_current_env)
+        return current_env | map_env(updated_env_list)
+
     def set_cruise_control_properties(self) -> None:
         """Writes all Cruise Control properties to the `cruisecontrol.properties` path."""
         self.workload.write(
@@ -1018,21 +1038,7 @@ class BalancerConfigManager(CommonConfigManager):
 
         We avoid overwriting KAFKA_OPTS in ENV path because it is only used by the broker.
         """
-        updated_env_list = [
-            self.kafka_jmx_opts,
-            self.cc_jmx_opts,
-            self.jvm_performance_opts,
-            self.heap_opts,
-            self.log_level,
-            self.kafka_opts,
-        ] + self.auxiliary_paths
-
-        raw_current_env = self.workload.read(self.workload.paths.env_path)
-        current_env = map_env(raw_current_env)
-
-        updated_env = current_env | map_env(updated_env_list)
-        content = "\n".join([f"{key}={value}" for key, value in updated_env.items()])
-
+        content = "\n".join([f"{key}={value}" for key, value in self.environment.items()])
         if not self.state.runs_broker:
             self.workload.write(content=content, path=self.workload.paths.env_path)
 
