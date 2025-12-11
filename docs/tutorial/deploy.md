@@ -131,14 +131,10 @@ It is always possible to run a command from within the Apache Kafka cluster usin
 To jump in to a running Charmed Apache Kafka K8s unit and run a command, for example listing files in a directory, you can do the following:
 
 ```shell
-juju ssh --container kafka kafka-k8s/leader sudo -i "ls \$BIN/bin"
+juju ssh --container kafka kafka-k8s/leader "ls /opt/kafka/bin/"
 ```
 
 where the printed result will be the output from the `ls \$BIN/bin` command being executed on the `kafka-k8s` leader unit.
-
-```{note}
-Charmed Apache Kafka K8s exports (among others) four different environment variables for conveniently referencing various file-system directories relevant to the workload, `$BIN`, `$LOGS`, `$CONF` and `$DATA` - more information on these directories can be found in [File system paths](reference-file-system-paths).
-```
 
 When the unit has started, the Charmed Apache Kafka K8s Operator installs the [`charmed-kafka`](https://snapcraft.io/charmed-kafka) snap in the unit that provides a number of snap commands (that corresponds to the shell-script `bin/kafka-*.sh` commands in the Apache Kafka distribution) for performing various administrative and operational tasks.
 
