@@ -5,22 +5,38 @@ This is a part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 
 ## Transport Layer Security (TLS)
 
-[TLS](https://en.wikipedia.org/wiki/Transport_Layer_Security) is used to encrypt data exchanged between two applications; it secures data transmitted over the network. Typically, enabling TLS within a highly available database, and between a highly available database and client/server applications, requires domain-specific knowledge and a high level of expertise. Fortunately, the domain-specific knowledge has been encoded into Charmed Apache Kafka K8s. This means (re-)configuring TLS on Charmed Apache Kafka K8s is readily available and requires minimal effort on your end.
+[TLS](https://en.wikipedia.org/wiki/Transport_Layer_Security) is used to encrypt data exchanged
+between two applications; it secures data transmitted over the network.
+Typically, enabling TLS within a highly available database, and between a highly available database
+and client/server applications, requires domain-specific knowledge and a high level of expertise.
+Fortunately, the domain-specific knowledge has been encoded into Charmed Apache Kafka K8s.
+This means (re-)configuring TLS on Charmed Apache Kafka K8s is readily available and requires
+minimal effort on your end.
 
 Juju relations are particularly useful for enabling TLS.
 For example, you can integrate Charmed Apache Kafka K8s to the
 [Self-signed Certificates Charm](https://charmhub.io/self-signed-certificates)
-using the [tls-certificates](https://charmhub.io/integrations/tls-certificates) interface. 
-The `tls-certificates` relation centralises TLS certificate management, handling certificate provisioning, requests, and renewal. This approach allows you to use different certificate providers, including self-signed certificates or external services such as Let's Encrypt.
+using the [tls-certificates](https://charmhub.io/integrations/tls-certificates) interface.
+The `tls-certificates` relation centralises TLS certificate management,
+handling certificate provisioning, requests, and renewal.
+This approach allows you to use different certificate providers,
+including self-signed certificates or external services such as Let's Encrypt.
 
 ```{note}
-In this tutorial, we will distribute [self-signed certificates](https://en.wikipedia.org/wiki/Self-signed_certificate) to all charms (Charmed Apache Kafka K8s and client applications) that are signed using a root self-signed CA that is also trusted by all applications. 
-This setup is only for testing and demonstrating purposes and self-signed certificates are not recommended in a production cluster. For more information about which charm may better suit your use-case, please see the [Security with X.509 certificates](https://charmhub.io/topics/security-with-x-509-certificates) page.
+In this tutorial, we will distribute
+[self-signed certificates](https://en.wikipedia.org/wiki/Self-signed_certificate)
+to all charms (Charmed Apache Kafka K8s and client applications) that are signed using
+a root self-signed CA that is also trusted by all applications. 
+This setup is only for testing and demonstrating purposes and self-signed certificates
+are not recommended in a production cluster.
+For more information about which charm may better suit your use-case, please see the
+[Security with X.509 certificates](https://charmhub.io/topics/security-with-x-509-certificates) page.
 ```
 
 ### Configure TLS
 
-Before enabling TLS on Charmed Apache Kafka K8s we must first deploy the `self-signed-certificates` charm:
+Before enabling TLS on Charmed Apache Kafka K8s we must first deploy the `self-signed-certificates`
+charm:
 
 ```shell
 juju deploy self-signed-certificates --config ca-common-name="Tutorial CA"
@@ -48,7 +64,7 @@ To enable TLS on Charmed Apache Kafka K8s, integrate with `self-signed-certifica
 juju integrate kafka-k8s:certificates self-signed-certificates
 ```
 
-After the charms settle into `active/idle` states, the Apache Kafka listeners should now have been swapped to the 
+After the charms settle into `active/idle` states, the Apache Kafka listeners should now have been swapped to the
 default encrypted port 9093. This can be tested by testing whether the ports are open/closed with `telnet`:
 
 ```shell
@@ -59,9 +75,10 @@ telnet <IP> 9093
 ### Enable TLS encrypted connection
 
 Once TLS is configured on the cluster side, client applications should be configured as well to connect to
-the correct port and trust the self-signed CA provided by the `self-signed-certificates` charm. 
+the correct port and trust the self-signed CA provided by the `self-signed-certificates` charm.
 
-Make sure that the `kafka-test-app` is not connected to the Charmed Apache Kafka K8s, by removing the relation if it exists:
+Make sure that the `kafka-test-app` is not connected to the Charmed Apache Kafka K8s,
+by removing the relation if it exists:
 
 ```shell
 juju remove-relation kafka-test-app kafka-k8s
@@ -73,8 +90,8 @@ Then, enable encryption on the `kafka-test-app` by relating with the `self-signe
 juju integrate kafka-test-app self-signed-certificates
 ```
 
-We can then set up the `kafka-test-app` to produce messages with the usual configuration (note that there is no difference 
-here with the unencrypted workflow):
+We can then set up the `kafka-test-app` to produce messages with the usual configuration
+(note that there is no difference here with the unencrypted workflow):
 
 ```shell
 juju config kafka-test-app topic_name=HOT-TOPIC role=producer num_messages=25
