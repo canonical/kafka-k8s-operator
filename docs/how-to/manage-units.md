@@ -31,18 +31,23 @@ See below for guidance.
 
 ### Partition reassignment
 
-When brokers are added or removed, Apache Kafka does not automatically rebalance existing topics and partitions across the new set of brokers.
+When brokers are added or removed, Apache Kafka does not automatically rebalance existing topics
+and partitions across the new set of brokers.
 
 Without reassignment or rebalancing:
 
-* New storages and new brokers will be used only when new topics and new partitions are created. 
+* New storages and new brokers will be used only when new topics and new partitions are created.
 * Removing a broker can result in permanent data loss if the partitions are not replicated on another broker.
 
-Partition reassignment can still be done manually by the admin user by using the 
-`charmed-kafka.reassign-partitions` Charmed Apache Kafka K8s bin utility script. 
-For more information on the script usage, refer to [Apache Kafka documentation](https://kafka.apache.org/documentation/#basic_ops_partitionassignment). 
+Partition reassignment can still be done manually by the admin user by using the
+`charmed-kafka.reassign-partitions` Charmed Apache Kafka K8s bin utility script.
+For more information on the script usage, refer to
+[Apache Kafka documentation](https://kafka.apache.org/documentation/#basic_ops_partitionassignment).
 
-[LinkedIn’s Cruise Control](https://github.com/linkedin/cruise-control) can be used for semi-automatic rebalancing. For guidance on how to use it with Charmed Apache Kafka K8s, see our [Tutorial](tutorial-rebalance-partitions).
+[LinkedIn’s Cruise Control](https://github.com/linkedin/cruise-control) can be used for
+semi-automatic rebalancing.
+For guidance on how to use it with Charmed Apache Kafka K8s, see our
+[Tutorial](tutorial-rebalance-partitions).
 
 ## Admin utility scripts
 
@@ -52,7 +57,8 @@ Apache Kafka ships with `bin/*.sh` commands to do various administrative tasks s
 * `bin/kafka-topics.sh` for topic management
 * `bin/kafka-acls.sh` for management of ACLs of Apache Kafka users
 
-Please refer to the upstream [Apache Kafka project](https://github.com/apache/kafka/tree/trunk/bin) and its [documentation](https://kafka.apache.org/documentation/#basic_ops),
+Please refer to the upstream [Apache Kafka project](https://github.com/apache/kafka/tree/trunk/bin)
+and its [documentation](https://kafka.apache.org/documentation/#basic_ops),
 for a full list of the bash commands available in Apache Kafka distributions.
 Additionally, you can use `--help` argument to print a short summary for a given bash command.
 
@@ -93,7 +99,8 @@ where the `--container kafka` argument selects the Apache Kafka workload contain
 By default, the charm operator container is opened.
 
 This file can be provided to the Apache Kafka bin commands via the `--command-config`
-argument. Note that `client.properties` may also refer to other files (e.g. truststore and keystore for TLS-enabled connections).
+argument. Note that `client.properties` may also refer to other files
+(e.g. truststore and keystore for TLS-enabled connections).
 Those files also need to be accessible and correctly specified.
 
 Commands can also be run within an Apache Kafka broker, since both the authentication
