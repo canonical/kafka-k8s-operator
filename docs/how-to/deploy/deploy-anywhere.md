@@ -1,17 +1,20 @@
-(how-to-deploy-deploy-anywhere)=
 # How to deploy Charmed Apache Kafka K8s
 
-```{caution}
-For non-K8s Charmed Apache Apache Kafka, see the [Charmed Apache Kafka documentation](https://charmhub.io/kafka-k8s) instead.
-```
-<!-- Update the link to lead to the docs! -->
+This guide provides platform-independent deployment instructions.
+For specific guides, see: [AKS](how-to-deploy-on-aks) and [EKS](how-to-deploy-on-eks).
 
-To deploy a Charmed Apache Kafka K8s cluster:
+(how-to-deploy-deploy-anywhere)=
+
+```{caution}
+For Charmed Apache Kafka on machine cloud (VM), see the [Charmed Apache Kafka documentation](https://documentation.ubuntu.com/charmed-kafka/4/) instead.
+```
+
+To deploy a Charmed Apache Kafka K8s cluster on a bare environment, it is necessary to:
 
 1. Set up a Juju Controller
 2. Set up a Juju Model
-3. Deploy and relate Apache Kafka K8s and Apache ZooKeeper K8s charms.
-4. (Optionally) Create an external admin user
+3. Deploy Charmed Apache Kafka K8s
+4. Create an external admin user
 
 In the next subsections, we will cover these steps separately by referring to
 relevant Juju documentation and providing details on the Charmed Apache Kafka K8s specifics.
@@ -19,10 +22,12 @@ If you already have a Juju controller and/or a Juju model, you can skip the asso
 
 ## Juju controller setup
 
-Make sure you have a Juju controller accessible from
-your local environment using the [Juju client snap](https://snapcraft.io/juju).
+Make sure you have a Juju controller accessible from 
+your local environment using the [Juju client snap](https://snapcraft.io/juju). 
 
 List available controllers:
+Make sure that the controller's back-end cloud is **not** Kubernetes-based.
+The cloud information can be retrieved with the following command
 
 ```shell
 juju list-controllers
@@ -40,9 +45,9 @@ If there are no suitable controllers, create a new one:
 juju bootstrap <cloud> <controller>
 ```
 
-where `<cloud>` -- the cloud to deploy controller to, e.g., `localhost`. For more information on how to set up a new cloud, see the [How to manage clouds](https://documentation.ubuntu.com/juju/latest/howto/manage-clouds/index.html) guide in Juju documentation.
+where `<cloud>` -- the cloud to deploy controller to, e.g. `localhost` if using a LXD cloud. For more information on how to set up a new cloud, see the [How to manage clouds](https://documentation.ubuntu.com/juju/latest/howto/manage-clouds/index.html) guide in Juju documentation.
 
-For more Juju controller setup guidance, see the [How to manage controllers](https://documentation.ubuntu.com/juju/latest/howto/manage-controllers/index.html) guide in Juju documentation.
+For more Juju controller setup guidance, see the [How to manage controllers](https://documentation.ubuntu.com/juju/latest/howto/manage-controllers/) guide in Juju documentation.
 
 ## Juju model setup
 
@@ -55,36 +60,58 @@ juju add-model <model>
 Alternatively, you can switch to any existing Juju model: 
 
 ```shell
-juju switch <model>
+juju switch <model-name>
 ```
 
-Make sure that the model is of a correct type (`k8s`):
+Make sure that the model is of a correct type (not `k8s`):
 
 ```shell
 juju show-model | yq '.[].type'
 ```
 
-## Deploy and relate Charmed Apache Kafka K8s and Charmed Apache ZooKeeper
+## Deploy Charmed Apache Kafka K8s for production
 
-Charmed Apache Kafka and Charmed Apache ZooKeeper can both be deployed as follows:
-
-```shell
-juju deploy kafka-k8s --channel 3/stable -n <kafka-units> --trust
-juju deploy zookeeper-k8s --channel 3/stable -n <zookeeper-units> --trust
-```
-
-where `<kafka-units>` and `<zookeeper-units>` -- the number of units to deploy for Charmed Apache Kafka and Charmed Apache ZooKeeper. We recommend values of at least `3` and `5` respectively.
-
-```{note}
-The `--trust` option is needed for the Apache Kafka application to work properly, e.g., use NodePort or `juju refresh`. 
-For more information about the trust options usage, see the [Juju documentation](https://documentation.ubuntu.com/juju/latest/reference/juju-cli/list-of-juju-cli-commands/trust/). 
-```
-
-Connect Charmed Apache ZooKeeper and Charmed Apache Kafka by relating/integrating them:
+Charmed Apache Kafka K8s for production use-cases is deployed as follows:
 
 ```shell
-juju relate kafka-k8s zookeeper-k8s
+juju deploy kafka-k8s -n <broker-units> --config roles=broker --channel 4/edge --trust
+juju deploy kafka-k8s -n <controller-units> --config roles=controller --channel 4/edge controller --trust
 ```
+
+- `<broker-units>` -- the number of units to deploy for Charmed Apache Kafka K8s brokers
+- `<controller-units>` -- the number of units to deploy for KRaft controllers
+
+To maintain high-availability of topic partitions, `3+` broker units and `3` or `5` controller units are recommended.
+
+To exchange credentials and endpoints between the two clusters, integrate the broker and controller applications:
+
+```shell
+juju integrate kafka-k8s:peer-cluster-orchestrator controller:peer-cluster
+```
+
+Check the status of the deployment:
+
+```shell
+juju status
+```
+
+The deployment should be complete once all the units show `active` and `idle` status.
+
+## (Alternative) Deploy Charmed Apache Kafka K8s for testing
+
+In order to save resources for very-small, non-production test and staging clusters, it is possible to co-locate both the KRaft controller services and the broker services in to a single application.
+
+```{warning}
+This is not recommended for any production deployments. Apache Kafka brokers rely on the KRaft controllers to coordinate -- if both services go down at the same time, the risk of cluster instability increases
+```
+
+Charmed Apache Kafka K8s for testing use-cases is deployed as follows:
+
+```shell
+juju deploy kafka-k8s -n <kafka-units> --config roles=broker,controller --channel 4/edge --trust
+```
+
+- `<kafka-units>` -- the number of units to deploy for Charmed Apache Kafka K8s
 
 Check the status of the deployment:
 
@@ -94,31 +121,28 @@ juju status
 
 The deployment should be complete once all the units show `active` or `idle` status.
 
-## (Optional) Create an external admin users
+## (Optional) Create an external admin user
 
-Charmed Apache Kafka aims to follow the _secure by default_ paradigm. As a consequence, after being deployed the Apache Kafka cluster
-won't expose any external listener.
-In fact, ports are only opened when client applications are related, also
-depending on the protocols to be used.
+Charmed Apache Kafka K8s aims to follow the _secure by default_ paradigm. As a consequence, after being deployed the Apache Kafka cluster
+won't expose any external listeners -- the cluster will be unreachable. Ports are only opened when client applications are integrated.
 
 ```{note}
-For more information about the available listeners and protocols please refer to [this table](reference-apache-kafka-listeners). 
+For more information about the available listeners and protocols please refer to [this table](reference-broker-listeners). 
 ```
 
-It is however generally useful for most situations to create a first admin user
-to be used to manage the Apache Kafka cluster (either internally or externally).
+For most cluster administrators, it may be most helpful to create a user with the `admin` role, which has `super.user` permissions on the Apache Kafka cluster.
 
 To create an admin user, deploy the [Data Integrator Charm](https://charmhub.io/data-integrator) with
 `extra-user-roles` set to `admin`:
 
 ```shell
-juju deploy data-integrator --channel stable --config topic-name=test-topic --config extra-user-roles=admin
+juju deploy data-integrator --config topic-name="__admin-user" --config extra-user-roles="admin"
 ```
 
-... and relate it to the Apache Kafka K8s charm:
+Now, integrate it to the Apache Kafka charm:
 
 ```shell
-juju relate data-integrator kafka-k8s
+juju integrate data-integrator kafka-k8s
 ```
 
 To retrieve authentication information, such as the username and password, use:
