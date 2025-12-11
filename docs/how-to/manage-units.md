@@ -1,39 +1,33 @@
 (how-to-manage-units)=
 # How to manage units
 
-For general Juju unit management process, see the [Juju documentation](https://juju.is/docs/juju/manage-units).
+For general Juju unit management process, see the
+[Juju documentation](https://juju.is/docs/juju/manage-units).
 
 ## Scaling
 
 ```{note}
-Scaling a Charmed Apache Kafka K8s cluster does not automatically rebalance existing topics and partitions. Rebalancing must be performed manually—before scaling in or after scaling out.
+Scaling a Charmed Apache Kafka K8s cluster does not automatically rebalance existing topics and partitions.
+Rebalancing must be performed manually—before scaling in or after scaling out.
 ```
-
-### Add units
-
-To scale-out Charmed Apache Kafka K8s application, add more units:
-
-```shell
-juju add-unit kafka-k8s -n <num_brokers_to_add>
-```
-
-See the `juju add-unit` [command reference](https://documentation.ubuntu.com/juju/latest/reference/juju-cli/list-of-juju-cli-commands/add-unit/).
-
-Make sure to reassign partitions and topics to use newly added units. See below for guidance.
-
-### Remove units
 
 ```{caution}
-Reassign partitions **before** scaling in to ensure that decommissioned units do not hold any data. Failing to do so may lead to data loss.
+Reassign partitions **before** scaling in to ensure that decommissioned units do not hold any data.
+Failing to do so may lead to data loss.
 ```
 
-To decrease the number of Apache Kafka brokers, remove some existing units from the Charmed Apache Kafka K8s application:
+To scale the Charmed Apache Kafka K8s application, use the `juju scale-application`
+command with the name of the app and the desired number of units:
 
 ```shell
-juju remove-unit kafka-k8s/1 kafka-k8s/2
+juju scale-application kafka-k8s <units>
 ```
 
-See the `juju remove-unit` [command reference](https://documentation.ubuntu.com/juju/latest/reference/juju-cli/list-of-juju-cli-commands/remove-unit/).
+See the `scale-application`
+[command reference](https://documentation.ubuntu.com/juju/latest/reference/juju-cli/list-of-juju-cli-commands/scale-application/index.html).
+
+Make sure to reassign partitions and topics to use newly added units.
+See below for guidance.
 
 ### Partition reassignment
 
@@ -111,10 +105,19 @@ already present. For example, see below.
 To list the current topics on the Apache Kafka cluster, using credentials from inside the cluster, run:
 
 ```shell
-juju ssh kafka-k8s/leader 'charmed-kafka.topics --bootstrap-server $BOOTSTRAP_SERVERS --list --command-config /var/snap/charmed-kafka/common/etc/kafka/client.properties'
+juju ssh --container kafka kafka-k8s/leader '/opt/kafka/bin/kafka-topics.sh --bootstrap-server $BOOTSTRAP_SERVERS --list --command-config /etc/kafka/client.properties'
 ```
 
 The `BOOTSTRAP_SERVERS` variable contains the information we retrieved earlier in the previous section.
+
+For example, a full command without the usage of the variable might look like the following:
+
+```shell
+juju ssh --container kafka kafka-k8s/leader '/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka-k8s-0.kafka-k8s-endpoints:9092,kafka-k8s-1.kafka-k8s-endpoints:9092,kafka-k8s-2.kafka-k8s-endpoints:9092,kafka-k8s-3.kafka-k8s-endpoints:9092 --list --command-config /etc/kafka/client.properties'
+```
+
+where `kafka-k8s-0.kafka-k8s-endpoints:9092,kafka-k8s-1.kafka-k8s-endpoints:9092,kafka-k8s-2.kafka-k8s-endpoints:9092,kafka-k8s-3.kafka-k8s-endpoints:9092` -
+is the contents of the `$BOOTSTRAP_SERVERS` variable.
 
 ### Juju external users
 
