@@ -39,8 +39,8 @@ Without reassignment or rebalancing:
 * New storages and new brokers will be used only when new topics and new partitions are created.
 * Removing a broker can result in permanent data loss if the partitions are not replicated on another broker.
 
-Partition reassignment can still be done manually by the admin user by using the
-`charmed-kafka.reassign-partitions` Charmed Apache Kafka K8s bin utility script.
+Partition reassignment can be done manually by the admin user with the
+`/opt/kafka/bin/kafka-reassign-partitions.sh` Apache Kafka bin utility script.
 For more information on the script usage, refer to
 [Apache Kafka documentation](https://kafka.apache.org/documentation/#basic_ops_partitionassignment).
 

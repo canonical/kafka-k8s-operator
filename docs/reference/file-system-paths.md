@@ -18,7 +18,7 @@ for all SSH sessions.
 For example, to list the files and directories in the `$LOGS` directory on a particular unit:
 
 ```shell
-juju ssh kafka-k8s/0 sudo -i 'ls $LOGS'
+juju ssh --container kafka kafka-k8s/leader sudo -i 'ls $LOGS'
 ```
 
 ## Configuration
@@ -26,7 +26,7 @@ juju ssh kafka-k8s/0 sudo -i 'ls $LOGS'
 - **`$CONF/server.properties`** - the full configuration file for the broker and KRaft controller services
 - **`$CONF/client.properties`** - a minimal configuration file for making client connections to brokers with SASL authentication and SSL encryption
   - For internal administrator usage only
-  - `--command-config $CONF/client.properties` is often used as an argument when running Kafka CLI commands either directly, or via the snap commands
+  - `--command-config $CONF/client.properties` is often used as an argument when running Kafka CLI commands directly
 - **`$CONF/kraft-client.properties`** - the minimal configuration file for making client connections to KRaft controllers with SASL authentication and SSL encryption
   - For internal administrator usage only
 - **`$CONF/peer-keystore.p12` + `$CONF/peer-truststore.jks`** - the Java keystore and truststore used for inter-broker and broker-controller SSL encryption
@@ -45,7 +45,6 @@ juju ssh kafka-k8s/0 sudo -i 'ls $LOGS'
 ## Apache Kafka binaries
 
 - **`$BIN/bin/*.sh`** - general bash scripts provided from upstream Apache Kafka, with utilities for managing and interacting with the cluster
-  - These files are typically accessible directly via Snap commands - e.g, `kafka-topics.sh` can be invoked by running `charmed-kafka.topics`
 
 ## Message data and cluster metadata
 

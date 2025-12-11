@@ -65,13 +65,13 @@ By default, no partitions are allocated for the new unit `3`.
 You can see that by checking the log directory assignment:
 
 ```bash
-juju ssh kafka-k8s/leader sudo -i \
-    'charmed-kafka.log-dirs' \
+juju ssh --container kafka kafka-k8s/leader \
+    '/opt/kafka/bin/kafka-log-dirs.sh' \
     '--describe' \
     '--bootstrap-server <unit-ip>:9093' \
-    '--command-config $CONF/client.properties' \
+    '--command-config /etc/kafka/client.properties' \
     '2> /dev/null' \
-    | tail -1 | jq -c '.brokers[] | select(.broker == 3)' | jq
+    | tail -n +1 | jq -c '.brokers[] | select(.broker == 3)' | jq
 ```
 
 This should produce output similar to the result seen below, with no partitions allocated by default:
@@ -148,13 +148,13 @@ unit-cruise-control-0: 22:19:12 INFO unit.cruise-control/0.juju-log Waiting for 
 Once the action is complete, verify the partitions using the same commands as before:
 
 ```bash
-juju ssh kafka-k8s/leader sudo -i \
-    'charmed-kafka.log-dirs' \
+juju ssh --container kafka kafka-k8s/leader \
+    '/opt/kafka/bin/kafka-log-dirs.sh' \
     '--describe' \
     '--bootstrap-server <unit-ip>:9093' \
-    '--command-config $CONF/client.properties' \
+    '--command-config /etc/kafka/client.properties' \
     '2> /dev/null' \
-    | tail -1 | jq -c '.brokers[] | select(.broker == 3)' | jq
+    | tail -n +1 | jq -c '.brokers[] | select(.broker == 3)' | jq
 ```
 
 This should produce an output similar to the result seen below, with broker `3` now having assigned
@@ -209,13 +209,13 @@ to other brokers within the cluster.
 Once the action has been completed, verify that broker `3` no longer has any assigned partitions:
 
 ```bash
-juju ssh kafka-k8s/leader sudo -i \
-    'charmed-kafka.log-dirs' \
+juju ssh --container kafka kafka-k8s/leader \
+    '/opt/kafka/bin/kafka-log-dirs.sh' \
     '--describe' \
     '--bootstrap-server <unit-ip>:9093' \
-    '--command-config $CONF/client.properties' \
+    '--command-config /etc/kafka/client.properties' \
     '2> /dev/null' \
-    | tail -1 | jq -c '.brokers[] | select(.broker == 3)' | jq
+    | tail -n +1 | jq -c '.brokers[] | select(.broker == 3)' | jq
 ```
 
 Make sure that broker `3` now has no partitions assigned, for example:

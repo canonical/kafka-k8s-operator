@@ -131,7 +131,7 @@ It is always possible to run a command from within the Apache Kafka cluster usin
 To jump in to a running Charmed Apache Kafka K8s unit and run a command, for example listing files in a directory, you can do the following:
 
 ```shell
-juju ssh kafka-k8s/leader sudo -i "ls \$BIN/bin"
+juju ssh --container kafka kafka-k8s/leader sudo -i "ls \$BIN/bin"
 ```
 
 where the printed result will be the output from the `ls \$BIN/bin` command being executed on the `kafka-k8s` leader unit.

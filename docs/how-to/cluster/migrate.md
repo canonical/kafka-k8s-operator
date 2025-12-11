@@ -145,7 +145,7 @@ curl -u $CONNECT_USERNAME:$CONNECT_PASSWORD \
 
 ## Monitoring and validating data replication
 
-The migration process can be monitored using the original cluster's built-in Apache Kafka bin commands. In the Charmed Apache Kafka K8s cluster, these bin commands are also mapped to snap commands on the units (e.g. `charmed-kafka.get-offsets` or `charmed-kafka.topics`).
+The migration process can be monitored using the original cluster's built-in Apache Kafka bin commands.
 
 To monitor the current consumer offsets, run the following on the source Kafka cluster being migrated from:
 

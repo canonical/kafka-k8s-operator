@@ -169,16 +169,16 @@ KAFKA_CLIENT_MTLS_CN=testclient
 Finally, grant read and write privileges to the mTLS client user over `--group`, `--topic` and `--transactional-id` resources:
 
 ```bash
-juju ssh kafka-k8s/leader "
-sudo charmed-kafka.acls --bootstrap-server $KAFKA_SERVERS_SASL --command-config $SNAP_KAFKA_PATH/client.properties \
+juju ssh --container kafka kafka-k8s/leader "
+/opt/kafka/bin/kafka-acls.sh --bootstrap-server $KAFKA_SERVERS_SASL --command-config $KAFKA_CFG_PATH/client.properties \
 --add --allow-principal User:$KAFKA_CLIENT_MTLS_CN \
 --operation READ --operation DESCRIBE --group='*'
 
-sudo charmed-kafka.acls --bootstrap-server $KAFKA_SERVERS_SASL --command-config $SNAP_KAFKA_PATH/client.properties \
+/opt/kafka/bin/kafka-acls.sh --bootstrap-server $KAFKA_SERVERS_SASL --command-config $KAFKA_CFG_PATH/client.properties \
 --add --allow-principal User:$KAFKA_CLIENT_MTLS_CN \
 --operation READ --operation DESCRIBE --operation CREATE --operation WRITE --operation DELETE --operation ALTER --operation ALTERCONFIGS --topic=TEST
 
-sudo charmed-kafka.acls --bootstrap-server $KAFKA_SERVERS_SASL --command-config $SNAP_KAFKA_PATH/client.properties \
+/opt/kafka/bin/kafka-acls.sh --bootstrap-server $KAFKA_SERVERS_SASL --command-config $KAFKA_CFG_PATH/client.properties \
 --add --allow-principal User:$KAFKA_CLIENT_MTLS_CN \
 --operation DESCRIBE --operation WRITE --transactional-id '*'
 "
@@ -221,9 +221,10 @@ sudo chown snap_daemon:root $SNAP_KAFKA_PATH/client.truststore.jks
 Now use the newly created credentials to create a topic named `TEST`:
 
 ```bash
-sudo charmed-kafka.topics --bootstrap-server $KAFKA_SERVERS_MTLS --command-config $SNAP_KAFKA_PATH/client-mtls.properties \
---create --topic TEST
+juju ssh --container kafka kafka-k8s/0 \
+    "/opt/kafka/bin/kafka-topics.sh --create --topic TEST \
+    --bootstrap-server $KAFKA_SERVERS_MTLS \
+    --command-config /etc/kafka/client.properties"
 ```
 
 You should see: `Created topic TEST` in the output.
-
