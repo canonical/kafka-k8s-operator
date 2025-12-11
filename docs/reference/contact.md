@@ -3,7 +3,7 @@
 
 Contact Canonical Data Platform team in [Matrix](https://matrix.to/#/#charmhub-data-platform:ubuntu.com).
 
-Report your ideas/issues on [GitHub](https://github.com/canonical/kafka-operator/issues/new).
+Report your ideas/issues on [GitHub](https://github.com/canonical/kafka-k8s-operator/issues/new).
 
 Security issues should be reported through [Launchpad](https://wiki.ubuntu.com/DebuggingSecurity#How_to_File).
 

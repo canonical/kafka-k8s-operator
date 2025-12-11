@@ -76,7 +76,7 @@ This should produce output similar to the result seen below, with no partitions 
   "logDirs": [
     {
       "error": null,
-      "logDir": "/var/snap/charmed-kafka/common/var/lib/kafka/data",
+      "logDir": "/var/lib/kafka/data",
       "partitions": []
     }
   ]

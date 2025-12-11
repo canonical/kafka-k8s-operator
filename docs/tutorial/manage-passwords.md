@@ -9,7 +9,7 @@ Passwords help to secure the Apache Kafka cluster and are essential for security
 
 ### The admin user
 
-The admin user password management is handled directly by the charm, by using Juju actions. 
+The admin user password management is handled directly by the charm, by using Juju secrets. 
 
 #### Retrieve the password
 

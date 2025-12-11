@@ -147,22 +147,19 @@ Within the machine, Charmed Apache Kafka K8s also creates a `$CONF/client.proper
 For example, in order to create a topic, you can run:
 
 ```shell
-juju ssh kafka-k8s/0 sudo -i \
-    "charmed-kafka.topics \
-        --create \
-        --topic test-topic \
-        --bootstrap-server $BOOTSTRAP_SERVER \
-        --command-config \$CONF/client.properties"
+juju ssh --container kafka kafka-k8s/0 \
+    "/opt/kafka/bin/kafka-topics.sh --create --topic test_topic \
+    --bootstrap-server $BOOTSTRAP_SERVER \
+    --command-config /etc/kafka/client.properties"
 ```
 
 You can similarly then list the topic, using:
 
 ```shell
-juju ssh kafka-k8s/0 sudo -i \
-    "charmed-kafka.topics \
-        --list \
-        --bootstrap-server $BOOTSTRAP_SERVER \
-        --command-config \$CONF/client.properties"
+juju ssh --container kafka kafka-k8s/0 \
+    "/opt/kafka/bin/kafka-topics.sh --list \
+    --bootstrap-server $BOOTSTRAP_SERVER \
+    --command-config /etc/kafka/client.properties"
 ```
 
 making sure the topic was successfully created.
@@ -170,12 +167,11 @@ making sure the topic was successfully created.
 You can finally delete the topic, using:
 
 ```shell
-juju ssh kafka-k8s/0 sudo -i \
-    "charmed-kafka.topics \
-        --delete \
-        --topic test-topic \
-        --bootstrap-server $BOOTSTRAP_SERVER \
-        --command-config \$CONF/client.properties"
+juju ssh --container kafka kafka-k8s/0 \
+    "/opt/kafka/bin/kafka-topics.sh --delete \
+    --topic test_topic \
+    --bootstrap-server $BOOTSTRAP_SERVER \
+    --command-config /etc/kafka/client.properties"
 ```
 
 <!-- For a full list of the available Charmed Kafka command-line tools, please refer to [snap commands](reference-snap-commands). -->

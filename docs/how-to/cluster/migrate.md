@@ -15,7 +15,7 @@ To migrate a cluster we need:
 
 - An "old" existing Kafka cluster to migrate from.
   - The cluster needs to be reachable from/to the new Charmed Apache Kafka K8s cluster.
-- A bootstrapped Juju VM cloud
+- A bootstrapped Juju K8s cloud
 - A Charmed Apache Kafka K8s Connect cluster to run the MirrorMaker tasks. For guidance on how to deploy a new Charmed Apache Kafka K8s cluster, see:
   - The [How-to use Kafka Connect for ETL workloads guide](how-to-use-kafka-connect)
 - A Charmed Apache Kafka K8s to migrate data to. For guidance on how to deploy a new Charmed Apache Kafka K8s, see:

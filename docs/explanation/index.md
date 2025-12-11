@@ -14,7 +14,7 @@ Check the [MirrorMaker explanation](explanation-mirrormaker2-0) page for more co
 
 ## Backups
 
-Read through [Backups explanation](explanation-backups) for information on the why snapshots and backing up Apache Kafka's log data is typically not necessary, and is not supported with Charmed Apache Kafka K8s.
+Read through [Backups explanation](explanation-backups) for information on why snapshots and backing up Apache Kafka's log data is typically not necessary, and is not supported with Charmed Apache Kafka K8s.
 
 ## Other topics
 

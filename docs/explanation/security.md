@@ -74,7 +74,7 @@ In the following, we provide guidance on how to harden your deployment using:
 
 ### Base images
 
-Charmed Apache Kafka K8s runs on a Rockcraft-based image built on Ubuntu 22.04 LTS.
+Charmed Apache Kafka K8s runs on a Rockcraft-based image built on Ubuntu 24.04 LTS.
 This image includes Apache Kafka distribution binaries built and maintained by Canonical,
 which are available on the [Apache Kafka release page](https://launchpad.net/kafka-releases).
 

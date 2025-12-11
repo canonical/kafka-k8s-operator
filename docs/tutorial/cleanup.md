@@ -39,7 +39,7 @@ If you're looking for what to do next you can:
 - Try [Charmed Apache Kafka on VM](https://github.com/canonical/kafka-operator).
 - Check out our other Charmed offerings from [Canonical's Data Platform team](https://canonical.com/data)
 - Read about [High Availability Best Practices](https://canonical.com/blog/database-high-availability)
-- [Report](https://github.com/canonical/kafka-operator/issues) any problems you encountered.
+- [Report](https://github.com/canonical/kafka-k8s-operator/issues) any problems you encountered.
 - [Give us your feedback](https://matrix.to/#/#charmhub-data-platform:ubuntu.com).
 - [Contribute to the code base](https://github.com/canonical/kafka-k8s-operator)
 
