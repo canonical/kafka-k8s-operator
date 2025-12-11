@@ -69,6 +69,7 @@ Encryption<tls-encryption.md>
 Upgrades<upgrade.md>
 Monitoring<monitoring.md>
 cluster/index.md
+External K8s connection<external-k8s-connection>
 Create mTLS credentials<create-mtls-client-credentials.md>
 Schemas and serialisation<schemas-serialisation.md>
 Kafka Connect<kafka-connect.md>
