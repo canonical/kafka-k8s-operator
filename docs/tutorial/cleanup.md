@@ -15,7 +15,7 @@ Removing Charmed Apache Kafka K8s as shown below will delete all the data in the
 To remove Charmed Apache Kafka K8s and the model it is hosted on run the command:
 
 ```shell
-juju destroy-model tutorial --destroy-storage --force
+juju destroy-model tutorial --destroy-storage
 ```
 
 Next step is to remove the Juju controller. You can see all of the available controllers by entering `juju controllers`. To remove the controller enter:
@@ -42,4 +42,3 @@ If you're looking for what to do next you can:
 - [Report](https://github.com/canonical/kafka-k8s-operator/issues) any problems you encountered.
 - [Give us your feedback](https://matrix.to/#/#charmhub-data-platform:ubuntu.com).
 - [Contribute to the code base](https://github.com/canonical/kafka-k8s-operator)
-
