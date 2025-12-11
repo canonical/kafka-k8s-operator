@@ -86,7 +86,7 @@ Then integrate with the `kafka-k8s` cluster:
 juju integrate kafka-k8s kafka-test-app
 ```
 
-As before, you can check that the messages are pushed into the Charmed Apache Kafka K8s cluster by inspecting the logs:
+As before, you can check that the messages are pushed into the Apache Kafka cluster by inspecting the logs:
 
 ```shell
 juju exec --application kafka-test-app "tail /tmp/*.log"
