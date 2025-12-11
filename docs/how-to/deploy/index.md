@@ -11,5 +11,4 @@
 
 AKS<deploy-aks.md>
 EKS<deploy-eks.md>
-Spaces<deploy-spaces.md>
 ```
