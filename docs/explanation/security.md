@@ -28,7 +28,7 @@ for the main supported Kubernetes platforms.
 
 Juju is the component responsible for orchestrating the entire lifecycle,
 from deployment to Day 2 operations. For more information on Juju security hardening,
-see the [Juju security](https://documentation.ubuntu.com/juju/3.6/explanation/juju-security/)
+see the [Juju security](https://documentation.ubuntu.com/juju/latest/explanation/juju-security/)
 page and the
 [How to harden your deployment](https://documentation.ubuntu.com/juju/latest/howto/manage-your-juju-deployment/harden-your-juju-deployment/)
 guide.

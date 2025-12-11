@@ -125,7 +125,7 @@ topic partitions are assigned to it, or a new topic is created.
 ## Relations
 
 The Charmed Apache Kafka K8s Operator supports Juju
-[relations](https://documentation.ubuntu.com/juju/3.6/reference/relation/)
+[relations](https://documentation.ubuntu.com/juju/latest/reference/relation/)
 for interfaces listed below.
 
 ### The Kafka_client interface

@@ -75,7 +75,7 @@ To exit the screen with `watch -n 1 --color juju status --color`, enter `Ctrl+c`
 
 Once all the units are shown as `active|idle`, the credentials can be retrieved.
 
-All sensitive configuration data used by Charmed Apache Kafka K8s, such as passwords and SSL certificates, is stored in Juju secrets. See the [Juju secrets documentation](https://documentation.ubuntu.com/juju/3.6/reference/secret/) for more information.
+All sensitive configuration data used by Charmed Apache Kafka K8s, such as passwords and SSL certificates, is stored in Juju secrets. See the [Juju secrets documentation](https://documentation.ubuntu.com/juju/latest/reference/secret/) for more information.
 
 To reveal the contents of the Juju secret containing sensitive cluster data for the Charmed Apache Kafka K8s application, you can run:
 

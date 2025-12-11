@@ -8,7 +8,7 @@ To deploy on IAAS/VM, see [Charmed Apache Kafka operator](https://documentation.
 # Charmed Apache Kafka K8s documentation
 
 Charmed Apache Kafka K8s is an open-source software operator, packaged as a
-[Juju charm](https://documentation.ubuntu.com/juju/3.6/reference/charm/),
+[Juju charm](https://documentation.ubuntu.com/juju/latest/reference/charm/),
 that simplifies the deployment, scaling, and management of Apache Kafka clusters
 on Kubernetes.
 
