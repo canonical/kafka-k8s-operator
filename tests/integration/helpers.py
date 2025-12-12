@@ -223,7 +223,7 @@ def get_unit_hostname(ops_test: OpsTest, unit_name: str) -> str:
 def copy_file_to_unit(ops_test: OpsTest, unit_name: str, filename: str, content: str) -> None:
     try:
         check_output(
-            f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} 'sudo tee -a {filename}'",
+            f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} 'tee -a {filename}'",
             stderr=PIPE,
             shell=True,
             input=content,
