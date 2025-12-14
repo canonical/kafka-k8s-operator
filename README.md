@@ -54,11 +54,11 @@ To watch the process, the `juju status` command can be used.
 Once all the units are shown as `active|idle`, the credentials to access a broker
 can be set using Juju secrets, discussed in the **Password Rotation** section.
 
-Note that Charmed Apache Kafka cluster is secure-by-default:
+Note that Charmed Apache Kafka K8s cluster is secure-by-default:
 when no other application is integrated to Charmed Apache Kafka K8s, listeners are disabled,
 thus preventing any incoming connection.
 If there are no other applications, you can deploy a `data-integrator`
-charm and integrate it to Charmed Apache Kafka to enable listeners.
+charm and integrate it to Charmed Apache Kafka K8s to enable listeners.
 
 ### Scaling
 
@@ -107,7 +107,7 @@ juju config kafka-k8s system-users=secret:cvh7kruupa1s46bqvuig
 
 ### Storage support
 
-Currently, the Charmed Apache Kafka Operator supports 1 or more storage volumes.
+Currently, the Charmed Apache Kafka K8s Operator supports one storage volume.
 By default, a 10G storage volume tied to a
 [Kubernetes PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
 is installed.
