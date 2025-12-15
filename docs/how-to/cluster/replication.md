@@ -35,11 +35,11 @@ The result should be similar to:
 
 ```text
 Model  Controller  Cloud/Region         Version  SLA          Timestamp
-k      vms         localhost/localhost  3.6.3    unsupported  10:45:37+02:00
+k      overlord    microk8s/localhost   3.6.3    unsupported  10:45:37+02:00
 
 App            Version  Status  Scale  Charm          Channel      Rev  Exposed  Message
-active         3.9.0    active      1  kafka-k8s          3/edge       205  no
-passive        3.9.0    active      1  kafka-k8s          3/edge       205  no
+active         3.9.0    active      1  kafka-k8s      3/edge       205  no
+passive        3.9.0    active      1  kafka-k8s      3/edge       205  no
 kafka-connect           active      1  kafka-connect  latest/edge   20  no
 
 Unit              Workload  Agent  Machine  Public address  Ports           Message
@@ -83,13 +83,13 @@ After some time, the `mirrormaker` application should show up as `active/idle` i
 
 ```text
 Model  Controller  Cloud/Region         Version  SLA          Timestamp
-k      vms         localhost/localhost  3.6.3    unsupported  10:59:37+02:00
+k      overlord    microk8s/localhost   3.6.3    unsupported  10:59:37+02:00
 
 App            Version  Status  Scale  Charm          Channel      Rev  Exposed  Message
-active         3.9.0    active      1  kafka-k8s          3/edge       205  no       
+active         3.9.0    active      1  kafka-k8s      3/edge       205  no       
 kafka-connect           active      1  kafka-connect  latest/edge   20  no       
 mirrormaker             active      1  mirrormaker                   0  no       Task Status: UNASSIGNED
-passive        3.9.0    active      1  kafka-k8s          3/edge       205  no       
+passive        3.9.0    active      1  kafka-k8s      3/edge       205  no       
 
 Unit              Workload  Agent  Machine  Public address  Ports           Message
 active/0*         active    idle   0        10.86.75.171    9092,19092/tcp  
@@ -127,13 +127,13 @@ Check the status of deployed applications by running `juju status` command. The 
 
 ```text
 Model  Controller  Cloud/Region         Version  SLA          Timestamp
-k      vms         localhost/localhost  3.6.3    unsupported  10:59:37+02:00
+k      overlord    microk8s/localhost   3.6.3    unsupported  10:59:37+02:00
 
 App              Version  Status  Scale  Charm          Channel      Rev  Exposed  Message
-kafka-k8s-a          3.9.0    active      1  kafka-k8s          3/edge       205  no       
-kafka-k8s-b          3.9.0    active      1  kafka-k8s          3/edge       205  no       
-kafka-k8s-connect-a           active      1  kafka-k8s-connect  latest/edge   20  no       
-kafka-k8s-connect-b           active      1  kafka-k8s-connect  latest/edge   20  no       
+kafka-k8s-a      3.9.0    active      1  kafka-k8s          3/edge       205  no       
+kafka-k8s-b      3.9.0    active      1  kafka-k8s          3/edge       205  no       
+kafka-k8s-connect-a       active      1  kafka-k8s-connect  latest/edge   20  no       
+kafka-k8s-connect-b       active      1  kafka-k8s-connect  latest/edge   20  no       
 mirrormaker-a-b           active      1  mirrormaker                   0  no       Task Status: UNASSIGNED
 mirrormaker-b-a           active      1  mirrormaker                   0  no       Task Status: UNASSIGNED
 

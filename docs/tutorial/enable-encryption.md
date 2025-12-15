@@ -46,7 +46,7 @@ Wait for the charm to settle into an `active/idle` state, as shown by the `juju 
 
 ```shell
 Model     Controller        Cloud/Region         Version  SLA          Timestamp
-tutorial  overlord          localhost/localhost  3.6.8    unsupported  23:27:35Z
+tutorial  overlord          microk8s/localhost   3.6.8    unsupported  23:27:35Z
 
 App                       Version  Status  Scale  Charm                     Channel  Rev  Exposed  Message
 self-signed-certificates           active      1  self-signed-certificates  1/edge   336  no       

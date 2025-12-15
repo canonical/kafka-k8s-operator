@@ -54,11 +54,11 @@ Wait for `watch -n 1 --color juju status --color` to show:
 
 ```shell
 Model     Controller        Cloud/Region         Version  SLA          Timestamp
-tutorial  overlord          localhost/localhost  3.6.8    unsupported  17:00:08Z
+tutorial  overlord          microk8s/localhost   3.6.8    unsupported  17:00:08Z
 
 App              Version  Status  Scale  Charm            Channel        Rev  Exposed  Message
 data-integrator           active      1  data-integrator  latest/stable  180  no       
-kafka-k8s            4.0.0    active      3  kafka-k8s            4/edge         226  no       
+kafka-k8s        4.0.0    active      3  kafka-k8s            4/edge         226  no       
 kraft            4.0.0    active      3  kafka-k8s            4/edge         226  no       
 
 Unit                Workload  Agent  Machine  Public address  Ports           Message
@@ -246,7 +246,7 @@ After some time, the `juju status` output should show
 
 ```shell
 Model     Controller  Cloud/Region         Version  SLA          Timestamp
-tutorial  overlord    localhost/localhost  3.6.8    unsupported  18:58:47+02:00
+tutorial  overlord    microk8s/localhost   3.6.8    unsupported  18:58:47+02:00
 
 App              Version  Status  Scale  Charm            Channel  Rev  Address         Exposed  Message
 ...
