@@ -14,7 +14,7 @@ along with the necessary dependencies and utilities required for the operators l
 See the snap contents for the
 [Charmed Apache Kafka K8s](https://github.com/canonical/charmed-kafka-snap/blob/4/edge/snap/snapcraft.yaml).
 
-Every artifact bundled into the Charmed Apache Kafka K8s snap (which the rock is built from)
+Every artefact bundled into the Charmed Apache Kafka K8s snap (which the rock is built from)
 is verified after download using its MD5, SHA-256, or SHA-512 checksum.
 The installation of certified snaps into the rock is ensured by snap primitives that verify their
 Squashfs file systems images GPG signature.
