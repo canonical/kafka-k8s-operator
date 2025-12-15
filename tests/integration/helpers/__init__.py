@@ -27,6 +27,7 @@ TEST_DEFAULT_MESSAGES = 15
 TEST_SECRET_NAME = "auth"
 STORAGE = "data"
 TLS_NAME = "self-signed-certificates"
+TLS_CHANNEL = "1/stable"
 MANUAL_TLS_NAME = "manual-tls-certificates"
 CERTS_NAME = "tls-certificates-operator"
 TLS_REQUIRER = "tls-certificates-requirer"
