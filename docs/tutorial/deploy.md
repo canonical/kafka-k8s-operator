@@ -169,13 +169,12 @@ juju ssh --container kafka kafka-k8s/leader "ls /opt/kafka/bin/"
 where the printed result will be the output from the `ls \$BIN/bin` command being
 executed on the `kafka-k8s` leader unit.
 
-When the unit has started, the Charmed Apache Kafka K8s Operator installs the
-[`charmed-kafka`](https://snapcraft.io/charmed-kafka) snap in the unit that provides
-a number of snap commands (that corresponds to the shell-script `bin/kafka-*.sh`
-commands in the Apache Kafka distribution) for performing various administrative and operational tasks.
-
-Within the machine, Charmed Apache Kafka K8s also creates a `client.properties`
-file that already provides the relevant settings to connect to the cluster using the CLI.
+The Charmed Apache Kafka K8s image ships with the Apache Kafka `bin/*.sh` commands,
+that can be found under `/opt/kafka/bin/`. They can be used to do various administrative tasks,
+for example, `bin/kafka-config.sh` to update cluster configuration, `bin/kafka-topics.sh`
+for topic management, etc.
+Within the image you can also find a `client.properties` file that already provides
+the relevant settings to connect to the cluster using the CLI.
 
 For example, in order to create a topic, you can run:
 
