@@ -206,8 +206,6 @@ juju ssh --container kafka kafka-k8s/0 \
     --command-config /etc/kafka/client.properties"
 ```
 
-<!-- For a full list of the available Charmed Kafka command-line tools, please refer to [snap commands](reference-snap-commands). -->
-
 ## What's next?
 
 Although the commands above can run within the cluster, it is generally recommended
