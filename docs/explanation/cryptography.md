@@ -60,7 +60,7 @@ that provides encryption-in-transit capabilities out of the box for:
 * Broker-controller communications
 * Client connections
 
-To set up a secure connection Charmed Apache Kafka K8s need to be integrated with
+To set up a secure connection Charmed Apache Kafka K8s needs to be integrated with
 TLS Certificate Provider charms, e.g., `self-signed-certificates` operator.
 Certificate Signing Requests (CSRs) are generated for every unit using the
 `tls_certificates_interface` library that uses the `cryptography` Python library
