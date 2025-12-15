@@ -230,10 +230,6 @@ It is needed to offer the endpoints of the COS relations.
 The [offers-overlay](https://github.com/canonical/cos-lite-bundle/blob/main/overlays/offers-overlay.yaml)
 can be used, and this step is shown on the COS tutorial.
 
-Next, deploy [Grafana Agent](https://charmhub.io/grafana-agent) and follow the
-[tutorial](https://discourse.charmhub.io/t/using-the-grafana-agent-machine-charm/8896)
-to integrate it to the COS Lite offers.
-
 Now, integrate Apache Kafka with the Grafana Agent:
 
 ```bash
