@@ -6,7 +6,7 @@ This is a part of the [Charmed Apache Kafka K8s Tutorial](index.md).
 ## Deploy Charmed Apache Kafka K8s
 
 To deploy Charmed Apache Kafka K8s, all you need to do is run the following commands,
-which will automatically fetch [Apache Kafka](https://charmhub.io/kafka?channel=4/edge)
+which will automatically fetch [Apache Kafka](https://charmhub.io/kafka-k8s?channel=4/edge)
 from [Charmhub](https://charmhub.io/) and deploy it to your model.
 
 For example, to deploy a cluster of three Apache Kafka brokers, you can simply run:
@@ -33,7 +33,7 @@ a separate controller cluster and broker cluster.
 To deploy a cluster of three KRaft controllers, run:
 
 ```shell
-juju deploy kafka -n 3 --channel 4/edge --roles=controller kraft --trust
+juju deploy kafka-k8s -n 3 --channel 4/edge --roles=controller kraft --trust
 ```
 
 After this, it is necessary to connect the two clusters, taking care to specify which
@@ -63,7 +63,7 @@ will show:
 
 ```shell
 Model     Controller        Cloud/Region         Version  SLA          Timestamp
-tutorial  overlord          localhost/localhost  3.6.8    unsupported  15:53:00Z
+tutorial  overlord          microk8s/localhost   3.6.8    unsupported  15:53:00Z
 
 App    Version  Status  Scale  Charm  Channel  Rev  Exposed  Message
 kafka-k8s  4.0.0    active      3  kafka-k8s  4/edge   226  no       
@@ -174,7 +174,7 @@ When the unit has started, the Charmed Apache Kafka K8s Operator installs the
 a number of snap commands (that corresponds to the shell-script `bin/kafka-*.sh`
 commands in the Apache Kafka distribution) for performing various administrative and operational tasks.
 
-Within the machine, Charmed Apache Kafka K8s also creates a `$CONF/client.properties`
+Within the machine, Charmed Apache Kafka K8s also creates a `client.properties`
 file that already provides the relevant settings to connect to the cluster using the CLI.
 
 For example, in order to create a topic, you can run:
