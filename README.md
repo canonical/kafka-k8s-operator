@@ -107,10 +107,8 @@ juju config kafka-k8s system-users=secret:cvh7kruupa1s46bqvuig
 
 ### Storage support
 
-Currently, the Charmed Apache Kafka K8s Operator supports one storage volume.
-By default, a 10G storage volume tied to a
-[Kubernetes PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
-is installed.
+Currently, Charmed Apache Kafka K8s makes use of a 10 GB storage mount,
+tied to a [Kubernetes PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/).
 
 This storage is mounted on `/var/lib/data/kafka` and used for log-data.
 
