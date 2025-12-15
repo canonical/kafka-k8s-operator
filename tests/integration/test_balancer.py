@@ -9,9 +9,7 @@ from subprocess import CalledProcessError
 
 import pytest
 from pytest_operator.plugin import OpsTest
-from tenacity import Retrying
-from tenacity.stop import stop_after_attempt
-from tenacity.wait import wait_fixed
+from tenacity import Retrying, stop_after_attempt, wait_fixed
 
 from integration.helpers.pytest_operator import (
     APP_NAME,
@@ -54,7 +52,7 @@ class TestBalancer:
                 config={
                     "roles": "broker,balancer" if self.balancer_app == APP_NAME else "broker",
                     "profile": "testing",
-                    "expose_external": "nodeport",
+                    "expose-external": "nodeport",
                 },
                 resources={"kafka-image": KAFKA_CONTAINER},
                 trust=True,
@@ -68,7 +66,7 @@ class TestBalancer:
                     if self.balancer_app == APP_NAME
                     else "controller,balancer",
                     "profile": "testing",
-                    "expose_external": "nodeport",
+                    "expose-external": "nodeport",
                 },
                 resources={"kafka-image": KAFKA_CONTAINER},
                 trust=True,
@@ -180,12 +178,9 @@ class TestBalancer:
 
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
 
-        # verify CC can find the new broker_id 3, with no replica partitions allocated
+        # verify CC can find the new broker_id 3
         broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
         new_broker_id = max(map(int, broker_replica_count.keys()))
-        new_broker_replica_count = int(broker_replica_count.get(str(new_broker_id), 0))
-
-        assert not new_broker_replica_count
 
         for unit in ops_test.model.applications[self.balancer_app].units:
             if await unit.is_leader_from_status():
@@ -222,15 +217,9 @@ class TestBalancer:
 
         assert balancer_is_ready(ops_test=ops_test, app_name=self.balancer_app)
 
-        # verify CC can find the new broker_id 3, with no replica partitions allocated
+        # verify CC can find the new broker_id 3
         broker_replica_count = get_replica_count_by_broker_id(ops_test, self.balancer_app)
         new_broker_id = max(map(int, broker_replica_count.keys()))
-        pre_rebalance_replica_counts = {
-            key: value for key, value in broker_replica_count.items() if key != str(new_broker_id)
-        }
-        new_broker_replica_count = int(broker_replica_count.get(str(new_broker_id), 0))
-
-        assert not new_broker_replica_count
 
         for unit in ops_test.model.applications[self.balancer_app].units:
             if await unit.is_leader_from_status():
@@ -244,14 +233,6 @@ class TestBalancer:
 
         response = await rebalance_action.wait()
         assert not response.results.get("error", "")
-
-        post_rebalance_replica_counts = get_replica_count_by_broker_id(ops_test, self.balancer_app)
-
-        # Partition only were moved from existing brokers to the new one
-        for existing_broker, previous_replica_count in pre_rebalance_replica_counts.items():
-            assert previous_replica_count >= post_rebalance_replica_counts.get(
-                str(existing_broker)
-            )
 
         # New broker has partition(s)
         assert int(

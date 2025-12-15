@@ -413,7 +413,10 @@ def test_update_status_sets_active(
     cluster_peer = PeerRelation(
         PEER, PEER, local_unit_data=unit_peer_tls_data, local_app_data=passwords_data | kraft_data
     )
-    state_in = dataclasses.replace(base_state, relations=[cluster_peer])
+    state_in = dataclasses.replace(
+        base_state,
+        relations=[cluster_peer],
+    )
 
     # When
     with patch("workload.KafkaWorkload.active", return_value=True):
@@ -444,7 +447,7 @@ def test_storage_add_does_nothing_if_snap_not_active(
 
 
 @pytest.mark.skipif(SUBSTRATE == "k8s", reason="multiple storage not supported in K8s")
-def test_storage_add_defers_if_service_not_healthy(
+def test_storage_add_when_service_not_healthy(
     ctx: Context, base_state: State, passwords_data: dict[str, str]
 ) -> None:
     # Given
@@ -457,13 +460,11 @@ def test_storage_add_defers_if_service_not_healthy(
         patch("workload.KafkaWorkload.active", return_value=True),
         patch("events.broker.BrokerOperator.healthy", return_value=False),
         patch("charm.KafkaCharm._disable_enable_restart_broker") as patched_restart,
-        patch("ops.framework.EventBase.defer") as patched_defer,
     ):
         ctx.run(ctx.on.storage_attached(storage), state_in)
 
     # Then
     assert patched_restart.call_count == 0
-    assert patched_defer.call_count == 1
 
 
 @pytest.mark.skipif(SUBSTRATE == "k8s", reason="multiple storage not supported in K8s")
@@ -672,7 +673,7 @@ def test_config_changed_updates_client_data(ctx: Context, base_state: State) -> 
         ),
         patch("events.broker.BrokerOperator.healthy", return_value=True),
         patch("workload.KafkaWorkload.read", return_value=["gandalf=white"]),
-        patch("events.broker.BrokerOperator.update_client_data") as patched_update_client_data,
+        patch("events.provider.KafkaProvider.reconcile") as patched_reconcile,
         patch(
             "managers.config.ConfigManager.set_client_properties"
         ) as patched_set_client_properties,
@@ -684,7 +685,7 @@ def test_config_changed_updates_client_data(ctx: Context, base_state: State) -> 
 
     # Then
     patched_set_client_properties.assert_called()
-    patched_update_client_data.assert_called_once()
+    patched_reconcile.assert_called_once()
 
 
 def test_config_changed_restarts(ctx: Context, base_state: State) -> None:

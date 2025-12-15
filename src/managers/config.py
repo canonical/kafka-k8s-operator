@@ -88,6 +88,7 @@ SERVER_PROPERTIES_BLACKLIST = [
     "roles",
     "expose_external",
     "system_users",
+    "tls_private_key",
 ]
 
 
@@ -233,7 +234,7 @@ class CommonConfigManager:
             String of Log4j options
         """
         opts = [
-            f'-Dlog4j.configuration=file:{self.workload.paths.tools_log4j_properties} -Dcharmed.kafka.log.level={self.log_level.split("=")[1]}'
+            f"-Dlog4j.configuration=file:{self.workload.paths.tools_log4j_properties} -Dcharmed.kafka.log.level={self.log_level.split('=')[1]}"
         ]
 
         return f"KAFKA_LOG4J_OPTS='{' '.join(opts)}'"
@@ -683,7 +684,10 @@ class ConfigManager(CommonConfigManager):
         Returns:
             List of properties to be set on the Kafka broker
         """
-        password = self.state.cluster.internal_user_credentials.get(username, "")
+        if username == ADMIN_USER:
+            password = self.peer_cluster_state.broker_password
+        else:
+            password = self.state.cluster.internal_user_credentials.get(username, "")
 
         properties = [
             f'sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="{username}" password="{password}";',
@@ -851,6 +855,18 @@ class ConfigManager(CommonConfigManager):
         updated_env = current_env | map_env(updated_env_list)
         content = "\n".join([f"{key}={value}" for key, value in updated_env.items()])
         self.workload.write(content=content, path="/etc/environment")
+
+    def properties_changed(self) -> set[str]:
+        """Check if server properties have changed since last written.
+
+        Returns:
+            Set of changed properties, empty if no changes
+        """
+        current_properties = self.workload.read(self.workload.paths.server_properties)
+        if not current_properties:
+            return set()
+
+        return set(current_properties) ^ set(self.server_properties)
 
     @staticmethod
     def _translate_config_key(key: str):

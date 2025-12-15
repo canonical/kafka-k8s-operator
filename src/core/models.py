@@ -9,7 +9,7 @@ import logging
 import socket
 from dataclasses import dataclass
 from functools import cached_property
-from typing import MutableMapping, TypeAlias, TypedDict
+from typing import Annotated, Literal, MutableMapping, TypeAlias, TypedDict
 
 import requests
 from charms.data_platform_libs.v0.data_interfaces import (
@@ -21,8 +21,24 @@ from charms.data_platform_libs.v0.data_interfaces import (
     ProviderData,
     RequirerData,
 )
+from charms.data_platform_libs.v1.data_interfaces import (
+    SECRET_PREFIX,
+    BaseModel,
+    EntityPermissionModel,
+    KafkaRequestModel,
+    KafkaResponseModel,
+    OpsPeerRepository,
+    OpsRelationRepository,
+    OptionalSecrets,
+    OptionalSecretStr,
+    SecretGroup,
+    SecretNotFoundError,
+    TlsSecretBool,
+    TlsSecretStr,
+)
 from lightkube.resources.core_v1 import Node, Pod
-from ops.model import Application, ModelError, Relation, Unit
+from ops.model import Application, Model, ModelError, Relation, Unit
+from pydantic import Field, ValidationError, field_validator
 from typing_extensions import override
 
 from literals import (
@@ -43,7 +59,6 @@ from managers.k8s import K8sManager
 logger = logging.getLogger(__name__)
 
 JSON: TypeAlias = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
-
 
 CPU = TypedDict("CPU", {"num.cores": str})
 Capacity = TypedDict("Capacity", {"DISK": dict[str, str], "CPU": CPU, "NW_IN": str, "NW_OUT": str})
@@ -67,6 +82,14 @@ SECRET_LABEL_MAP = {
     "balancer-uris": getattr(custom_secret_groups, "BALANCER"),
 }
 
+BrokerGroupSecretStr = Annotated[OptionalSecretStr, Field(exclude=True, default=None), "broker"]
+ControllerGroupSecretStr = Annotated[
+    OptionalSecretStr, Field(exclude=True, default=None), "controller"
+]
+BalancerGroupSecretStr = Annotated[
+    OptionalSecretStr, Field(exclude=True, default=None), "balancer"
+]
+
 
 @dataclass
 class GeneratedCa:
@@ -84,6 +107,168 @@ class SelfSignedCertificate:
     csr: str
     certificate: str
     private_key: str
+
+
+RESOURCE_TYPES = {"TOPIC", "GROUP"}
+VALID_OPERATIONS = {"READ", "WRITE", "CREATE", "DELETE", "DESCRIBE"}
+
+
+class KafkaPermissionModel(EntityPermissionModel):
+    """Extended permission request model for Kafka clients."""
+
+    @field_validator("resource_type")
+    @classmethod
+    def validate_resource_type(cls, v: str) -> str:
+        """Checks if resource_type is valid and converts it to uppercase."""
+        if v.upper() not in {"TOPIC", "GROUP"}:
+            raise ValueError(f"resource type should be in {RESOURCE_TYPES}")
+        return v.upper()
+
+    @field_validator("privileges")
+    @classmethod
+    def validate_privileges(cls, v: list) -> list[str]:
+        """Checks if resource_type is valid and converts it to uppercase."""
+        ops = []
+        for op in v:
+            if op not in VALID_OPERATIONS:
+                raise ValueError(f"privilege should be in {VALID_OPERATIONS}")
+            ops.append(op)
+        return ops
+
+
+class KafkaCompatibilityResponseModel(KafkaResponseModel):
+    """Response model compatible with V0."""
+
+    tls: TlsSecretBool | TlsSecretStr = Field(default=None)
+    consumer_group_prefix: str | None = Field(default=None)
+
+
+class RelationStateV1:
+    """Relation state object based on Data Interfaces V1."""
+
+    def __init__(
+        self,
+        relation: Relation | None,
+        model: Model,
+        component: Unit | Application,
+        extra_secret_fields: list[str] = [],
+        data_model: BaseModel | None = None,
+        substrate: Substrates | None = None,
+        is_peer_relation: bool = False,
+    ):
+        self.model = model
+        if is_peer_relation:
+            self.repository = OpsPeerRepository(self.model, relation, component)
+        else:
+            self.repository = OpsRelationRepository(self.model, relation, component)
+        self.relation = relation
+        self.component = component
+        self.data_model = data_model
+        self.substrate = substrate
+        self.is_peer_relation = is_peer_relation
+        self.secret_fields = set(self.secret_map)
+        if extra_secret_fields:
+            self.secret_fields |= set(extra_secret_fields)
+
+    def is_secret_field(self, field: str) -> bool:
+        """Determine if a field is secret or not, based on the relation data model."""
+        if field in self.secret_fields:
+            return True
+
+        # Handle dynamic secret fields
+        if self.is_peer_relation and field.startswith("relation-"):
+            return True
+
+        return False
+
+    @cached_property
+    def secret_map(self) -> dict[str, SecretGroup]:
+        """Return a mapping of fields to associated secret groups."""
+        if not self.data_model:
+            return {}
+
+        _map = {}
+        for field, field_info in self.data_model.__pydantic_fields__.items():
+            if field_info.annotation in OptionalSecrets and len(field_info.metadata) == 1:
+                if secret_group := SecretGroup(field_info.metadata[0]):
+                    _map[field] = secret_group
+
+        return _map
+
+    @property
+    def relation_data(self) -> dict:
+        """Return the data dictionary containing secret and non-secret fields, compatible with V0."""
+        _data = self.repository.get_data() or {}
+
+        for secret_group in set(self.secret_map.values()) | {SecretGroup("extra")}:
+            if secret := self.repository.get_secret(secret_group, None):
+                try:
+                    secret_info = (
+                        secret.meta.get_info()  # pyright: ignore[reportOptionalMemberAccess]
+                    )
+                    _data |= self.model.get_secret(id=secret_info.id).get_content(refresh=True)
+                except (AttributeError, SecretNotFoundError, ValueError):
+                    _data |= secret.get_content()
+
+        secret_fields = [fld for fld in _data if fld.startswith(SECRET_PREFIX)]
+        for secret_field in secret_fields:
+            if secret := self.model.get_secret(id=_data[secret_field]):
+                _data |= secret.get_content(refresh=True)
+
+        return _data
+
+    def update(self, items: dict[str, str]) -> None:
+        """Writes to relation_data via repository."""
+        delete_fields = [key for key in items if not items[key]]
+        update_content = {k: items[k] for k in items if k not in delete_fields}
+
+        for k, v in update_content.items():
+            if self.is_secret_field(k):
+                secret_group = self.secret_map.get(k, SecretGroup("extra"))
+                self.repository.write_secret_field(k, v, secret_group)
+            else:
+                self.repository.write_field(k, v)
+
+        for key in delete_fields:
+            if self.is_secret_field(key):
+                secret_group = self.secret_map.get(key, SecretGroup("extra"))
+                self.repository.delete_secret_field(key, secret_group)
+            else:
+                self.repository.delete_field(key)
+
+    @property
+    def network_interface(self) -> str:
+        """Returns the network interface name of the relation based on network bindings."""
+        if not self.relation:
+            return ""
+
+        try:
+            if binding := self.model.get_binding(self.relation):
+                if interfaces := binding.network.interfaces:
+                    return interfaces[0].name
+        except ModelError as e:
+            logger.error(f"Can't retrieve network binding data: {e}")
+            pass
+
+        return ""
+
+    @property
+    def ip(self) -> str:
+        """Returns the IP of the unit on the relation based on network bindings."""
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0)
+
+        # use the network interface we're bound to.
+        if self.network_interface:
+            s.setsockopt(
+                socket.SOL_SOCKET, socket.SO_BINDTODEVICE, self.network_interface.encode("utf-8")
+            )
+
+        s.connect(("10.10.10.10", 1))
+        ip = s.getsockname()[0]
+        s.close()
+
+        return ip
 
 
 class RelationState:
@@ -484,10 +669,13 @@ class KafkaCluster(RelationState):
         relation: Relation | None,
         data_interface: DataPeerData,
         component: Application,
+        network_bandwidth: int = 50000,
     ):
         super().__init__(relation, data_interface, component, None)
         self.data_interface = data_interface
+        self.model = data_interface._model
         self.app = component
+        self.network_bandwidth = network_bandwidth
 
     @override
     def update(self, items: dict[str, str]) -> None:
@@ -542,7 +730,7 @@ class KafkaCluster(RelationState):
         Returns:
             True if TLS encryption should be active. Otherwise False
         """
-        relation = self.data_interface._model.get_relation(TLS_RELATION)
+        relation = self.model.get_relation(TLS_RELATION)
 
         if not relation or not relation.active:
             return False
@@ -583,6 +771,45 @@ class KafkaCluster(RelationState):
     def bootstrap_unit_id(self) -> str:
         """Unit ID of the bootstrap controller."""
         return self.relation_data.get("bootstrap-unit-id", "")
+
+    @property
+    def broker_capacities_snapshot(self) -> dict[int, dict]:
+        """Snapshot of broker capacities."""
+        raw = json.loads(self.relation_data.get("broker-capacities-snapshot", "{}"))
+        # JSON keys can't be int, so convert them back to int here,
+        # as we always treat broker_id as int.
+        return {int(k): v for k, v in raw.items()}
+
+    def add_broker(self, broker) -> None:
+        """Add a given `KafkaBroker` to the broker capacities snapshot."""
+        if not all([broker.cores, broker.storages]):
+            return
+
+        snapshot = self.broker_capacities_snapshot
+
+        updated = {
+            "DISK": broker.storages,
+            "CPU": {"num.cores": broker.cores},
+            "NW_IN": str(self.network_bandwidth),
+            "NW_OUT": str(self.network_bandwidth),
+        }
+        current = snapshot.get(broker.broker_id, {})
+
+        if updated == current:
+            return
+
+        snapshot[broker.broker_id] = dict(updated)
+        self.update({"broker-capacities-snapshot": json.dumps(snapshot)})
+
+    def remove_broker(self, broker_id: int) -> None:
+        """Remove a broker ID from the broker capacities snapshot."""
+        snapshot = dict(self.broker_capacities_snapshot)
+
+        if broker_id not in snapshot:
+            return
+
+        snapshot.pop(broker_id)
+        self.update({"broker-capacities-snapshot": json.dumps(snapshot)})
 
 
 class TLSState:
@@ -722,6 +949,7 @@ class KafkaBroker(RelationState):
     ):
         super().__init__(relation, data_interface, component, substrate)
         self.data_interface = data_interface
+        self.model = data_interface._model
         self.unit = component
         self.k8s = K8sManager(
             pod_name=self.pod_name,
@@ -783,9 +1011,10 @@ class KafkaBroker(RelationState):
         if not relation:
             return
 
-        self.relation_data.update({f"ip-{relation.id}": ip_address})
+        self.update({f"ip-{relation.id}": ip_address})
 
     # --- TLS ---
+
     @property
     def peer_certs(self) -> TLSState:
         """TLS state for internal (peer) communications."""
@@ -795,6 +1024,11 @@ class KafkaBroker(RelationState):
     def client_certs(self) -> TLSState:
         """TLS state for external (client) communications."""
         return TLSState(self, TLSScope.CLIENT)
+
+    @property
+    def private_key_kind(self) -> Literal["secret", "lib"]:
+        """Returns the kind of tls-private-key used for client certs on the unit."""
+        return self.relation_data.get("private-key-kind", "lib")
 
     @property
     def keystore_password(self) -> str:
@@ -824,7 +1058,7 @@ class KafkaBroker(RelationState):
     @property
     def cores(self) -> str:
         """The number of CPU cores for the unit machine."""
-        return self.relation_data.get("cores", "")
+        return str(self.relation_data.get("cores", ""))
 
     @property
     def rack(self) -> str:
@@ -874,30 +1108,41 @@ class KafkaBroker(RelationState):
         return bool(self.relation_data.get("added-to-quorum", False))
 
 
-class KafkaClient(RelationState):
+class KafkaClient(RelationStateV1):
     """State collection metadata for a single related client application."""
 
     def __init__(
         self,
         relation: Relation | None,
-        data_interface: Data,
+        model: Model,
         component: Application,
+        request: KafkaRequestModel,
         local_app: Application | None = None,
         bootstrap_server: str = "",
         password: str = "",  # nosec: B107
         tls: str = "",
     ):
-        super().__init__(relation, data_interface, component, None)
+        super().__init__(
+            relation,
+            model,
+            component,
+            substrate=None,
+        )
         self.app = component
         self._local_app = local_app
         self._bootstrap_server = bootstrap_server
         self._password = password
         self._tls = tls
+        self.request = request
+        self.request_id = request.request_id
 
     @property
     def username(self) -> str:
         """The generated username for the client application."""
-        return f"relation-{getattr(self.relation, 'id', '')}"
+        if not self.relation:
+            return ""
+
+        return self.generate_username(self.relation.id, self.request_id)
 
     @property
     def bootstrap_server(self) -> str:
@@ -938,7 +1183,7 @@ class KafkaClient(RelationState):
     @property
     def topic(self) -> str:
         """The requested topic for the client."""
-        return self.relation_data.get("topic", "")
+        return self.request.resource
 
     @property
     def extra_user_roles(self) -> str:
@@ -947,12 +1192,15 @@ class KafkaClient(RelationState):
         Can be any comma-delimited selection of `producer`, `consumer` and `admin`.
         When `admin` is set, the Kafka charm interprets this as a new super.user.
         """
-        return self.relation_data.get("extra-user-roles", "")
+        return self.request.extra_user_roles or ""
 
     @property
     def mtls_cert(self) -> str:
         """Returns TLS cert of the client."""
-        return self.relation_data.get("mtls-cert", "")
+        if not self.request.mtls_cert:
+            return ""
+
+        return self.request.mtls_cert
 
     @property
     def alias(self) -> str:
@@ -961,6 +1209,89 @@ class KafkaClient(RelationState):
             return ""
 
         return self.generate_alias(self.relation.app.name, self.relation.id)
+
+    @property
+    def version(self) -> str:
+        """The Data Interface version of the client."""
+        return self.relation_data.get("version", "v0")
+
+    @property
+    def written_data(self) -> dict:
+        """The data written for this client."""
+        if not self._local_app:
+            return {}
+
+        _data = RelationStateV1(self.relation, self.model, self._local_app).relation_data
+        if self.version == "v0":
+            return _data
+
+        if "requests" not in _data:
+            return {}
+
+        # Since DI v1 relations could include multiple requests, we need to extract
+        # data for this specific request, both from relation data and secrets.
+        my_data = [r for r in _data["requests"] if r.get("request-id") == self.request_id]
+        if not my_data:
+            return {}
+
+        _data = my_data[0]
+        secret_fields = [fld for fld in _data if fld.startswith(SECRET_PREFIX)]
+        for secret_field in secret_fields:
+            if secret_uri := _data[secret_field]:
+                if secret := self.model.get_secret(id=secret_uri):
+                    _data |= secret.get_content(refresh=True)
+
+        return _data
+
+    def needs_update(self, broker_ca: str) -> bool:
+        """Check if written data for this client needs update, based on current Kafka app state."""
+        state = self.written_data
+        return not all(
+            [
+                self.username == state.get("username"),
+                self.password == state.get("password"),
+                self.bootstrap_server == state.get("endpoints"),
+                self.tls == state.get("tls"),
+                broker_ca == state.get("tls-ca", ""),
+            ]
+        )
+
+    @property
+    def secret_user(self) -> str | None:
+        """The ID of the secret containing auth information, aka 'secret-user'."""
+        if secret_user := self.repository.get_secret(SecretGroup("user"), None, self.request_id):
+            if secret_info := secret_user.get_info():
+                return secret_info.id
+
+        return None
+
+    @property
+    def secret_tls(self) -> str | None:
+        """The ID of the secret containing tls information, aka 'secret-tls'."""
+        if secret_tls := self.repository.get_secret(SecretGroup("tls"), None, self.request_id):
+            if secret_info := secret_tls.get_info():
+                return secret_info.id
+
+        return None
+
+    @property
+    def permissions(self) -> list[KafkaPermissionModel]:
+        """List of permissions requested by the client."""
+        if not self.request.entity_permissions:
+            return []
+
+        try:
+            return [KafkaPermissionModel(**p.dict()) for p in self.request.entity_permissions]
+        except ValidationError as e:
+            # TODO: propagate the error to the client once DI V1 supports DA-174.
+            logger.error(f"Permissions requested by the client is invalid: {e}")
+            return []
+
+    @staticmethod
+    def generate_username(relation_id: int, request_id: str | None) -> str:
+        """Generate the username for a specific request on a relation."""
+        postfix = f"-{request_id}" if request_id else ""
+        return f"relation-{relation_id}{postfix}"
 
     @staticmethod
     def generate_alias(app_name: str, relation_id: int) -> str:

@@ -4,6 +4,7 @@
 
 """Supporting objects for Kafka charm state."""
 
+import logging
 import re
 import secrets
 import socket
@@ -15,6 +16,8 @@ from charmlibs import pathops
 from ops.pebble import Layer
 
 from literals import BALANCER, BROKER, Role, TLSScope
+
+logger = logging.getLogger(__name__)
 
 
 class CharmedKafkaPaths:

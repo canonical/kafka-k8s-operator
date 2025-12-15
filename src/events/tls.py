@@ -21,10 +21,8 @@ from charms.tls_certificates_interface.v4.tls_certificates import (
     CertificateRequestAttributes,
     PrivateKey,
     TLSCertificatesRequiresV4,
-    generate_private_key,
 )
 from ops.charm import (
-    ActionEvent,
     RelationBrokenEvent,
 )
 from ops.framework import EventBase, EventSource, Object
@@ -57,17 +55,19 @@ class TLSHandler(Object):
     def __init__(self, charm: "KafkaCharm") -> None:
         super().__init__(charm, "tls")
         self.charm: "KafkaCharm" = charm
+        self._certs_updated = False
 
         self.sans = self.charm.broker.tls_manager.build_sans()
         self.common_name = f"{self.charm.unit.name}-{self.charm.model.uuid}"
 
         peer_private_key = None
-        client_private_key = None
-
         if peer_key := self.charm.state.unit_broker.peer_certs.private_key:
             peer_private_key = PrivateKey.from_string(peer_key)
 
-        if client_key := self.charm.state.unit_broker.client_certs.private_key:
+        client_private_key = None
+        if (
+            client_key := self.charm.state.unit_broker.client_certs.private_key
+        ) and self.charm.state.unit_broker.private_key_kind == "secret":
             client_private_key = PrivateKey.from_string(client_key)
 
         self.certificates = TLSCertificatesRequiresV4(
@@ -110,10 +110,6 @@ class TLSHandler(Object):
         self.framework.observe(
             getattr(self.peer_certificates.on, "certificate_available"),
             self._on_peer_certificate_available,
-        )
-
-        self.framework.observe(
-            getattr(self.charm.on, "set_tls_private_key_action"), self._set_tls_private_key
         )
 
         self.certificate_transfer = CertificateTransferRequires(
@@ -176,7 +172,7 @@ class TLSHandler(Object):
 
         if state.scope == TLSScope.PEER:
             # switch back to internal TLS
-            self.charm.broker.setup_internal_tls()
+            self.charm.broker.setup_internal_tls(event)
 
             # Keep the old bundle
             for dependent in ["broker", "balancer"]:
@@ -249,19 +245,6 @@ class TLSHandler(Object):
         self.update_truststore()
         self.charm.on.config_changed.emit()
 
-    def _set_tls_private_key(self, event: ActionEvent) -> None:
-        """Handler for `set_tls_private_key` action."""
-        key = event.params.get("internal-key") or generate_private_key().raw
-        private_key = (
-            key
-            if re.match(r"(-+(BEGIN|END) [A-Z ]+-+)", key)
-            else base64.b64decode(key).decode("utf-8")
-        )
-
-        self.charm.state.unit_broker.client_certs.private_key = private_key
-        self.certificates._private_key = PrivateKey.from_string(private_key)
-        self.refresh_tls_certificates.emit()
-
     def _on_mtls_client_certificates_available(self, event: CertificatesAvailableEvent) -> None:
         """Handle the certificates available event on the `certifcate_transfer` interface."""
         relation = self.charm.model.get_relation(CERTIFICATE_TRANSFER_RELATION, event.relation_id)
@@ -286,9 +269,44 @@ class TLSHandler(Object):
 
         self.update_truststore()
 
-    def _on_mtls_client_certificates_removed(self, event: CertificatesRemovedEvent) -> None:
+    def _on_mtls_client_certificates_removed(self, _: CertificatesRemovedEvent) -> None:
         """Handle the certificates removed event."""
         self.update_truststore()
+
+        # Turn off MTLS if no clients are remaining.
+        if self.charm.unit.is_leader() and not self.charm.state.has_mtls_clients:
+            self.charm.state.cluster.update({"mtls": ""})
+
+    def set_tls_private_key(self, secret_private_key: str | None = None) -> None:
+        """Handler for setting tls-private-key from secret."""
+        if secret_private_key == self.charm.state.unit_broker.client_certs.private_key:
+            logger.debug("tls-private-key not changed, exiting...")
+            return
+
+        if not secret_private_key and self.charm.state.unit_broker.private_key_kind == "lib":
+            logger.debug("empty secret tls-private-key, currently lib managed, exiting...")
+            return
+
+        if secret_private_key:
+            private_key = (
+                secret_private_key
+                if re.match(r"(-+(BEGIN|END) [A-Z ]+-+)", secret_private_key)
+                else base64.b64decode(secret_private_key).decode("utf-8")
+            )
+            logger.debug("Non-empty private key, switching to secret...")
+            self.charm.state.unit_broker.update({"private-key-kind": "secret"})
+        else:
+            logger.debug("Empty private key, switching to lib...")
+            self.charm.state.unit_broker.update({"private-key-kind": "lib"})
+            private_key = None
+
+        logger.debug(f"Setting broker private_key - {bool(private_key)}")
+        self.charm.state.unit_broker.client_certs.private_key = private_key or ""
+        self.certificates._private_key = (
+            PrivateKey.from_string(private_key) if private_key else None
+        )
+
+        self.refresh_tls_certificates.emit()
 
     def update_truststore(self) -> None:
         """Updates the truststore based on current state of MTLS client relations and certificates available on the `certificate_transfer` interface."""
@@ -344,3 +362,79 @@ class TLSHandler(Object):
             return False
 
         return True
+
+    @property
+    def certs_updated(self) -> bool:
+        """Returns True if the certificates have been updated, False otherwise."""
+        return self._certs_updated
+
+    @certs_updated.setter
+    def certs_updated(self, value: bool) -> None:
+        self._certs_updated = value
+
+    def unit_tls_rotate(self) -> None:
+        """Updates the truststore and checks if this unit needs to rotate its TLS certificates."""
+        self.charm.broker.update_peer_truststore_state()
+        old_peer_certs = self.charm.broker.tls_manager.peer_trusted_certificates.values()
+        self.charm.broker.tls_manager.update_peer_cluster_trust()
+        new_peer_certs = self.charm.broker.tls_manager.peer_trusted_certificates.values()
+        self.certs_updated = set(new_peer_certs) != set(old_peer_certs)
+
+    def config_changed_rotation(self, event: EventBase) -> bool:
+        """Handle TLS certificate rotation logic during config_changed events.
+
+        Returns:
+            bool: should_continue
+        """
+        self.unit_tls_rotate()
+        if (
+            self.charm.state.tls_rotate
+            and not self.charm.broker.tls_manager.peer_cluster_app_trusts_new_bundle()
+        ):
+            # Basically we should defer and wait for the other side
+            # to complete its rolling restart and then begin our rolling restart.
+            # However, if both sides are rotating, we should prevent deadlock by
+            # forcing one side (BROKER here) to restart anyway.
+            should_defer = True
+            if self.charm.state.both_sides_rotating and self.charm.state.runs_broker:
+                logger.debug(
+                    "Both sides are rotating TLS certificates, initiating rolling restart..."
+                )
+                should_defer = False
+
+            if should_defer:
+                event.defer()
+                return False
+
+        # Check for SANs change and revoke the cert if SANs change is detected.
+        # Emitting the refresh_tls_certificates will lead to rotation and restart.
+        if self.charm.broker.tls_manager.sans_changed(TLSScope.CLIENT):
+            self.charm.state.unit_broker.client_certs.certificate = ""
+            self.refresh_tls_certificates.emit()
+
+        if self.charm.broker.tls_manager.sans_changed(TLSScope.PEER):
+            self.charm.state.unit_broker.peer_certs.certificate = ""
+            if self.charm.state.use_internal_tls:
+                self.charm.broker.setup_internal_tls(event)
+            else:
+                self.refresh_tls_certificates.emit()
+
+        return True
+
+    def handle_config_changed_tls_updates(self) -> None:
+        """Handle TLS state updates during config_changed events."""
+        # Update truststore if needed.
+        self.update_truststore()
+
+        if self.charm.state.tls_rotate:
+            # If TLS rotation is needed, inform the balancer.
+            if self.charm.state.runs_balancer:
+                self.charm.state.balancer_tls_rotate = True
+
+            # Reset TLS rotation state
+            self.charm.state.tls_rotate = False
+
+        # Turn on/off peer-cluster TLS rotate if all units are done, only run on leader unit
+        self.charm.state.peer_cluster_tls_rotate = any(
+            unit.peer_certs.rotate for unit in self.charm.state.brokers
+        )

@@ -6,7 +6,7 @@ import dataclasses
 import json
 import logging
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 import pytest
 import yaml
@@ -16,7 +16,10 @@ from tests.unit.helpers import generate_tls_artifacts
 
 from charm import KafkaCharm
 from literals import (
+    ADMIN_USER,
     CONTAINER,
+    CONTROLLER_USER,
+    INTER_BROKER_USER,
     PEER,
     PEER_CLUSTER_ORCHESTRATOR_RELATION,
     PEER_CLUSTER_RELATION,
@@ -177,6 +180,16 @@ def test_ready_to_start(charm_configuration, base_state: State):
     # When
     with (
         patch("workload.KafkaWorkload.run_bin_command", return_value="cluster-uuid-number"),
+        patch(
+            "core.cluster.ClusterState.broker_capacities",
+            new_callable=PropertyMock,
+            return_value={"brokerCapacities": [{}, {}, {}]},
+        ),
+        patch(
+            "managers.balancer.BalancerManager.config_change_detected",
+            return_value=False,
+        ),
+        patch("managers.tls.TLSManager.configure"),
         patch("health.KafkaHealth.machine_configured", return_value=True),
         patch("workload.KafkaWorkload.start"),
         patch("workload.KafkaWorkload.active", return_value=True),
@@ -192,9 +205,9 @@ def test_ready_to_start(charm_configuration, base_state: State):
     assert "bootstrap-unit-id" in state_out.get_relations(PEER)[0].local_app_data
     assert "bootstrap-replica-id" in state_out.get_relations(PEER)[0].local_app_data
     # Only the internal users should be created.
-    assert "admin-password" in secret_contents
-    assert "sync-password" in secret_contents
-    assert "controller-password" in secret_contents
+    assert f"{ADMIN_USER}-password" in secret_contents
+    assert f"{CONTROLLER_USER}-password" in secret_contents
+    assert f"{INTER_BROKER_USER}-password" in secret_contents
     assert "internal-ca" in secret_contents
     assert "internal-ca-key" in secret_contents
     assert state_out.unit_status == ActiveStatus()

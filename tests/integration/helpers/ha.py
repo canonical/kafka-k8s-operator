@@ -15,7 +15,7 @@ from subprocess import PIPE, CalledProcessError, check_output
 from typing import Literal
 
 import jubilant
-from tenacity import RetryError, Retrying, stop_after_attempt, wait_fixed
+from tenacity import RetryError, Retrying, retry, retry_if_result, stop_after_attempt, wait_fixed
 
 from integration.ha.continuous_writes import ContinuousWritesResult
 from integration.helpers import (
@@ -479,6 +479,16 @@ def get_kraft_quorum_lags(juju: jubilant.Juju) -> list[int]:
 
     logger.info(f"Lags: {lags}")
     return lags
+
+
+@retry(
+    wait=wait_fixed(20),
+    stop=stop_after_attempt(15),
+    retry=retry_if_result(lambda result: result is False),
+    retry_error_callback=lambda _: False,
+)
+def assert_quorum_lag_is_zero(juju: jubilant.Juju):
+    return not any(get_kraft_quorum_lags(juju))
 
 
 def is_down(juju: jubilant.Juju, unit: str, port: int = CONTROLLER_PORT) -> bool:

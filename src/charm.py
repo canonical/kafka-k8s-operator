@@ -9,7 +9,7 @@ import logging
 import charm_refresh
 from charms.data_platform_libs.v0.data_models import TypedCharmBase
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
-from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
+from charms.loki_k8s.v1.loki_push_api import LogForwarder
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from ops import (
@@ -45,6 +45,7 @@ from workload import KafkaWorkload
 logger = logging.getLogger(__name__)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("charms.data_platform_libs.v1.data_interfaces").setLevel(logging.WARNING)
 
 
 class KafkaCharm(TypedCharmBase[CharmConfig]):
@@ -83,7 +84,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         # Register roles event handlers after global ones, so that they get the priority.
         self.broker = BrokerOperator(self)
-        self.balancer = BalancerOperator(self)
+        self.balancer = BalancerOperator(self, self.workload)
 
         self.tls = TLSHandler(self)
 
@@ -111,15 +112,10 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             alert_rules_path=METRICS_RULES_DIR,
         )
         self.grafana_dashboards = GrafanaDashboardProvider(self)
-        self.loki_push = LogProxyConsumer(
+        self.loki_push = LogForwarder(
             self,
-            log_files=[
-                f"{self.broker.workload.paths.logs_path}/server.log",
-                f"{self.balancer.workload.paths.logs_path}/kafkacruisecontrol.log",
-            ],
             alert_rules_path=LOGS_RULES_DIR,
             relation_name="logging",
-            container_name="kafka",
         )
 
     def _on_roles_changed(self, _):
@@ -150,10 +146,13 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
         self.broker.workload.restart()
 
-        if self.broker.healthy:
-            logger.info(f'Broker {self.unit.name.split("/")[1]} restarted')
-        else:
-            logger.error(f"Broker {self.unit.name.split('/')[1]} failed to restart")
+        if not self.workload.health_check(
+            host=self.state.unit_broker.internal_address,
+            runs_broker=self.state.runs_broker,
+            runs_controller=self.state.runs_controller,
+        ):
+            event.defer()
+            return
 
         self.broker.update_credentials_cache()
 
@@ -181,6 +180,16 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         """Determine the unit status, respecting refresh higher priority statuses."""
         if self.refresh and self.refresh.unit_status_higher_priority:
             return self.refresh.unit_status_higher_priority
+
+        # Scaling warning if auto-balance is set.
+        # Since this runs on every hook, we intentionally use and for
+        # less complex checks first and avoid using all
+        if (
+            self.state.runs_broker
+            and self.state.runs_balancer
+            and self.broker.kraft.controller_manager.departing_brokers
+        ):
+            return Status.SCALING_WARNING.value.status
 
         # Check for pending inactive statuses (charm-specific logic)
         # Remove active status if present, will be added as default at the end

@@ -43,7 +43,7 @@ def test_build_and_deploy(juju: jubilant.Juju, kafka_charm, app_charm, kraft_mod
         juju=juju,
         charm=kafka_charm,
         kraft_mode=kraft_mode,
-        config_broker={"expose_external": "nodeport"},
+        config_broker={"expose-external": "nodeport"},
     )
     juju.deploy(app_charm, app=DUMMY_NAME, trust=True)
 

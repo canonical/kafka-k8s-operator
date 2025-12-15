@@ -12,7 +12,7 @@ from unittest.mock import PropertyMock, mock_open, patch
 import pytest
 import yaml
 from ops import CharmMeta
-from ops.testing import Container, Context, PeerRelation, Relation, State, Storage
+from ops.testing import Container, Context, PeerRelation, Relation, Secret, State, Storage
 
 from charm import KafkaCharm
 from literals import (
@@ -146,7 +146,7 @@ def test_metadata_log_dir_in_server_properties(ctx: Context, base_state: State) 
 def test_listeners_in_server_properties(charm_configuration: dict, base_state: State) -> None:
     """Checks that listeners are split into INTERNAL, CLIENT and EXTERNAL."""
     # Given
-    charm_configuration["options"]["expose_external"]["default"] = "nodeport"
+    charm_configuration["options"]["expose-external"]["default"] = "nodeport"
     cluster_peer = PeerRelation(PEER, PEER, local_unit_data={"private-address": "treebeard"})
     client_relation = Relation(REL_NAME, "app")
     state_in = dataclasses.replace(base_state, relations=[cluster_peer, client_relation])
@@ -211,7 +211,7 @@ def test_listeners_in_server_properties(charm_configuration: dict, base_state: S
 def test_extra_listeners_in_server_properties(charm_configuration: dict, base_state: State):
     """Checks that the extra-listeners are properly set from config."""
     # Given
-    charm_configuration["options"]["extra_listeners"][
+    charm_configuration["options"]["extra-listeners"][
         "default"
     ] = "worker-{unit}.foo.com:30000,worker-{unit}.bar.com:40000"
     cluster_peer = PeerRelation(PEER, PEER, local_unit_data={"private-address": "treebeard"})
@@ -254,11 +254,17 @@ def test_extra_listeners_in_server_properties(charm_configuration: dict, base_st
         # 2 extra, 1 internal, 1 client
         assert len(charm.broker.config_manager.all_listeners) == 4
 
-    # Adding SSL
-    client_relation = dataclasses.replace(
-        client_relation, local_app_data={"mtls-cert": "client-cert"}
+    # Adding SSL (mTLS)
+    mtls_secret = Secret(
+        tracked_content={"mtls-cert": "client-cert"},
+        label=f"kafka-client.{client_relation.id}.mtls.secret",
     )
-    state_in = dataclasses.replace(base_state, relations=[cluster_peer, client_relation])
+    client_relation = dataclasses.replace(
+        client_relation, remote_app_data={"secret-mtls": mtls_secret.id}
+    )
+    state_in = dataclasses.replace(
+        base_state, relations=[cluster_peer, client_relation], secrets=[mtls_secret]
+    )
 
     # When
     with ctx(ctx.on.config_changed(), state_in) as manager:
@@ -561,9 +567,9 @@ def test_default_replication_properties_more_than_three(ctx: Context, base_state
 
 
 def test_ssl_principal_mapping_rules(charm_configuration: dict, base_state: State) -> None:
-    """Check that a change in ssl_principal_mapping_rules is reflected in server_properties."""
+    """Check that a change in ssl-principal-mapping-rules is reflected in server_properties."""
     # Given
-    charm_configuration["options"]["ssl_principal_mapping_rules"][
+    charm_configuration["options"]["ssl-principal-mapping-rules"][
         "default"
     ] = "RULE:^(erebor)$/$1/,DEFAULT"
     cluster_peer = PeerRelation(PEER, PEER)
@@ -681,7 +687,7 @@ def test_super_users(ctx: Context, base_state: State) -> None:
 
 def test_cruise_control_reporter_only_with_balancer(ctx: Context, base_state: State):
     # Given
-    state_in = base_state
+    state_in = dataclasses.replace(base_state, config=base_state.config)
     reporters_config_value = "metric.reporters=com.linkedin.kafka.cruisecontrol.metricsreporter.CruiseControlMetricsReporter"
 
     # When
