@@ -28,8 +28,8 @@ tutorial  overlord          microk8s/localhost   3.6.8    unsupported  01:02:27Z
 
 App                       Version  Status  Scale  Charm                     Channel        Rev  Exposed  Message
 data-integrator                    active      1  data-integrator           latest/stable  180  no       
-kafka-k8s                 4.0.0    active      3  kafka-k8s                     4/edge         226  no       
-kraft                     4.0.0    active      3  kafka-k8s                     4/edge         226  no       
+kafka-k8s                 4.0.0    active      3  kafka-k8s                 4/edge         226  no       
+kraft                     4.0.0    active      3  kafka-k8s                 4/edge         226  no       
 self-signed-certificates           active      1  self-signed-certificates  1/edge         336  no       
 
 Unit                         Workload  Agent  Machine  Public address  Ports           Message
