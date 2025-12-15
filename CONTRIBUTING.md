@@ -15,9 +15,11 @@ This documents explains the processes and practices recommended for contributing
 
 ## Requirements
 
-To build the charm locally, you will need to install [Charmcraft](https://juju.is/docs/sdk/install-charmcraft).
+To build the charm locally, you will need to install
+[Charmcraft](https://juju.is/docs/sdk/install-charmcraft).
 
-To run the charm locally with Juju, it is recommended to use [LXD](https://linuxcontainers.org/lxd/introduction/) as your virtual machine manager. Instructions for running Juju on LXD can be found [here](https://juju.is/docs/olm/lxd).
+To run the charm locally with Juju, it is recommended to use
+[Multipass](https://canonical.com/multipass) and [MicroK8s](https://canonical.com/microk8s).
 
 ## Build and Deploy
 

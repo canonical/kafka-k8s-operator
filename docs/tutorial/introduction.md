@@ -7,17 +7,18 @@ Through this tutorial, you will learn a variety of operations, everything from a
 
 In this tutorial, we will walk through how to:
 
-- Set up your local environment using LXD and Juju.
+- Set up your local environment using Multipass, MicroK8s and Juju.
 - Deploy Charmed Apache Kafka K8s using only a few commands.
 - Get the admin credentials directly.
 - Add high-availability with replication.
 - Change the admin password.
 - Automatically create Apache Kafka users via Juju relations.
 - Use Cruise Control for cluster rebalancing.
-- Use Karapace for schema management and message serialisation.
 - Use Apache Kafka Connect for moving data between data applications.
+<!-- - Use Karapace for schema management and message serialisation. -->
 
-While this tutorial intends to guide and teach you as you deploy Charmed Apache Kafka K8s, it will be most beneficial if you already have a familiarity with:
+While this tutorial intends to guide and teach you as you deploy Charmed Apache Kafka K8s,
+it will be most beneficial if you already have a familiarity with:
 
 - Basic Unix shell commands.
 - General data-intensive application concepts such as partitioning, replication and user management.
