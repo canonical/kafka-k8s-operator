@@ -62,28 +62,20 @@ Wait until the application is ready - when it is ready, `watch -n 1 --color juju
 will show:
 
 ```shell
-Model     Controller        Cloud/Region         Version  SLA          Timestamp
-tutorial  overlord          microk8s/localhost   3.6.8    unsupported  15:53:00Z
+Model     Controller  Cloud/Region        Version  SLA          Timestamp
+tutorial  microk8s    microk8s/localhost  3.6.12   unsupported  00:14:14Z
 
-App    Version  Status  Scale  Charm  Channel  Rev  Exposed  Message
-kafka-k8s  4.0.0    active      3  kafka-k8s  4/edge   226  no       
-kraft  4.0.0    active      3  kafka-k8s  4/edge   226  no       
+App        Version  Status  Scale  Charm      Channel  Rev  Address         Exposed  Message
+kafka-k8s  4.0.0    active      3  kafka-k8s  4/edge    96  10.152.183.93   no       
+kraft      4.0.0    active      3  kafka-k8s  4/edge    96  10.152.183.160  no       
 
-Unit      Workload  Agent  Machine  Public address  Ports      Message
-kafka-k8s/0*  active    idle   0        10.233.204.241  19093/tcp  
-kafka-k8s/1   active    idle   1        10.233.204.196  19093/tcp  
-kafka-k8s/2   active    idle   2        10.233.204.148  19093/tcp  
-kraft/0   active    idle   3        10.233.204.125  9098/tcp   
-kraft/1*  active    idle   4        10.233.204.36   9098/tcp   
-kraft/2   active    idle   5        10.233.204.225  9098/tcp   
-
-Machine  State    Address         Inst id        Base          AZ  Message
-0        started  10.233.204.241  juju-07a730-0  ubuntu@24.04      Running
-1        started  10.233.204.196  juju-07a730-1  ubuntu@24.04      Running
-2        started  10.233.204.148  juju-07a730-2  ubuntu@24.04      Running
-3        started  10.233.204.125  juju-07a730-3  ubuntu@24.04      Running
-4        started  10.233.204.36   juju-07a730-4  ubuntu@24.04      Running
-5        started  10.233.204.225  juju-07a730-5  ubuntu@24.04      Running
+Unit          Workload  Agent  Address       Ports  Message
+kafka-k8s/0   active    idle   10.1.188.219         
+kafka-k8s/1*  active    idle   10.1.188.218         
+kafka-k8s/2   active    idle   10.1.188.220         
+kraft/0       active    idle   10.1.188.224         
+kraft/1       active    idle   10.1.188.225         
+kraft/2*      active    idle   10.1.188.226      
 ```
 
 To exit the screen with `watch -n 1 --color juju status --color`, enter `Ctrl+C`.
