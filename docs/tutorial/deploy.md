@@ -12,7 +12,7 @@ from [Charmhub](https://charmhub.io/) and deploy it to your model.
 For example, to deploy a cluster of three Apache Kafka brokers, you can simply run:
 
 ```shell
-juju deploy kafka-k8s -n 3 --channel 4/edge --roles=broker --trust
+juju deploy kafka-k8s -n 3 --channel 4/edge --config roles=broker --trust
 ```
 
 Apache Kafka also uses the KRaft consensus protocol for coordinating broker information,
@@ -33,7 +33,7 @@ a separate controller cluster and broker cluster.
 To deploy a cluster of three KRaft controllers, run:
 
 ```shell
-juju deploy kafka-k8s -n 3 --channel 4/edge --roles=controller kraft --trust
+juju deploy kafka-k8s -n 3 --channel 4/edge --config roles=controller kraft --trust
 ```
 
 After this, it is necessary to connect the two clusters, taking care to specify which

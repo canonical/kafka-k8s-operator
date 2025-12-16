@@ -26,7 +26,7 @@ multipass launch --cpus 4 --memory 8G --disk 50G --name my-vm charm-dev
 
 ```{note}
 See all `multipass launch` parameters in the
-[launch command reference](https://multipass.run/docs/launch-command)*.
+[launch command reference](https://multipass.run/docs/launch-command).
 ```
 
 Multipass [list of commands](https://multipass.run/docs/multipass-cli-commands)
