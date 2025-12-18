@@ -1,7 +1,7 @@
 (tutorial-deploy)=
 # 2. Deploy Apache Kafka
 
-This is a part of the [Charmed Apache Kafka K8s Tutorial](index.md).
+This is a part of the [Charmed Apache Kafka K8s Tutorial](tutorial-introduction).
 
 ## Deploy Charmed Apache Kafka K8s
 
@@ -16,7 +16,7 @@ juju deploy kafka-k8s -n 3 --channel 4/edge --config roles=broker --trust
 ```
 
 Apache Kafka also uses the KRaft consensus protocol for coordinating broker information,
-topic + partition metadata and Access Control Lists (ACLs), ran as a quorum of controller
+topic + partition metadata, and Access Control Lists (ACLs), ran as a quorum of controller
 nodes using the Raft consensus algorithm.
 
 ```{note}
@@ -63,68 +63,91 @@ will show:
 
 ```shell
 Model     Controller  Cloud/Region        Version  SLA          Timestamp
-tutorial  microk8s    microk8s/localhost  3.6.12   unsupported  00:14:14Z
+tutorial  microk8s    microk8s/localhost  3.6.12   unsupported  17:30:56Z
 
 App        Version  Status  Scale  Charm      Channel  Rev  Address         Exposed  Message
 kafka-k8s  4.0.0    active      3  kafka-k8s  4/edge    96  10.152.183.93   no       
 kraft      4.0.0    active      3  kafka-k8s  4/edge    96  10.152.183.160  no       
 
-Unit          Workload  Agent  Address       Ports  Message
-kafka-k8s/0   active    idle   10.1.188.219         
-kafka-k8s/1*  active    idle   10.1.188.218         
-kafka-k8s/2   active    idle   10.1.188.220         
-kraft/0       active    idle   10.1.188.224         
-kraft/1       active    idle   10.1.188.225         
-kraft/2*      active    idle   10.1.188.226      
+Unit          Workload  Agent      Address       Ports  Message
+kafka-k8s/0*  active    idle       10.1.188.228         
+kafka-k8s/1   active    idle       10.1.188.227         
+kafka-k8s/2   active    idle       10.1.188.231         
+kraft/0       active    idle       10.1.188.230         
+kraft/1       active    idle       10.1.188.229         
+kraft/2*      active    idle       10.1.188.232  
 ```
 
-To exit the screen with `watch -n 1 --color juju status --color`, enter `Ctrl+C`.
+To exit the screen, press `Ctrl+C`.
 
 ## Access Apache Kafka brokers
 
-Once all the units are shown as `active|idle`, the credentials can be retrieved.
+Charmed Apache Kafka K8s aims to follow the secure by default paradigm.
+As a consequence, after being deployed the Apache Kafka cluster won’t expose
+any external listeners – the cluster will be unreachable.
+Ports are only opened when client applications are integrated.
 
-All sensitive configuration data used by Charmed Apache Kafka K8s, such as passwords
-and SSL certificates, is stored in Juju secrets.
-See the [Juju secrets documentation](https://documentation.ubuntu.com/juju/latest/reference/secret/)
-for more information.
+For most cluster administrators, it may be most helpful to create a user
+with the admin role, which has superuser permissions on the Apache Kafka cluster.
 
-To reveal the contents of the Juju secret containing sensitive cluster data for
-the Charmed Apache Kafka K8s application:
+### Create an admin user
+
+To create an admin user, deploy the
+[Data Integrator Charm](https://charmhub.io/data-integrator)
+with the `extra-user-roles` set to `admin`:
 
 ```shell
-juju show-secret --reveal cluster.kafka.app
+juju deploy data-integrator --config topic-name="__admin-user" --config extra-user-roles="admin"
 ```
+
+Then, integrate it with the Apache Kafka charm:
+
+```shell
+juju integrate data-integrator kafka-k8s
+```
+
+Check `juju status` and wait for the new charmed application to be deployed and integrated with the `idle`/`active` status.
+
+Retrieve authentication information:
+
+```shell
+juju run data-integrator/leader get-credentials
+```
+
+That will return `username` and `password`, as well as endpoints.
+
+<details>
+
+<summary>
+
+Output example
+</summary>
 
 The output of the previous command will look something like this:
 
 ```shell
-d2lj5jgco3bs3dacm2tg:
-  revision: 1
-  checksum: a6517abdd5e22038bfafe988e6253bb03c0462067b50475789eb6bc658ee0b11
-  owner: kafka
-  label: cluster.kafka.app
-  created: 2025-08-24T15:42:13Z
-  updated: 2025-08-24T15:42:13Z
-  content:
-    admin-password: dxpex3Uc1sWIBna83gELtJOhAuW2awji
-    sync-password: eqI0RLV1lRSaIIiDKf3yz0W66ajICmDT
-    internal-ca: |-
-      <multi-line-certificate>
-    internal-ca-key: |-
-      <multi-line-private-key>
+Running operation 5 with 1 task
+  - task 6 on unit-data-integrator-0
+
+Waiting for task 6...
+kafka:
+  data: '{"resource": "__admin-user", "salt": "C9qptFtwVMLmqVDp", "extra-user-roles":
+    "admin", "provided-secrets": ["mtls-cert"], "requested-secrets": ["username",
+    "password", "tls", "tls-ca", "uris", "read-only-uris"]}'
+  endpoints: kafka-k8s-0.kafka-k8s-endpoints:9092,kafka-k8s-1.kafka-k8s-endpoints:9092,kafka-k8s-2.kafka-k8s-endpoints:9092
+  password: 6OtdPWzEM336uR0FMzU9O38YnQnxhfgE
+  resource: __admin-user
+  salt: rsbLcRVkIldhuWLf
+  tls: disabled
+  topic: __admin-user
+  username: relation-8
+  version: v0
+ok: "True"
 ```
 
-The important line here for accessing the Apache Kafka cluster itself is `admin-password`,
-which tells us that `username=admin` and `password=dxpex3Uc1sWIBna83gELtJOhAuW2awji`.
-These are the credentials to use to successfully authenticate to the cluster.
+</details>
 
-For simplicity, the password can also be directly retrieved by parsing the YAML
-response from the previous command directly using `yq`:
-
-```shell
-juju show-secret --reveal cluster.kafka.app | yq '.. | ."admin-password"? // empty' | tr -d '"'
-```
+### Bootstrap server
 
 ```{caution}
 When no other application is integrated to Charmed Apache Kafka K8s,
@@ -133,19 +156,20 @@ thus preventing any external incoming connection.
 ```
 
 We will also need a bootstrap server Apache Kafka broker address and port to initially connect to.
-When any application connects for the first time to a `bootstrap-server`,
+When any application connects for the first time to a bootstrap server,
 the client will automatically make a metadata request that returns the full set of Apache Kafka brokers
 with their addresses and ports.
 
-To use `kafka-k8s/0` as the `bootstrap-server`, retrieve its IP address and add a port with:
+To use `kafka-k8s/0` as a bootstrap server, retrieve its IP address and add a port, export as a variable:
 
 ```shell
-bootstrap_address=$(juju show-unit kafka-k8s/0 | yq '.. | ."public-address"? // empty' | tr -d '"')
-
+bootstrap_address=$(juju show-unit kafka-k8s/0 | yq -r '.[] | .address // ""' | sed '/^$/d')
 export BOOTSTRAP_SERVER=$bootstrap_address:19093
 ```
 
 where `19093` refers to the available open internal port on the broker unit.
+
+### Connect from inside
 
 It is always possible to run a command from within the Apache Kafka cluster using the internal
 listeners and ports in place of the external ones. For an explanation of Charmed Apache Kafka K8s
@@ -197,12 +221,3 @@ juju ssh --container kafka kafka-k8s/0 \
     --bootstrap-server $BOOTSTRAP_SERVER \
     --command-config /etc/kafka/client.properties"
 ```
-
-## What's next?
-
-Although the commands above can run within the cluster, it is generally recommended
-during operations to enable external listeners and use these for running the admin commands
-from outside the cluster.
-To do so, as we will see in the next section, we will deploy a
-[data-integrator](https://charmhub.io/data-integrator) charm and integrate it to
-Charmed Apache Kafka K8s.
