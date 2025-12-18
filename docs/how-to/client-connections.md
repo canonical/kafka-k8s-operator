@@ -46,11 +46,18 @@ This should output something like:
 
 ```yaml
 kafka:
-  consumer-group-prefix: relation-27-
-  endpoints: 10.123.8.133:19092
-  password: ejMp4SblzxkMCF0yUXjaspneflXqcyXK
+  consumer-group-prefix: relation-8-
+  data: '{"resource": "test-topic", "salt": "w3goGsGhdyROwoaP", "extra-user-roles":
+    "producer,consumer", "provided-secrets": ["mtls-cert"], "requested-secrets": ["username",
+    "password", "tls", "tls-ca", "uris", "read-only-uris"]}'
+  endpoints: kafka-k8s-0.kafka-k8s-endpoints:9092,kafka-k8s-1.kafka-k8s-endpoints:9092,kafka-k8s-2.kafka-k8s-endpoints:9092
+  password: fm2E0oBidzcnpav1WSNfJXKn0vtgn44G
+  resource: test-topic
+  salt: HoczwpSOmsBqKpf6
   tls: disabled
-  username: relation-27
+  topic: test-topic
+  username: relation-8
+  version: v0
 ok: "True"
 ```
 

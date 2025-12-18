@@ -64,11 +64,18 @@ Running the command should output:
 
 ```shell 
 kafka:
-  endpoints: 10.244.26.43:9092,10.244.26.6:9092,10.244.26.19:9092
+  consumer-group-prefix: relation-8-
+  data: '{"resource": "test-topic", "salt": "w3goGsGhdyROwoaP", "extra-user-roles":
+    "producer,consumer", "provided-secrets": ["mtls-cert"], "requested-secrets": ["username",
+    "password", "tls", "tls-ca", "uris", "read-only-uris"]}'
+  endpoints: kafka-k8s-0.kafka-k8s-endpoints:9092,kafka-k8s-1.kafka-k8s-endpoints:9092,kafka-k8s-2.kafka-k8s-endpoints:9092
   password: S4IeRaYaiiq0tsM7m2UZuP2mSI573IGV
+  resource: test-topic
+  salt: HoczwpSOmsBqKpf6
   tls: disabled
   topic: test-topic
   username: relation-6
+  version: v0
 ok: "True"
 ```
 
@@ -94,11 +101,18 @@ Running the command should now output a different password:
 
 ```shell 
 kafka:
-  endpoints: 10.244.26.43:9092,10.244.26.6:9092,10.244.26.19:9092
+  consumer-group-prefix: relation-8-
+  data: '{"resource": "test-topic", "salt": "w3goGsGhdyROwoaP", "extra-user-roles":
+    "producer,consumer", "provided-secrets": ["mtls-cert"], "requested-secrets": ["username",
+    "password", "tls", "tls-ca", "uris", "read-only-uris"]}'
+  endpoints: kafka-k8s-0.kafka-k8s-endpoints:9092,kafka-k8s-1.kafka-k8s-endpoints:9092,kafka-k8s-2.kafka-k8s-endpoints:9092
   password: ToVfqYQ7tWmNmjy2tJTqulZHmJxJqQ22
+  resource: test-topic
+  salt: HoczwpSOmsBqKpf6
   tls: disabled
   topic: test-topic
   username: relation-11
+  version: v0
 ok: "True"
 ```
 

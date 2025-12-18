@@ -90,15 +90,18 @@ This should output something like:
 
 ```yaml
 kafka:
-  consumer-group-prefix: relation-9-
-  data: '{"extra-user-roles": "producer,consumer", "provided-secrets": "[\"mtls-cert\"]",
-    "requested-secrets": "[\"username\", \"password\", \"tls\", \"tls-ca\", \"uris\",
-    \"read-only-uris\"]", "topic": "test-topic"}'
-  endpoints: 10.233.204.148:9092,10.233.204.196:9092,10.233.204.241:9092
-  password: JwxZmIgHIkafm0T6nyPIKbF8m29EALoI
+  consumer-group-prefix: relation-8-
+  data: '{"resource": "test-topic", "salt": "w3goGsGhdyROwoaP", "extra-user-roles":
+    "producer,consumer", "provided-secrets": ["mtls-cert"], "requested-secrets": ["username",
+    "password", "tls", "tls-ca", "uris", "read-only-uris"]}'
+  endpoints: kafka-k8s-0.kafka-k8s-endpoints:9092,kafka-k8s-1.kafka-k8s-endpoints:9092,kafka-k8s-2.kafka-k8s-endpoints:9092
+  password: fm2E0oBidzcnpav1WSNfJXKn0vtgn44G
+  resource: test-topic
+  salt: HoczwpSOmsBqKpf6
   tls: disabled
   topic: test-topic
-  username: relation-9
+  username: relation-8
+  version: v0
 ok: "True"
 ```
 
