@@ -118,10 +118,7 @@ That will return `username` and `password`, as well as endpoints.
 
 <details>
 
-<summary>
-
-Output example
-</summary>
+<summary>Output example</summary>
 
 The output of the previous command will look something like this:
 
