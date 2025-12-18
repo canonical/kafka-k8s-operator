@@ -22,7 +22,7 @@ nodes using the Raft consensus algorithm.
 ```{note}
 KRaft replaces the dependency on Apache ZooKeeper for metadata management.
 For more information on the differences between the two solutions,
-please refer to the [upstream Apache Kafka documentation](https://kafka.apache.org/40/documentation/zk2kraft.html)
+please refer to the [upstream Apache Kafka documentation](https://kafka.apache.org/41/getting-started/zk2kraft/)
 ```
 
 Charmed Apache Kafka K8s can run both with `roles=broker` and/or `roles=controller`.
