@@ -46,15 +46,15 @@ juju integrate kafka-connect kafka-k8s
 As we will need full access to both Kafka clusters, we will use credentials provided to the `data-integrator`. Get the SASL credentials to connect to the target Apache Kafka cluster:
 
 ```bash
-SECRET=juju show-unit data-integrator/0 --format yaml | yq -r '.. | ."secret-user"? // empty' | grep -oP "[^\/]*$"
-export NEW_USERNAME=$(juju show-secret --reveal $SECRET | yq -r '.. | .username? // empty')
-export NEW_PASSWORD=$(juju show-secret --reveal $SECRET | yq -r '.. | .password? // empty')
+SECRET=juju show-unit data-integrator/0 --format yaml | yq -r '.. | ."secret-user"? // ""' | grep -oP "[^\/]*$"
+export NEW_USERNAME=$(juju show-secret --reveal $SECRET | yq -r '.. | .username? // ""')
+export NEW_PASSWORD=$(juju show-secret --reveal $SECRET | yq -r '.. | .password? // ""')
 ```
 
 Get the comma-delimited list of bootstrap-server IPs:
 
 ```bash
-export NEW_SERVERS=$(juju show-unit data-integrator/0 | yq -r '.. | .endpoints? // empty')
+export NEW_SERVERS=$(juju show-unit data-integrator/0 | yq -r '.. | .endpoints? // ""')
 ```
 
 Building full `sasl.jaas.config` for authorisation:
@@ -81,8 +81,8 @@ First, get the `admin` credentials for the Kafka Connect application:
 ```bash
 CONNECT_SECRET_KEY=$(juju list-secrets | grep kafka-connect | awk '{ print $1}')
 export CONNECT_USERNAME=admin
-export CONNECT_PASSWORD=$(juju show-secret --reveal $CONNECT_SECRET_KEY --format yaml | yq '.. | ."admin-password"? // empty' | tr -d '"')
-export CONNECT_ENDPOINTS=$(juju show-unit kafka-connect/0 --format json | yq '.. | ."public-address"? // empty' | tr -d '"')
+export CONNECT_PASSWORD=$(juju show-secret --reveal $CONNECT_SECRET_KEY --format yaml | yq '.. | ."admin-password"? // ""' | tr -d '"')
+export CONNECT_ENDPOINTS=$(juju show-unit kafka-connect/0 --format json | yq '.. | ."public-address"? // ""' | tr -d '"')
 ```
 
 To start the MirrorMaker replication task, make an HTTP request to Kafka Connect, using the credentials and endpoints for both Kafka clusters:

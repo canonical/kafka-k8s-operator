@@ -9,16 +9,17 @@ Passwords help to secure the Apache Kafka cluster and are essential for security
 
 ### The admin user
 
-The admin user password management is handled directly by the charm, by using Juju secrets. 
+The admin user password management is handled directly by the charm, by using Juju secrets.
 
 #### Retrieve the password
 
-As a reminder, the `admin` password is stored in a Juju secret that was created and managed by the Charmed Apache Kafka K8s application.
+As a reminder, the `admin` password is stored in a Juju secret that was created
+and managed by the Charmed Apache Kafka K8s application.
 
 Get the current value of the `admin` user password from the secret with following:
 
 ```shell
-juju show-secret --reveal cluster.kafka.app | yq '.. | ."admin-password"? // empty' | tr -d '"'
+juju show-secret --reveal cluster.kafka-k8s.app | yq '.. | ."operator-password"? // ""' | tr -d '"'
 ```
 
 #### Change the password
