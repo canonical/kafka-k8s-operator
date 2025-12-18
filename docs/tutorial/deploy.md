@@ -82,7 +82,7 @@ To exit the screen, press `Ctrl+C`.
 
 ## Connect to brokers
 
-Now that we have Apache KAfka cluster set up and ready,
+Now that we have Apache Kafka cluster set up and ready,
 we can test it by connecting to it and running some simple commands.
 
 Charmed Apache Kafka K8s aims to follow the secure by default paradigm.
