@@ -80,100 +80,22 @@ kraft/2*      active    idle       10.1.188.232
 
 To exit the screen, press `Ctrl+C`.
 
-## Access Apache Kafka brokers
+## Connect to brokers
+
+Now that we have Apache KAfka cluster set up and ready,
+we can test it by connecting to it and running some simple commands.
 
 Charmed Apache Kafka K8s aims to follow the secure by default paradigm.
 As a consequence, after being deployed the Apache Kafka cluster won’t expose
 any external listeners – the cluster will be unreachable.
 Ports are only opened when client applications are integrated.
 
-For most cluster administrators, it may be most helpful to create a user
-with the admin role, which has superuser permissions on the Apache Kafka cluster.
+However, it is always possible to run a command from within the Apache Kafka cluster
+using the internal listeners and ports in place of the external ones.
+See [Apache Kafka listeners reference](reference-broker-listeners) page.
 
-### Create an admin user
-
-To create an admin user, deploy the
-[Data Integrator Charm](https://charmhub.io/data-integrator)
-with the `extra-user-roles` set to `admin`:
-
-```shell
-juju deploy data-integrator --config topic-name="__admin-user" --config extra-user-roles="admin"
-```
-
-Then, integrate it with the Apache Kafka charm:
-
-```shell
-juju integrate data-integrator kafka-k8s
-```
-
-Check `juju status` and wait for the new charmed application to be deployed and integrated with the `idle`/`active` status.
-
-Retrieve authentication information:
-
-```shell
-juju run data-integrator/leader get-credentials
-```
-
-That will return `username` and `password`, as well as endpoints.
-
-<details>
-
-<summary>Output example</summary>
-
-The output of the previous command will look something like this:
-
-```shell
-Running operation 5 with 1 task
-  - task 6 on unit-data-integrator-0
-
-Waiting for task 6...
-kafka:
-  data: '{"resource": "__admin-user", "salt": "C9qptFtwVMLmqVDp", "extra-user-roles":
-    "admin", "provided-secrets": ["mtls-cert"], "requested-secrets": ["username",
-    "password", "tls", "tls-ca", "uris", "read-only-uris"]}'
-  endpoints: kafka-k8s-0.kafka-k8s-endpoints:9092,kafka-k8s-1.kafka-k8s-endpoints:9092,kafka-k8s-2.kafka-k8s-endpoints:9092
-  password: 6OtdPWzEM336uR0FMzU9O38YnQnxhfgE
-  resource: __admin-user
-  salt: rsbLcRVkIldhuWLf
-  tls: disabled
-  topic: __admin-user
-  username: relation-8
-  version: v0
-ok: "True"
-```
-
-</details>
-
-### Bootstrap server
-
-```{caution}
-When no other application is integrated to Charmed Apache Kafka K8s,
-the cluster is secured-by-default and external listeners (bound to port `9092`) are disabled,
-thus preventing any external incoming connection. 
-```
-
-We will also need a bootstrap server Apache Kafka broker address and port to initially connect to.
-When any application connects for the first time to a bootstrap server,
-the client will automatically make a metadata request that returns the full set of Apache Kafka brokers
-with their addresses and ports.
-
-To use `kafka-k8s/0` as a bootstrap server, retrieve its IP address and add a port, export as a variable:
-
-```shell
-bootstrap_address=$(juju show-unit kafka-k8s/0 | yq -r '.[] | .address // ""' | sed '/^$/d')
-export BOOTSTRAP_SERVER=$bootstrap_address:19093
-```
-
-where `19093` refers to the available open internal port on the broker unit.
-
-### Connect from inside
-
-It is always possible to run a command from within the Apache Kafka cluster using the internal
-listeners and ports in place of the external ones. For an explanation of Charmed Apache Kafka K8s
-listeners, please refer to [Apache Kafka listeners](reference-broker-listeners).
-
-To jump in to a running Charmed Apache Kafka K8s unit and run a command,
-for example listing files in a directory, you can do the following:
+To connect to a running Charmed Apache Kafka K8s unit and run a command,
+for example listing files in a directory:
 
 ```shell
 juju ssh --container kafka kafka-k8s/leader "ls /opt/kafka/bin/"
@@ -182,14 +104,32 @@ juju ssh --container kafka kafka-k8s/leader "ls /opt/kafka/bin/"
 where the printed result will be the output from the `ls \$BIN/bin` command being
 executed on the `kafka-k8s` leader unit.
 
-The Charmed Apache Kafka K8s image ships with the Apache Kafka `bin/*.sh` commands,
+The Charmed Apache Kafka K8s image ships with the Apache Kafka `bin/*.sh` scripts,
 that can be found under `/opt/kafka/bin/`. They can be used to do various administrative tasks,
 for example, `bin/kafka-config.sh` to update cluster configuration, `bin/kafka-topics.sh`
-for topic management, etc.
+for topic management, etc. See [Apache Kafka documentation](https://kafka.apache.org/41/operations/basic-kafka-operations/).
 Within the image you can also find a `client.properties` file that already provides
 the relevant settings to connect to the cluster using the CLI.
 
-For example, in order to create a topic, you can run:
+We will need a bootstrap server Apache Kafka broker address and port to initially connect to.
+
+```{note}
+When any application connects for the first time to a bootstrap server,
+the client will automatically make a metadata request that returns the full set of Apache Kafka brokers
+with their addresses and ports.
+```
+
+Use `kafka-k8s/0` as a bootstrap server, retrieve its IP address and export it with a port as a variable:
+
+```shell
+bootstrap_address=$(juju show-unit kafka-k8s/0 | yq -r '.[] | .address // ""' | sed '/^$/d')
+export BOOTSTRAP_SERVER=$bootstrap_address:19093
+```
+
+where `19093` refers to the available open internal port on the broker unit.
+
+Now, use the administrative scripts from the Charmed Apache Kafka K8s image.
+For example, create a topic:
 
 ```shell
 juju ssh --container kafka kafka-k8s/0 \
@@ -198,7 +138,7 @@ juju ssh --container kafka kafka-k8s/0 \
     --command-config /etc/kafka/client.properties"
 ```
 
-You can similarly then list the topic, using:
+Then, list all topic:
 
 ```shell
 juju ssh --container kafka kafka-k8s/0 \
@@ -207,9 +147,8 @@ juju ssh --container kafka kafka-k8s/0 \
     --command-config /etc/kafka/client.properties"
 ```
 
-making sure the topic was successfully created.
-
-You can finally delete the topic, using:
+Make sure the topic we created earlier is in the list.
+Finally, delete the topic from earlier:
 
 ```shell
 juju ssh --container kafka kafka-k8s/0 \
@@ -218,3 +157,7 @@ juju ssh --container kafka kafka-k8s/0 \
     --bootstrap-server $BOOTSTRAP_SERVER \
     --command-config /etc/kafka/client.properties"
 ```
+
+Now we have Apache Kafka cluster installed and tested.
+
+Next, continue to the following page to connect using client applications.
