@@ -10,6 +10,7 @@ from typing import Set
 import pytest
 from pytest_operator.plugin import OpsTest
 
+from integration.helpers import TLS_CHANNEL, TLS_NAME
 from integration.helpers.pytest_operator import (
     APP_NAME,
     REL_NAME_ADMIN,
@@ -28,7 +29,6 @@ logger = logging.getLogger(__name__)
 
 DUMMY_NAME_1 = "app"
 DUMMY_NAME_2 = "appii"
-TLS_NAME = "self-signed-certificates"
 REL_NAME_CONSUMER = "kafka-client-consumer"
 REL_NAME_PRODUCER = "kafka-client-producer"
 
@@ -242,9 +242,7 @@ async def test_connection_updated_on_tls_enabled(
     # deploying tls
     tls_config = {"ca-common-name": "kafka"}
     # FIXME (certs): Unpin the revision once the charm is fixed
-    await ops_test.model.deploy(
-        TLS_NAME, channel="edge", config=tls_config, revision=163, trust=True
-    )
+    await ops_test.model.deploy(TLS_NAME, channel=TLS_CHANNEL, config=tls_config, trust=True)
     await ops_test.model.wait_for_idle(
         apps=[TLS_NAME], idle_period=30, timeout=1800, status="active"
     )
