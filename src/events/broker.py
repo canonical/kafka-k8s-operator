@@ -188,6 +188,7 @@ class BrokerOperator(Object):
 
         self.config_manager.set_server_properties()
         self.config_manager.set_client_properties()
+        self.config_manager.set_environment()
 
         # during pod-reschedules (e.g upgrades or otherwise) we lose all files
         # need to manually add-back key/truststores
@@ -350,9 +351,10 @@ class BrokerOperator(Object):
         self.charm.state.unit_broker.update({"storages": self.balancer_manager.storages})
 
         # all mounted data dirs should have correct ownership
-        self.workload.exec(
-            ["chown", "-R", f"{USER_ID}:{GROUP}", f"{self.workload.paths.data_path}"]
-        )
+        if self.charm.substrate == "vm":
+            self.workload.exec(
+                ["chown", "-R", f"{USER_ID}:{GROUP}", f"{self.workload.paths.data_path}"]
+            )
 
         # run this regardless of role, needed for cloud storages + ceph
         for storage in self.charm.state.log_dirs.split(","):
