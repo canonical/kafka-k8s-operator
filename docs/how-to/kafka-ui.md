@@ -77,7 +77,7 @@ To activate the Charmed Kafka UI application, integrate it with the Charmed Apac
 juju integrate kafka-ui-k8s kafka-k8s
 ```
 
-The charmed Kafka UI K8s appication should still be in `blocked` state, and reporting that it requires an ingress relation:
+The charmed Kafka UI K8s application should still be in `blocked` state, and reporting that it requires an ingress relation:
 
 ```text
 ...
@@ -153,7 +153,7 @@ To familiarise yourself with Kafbat's Kafka UI features, it is advised to consul
 
 The charmed Kafka UI K8s operator can integrate with other charmed operators, including the charmed Kafka Connect K8s and the charmed Karapace K8s operators.
 For more information on these products and their use-cases, please refer to the
-[How to use Kafka Connect for ETL workloads](how-to-use-kafka-connect-for-etl-workloads) and
+[How to use Kafka Connect for ETL workloads](how-to-use-kafka-connect) and
 [Schemas and serialisation](how-to-schemas-serialisation) guides.
 
 If you have followed aforementioned guides, you can integrate the charmed Kafka Connect and charmed Karapace applications with the Kafka UI using:
