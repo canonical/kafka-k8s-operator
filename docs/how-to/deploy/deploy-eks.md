@@ -1,4 +1,4 @@
-(how-to-deploy-deploy-on-eks)=
+(how-to-deploy-on-eks)=
 # How to deploy on EKS
 
 [Amazon Elastic Kubernetes Service](https://aws.amazon.com/eks/) (EKS) is a popular, fully automated Kubernetes service. To access the EKS Web interface, go to [{spellexception}`console.aws.amazon.com/eks/home`](https://console.aws.amazon.com/eks/home).

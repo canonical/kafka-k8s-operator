@@ -35,7 +35,7 @@ Without reassignment or rebalancing:
 * Removing a broker can result in permanent data loss if the partitions are not replicated on another broker.
 
 Partition reassignment can be done manually by the admin user with the `/opt/kafka/bin/kafka-reassign-partitions.sh` Apache Kafka bin utility script.
-For more information on the script usage, refer to [Apache Kafka documentation](https://kafka.apache.org/documentation/#basic_ops_partitionassignment).
+For more information on the script usage, refer to [Apache Kafka documentation](https://kafka.apache.org/41/operations/basic-kafka-operations/).
 
 [LinkedIn’s Cruise Control](https://github.com/linkedin/cruise-control) can be used for semi-automatic rebalancing. For guidance on how to use it with Charmed Apache Kafka K8s, see our [Tutorial](tutorial-rebalance-partitions).
 
@@ -47,7 +47,7 @@ Apache Kafka ships with `bin/*.sh` commands to do various administrative tasks s
 * `bin/kafka-topics.sh` for topic management
 * `bin/kafka-acls.sh` for management of ACLs of Apache Kafka users
 
-Please refer to the upstream [Apache Kafka project](https://github.com/apache/kafka/tree/trunk/bin) and its [documentation](https://kafka.apache.org/documentation/#basic_ops),
+Please refer to the upstream [Apache Kafka project](https://github.com/apache/kafka/tree/trunk/bin) and its [documentation](https://kafka.apache.org/41/operations/basic-kafka-operations/),
 for a full list of the bash commands available in Apache Kafka distributions.
 Additionally, you can
 use `--help` argument to print a short summary for a given bash command.
