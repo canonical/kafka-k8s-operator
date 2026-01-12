@@ -24,12 +24,12 @@ easy-to-use application integration, and monitoring.
 
 | | |
 |--|--|
-| **Tutorial** | [Introduction](tutorial-introduction) 🞄 [Step 1: Environment setup](tutorial-environment) |
-| **Deployment** | [Main deployment guide](how-to-deploy-deploy-anywhere) 🞄 [AKS](how-to-deploy-on-aks) 🞄 [EKS](how-to-deploy-on-eks) 🞄 [Requirements](reference-requirements) |
-| **Operations** | [Connections management](how-to-client-connections) 🞄 [Unit management](how-to-manage-units) 🞄 [Monitoring](how-to-monitoring) 🞄 [File system paths](reference-file-system-paths) 🞄 [Broker listeners](reference-broker-listeners) 🞄 [Status reference](reference-statuses) 🞄 [External K8s connection](how-to-external-k8s-connection) |
-| **Maintenance** | [Version upgrade](how-to-upgrade) 🞄 [Migration](how-to-cluster-migration) 🞄 [Replication](how-to-cluster-replication) 🞄 [MirrorMaker](explanation-mirrormaker2-0)  🞄 [Backups](explanation-backups) |
-| **Security** | [Overview](explanation-security) 🞄 [Enable encryption](how-to-tls-encryption) 🞄 [mTLS](how-to-create-mtls-client-credentials) 🞄 [Cryptography](explanation-cryptography) |
-| **Extensions** | [Kafka Connect](how-to-use-kafka-connect) 🞄 [Schema registry](how-to-schemas-serialisation) |
+| **Tutorial** | [Introduction](tutorial-introduction) • [Step 1: Environment setup](tutorial-environment) |
+| **Deployment** | [Main deployment guide](how-to-deploy-deploy-anywhere) • [AKS](how-to-deploy-on-aks) • [EKS](how-to-deploy-on-eks) • [Requirements](reference-requirements) |
+| **Operations** | [Connections management](how-to-client-connections) • [Unit management](how-to-manage-units) • [Monitoring](how-to-monitoring) • [File system paths](reference-file-system-paths) • [Broker listeners](reference-broker-listeners) • [Status reference](reference-statuses) • [External K8s connection](how-to-external-k8s-connection) |
+| **Maintenance** | [Version upgrade](how-to-upgrade) • [Migration](how-to-cluster-migration) • [Replication](how-to-cluster-replication) • [MirrorMaker](explanation-mirrormaker2-0)  • [Backups](explanation-backups) |
+| **Security** | [Overview](explanation-security) • [Enable encryption](how-to-tls-encryption) • [mTLS](how-to-create-mtls-client-credentials) • [Cryptography](explanation-cryptography) |
+| **Extensions** | [Kafka Connect](how-to-use-kafka-connect) • [Schema registry](how-to-schemas-serialisation) |
 
 ## How the documentation is organised
 
