@@ -16,11 +16,11 @@ The charm helps ops teams and administrators automate Apache Kafka operations fr
 
 | | |
 |--|--|
-| **Tutorial** | [Introduction](tutorial-introduction) 🞄 [Step 1: Environment setup](tutorial-environment) |
-| **Deployment** | [Main deployment guide](how-to-deploy-deploy-anywhere) 🞄 [AKS](how-to-deploy-on-aks) 🞄 [EKS](how-to-deploy-on-eks) 🞄 [Apache ZooKeeper configuration](explanation-cluster-configuration) 🞄 [Requirements](reference-requirements) |
-| **Operations** | [Application management](how-to-manage-applications) 🞄 [Unit management](how-to-manage-units) 🞄 [Monitoring](how-to-monitoring) 🞄 [File system paths](reference-file-system-paths) 🞄 [Broker listeners](reference-broker-listeners) 🞄 [Status reference](reference-statuses) 🞄 [External K8s connection](how-to-external-k8s-connection) 🞄 [Troubleshooting](troubleshooting) |
-| **Maintenance** | [Version upgrade](how-to-upgrade) 🞄 [Migration](how-to-cluster-replication-migrate-a-cluster) 🞄 [MirrorMaker](explanation-mirrormaker2-0) 🞄 [Backups](how-to-back-up-and-restore) |
-| **Security** | [Overview](explanation-security) 🞄 [Enable encryption](how-to-enable-encryption) 🞄 [mTLS](how-to-create-mtls-client-credentials) 🞄 [Cryptography](explanation-cryptography) |
+| **Tutorial** | [Introduction](tutorial-introduction) • [Step 1: Environment setup](tutorial-environment) |
+| **Deployment** | [Main deployment guide](how-to-deploy-deploy-anywhere) • [AKS](how-to-deploy-on-aks) • [EKS](how-to-deploy-on-eks) • [Apache ZooKeeper configuration](explanation-cluster-configuration) • [Requirements](reference-requirements) |
+| **Operations** | [Application management](how-to-manage-applications) • [Unit management](how-to-manage-units) • [Monitoring](how-to-monitoring) • [File system paths](reference-file-system-paths) • [Broker listeners](reference-broker-listeners) • [Status reference](reference-statuses) • [External K8s connection](how-to-external-k8s-connection) • [Troubleshooting](troubleshooting) |
+| **Maintenance** | [Version upgrade](how-to-upgrade) • [Migration](how-to-cluster-replication-migrate-a-cluster) • [MirrorMaker](explanation-mirrormaker2-0) • [Backups](how-to-back-up-and-restore) |
+| **Security** | [Overview](explanation-security) • [Enable encryption](how-to-enable-encryption) • [mTLS](how-to-create-mtls-client-credentials) • [Cryptography](explanation-cryptography) |
 | **Extensions** | [Schema registry](how-to-manage-message-schemas) |
 
 ## How the documentation is organised
