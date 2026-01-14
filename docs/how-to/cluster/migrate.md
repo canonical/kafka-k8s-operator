@@ -163,4 +163,4 @@ mm2-connect-cluster  source.topic.A  2          1505            1505            
 mm2-connect-cluster  source.topic.B  0          875             875             0          connector-consumer-MirrorSourceConnector-1-def...
 ```
 
-To monitor the produced data flowing in to the target Charmed Apache Kafka K8s cluster, you can query the Prometheus metrics collected - see [How to set up monitoring](how-to-set-up-monitoring) for more information.
+To monitor the produced data flowing in to the target Charmed Apache Kafka K8s cluster, you can query the Prometheus metrics collected - see [How to set up monitoring](how-to-monitoring) for more information.
