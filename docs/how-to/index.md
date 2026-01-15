@@ -9,8 +9,8 @@ Deployment follows a broadly similar pattern on all platforms, but due to differ
 
 * Common [deployment guide](how-to-deploy-deploy-anywhere)
 * Specific deployment guides:
-  * [AKS](how-to-deploy-deploy-on-aks)
-  * [EKS](how-to-deploy-deploy-on-eks)
+  * [AKS](how-to-deploy-on-aks)
+  * [EKS](how-to-deploy-on-eks)
 
 ## Management
 

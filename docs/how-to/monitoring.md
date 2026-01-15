@@ -1,3 +1,4 @@
+(how-to-monitoring)=
 # How to set up monitoring
 
 Charmed Apache Kafka K8s and Charmed Apache ZooKeeper K8s come with the [JMX exporter](https://github.com/prometheus/jmx_exporter/).

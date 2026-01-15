@@ -13,7 +13,7 @@ Under the hood, MirrorMaker uses Kafka Connect source connectors to replicate da
 - **MirrorCheckpointConnector** - periodically tracks offsets. If enabled, it also synchronises consumer group offsets between the original and new clusters
 - **MirrorHeartbeatConnector** - periodically checks connectivity between the original and new clusters
 
-Together, they are used for cluster->cluster replication of topics, consumer groups, topic configuration and ACLs, preserving partitioning and consumer offsets. For more detail on MirrorMaker internals, consult the [Apache Kafka documentation on replication](https://kafka.apache.org/39/documentation.html#georeplication-overview) and the [MirrorMaker 2.0 KIP](https://cwiki.apache.org/confluence/display/KAFKA/KIP-382%3A+MirrorMaker+2.0). In practice, it allows one to sync data one way between two live Apache Kafka clusters with minimal impact on the ongoing production service.
+Together, they are used for cluster->cluster replication of topics, consumer groups, topic configuration and ACLs, preserving partitioning and consumer offsets. For more detail on MirrorMaker internals, consult the [Apache Kafka documentation on replication](https://kafka.apache.org/39/operations/geo-replication-cross-cluster-data-mirroring/) and the [MirrorMaker 2.0 KIP](https://cwiki.apache.org/confluence/display/KAFKA/KIP-382%3A+MirrorMaker+2.0). In practice, it allows one to sync data one way between two live Apache Kafka clusters with minimal impact on the ongoing production service.
 
 In short, MirrorMaker runs as a distributed service on the new cluster that may not yet be serving traffic to external clients. MirrorMaker consumes all topics, groups and offsets from the still-active original cluster in production to produce them one way on the new one.
 
@@ -75,7 +75,7 @@ MirrorMaker needs full `super.user` permissions on **BOTH** clusters. It support
 - `OLD_SASL_USERNAME` -- string of `sasl.jaas.config` property
 
 ```{note}
-For `SSL` or `SASL_SSL` authentication, see the configuration options supported by Kafka Connect in the [Apache Kafka documentation](https://kafka.apache.org/documentation/#connectconfigs).
+For `SSL` or `SASL_SSL` authentication, see the configuration options supported by Kafka Connect in the [Apache Kafka documentation](https://kafka.apache.org/39/configuration/kafka-connect-configs/).
 ```
 
 ## Creating `mm2.properties` file on the Apache Kafka cluster
@@ -184,7 +184,7 @@ admin-group-1   NEW-TOPIC           2          89              90              1
 admin-group-1   NEW-TOPIC           4          103             104             1               kafka-python-2.0.2-a95b3f90-75e9-4a16-b63e-5e021b7344c5 /10.248.204.1   kafka-python-2.0.2
 ```
 
-There is also a [range of different metrics](https://kafka.apache.org/39/documentation.html#georeplication-monitoring) made available by MirrorMaker during the migration. To check the metrics, send a request to the `/metrics` endpoint:
+There is also a [range of different metrics](https://kafka.apache.org/39/operations/geo-replication-cross-cluster-data-mirroring/#monitoring-geo-replication) made available by MirrorMaker during the migration. To check the metrics, send a request to the `/metrics` endpoint:
 
 ```shell
 curl 10.248.204.198:9099/metrics | grep records_count

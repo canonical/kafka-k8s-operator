@@ -15,4 +15,3 @@ Please do NOT file GitHub issues on security topics.
 * [Git sources for Charmed Apache Kafka K8s](https://github.com/canonical/kafka-k8s-operator)
 * [Canonical Data on Launchpad](https://launchpad.net/~data-platform)
 * [Canonical Data on Matrix](https://matrix.to/#/#charmhub-data-platform:ubuntu.com)
-* [Mailing list on Launchpad](https://lists.launchpad.net/data-platform/)
