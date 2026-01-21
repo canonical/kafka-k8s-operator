@@ -107,7 +107,7 @@ html_context = {
     # TODO: If there's no such website,
     #       remove the {{ product_page }} link from the page header template
     #       (usually .sphinx/_templates/header.html; also, see README.rst).
-    "product_page": "https://canonical.com/data/kafka",
+    "product_page": "canonical.com/data/kafka",
     # Product tag image; the orange part of your logo, shown in the page header
     #
     # TODO: To add a tag image, uncomment and update as needed.
@@ -222,16 +222,9 @@ redirects = {}
 linkcheck_ignore = [
     "http://127.0.0.1:8000",
     "https://github.com/canonical/ACME/*",
-    "https://kafka.apache.org/documentation/#basic_ops_partitionassignment",
-    "https://kafka.apache.org/documentation/#basic_ops",
-    "https://kafka.apache.org/documentation/#connectconfigs",
-    "https://kafka.apache.org/documentation/#kraft",
-    "https://kafka.apache.org/documentation/#mirrormakerconfigs",
     "https://matrix.to/#/#charmhub-data-platform:ubuntu.com",
     "https://us-east-1.console.aws.amazon.com/ec2/",
-    "https://kafka.apache.org/39/documentation.html#georeplication-overview",
-    "https://kafka.apache.org/39/documentation.html#georeplication-monitoring",
-    "https://launchpad.net/soss"
+    "https://launchpad.net/soss",
     ]
 
 

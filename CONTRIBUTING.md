@@ -15,9 +15,11 @@ This documents explains the processes and practices recommended for contributing
 
 ## Requirements
 
-To build the charm locally, you will need to install [Charmcraft](https://juju.is/docs/sdk/install-charmcraft).
+To build the charm locally, you will need to install
+[Charmcraft](https://juju.is/docs/sdk/install-charmcraft).
 
-To run the charm locally with Juju, it is recommended to use [LXD](https://linuxcontainers.org/lxd/introduction/) as your virtual machine manager. Instructions for running Juju on LXD can be found [here](https://juju.is/docs/olm/lxd).
+To run the charm locally with Juju, it is recommended to use
+[Multipass](https://canonical.com/multipass) and [MicroK8s](https://canonical.com/microk8s).
 
 ## Build and Deploy
 
@@ -40,14 +42,12 @@ juju model-config logging-config="<root>=INFO;unit=DEBUG"
 # Build the charm locally
 charmcraft pack
 
-# Deploy the latest Apache ZooKeeper release
-juju deploy zookeeper-k8s --channel edge -n 3
-
 # Deploy the charm
-juju deploy ./*.charm -n 3
-
-# After Apache ZooKeeper has initialised, relate the applications
-juju relate kafka-k8s zookeeper-k8s
+juju deploy ./*.charm \
+  --trust \
+  -n 3 \
+  --config roles="broker,controller" \
+  --resource kafka-image=$(yq -r '."resources"."kafka-image"."upstream-source"' metadata.yaml) 
 ```
 
 ## Developing
@@ -71,15 +71,10 @@ tox                      # runs 'lint' and 'unit' environments
 
 ## Documentation
 
-Product documentation is stored in [Discourse](https://discourse.charmhub.io/t/charmed-kafka-k8s-documentation/10296) and published on Charmhub and the Canonical website via Discourse API. 
-The documentation in this repository under the `docs` folder is a mirror synched by [Discourse Gatekeeper](https://github.com/canonical/discourse-gatekeeper), that takes care of automatically raising and updating a PR whenever changes to the content on Discourse are made.
-Although Discourse content can be edited directly, unless the modifications are trivial and obvious (typos, spellings, formatting) we generally recommend to follow a review process:
+Product documentation is stored in this repository under the `docs` folder and published on ReadtheDocs.
 
 1. Create a branch (either in the main repo or in a fork) from the current `main` and modify documentation files as necessary.
-2. Raise a PR against the `main` to start the review process, and conduct the code review within the PR.
-3. Once the PR is approved and all comments are addressed, the PR should NOT be merged directly! All the modifications should be applied to Discourse manually. If needed, new Discourse topics can be created, and referenced in the navigation table of the main index file on Discourse.
-4. Discourse Gatekeeper will raise a new PR or add new commits to an open Discourse PR, tracking the `discourse-gatekeeper/migrate` branch. The [sync_docs.yaml](https://github.com/canonical/kafka-k8s-operator/actions/workflows/sync_docs.yaml) GitHub Actions provides further details on the Gatekeeper integration that can be run (a) in a scheduled fashion every night; (b) as a part of pull request CI, and (c) can be triggered manually. If new topics are referenced in the main index file on Discourse, these will be added to `docs/index.md` and the new topics pulled from Discourse.
-5. Once Gatekeeper has raised a new or updated an existing PR, feel free to close the initial PR manually created in step 2, with a comment referring to the PR created by Gatekeeper. If the initial PR was referring to a ticket, add the ticket to either the title or the description of the GateKeeper PR.
+2. Raise a PR against the `main` to start the review process, and conduct the code review within the PR before merging back to the `main`.
 
 ### Terminology
 
@@ -101,4 +96,6 @@ For subsequent usage, the full form can be substituted by alternatives.
 
 ## Canonical Contributor Agreement
 
-Canonical welcomes contributions to the Charmed Apache Kafka K8s. Please check out our [contributor agreement](https://ubuntu.com/legal/contributors) if you're interested in contributing to the solution.
+Canonical welcomes contributions to the Charmed Apache Kafka K8s.
+Please check out our [contributor agreement](https://ubuntu.com/legal/contributors)
+if you're interested in contributing to the solution.

@@ -32,29 +32,33 @@ The charm can be deployed in much smaller environments if needed.
 
 ## Usage
 
-This section demonstrates basic usage of Charmed Apache Kafka K8s. 
-For more information on how to perform typical tasks, see the How to guides section of the [Charmed Apache Kafka K8s documentation](https://canonical.com/data/docs/kafka/k8s).
+This section demonstrates basic usage of Charmed Apache Kafka K8s.
+For more information on how to perform typical tasks, see the How to guides section of the [Charmed Apache Kafka K8s documentation](https://documentation.ubuntu.com/charmed-kafka-k8s/4/).
 
 ### Deployment
 
-The Apache Kafka and Apache ZooKeeper operators can both be deployed as follows:
+Charmed Apache Kafka K8s can be deployed as follows:
 
-```shell
-juju deploy zookeeper-k8s -n 5
-juju deploy kafka-k8s -n 3
+```bash
+juju deploy kafka-k8s -n 5 --config roles="controller" controller --trust
+juju deploy kafka-k8s -n 3 --config roles="broker" --trust
 ```
 
-After this, it is necessary to connect them:
+After this, it is necessary to integrate them:
 
-```shell
-juju integrate kafka-k8s zookeeper-k8s
+```bash
+juju integrate kafka-k8s:peer-cluster-orchestrator controller:peer-cluster
 ```
 
-To watch the process, the `juju status` command can be used. Once all the units shown as `active|idle`, the credentials to access a broker can be queried with:
+To watch the process, the `juju status` command can be used.
+Once all the units are shown as `active|idle`, the credentials to access a broker
+can be set using Juju secrets, discussed in the **Password Rotation** section.
 
-```shell
-juju run kafka-k8s/leader get-admin-credentials
-```
+Note that Charmed Apache Kafka K8s cluster is secure-by-default:
+when no other application is integrated to Charmed Apache Kafka K8s, listeners are disabled,
+thus preventing any incoming connection.
+If there are no other applications, you can deploy a `data-integrator`
+charm and integrate it to Charmed Apache Kafka K8s to enable listeners.
 
 ### Scaling
 
@@ -64,7 +68,8 @@ The charm can be scaled using `juju scale-application` command:
 juju scale-application kafka-k8s <num_of_units_to_scale_to>
 ```
 
-This will add or remove brokers to match the required number. For example, to scale a deployment with 3 kafka units to 5, run:
+This will add or remove brokers to match the required number.
+For example, to scale a deployment to 5 units, run:
 
 ```shell
 juju scale-application kafka-k8s 5
@@ -72,38 +77,69 @@ juju scale-application kafka-k8s 5
 
 ### Password rotation
 
-The operator user is used internally by the Charmed Apache Kafka K8s Operator. The `set-password` action can be used to rotate its password:
+The `admin` user is used internally by the Charmed Apache Kafka K8s operator.
+The password for this user can be set using Juju secrets.
+The process to set or change the password is described below.  
 
-```shell
-juju run kafka-k8s/leader set-password password=<password>
+First, add a custom secret for the internal `admin` user with your desired password:
+
+```bash
+juju add-secret mysecret admin=My$trongP4ss
 ```
 
-Use the same action without a password parameter to randomly generate a password for the operator user.
+You will receive a secret ID in response, for example:
+
+```text
+secret:cvh7kruupa1s46bqvuig
+```
+
+Then, grant access to the secret with:
+
+```bash
+juju grant-secret mysecret kafka-k8s
+```
+
+Finally, configure the Apache Kafka application to use the provided secret:
+
+```bash
+juju config kafka-k8s system-users=secret:cvh7kruupa1s46bqvuig
+```
 
 ### Storage support
 
-Currently, Charmed Apache Kafka K8s makes use of a 10 GB storage mount, tied to a [Kubernetes PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/).
+Currently, Charmed Apache Kafka K8s makes use of a 10 GB storage mount,
+tied to a [Kubernetes PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/).
 
 This storage is mounted on `/var/lib/data/kafka` and used for log-data.
 
 Service logs can be found in `/var/log/kafka`.
 
+When storage is added or removed, the Apache Kafka service will restart
+to ensure it uses the new volumes. Additionally, logs and charm status messages will prompt users
+to manually reassign partitions so that the new storage volumes are populated.
+By default, Apache Kafka will not assign partitions to new directories/units until existing
+topic partitions are assigned to it, or a new topic is created.
+
 ## Relations
 
-The Charmed Apache Kafka K8s Operator supports Juju [relations](https://juju.is/docs/olm/relations) for interfaces listed below.
+The Charmed Apache Kafka K8s Operator supports Juju
+[relations](https://documentation.ubuntu.com/juju/latest/reference/relation/)
+for interfaces listed below.
 
-#### The kafka_client interface
+### The Kafka_client interface
 
-The `kafka_client` interface is used with the [Data Integrator](https://charmhub.io/data-integrator) charm, which upon relation automatically provides credentials and endpoints for connecting to the desired product.
+The `kafka_client` interface is used with the [Data Integrator](https://charmhub.io/data-integrator)
+charm, which upon relation automatically provides credentials and endpoints for connecting
+to the desired product.
 
-To deploy the `data-integrator` charm with the desired `topic-name` and user roles: 
+To deploy the `data-integrator` charm with the desired `topic-name` and user roles:
 
 ```shell
 juju deploy data-integrator
 juju config data-integrator topic-name=test-topic extra-user-roles=producer,consumer
 ```
 
-To relate the two applications:
+To integrate the two applications:
 
 ```shell
 juju integrate data-integrator kafka-k8s
@@ -112,38 +148,37 @@ juju integrate data-integrator kafka-k8s
 To retrieve information, enter:
 
 ```shell
-juju run data-integrator/leader get-credentials
+juju run data-integrator/leader get-credentials --wait
 ```
 
 The output looks like this:
 
 ```yaml
-unit-data-integrator-0:                                                         
-  UnitId: data-integrator/0                                                     
-  id: "4"                                                                       
-  results:                                                                      
-    kafka:                                                                      
-      consumer-group-prefix: relation-27-                                       
-      endpoints: 10.123.8.133:19092                                             
-      password: ejMp4SblzxkMCF0yUXjaspneflXqcyXK                                
-      tls: disabled                                                             
-      username: relation-27                                                     
-      zookeeper-uris: 10.123.8.154:2181,10.123.8.181:2181,10.123.8.61:2181/kafka
-    ok: "True"                                                                  
-  status: completed                                                             
-  timing:                                                                       
-    completed: 2023-01-27 14:22:51 +0000 UTC                                    
-    enqueued: 2023-01-27 14:22:50 +0000 UTC                                     
-    started: 2023-01-27 14:22:51 +0000 UTC                                      
+unit-data-integrator-0:
+  UnitId: data-integrator/0
+  id: "4"
+  results:
+    kafka:
+      consumer-group-prefix: relation-27- 
+      endpoints: 10.123.8.133:19092
+      password: ejMp4SblzxkMCF0yUXjaspneflXqcyXK 
+      tls: disabled 
+      username: relation-27 
+    ok: "True"
+  status: completed
+  timing:
+    completed: 2023-01-27 14:22:51 +0000 UTC 
+    enqueued: 2023-01-27 14:22:50 +0000 UTC
+    started: 2023-01-27 14:22:51 +0000 UTC
 ```
 
-#### The tls-certificates interface
+### The tls-certificates interface
 
 The `tls-certificates` interface is used with the `tls-certificates-operator` charm.
 
 To enable TLS, deploy the TLS charm first:
 
-```shell 
+```shell
 juju deploy tls-certificates-operator
 ```
 
@@ -153,10 +188,9 @@ Then, add the necessary configurations:
 juju config tls-certificates-operator generate-self-signed-certificates="true" ca-common-name="Test CA" 
 ```
 
-And enable TLS by relating the two applications to the `tls-certificates` charm:
+And enable TLS by relating the application to the `tls-certificates` charm:
 
 ```shell
-juju integrate tls-certificates-operator zookeeper-k8s
 juju integrate tls-certificates-operator kafka-k8s
 ```
 
@@ -169,7 +203,6 @@ openssl genrsa -out internal-key.pem 3072
 And apply keys on each Charmed Apache Kafka K8s unit:
 
 ```shell
-# 
 juju run kafka-k8s/0 set-tls-private-key "internal-key=$(base64 -w0 internal-key.pem)"
 juju run kafka-k8s/1 set-tls-private-key "internal-key=$(base64 -w0 internal-key.pem)"
 juju run kafka-k8s/2 set-tls-private-key "internal-key=$(base64 -w0 internal-key.pem)"
@@ -179,63 +212,51 @@ To disable TLS remove the relation:
 
 ```shell
 juju remove-relation kafka-k8s tls-certificates-operator
-juju remove-relation zookeeper-k8s tls-certificates-operator
 ```
 
 > **Note**: The TLS settings here are for self-signed-certificates which are not recommended for production clusters, the `tls-certificates-operator` charm offers a variety of configurations, read more on the TLS charm in the [documentation](https://charmhub.io/tls-certificates-operator).
 
 ## Monitoring
 
-The Charmed Apache Kafka K8s comes with several exporters by default. The metrics can be queried by accessing the following endpoints:
-
-- JMX exporter: `http://<pod-ip>:9101/metrics`
+The Charmed Apache Kafka K8s operator comes with the [JMX exporter](https://github.com/prometheus/jmx_exporter/).
+The metrics can be queried by accessing the `http://<unit-ip>:9101/metrics` endpoint.
 
 Additionally, the charm provides integration with the [Canonical Observability Stack](https://charmhub.io/topics/canonical-observability-stack).
 
-Deploy `cos-lite` bundle in a Kubernetes environment. This can be done by following the [deployment tutorial](https://charmhub.io/topics/canonical-observability-stack/tutorials/install-microk8s). It is needed to offer the endpoints of the COS relations. The [offers-overlay](https://github.com/canonical/cos-lite-bundle/blob/main/overlays/offers-overlay.yaml) can be used, and this step is shown on the COS tutorial.
+Deploy `cos-lite` bundle in a separate model.
+This can be done by following the
+[deployment tutorial](https://charmhub.io/topics/canonical-observability-stack/tutorials/install-microk8s).
+It is needed to offer the endpoints of the COS relations.
+The [offers-overlay](https://github.com/canonical/cos-lite-bundle/blob/main/overlays/offers-overlay.yaml)
+can be used, and this step is shown on the COS tutorial.
 
-Once COS is deployed, we can find the offers from the Apache Kafka model. To do that, switch back to the kafka model:
+Now, integrate Apache Kafka with the Grafana Agent:
 
-```shell
-juju switch <kafka_model_name>
+```bash
+juju integrate kafka-k8s grafana-agent
 ```
 
-And use the `find-offers` command:
-
-```shell
-juju find-offers <k8s_controller_name>:
-```
-
-The following or similar output will appear, if `micro` is the k8s controller name and `cos` the model where `cos-lite` has been deployed:
-
-```
-Store  URL                   Access  Interfaces                         
-micro  admin/cos.grafana     admin   grafana_dashboard:grafana-dashboard
-micro  admin/cos.prometheus  admin   prometheus_scrape:metrics-endpoint
-. . .
-```
-
-Now, integrate kafka with the `metrics-endpoint`, `grafana-dashboard` and `logging` relations:
-
-```shell
-juju relate micro:admin/cos.prometheus kafka-k8s
-juju relate micro:admin/cos.grafana kafka-k8s
-juju relate micro:admin/cos.loki kafka-k8s
-```
-
-After this is complete, Grafana will show a new dashboard: `Kafka JMX Metrics`.
+After this is complete, Grafana will show two new dashboards: `Kafka Metrics` and `Node Exporter Kafka`.
 
 ## Security
 
-For an overview of security features of the Charmed Apache Kafka K8s, see the [Security page](https://canonical.com/data/docs/kafka/k8s/e-security) in the Explanation section of the documentation.
+For an overview of security features of the Charmed Apache Kafka K8s,
+see the [Security page](https://documentation.ubuntu.com/charmed-kafka-k8s/4/explanation/security/)
+in the Explanation section of the documentation.
 
-Security issues in the Charmed Apache Kafka K8s can be reported through [Launchpad](https://wiki.ubuntu.com/DebuggingSecurity#How%20to%20File). Please do not file GitHub issues about security issues.
+Security issues in the Charmed Apache Kafka K8s can be reported through
+[Launchpad](https://wiki.ubuntu.com/DebuggingSecurity#How%20to%20File).
+Please do not file GitHub issues about security issues.
 
 ## Contributing
 
-Please see the [Juju SDK docs](https://juju.is/docs/sdk) for guidelines on enhancements to this charm following best practice guidelines, and [CONTRIBUTING.md](https://github.com/canonical/kafka-k8s-operator/blob/main/CONTRIBUTING.md) for developer guidance.
-
+Please see the [Juju SDK docs](https://juju.is/docs/sdk) for guidelines on enhancements
+to this charm following best practice guidelines, and
+[CONTRIBUTING.md](https://github.com/canonical/kafka-k8s-operator/blob/main/CONTRIBUTING.md)
+for developer guidance.
 
 ## License
 
-Charmed Apache Kafka K8s is free software, distributed under the Apache Software License, version 2.0. For more information, see the [LICENSE](https://github.com/canonical/kafka-k8s-operator/blob/main/LICENSE) file.
+Charmed Apache Kafka K8s is free software, distributed under the Apache Software License,
+version 2.0. For more information, see the
+[LICENSE](https://github.com/canonical/kafka-k8s-operator/blob/main/LICENSE) file.

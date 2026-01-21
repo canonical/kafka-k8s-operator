@@ -1,15 +1,18 @@
-(how-to-deploy-deploy-on-aks)=
+(how-to-deploy-on-aks)=
 # How to deploy on AKS
 
-[Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/) (AKS) allows you to quickly deploy a production ready Kubernetes cluster in Azure. To access the AKS Web interface, go to [https://portal.azure.com/](https://portal.azure.com/).
+[Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/) (AKS) allows you
+to quickly deploy a production ready Kubernetes cluster in Azure.
+To access the AKS Web interface, go to [https://portal.azure.com/](https://portal.azure.com/).
 
 ## Install Client Environment
 
 Client environment includes:
+
 * Juju
 * Azure CLI
 
-### Juju 
+### Juju
 
 Install Juju via snap:
 
@@ -35,7 +38,8 @@ juju version
 
 ### Azure CLI
 
-Follow the [user guide](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt) for installing the Azure CLI on Linux distributions.
+Follow the [user guide](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt)
+for installing the Azure CLI on Linux distributions.
 
 Verify that it is correctly installed running the command below:
 
@@ -85,7 +89,7 @@ az group create --name <RESOURCE_GROUP> --location <LOCATION>
 ```
 
 The placeholder `<RESOURCE_GROUP>` can be a label of your choice, and it will be used to tag
-the resources created on Azure. Also the following guide will use the single server AKS, 
+the resources created on Azure. Also the following guide will use the single server AKS,
 using  `LOCATION=eastus` - but feel free to change this for your own deployment.
 
 Bootstrap AKS with the following command (increase nodes count/size if necessary):
@@ -140,13 +144,14 @@ Merged "aks" as current context in ~/.kube/config
 
 </details>
 
-You can verify that the cluster and your client `kubectl` CLI is correctly configured by running a simple command, such as:
+You can verify that the cluster and your client `kubectl` CLI is correctly configured
+by running a simple command, such as:
 
 ```shell
 kubectl get pod -A
 ```
 
-which should provide the list of the pod services running. 
+which should provide the list of the pod services running.
 
 ## Bootstrap Juju controller on AKS
 
@@ -160,7 +165,7 @@ juju bootstrap aks <CONTROLLER_NAME>
 
 <summary>Output example</summary>
 
-```shell
+```text
 Creating Juju controller "aks" on aks/eastus
 Bootstrap to Kubernetes cluster identified as azure/eastus
 Creating k8s resources for controller "controller-aks"
@@ -186,22 +191,23 @@ Create a new Juju model, if needed:
 juju add-model <MODEL_NAME>
 ```
 
-```{caution}
+````{caution}
 (Optional) Increase the debug level if you are troubleshooting charms:
+
 ```shell
 juju model-config logging-config='<root>=INFO;unit=DEBUG'
 ```
-```
+
+````
 
 Then, Charmed Apache Kafka can be deployed as usual:
 
 ```shell
-juju deploy zookeeper-k8s -n3 --channel 3/stable --trust
-juju deploy kafka-k8s -n3 --channel 3/stable --trust
-juju integrate kafka-k8s zookeeper-k8s
+juju deploy kafka-k8s -n 3 --channel 4/edge --trust --config roles=broker,controller
 ```
 
-We also recommend to deploy a [Data Integrator](https://charmhub.io/data-integrator) for creating an admin user to manage the content of the Kafka cluster:
+We also recommend to deploy a [Data Integrator](https://charmhub.io/data-integrator)
+for creating an admin user to manage the content of the Kafka cluster:
 
 ```shell
 juju deploy data-integrator admin --channel edge \
@@ -209,13 +215,14 @@ juju deploy data-integrator admin --channel edge \
   --config topic-name=admin-topic
 ```
 
-And integrate it with the Kafka application:
+And integrate it with the Apache Kafka application:
 
 ```shell
 juju integrate kafka-k8s admin
 ```
 
-For more information on Data Integrator and how to use it, please refer to the [how-to manage applications](how-to-manage-applications) user guide.
+For more information on Data Integrator and how to use it, please refer to the
+[how-to manage client connections](how-to-client-connections) user guide.
 
 ## Display deployment information
 
@@ -237,9 +244,12 @@ Metrics-server is running at https://aks-user-aks-aaaaa-bbbbb.hcp.eastus.azmk8s.
 
 </details>
 
-```
+List all Azure Kubernetes Service (AKS) clusters:
+
+```shell
 az aks list
 ```
+
 <details>
 
 <summary>Output example</summary>
@@ -272,10 +282,10 @@ aks-nodepool1-31246187-vmss000000   Ready    agent   11m   v1.28.9
 ## Clean up
 
 ```{caution}
-Always clean AKS resources that are no longer necessary -  they could be costly!
+Always clean AKS resources that are no longer necessary - they could be costly!
 ```
 
-To clean the AKS cluster, resources and juju cloud, run the following commands:
+To clean the AKS cluster, resources and Juju cloud, run the following commands:
 
 ```shell
 juju destroy-controller <CONTROLLER_NAME> --destroy-all-models --destroy-storage --force

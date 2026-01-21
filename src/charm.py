@@ -9,7 +9,7 @@ import logging
 import charm_refresh
 from charms.data_platform_libs.v0.data_models import TypedCharmBase
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
-from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
+from charms.loki_k8s.v1.loki_push_api import LogForwarder
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from ops import (
@@ -112,15 +112,10 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             alert_rules_path=METRICS_RULES_DIR,
         )
         self.grafana_dashboards = GrafanaDashboardProvider(self)
-        self.loki_push = LogProxyConsumer(
+        self.loki_push = LogForwarder(
             self,
-            log_files=[
-                f"{self.broker.workload.paths.logs_path}/server.log",
-                f"{self.balancer.workload.paths.logs_path}/kafkacruisecontrol.log",
-            ],
             alert_rules_path=LOGS_RULES_DIR,
             relation_name="logging",
-            container_name="kafka",
         )
 
     def _on_roles_changed(self, _):

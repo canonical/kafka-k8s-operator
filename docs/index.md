@@ -1,33 +1,42 @@
 (index)=
 
 ```{note}
-This is a **Kubernetes** operator. To deploy on IAAS/VM, see [Charmed Apache Kafka operator](https://charmhub.io/kafka).
+This is a **Kubernetes** operator.
+To deploy on IAAS/VM, see [Charmed Apache Kafka operator](https://documentation.ubuntu.com/charmed-kafka/4/).
 ```
 
 # Charmed Apache Kafka K8s documentation
 
-Charmed Apache Kafka K8s is an open-source operator that makes it easier to manage Apache Kafka on Kubernetes, with built-in support for enterprise features.
+Charmed Apache Kafka K8s is an open-source software operator, packaged as a
+[Juju charm](https://documentation.ubuntu.com/juju/latest/reference/charm/),
+that simplifies the deployment, scaling, and management of Apache Kafka clusters
+on Kubernetes.
 
-Apache Kafka is a free, open-source software project by the Apache Software Foundation. Users can find out more at the [Apache Kafka project page](https://kafka.apache.org).
+[Apache Kafka](https://kafka.apache.org) is a free, open-source software project
+by the Apache Software Foundation.
 
-Charmed Apache Kafka K8s is built on top of [Juju](https://juju.is/) and reliably simplifies the deployment, scaling, design, and management of Apache Kafka on Kubernetes in production. Additionally, you can use the charm to manage your Apache Kafka clusters with automation capabilities. It also offers replication, TLS, password rotation, easy-to-use application integration, and monitoring.
-Charmed Apache Kafka K8s operates Apache Kafka on different Kubernetes distributions, featuring support for both on-premise installation (e.g. using MicroK8s) or cloud services (e.g. AWS EKS).
-
-Charmed Apache Kafka K8s is a solution designed and developed to help ops teams and
-administrators to automate Apache Kafka operations from [Day 0 to Day 2](https://codilime.com/blog/day-0-day-1-day-2-the-software-lifecycle-in-the-cloud-age/), across multiple cloud environments and platforms.
-
-Canonical has also developed the [Charmed Apache Kafka operator](https://charmhub.io/kafka) to support Apache Kafka in VM/IAAS environments.
-
-Charmed Apache Kafka K8s is developed and supported by [Canonical](https://canonical.com/), as part of its commitment to 
-provide open-source, self-driving solutions, seamlessly integrated using the Operator Framework Juju. Please 
-refer to [Charmhub.io](https://charmhub.io/), for more Charmed operators that can be integrated by [Juju](https://juju.is/).
+The charm helps ops teams and administrators automate Apache Kafka operations from
+[Day 0 to Day 2](https://codilime.com/blog/day-0-day-1-day-2-the-software-lifecycle-in-the-cloud-age/)
+with additional capabilities, such as: replication, TLS encryption, password rotation,
+easy-to-use application integration, and monitoring.
 
 ## In this documentation
 
 | | |
 |--|--|
-|  [Tutorials](tutorial-index)</br>  Get started - a hands-on introduction to using Charmed Apache Kafka K8s operator for new users </br> |  [How-to guides](how-to-index) </br> Step-by-step guides covering key operations and common tasks |
-| [Reference](reference-index) </br> Technical information - specifications, APIs, architecture | [Explanation](explanation-index) </br> Concepts - discussion and clarification of key topics  |
+| **Tutorial** | [Introduction](tutorial-introduction) • [Step 1: Environment setup](tutorial-environment) |
+| **Deployment** | [Main deployment guide](how-to-deploy-deploy-anywhere) • [AKS](how-to-deploy-on-aks) • [EKS](how-to-deploy-on-eks) • [Requirements](reference-requirements) |
+| **Operations** | [Connections management](how-to-client-connections) • [Unit management](how-to-manage-units) • [Monitoring](how-to-monitoring) • [File system paths](reference-file-system-paths) • [Broker listeners](reference-broker-listeners) • [Status reference](reference-statuses) • [External K8s connection](how-to-external-k8s-connection) |
+| **Maintenance** | [Version upgrade](how-to-upgrade) • [Migration](how-to-cluster-migration) • [Replication](how-to-cluster-replication) • [MirrorMaker](explanation-mirrormaker2-0)  • [Backups](explanation-backups) |
+| **Security** | [Overview](explanation-security) • [Enable encryption](how-to-tls-encryption) • [mTLS](how-to-create-mtls-client-credentials) • [Cryptography](explanation-cryptography) |
+| **Extensions** | [Kafka Connect](how-to-use-kafka-connect) • [Schema registry](how-to-schemas-serialisation) |
+
+## How the documentation is organised
+
+[Tutorial](tutorial-introduction): For new users needing to learn how to use Charmed Apache Kafka <br>
+[How-to guides](how-to-index): For users needing step-by-step instructions to achieve a practical goal <br>
+[Reference](reference-index): For precise, theoretical, factual information to be used while working with the charm <br>
+[Explanation](explanation-index): For deeper understanding of key Charmed Apache Kafka concepts <br>
 
 ## Project and community
 
