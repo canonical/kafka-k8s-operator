@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Deploy Apache Kafka K8s clusters with brokers and KRaft controllers on Kubernetes using Juju commands."
+---
+
 (tutorial-deploy)=
 # 2. Deploy Apache Kafka
 

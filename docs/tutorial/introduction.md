@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Learn how to deploy and manage Apache Kafka on Kubernetes with end-to-end automated operations from Day 0 to Day 2."
+---
+
 # Tutorial
 <!-- # Charmed Apache Kafka K8s tutorial -->
 

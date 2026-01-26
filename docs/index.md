@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Complete guide to deploying, scaling, and managing Apache Kafka clusters on Kubernetes with Charmed Apache Kafka K8s operator."
+---
+
 (index)=
 
 ```{note}

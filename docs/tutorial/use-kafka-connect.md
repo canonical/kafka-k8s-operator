@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Use Kafka Connect ETL framework to move data between PostgreSQL and OpenSearch with Charmed Apache Kafka K8s on Kubernetes."
+---
+
 (tutorial-kafka-connect)=
 # 6. Use Kafka Connect for ETL
 

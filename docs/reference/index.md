@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Reference documentation for Apache Kafka K8s including release notes, actions, configurations, and technical specifications."
+---
+
 (reference-index)=
 # Reference
 

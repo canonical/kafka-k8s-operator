@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Understand MirrorMaker 2.0 architecture for Apache Kafka cluster-to-cluster replication with Kafka Connect source connectors."
+---
+
 (explanation-mirrormaker2-0)=
 # MirrorMaker 2.0 overview
 

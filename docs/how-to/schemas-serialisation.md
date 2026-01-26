@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Manage message schemas and serialization in Apache Kafka K8s using Karapace, an open-source Schema Registry implementation."
+---
+
 (how-to-schemas-serialisation)=
 # Schemas and serialisation
 

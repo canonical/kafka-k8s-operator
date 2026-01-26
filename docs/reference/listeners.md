@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Apache Kafka K8s broker listeners reference including protocols, ports, and scope for internal and client communication."
+---
+
 (reference-broker-listeners)=
 # Apache Kafka listeners
 

@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Set up Apache Kafka cluster replication and migration using MirrorMaker 2 for data synchronization between clusters."
+---
+
 (how-to-cluster-replication-index)=
 # Cluster replication
 

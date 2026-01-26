@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Clean up your Charmed Apache Kafka K8s deployment and remove Juju from your environment after completing the tutorial."
+---
+
 (tutorial-cleanup)=
 # 8. Cleanup your environment
 

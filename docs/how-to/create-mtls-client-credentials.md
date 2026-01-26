@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Create mTLS client credentials and establish mutual trust between Apache Kafka K8s clients and brokers for secure authentication."
+---
+
 (how-to-create-mtls-client-credentials)=
 # Use mTLS for clients
 

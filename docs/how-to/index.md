@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Step-by-step guides for deploying, managing, securing, and monitoring Apache Kafka K8s clusters on Kubernetes."
+---
+
 (how-to-index)=
 # How-to guides
 
