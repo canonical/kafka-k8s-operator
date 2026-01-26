@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Deploy Apache Kafka K8s on any Kubernetes platform including AKS, EKS, and custom K8s environments with Juju."
+    description: "Deploy Charmed Apache Kafka K8s on any Kubernetes platform including AKS, EKS, and custom K8s environments with Juju."
 ---
 
 (how-to-deploy-index)=

@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Reference documentation for Apache Kafka K8s including release notes, actions, configurations, and technical specifications."
+    description: "Reference documentation for Charmed Apache Kafka K8s including release notes, actions, configurations, and technical specifications."
 ---
 
 (reference-index)=

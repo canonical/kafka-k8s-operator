@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Understand foundational concepts of Apache Kafka K8s including security, cryptography, backups, and MirrorMaker replication."
+    description: "Understand foundational concepts of Charmed Apache Kafka K8s including security, cryptography, backups, and MirrorMaker replication."
 ---
 
 (explanation-index)=

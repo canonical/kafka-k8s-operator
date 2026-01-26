@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Step-by-step guides for deploying, managing, securing, and monitoring Apache Kafka K8s clusters on Kubernetes."
+    description: "Step-by-step guides for deploying, managing, securing, and monitoring Apache Kafka clusters on Kubernetes using Juju."
 ---
 
 (how-to-index)=
