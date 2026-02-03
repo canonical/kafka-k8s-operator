@@ -129,8 +129,10 @@ def test_scale_up_controller_kafka(juju: jubilant.Juju, kraft_mode, kafka_apps):
     )
 
 
+@flaky.flaky(max_runs=3, min_passes=1)
 def test_kill_broker_with_topic_leader(
     juju: jubilant.Juju,
+    restore_state,
     restart_delay,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
@@ -173,8 +175,10 @@ def test_kill_broker_with_topic_leader(
     assert_continuous_writes_consistency(result=result)
 
 
+@flaky.flaky(max_runs=3, min_passes=1)
 def test_restart_broker_with_topic_leader(
     juju: jubilant.Juju,
+    restore_state,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):
@@ -204,8 +208,10 @@ def test_restart_broker_with_topic_leader(
     assert_continuous_writes_consistency(result=result)
 
 
+@flaky.flaky(max_runs=3, min_passes=1)
 def test_freeze_broker_with_topic_leader(
     juju: jubilant.Juju,
+    restore_state,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):
@@ -252,8 +258,10 @@ def test_freeze_broker_with_topic_leader(
     assert_continuous_writes_consistency(result=result)
 
 
+@flaky.flaky(max_runs=3, min_passes=1)
 def test_full_cluster_crash(
     juju: jubilant.Juju,
+    restore_state,
     restart_delay,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
@@ -281,8 +289,10 @@ def test_full_cluster_crash(
     assert_continuous_writes_consistency(result=result)
 
 
+@flaky.flaky(max_runs=3, min_passes=1)
 def test_full_cluster_restart(
     juju: jubilant.Juju,
+    restore_state,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):

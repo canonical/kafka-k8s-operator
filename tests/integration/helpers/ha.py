@@ -11,7 +11,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from subprocess import PIPE, CalledProcessError, check_output
+from subprocess import PIPE, CalledProcessError, check_call, check_output
 from typing import Literal
 
 import jubilant
@@ -504,3 +504,17 @@ def is_down(juju: jubilant.Juju, unit: str, port: int = CONTROLLER_PORT) -> bool
         return False
 
     return True
+
+
+def reset_kafka_service(model: str, unit_name: str) -> None:
+    """Restarts kafka pebble service on the target uni.
+
+    Args:
+        model: Juju model name
+        unit_name: Juju unit name
+    """
+    # remove mask from eth0
+    pod_name = unit_name.replace("/", "-")
+    reset_command = f"kubectl exec -n {model} -c kafka {pod_name} -- pebble restart kafka"
+    logger.info(f"Running {reset_command}")
+    check_call(reset_command.split())
