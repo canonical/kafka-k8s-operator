@@ -513,7 +513,6 @@ def reset_kafka_service(model: str, unit_name: str) -> None:
         model: Juju model name
         unit_name: Juju unit name
     """
-    # remove mask from eth0
     pod_name = unit_name.replace("/", "-")
     reset_command = f"kubectl exec -n {model} -c kafka {pod_name} -- pebble restart kafka"
     logger.info(f"Running {reset_command}")
