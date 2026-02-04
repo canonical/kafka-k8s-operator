@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Step-by-step guides for deploying, managing, securing, and monitoring Charmed Apache Kafka K8s clusters on Kubernetes using Juju."
+    description: "Step-by-step guides for deploying, managing, securing, and monitoring Charmed Apache Kafka K8s using Juju."
 ---
 
 (how-to-index)=
