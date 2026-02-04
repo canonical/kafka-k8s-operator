@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Manage Apache Kafka client connections using kafka_client interface and Data Integrator charm for external applications."
+    description: "Manage Charmed Apache Kafka K8s client connections using kafka_client interface and Data Integrator charm for external applications."
 ---
 
 (how-to-client-connections)=

@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Contact Canonical Data Platform team for Apache Kafka K8s support via Matrix, GitHub issues, and security reporting channels."
+    description: "Contact Canonical Data Platform team for Charmed Apache Kafka K8s support via Matrix, GitHub issues, and security reporting channels."
 ---
 
 (reference-contact)=

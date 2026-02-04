@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Complete documentation for Charmed Apache Kafka K8s operator - deploy, manage, and scale Apache Kafka clusters on Kubernetes."
+    description: "Complete documentation for Charmed Apache Kafka K8s - deploy, manage, and scale Apache Kafka clusters on Kubernetes."
 ---
 
 (index)=

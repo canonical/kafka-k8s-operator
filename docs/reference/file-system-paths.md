@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "File system paths reference for Apache Kafka K8s including configuration, logs, data directories, and environment variables."
+    description: "File system paths reference for Charmed Apache Kafka K8s including configuration, logs, data directories, and environment variables."
 ---
 
 (reference-file-system-paths)=

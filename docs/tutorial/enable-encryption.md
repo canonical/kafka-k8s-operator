@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Enable TLS encryption for Apache Kafka K8s to secure data in transit using self-signed certificates and Juju relations."
+    description: "Enable TLS encryption for Charmed Apache Kafka K8s to secure data in transit using self-signed certificates and Juju relations."
 ---
 
 (tutorial-enable-encryption)=

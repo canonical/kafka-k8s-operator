@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Enable TLS encryption for Apache Kafka K8s client connections using self-signed or provided certificates with the tls-certificates interface."
+    description: "Enable TLS encryption for Charmed Apache Kafka K8s client connections using self-signed or provided certificates with the tls-certificates interface."
 ---
 
 (how-to-tls-encryption)=

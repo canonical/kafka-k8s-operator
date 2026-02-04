@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Deploy Apache Kafka K8s on Azure Kubernetes Service (AKS) with Juju and Azure CLI step-by-step configuration guide."
+    description: "Deploy Charmed Apache Kafka K8s on Azure Kubernetes Service (AKS) with Juju and Azure CLI step-by-step configuration guide."
 ---
 
 (how-to-deploy-on-aks)=

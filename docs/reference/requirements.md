@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Hardware requirements, Juju version compatibility, and recommended specifications for Apache Kafka K8s production deployments."
+    description: "Hardware requirements, Juju version compatibility, and recommended specifications for Charmed Apache Kafka K8s production deployments."
 ---
 
 (reference-requirements)=

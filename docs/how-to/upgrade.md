@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Perform in-place upgrades for Apache Kafka K8s minor versions with rolling restarts and manual validation checkpoints."
+    description: "Perform in-place upgrades for Charmed Apache Kafka K8s minor versions with rolling restarts and manual validation checkpoints."
 ---
 
 (how-to-upgrade)=

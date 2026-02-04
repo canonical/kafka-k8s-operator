@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Deploy and configure Kafka Connect for ETL workloads with automated operations management and seamless Apache Kafka K8s integration."
+    description: "Deploy and configure Kafka Connect for ETL workloads with automated operations management and seamless Charmed Apache Kafka K8s integration."
 ---
 
 (how-to-use-kafka-connect)=

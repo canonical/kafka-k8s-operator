@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Platform-independent deployment guide for Apache Kafka K8s with Juju controller setup and cluster configuration instructions."
+    description: "Platform-independent deployment guide for Charmed Apache Kafka K8s with Juju controller setup and cluster configuration instructions."
 ---
 
 # How to deploy Charmed Apache Kafka K8s

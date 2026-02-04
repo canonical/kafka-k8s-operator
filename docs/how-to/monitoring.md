@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Set up monitoring for Apache Kafka K8s with JMX exporter and Canonical Observability Stack for Grafana dashboards and Prometheus metrics."
+    description: "Set up monitoring for Charmed Apache Kafka K8s with JMX exporter and Canonical Observability Stack for Grafana dashboards and Prometheus metrics."
 ---
 
 (how-to-monitoring)=

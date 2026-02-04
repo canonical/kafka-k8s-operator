@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Step-by-step tutorial for deploying and managing Apache Kafka on Kubernetes with Charmed Apache Kafka K8s operator."
+    description: "Step-by-step tutorial for deploying and managing Charmed Apache Kafka K8s on Kubernetes with the operator."
 ---
 
 (tutorial-introduction)=

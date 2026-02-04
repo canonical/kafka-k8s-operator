@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: "Revision 56/51 release notes for Apache Kafka K8s with ZooKeeper featuring SASL authentication and TLS/SSL support."
+    description: "Revision 56/51 release notes for Charmed Apache Kafka K8s with ZooKeeper featuring SASL authentication and TLS/SSL support."
 ---
 
 (reference-release-notes-revision-56-51)=
