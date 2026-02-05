@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Learn how to integrate client applications with Charmed Apache Kafka K8s using the Data Integrator charm for user management."
+---
+
 (tutorial-integrate-with-client-applications)=
 # 3. Integrate with client applications
 

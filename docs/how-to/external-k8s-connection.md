@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Configure NodePort services to enable external connections to Charmed Apache Kafka K8s brokers from outside the Kubernetes cluster."
+---
+
 (how-to-external-k8s-connection)=
 # External K8s connection
 

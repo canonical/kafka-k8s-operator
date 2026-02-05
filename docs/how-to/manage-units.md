@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Scale Charmed Apache Kafka K8s units and rebalance partitions using Juju commands and LinkedIn's Cruise Control."
+---
+
 (how-to-manage-units)=
 # How to manage units
 

@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Set up active-passive cluster replication between Charmed Apache Kafka K8s clusters using MirrorMaker and Kafka Connect."
+---
+
 (how-to-cluster-replication)=
 # Set up replication between charmed clusters
 
