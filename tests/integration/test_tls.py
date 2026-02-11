@@ -499,6 +499,23 @@ async def test_dns_certificate(ops_test: OpsTest):
 
     assert f"Verified peername: {test_unit_hostname}" in output
 
+    # Cleanup, remove TLS relation and app
+    await ops_test.model.remove_application(TLS_NAME, block_until_done=True)
+    await ops_test.model.applications[APP_NAME].set_config(
+        {"certificate_include_ip_sans": "true"}
+    )
+
+    async with ops_test.fast_forward(fast_interval="60s"):
+        await asyncio.sleep(180)
+
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME],
+        timeout=3600,
+        idle_period=30,
+        status="active",
+        raise_on_error=False,
+    )
+
 
 @pytest.mark.abort_on_fail
 @pytest.mark.unstable
