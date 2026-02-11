@@ -197,7 +197,7 @@ def check_hostname_verification(
 ) -> str:
     try:
         result = check_output(
-            f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} 'echo | sudo openssl s_client -connect {hostname}:{port} -CAfile /root/{cafile_name} -verify_hostname {hostname}'",
+            f"JUJU_MODEL={ops_test.model_full_name} juju ssh --container kafka {unit_name} 'echo | openssl s_client -connect {hostname}:{port} -CAfile /root/{cafile_name} -verify_hostname {hostname}'",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,

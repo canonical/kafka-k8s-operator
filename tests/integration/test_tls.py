@@ -85,7 +85,7 @@ async def test_deploy_tls(ops_test: OpsTest, kafka_charm, app_charm):
     assert ops_test.model.applications[ZK_NAME].status == "active"
     assert ops_test.model.applications[TLS_NAME].status == "active"
 
-    await ops_test.model.add_relation(TLS_NAME, ZK_NAME)
+    await ops_test.model.integrate(TLS_NAME, ZK_NAME)
 
     # Relate Zookeeper to TLS
     async with ops_test.fast_forward(fast_interval="60s"):
@@ -107,7 +107,7 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm):
     """
     # Relate Zookeeper[TLS] to Kafka[Non-TLS]
     async with ops_test.fast_forward(fast_interval="60s"):
-        await ops_test.model.add_relation(ZK_NAME, APP_NAME)
+        await ops_test.model.integrate(ZK_NAME, APP_NAME)
         await ops_test.model.wait_for_idle(
             apps=[ZK_NAME], idle_period=15, timeout=1000, status="active"
         )
@@ -127,7 +127,7 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm):
     )
 
     # ensuring at least a few update-status
-    await ops_test.model.add_relation(f"{APP_NAME}:{TLS_RELATION}", TLS_NAME)
+    await ops_test.model.integrate(f"{APP_NAME}:{TLS_RELATION}", TLS_NAME)
     async with ops_test.fast_forward(fast_interval="20s"):
         await asyncio.sleep(60)
 
@@ -152,7 +152,7 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm):
     )
 
     # ensuring at least a few update-status
-    await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
+    await ops_test.model.integrate(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
     async with ops_test.fast_forward(fast_interval="20s"):
         await asyncio.sleep(60)
 
@@ -206,7 +206,7 @@ async def test_mtls(ops_test: OpsTest):
         CERTS_NAME, channel="stable", config=tls_config, series="jammy", application_name=MTLS_NAME
     )
     await ops_test.model.wait_for_idle(apps=[MTLS_NAME], timeout=1000, idle_period=15)
-    await ops_test.model.add_relation(
+    await ops_test.model.integrate(
         f"{APP_NAME}:{TRUSTED_CERTIFICATE_RELATION}", f"{MTLS_NAME}:{TLS_RELATION}"
     )
 
@@ -274,7 +274,7 @@ async def test_truststore_live_reload(ops_test: OpsTest):
         TLS_REQUIRER, channel="stable", application_name="other-req", revision=102
     )
 
-    await ops_test.model.add_relation("other-ca", "other-req")
+    await ops_test.model.integrate("other-ca", "other-req")
 
     await ops_test.model.wait_for_idle(
         apps=["other-ca", "other-req"], idle_period=60, timeout=2000, status="active"
@@ -309,7 +309,7 @@ async def test_truststore_live_reload(ops_test: OpsTest):
     )
 
     # We don't expect a broker restart here because of truststore live reload
-    await ops_test.model.add_relation(f"{APP_NAME}:{TRUSTED_CERTIFICATE_RELATION}", "other-op")
+    await ops_test.model.integrate(f"{APP_NAME}:{TRUSTED_CERTIFICATE_RELATION}", "other-op")
 
     await ops_test.model.wait_for_idle(
         apps=["other-op", APP_NAME], idle_period=60, timeout=2000, status="active"
@@ -460,8 +460,8 @@ async def test_dns_certificate(ops_test: OpsTest):
     )
 
     async with ops_test.fast_forward(fast_interval="60s"):
-        await ops_test.model.add_relation(ZK_NAME, TLS_NAME)
-        await ops_test.model.add_relation(f"{APP_NAME}:{TLS_RELATION}", TLS_NAME)
+        await ops_test.model.integrate(ZK_NAME, TLS_NAME)
+        await ops_test.model.integrate(f"{APP_NAME}:{TLS_RELATION}", TLS_NAME)
         await ops_test.model.wait_for_idle(
             apps=[ZK_NAME], idle_period=15, timeout=1000, status="active"
         )
@@ -521,8 +521,8 @@ async def test_manual_tls_chain(ops_test: OpsTest):
     await ops_test.model.deploy(MANUAL_TLS_NAME)
 
     await asyncio.gather(
-        ops_test.model.add_relation(f"{APP_NAME}:{TLS_RELATION}", MANUAL_TLS_NAME),
-        ops_test.model.add_relation(ZK_NAME, MANUAL_TLS_NAME),
+        ops_test.model.integrate(f"{APP_NAME}:{TLS_RELATION}", MANUAL_TLS_NAME),
+        ops_test.model.integrate(ZK_NAME, MANUAL_TLS_NAME),
     )
 
     # ensuring enough time for multiple rolling-restart with update-status
