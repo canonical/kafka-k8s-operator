@@ -501,9 +501,7 @@ async def test_dns_certificate(ops_test: OpsTest):
 
     # Cleanup, remove TLS relation and app
     await ops_test.model.remove_application(TLS_NAME, block_until_done=True)
-    await ops_test.model.applications[APP_NAME].set_config(
-        {"certificate_include_ip_sans": "true"}
-    )
+    await ops_test.model.applications[APP_NAME].set_config({"certificate_include_ip_sans": "true"})
 
     async with ops_test.fast_forward(fast_interval="60s"):
         await asyncio.sleep(180)
