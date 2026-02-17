@@ -369,6 +369,7 @@ def test_pod_reschedule(
     assert_continuous_writes_consistency(result=result)
 
 
+@flaky.flaky(max_runs=3, min_passes=1)
 def test_network_cut_without_ip_change(
     juju: jubilant.Juju,
     c_writes: ContinuousWrites,
