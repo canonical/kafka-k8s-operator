@@ -21,7 +21,7 @@ This guide assumes you already have an Apache Kafka cluster deployed with the Ch
 
 To deploy Apache Kafka cluster, follow the [Charmed Apache Kafka K8s Deployment guide](how-to-deploy-deploy-anywhere).
 
-Moreover, the Kafka UI K8s operator requires an ingress relation, which can be provided by the [Traefik K8s operator](https://charmhub.io/traefik-k8s).
+Moreover, the Charmed Kafka UI K8s operator requires an ingress relation, which can be provided by the [Traefik K8s operator](https://charmhub.io/traefik-k8s).
 You can follow the documentation to deploy the Traefik K8s operator and enable ingress on your Juju K8s cluster.
 To deploy [Traefik K8s operator](https://charmhub.io/traefik-k8s) and enable ingress on your Juju K8s cluster, follow the [documenation](https://documentation.ubuntu.com/traefik-k8s-charm/latest/).
 
@@ -53,15 +53,15 @@ kraft/2*         active    idle   10.1.81.61
 
 </details>
 
-## Deploy charmed Kafka UI
+## Deploy Charmed Kafka UI
 
-To deploy the Kafka UI K8s charmed operator:
+To deploy the Charmed Kafka UI K8s operator:
 
 ```bash
 juju deploy kafka-ui-k8s --channel latest/edge --trust
 ```
 
-Once the charmed Kafka UI K8s operator is deployed, it will end up in `blocked` state, since it needs to be integrated with a charmed Apache Kafka cluster. The output of `juju status` command will be like below:
+Once the Charmed Kafka UI K8s operator is deployed, it will end up in `blocked` state, since it needs to be integrated with a charmed Apache Kafka cluster. The output of `juju status` command will be like below:
 
 ```text
 ...
@@ -71,7 +71,7 @@ kafka-ui-k8s/0*  blocked   idle       10.1.81.21         application needs Kafka
 
 ## Integrate Kafka UI with Apache Kafka and Ingress
 
-To activate the Charmed Kafka UI application, integrate it with the Charmed Apache Kafka application:
+To activate the Charmed Kafka UI K8s application, integrate it with the Charmed Apache Kafka application:
 
 ```bash
 juju integrate kafka-ui-k8s kafka-k8s
@@ -85,7 +85,7 @@ kafka-ui-k8s/0*  blocked      idle       10.1.81.21         application needs in
 ...
 ```
 
-To resolve that, integrate the Kafka UI application with the ingress offer consumed before:
+To resolve that, integrate the Charmed Kafka UI K8s application with the ingress offer consumed before:
 
 ```bash
 juju integrate kafka-ui-k8s traefik
@@ -149,14 +149,14 @@ Once opened in the web browser, you should see an authentication page prompting 
 Once logged in, you can use the left menu to access the brokers, KRaft controllers, topics, schemas, and connectors configuration along with various monitoring metrics.
 To familiarise yourself with Kafbat's Kafka UI features, it is advised to consult the product's [official documentation](https://ui.docs.kafbat.io/).
 
-## Integrate charmed Kafka UI with other products
+## Integrate Charmed Kafka UI K8s with other products
 
-The charmed Kafka UI K8s operator can integrate with other charmed operators, including the charmed Kafka Connect K8s and the charmed Karapace K8s operators.
+The Charmed Kafka UI K8s operator can integrate with other charmed operators, including the Charmed Kafka Connect K8s and the Charmed Karapace K8s operators.
 For more information on these products and their use-cases, please refer to the
 [How to use Kafka Connect for ETL workloads](how-to-use-kafka-connect) and
 [Schemas and serialisation](how-to-schemas-serialisation) guides.
 
-If you have followed aforementioned guides, you can integrate the charmed Kafka Connect and charmed Karapace applications with the Kafka UI using:
+If you have followed aforementioned guides, you can integrate the Charmed Kafka Connect K8s and Charmed Karapace K8s applications with the Kafka UI using:
 
 ```bash
 juju integrate kafka-ui-k8s kafka-connect-k8s
