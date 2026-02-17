@@ -23,7 +23,7 @@ To deploy Apache Kafka cluster, follow the [Charmed Apache Kafka K8s Deployment 
 
 Moreover, the Kafka UI K8s operator requires an ingress relation, which can be provided by the [Traefik K8s operator](https://charmhub.io/traefik-k8s).
 You can follow the documentation to deploy the Traefik K8s operator and enable ingress on your Juju K8s cluster.
-In this guide, it is assumed that the `ingress` relation is available via a cross-model [Juju offer](https://documentation.ubuntu.com/juju/latest/reference/offer/).
+To deploy [Traefik K8s operator](https://charmhub.io/traefik-k8s) and enable ingress on your Juju K8s cluster, follow the [documenation](https://documentation.ubuntu.com/traefik-k8s-charm/latest/).
 
 For reference, a cluster with three brokers and three KRaft controllers produces `juju status` output similar to the following.
 As described above, the ingress relation is available via the `traefik` offer.
