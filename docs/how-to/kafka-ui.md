@@ -17,16 +17,16 @@ In this guide, you will:
 
 ## Prerequisites
 
-This guide assumes you already have an Apache Kafka cluster deployed with the Charmed Apache Kafka K8s operator.
-If not, follow the [Deploy Apache Kafka](tutorial-deploy) tutorial first.
+This guide assumes you already have an Apache Kafka cluster deployed with the Charmed Apache Kafka K8s operator and the `ingress` relation provided by the [Traefik K8s operator](https://charmhub.io/traefik-k8s) via a cross-model [Juju offer](https://documentation.ubuntu.com/juju/latest/reference/offer/).
+
+To deploy Apache Kafka cluster, follow the [Charmed Apache Kafka K8s Deployment guide](how-to-deploy-deploy-anywhere).
 
 Moreover, the Kafka UI K8s operator requires an ingress relation, which can be provided by the [Traefik K8s operator](https://charmhub.io/traefik-k8s).
 You can follow the documentation to deploy the Traefik K8s operator and enable ingress on your Juju K8s cluster.
 In this guide, it is assumed that the `ingress` relation is available via a cross-model [Juju offer](https://documentation.ubuntu.com/juju/latest/reference/offer/).
 
 For reference, a cluster with three brokers and three KRaft controllers produces `juju status` output similar to the following.
-As described above, the ingress relation is available via the `traefik` offer
-.
+As described above, the ingress relation is available via the `traefik` offer.
 
 <details>
 <summary> Output example</summary>
@@ -77,7 +77,7 @@ To activate the Charmed Kafka UI application, integrate it with the Charmed Apac
 juju integrate kafka-ui-k8s kafka-k8s
 ```
 
-The charmed Kafka UI K8s application should still be in `blocked` state, and reporting that it requires an ingress relation:
+After a while, the Charmed Kafka UI K8s application should still be in `blocked` state, and reporting that it requires an ingress relation:
 
 ```text
 ...
@@ -91,12 +91,12 @@ To resolve that, integrate the Kafka UI application with the ingress offer consu
 juju integrate kafka-ui-k8s traefik
 ```
 
-After a few seconds, the charmed Kafka UI K8s application should be in `active|idle` state.
+After a few seconds, the Charmed Kafka UI K8s application should be in `active|idle` state.
 
 ## Configure authentication
 
 By default, the Charmed Kafka UI K8s application enables authentication for the internal `admin` user.
-To change the admin password, you must:
+To change the admin password:
 
 1. Create a Juju secret containing the new credentials
 2. Configure the Charmed Kafka UI K8s application to use that secret
@@ -142,7 +142,7 @@ proxied-endpoints: '{"traefik": {"url": "http://10.160.219.1"}, "prometheus/0": 
   {"url": "http://10.160.219.1/ui-kafka-ui-k8s"}}'
 ```
 
-Based on the output, in this deployment, the UI is available at `"http://10.160.219.1/ui-kafka-ui-k8s`, which can be accessed using a web browser.
+Based on the output example above, the UI is available at the `"http://10.160.219.1/ui-kafka-ui-k8s` address, which can be accessed using a web browser.
 
 Once opened in the web browser, you should see an authentication page prompting for username and password, in which you can use the `admin` username and the password configured before to log in.
 
