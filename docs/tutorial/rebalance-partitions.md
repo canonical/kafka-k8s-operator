@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Rebalance and reassign Charmed Apache Kafka K8s partitions using LinkedIn's Cruise Control for optimal resource utilization."
+---
+
 (tutorial-rebalance-partitions)=
 # 7. Rebalance and reassign partitions
 

@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Understand why traditional backups are unnecessary for Charmed Apache Kafka K8s with KRaft mode and built-in replication for data resilience."
+---
+
 (explanation-backups)=
 # Backups
 

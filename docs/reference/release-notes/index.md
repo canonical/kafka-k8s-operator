@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Release notes for all stable revisions of Charmed Apache Kafka K8s with version compatibility and upgrade information."
+---
+
 (reference-release-notes-index)=
 # Releases
 

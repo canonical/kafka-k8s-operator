@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Complete guide to Charmed Apache Kafka K8s charm statuses, error messages, and recommended actions for troubleshooting."
+---
+
 (reference-statuses)=
 # Charm statuses
 

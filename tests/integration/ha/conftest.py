@@ -3,6 +3,8 @@
 # See LICENSE file for licensing details.
 
 import logging
+import time
+from subprocess import CalledProcessError
 
 import jubilant
 import pytest
@@ -10,11 +12,13 @@ import pytest
 from integration.ha.continuous_writes import ContinuousWrites
 from integration.helpers.ha import (
     add_k8s_hosts,
+    assert_all_brokers_up,
     deploy_chaos_mesh,
     destroy_chaos_mesh,
     modify_pebble_restart_delay,
     remove_instance_isolation,
     remove_k8s_hosts,
+    reset_kafka_service,
 )
 from integration.helpers.pytest_operator import (
     APP_NAME,
@@ -52,9 +56,29 @@ def restart_delay(juju: jubilant.Juju):
 @pytest.fixture()
 def chaos_mesh(juju: jubilant.Juju):
     """Deploys chaos mesh to the namespace and uninstalls it at the end."""
-    deploy_chaos_mesh(juju.model)
+    try:
+        deploy_chaos_mesh(juju.model)
+    except CalledProcessError as e:
+        logger.error(f"{e.stdout} {e.stderr}")
+        raise e
 
     yield
 
     remove_instance_isolation(juju)
     destroy_chaos_mesh(juju.model)
+
+
+@pytest.fixture()
+def restore_state(juju: jubilant.Juju):
+    """Resets all pods and Apache Kafka service to the default state."""
+    logger.info("Resetting units state")
+
+    units = juju.status().apps[APP_NAME].units
+    for unit in units:
+        try:
+            reset_kafka_service(juju.model, unit)
+            time.sleep(5)
+        except CalledProcessError:
+            continue
+
+    assert_all_brokers_up(juju)

@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Complete documentation for Charmed Apache Kafka K8s - deploy, manage, and scale Apache Kafka clusters on Kubernetes."
+---
+
 (index)=
 
 ```{note}
@@ -24,8 +30,19 @@ easy-to-use application integration, and monitoring.
 
 | | |
 |--|--|
-|  [Tutorial](tutorial-introduction)</br>  Learn how to deploy, configure, and use the charm with our step-by-step guidance. Get started from [step one](tutorial-environment). </br> |  [How-to guides](how-to-index) </br> Practical instructions for key tasks, like [deploy](how-to-deploy-index) on different platforms, [manage](how-to-manage-units) Juju units, [Monitor](how-to-monitoring-enable-monitoring) metrics, use [Kafka Connect](how-to-use-kafka-connect). |
-| [Reference](reference-index) </br> Technical information, for example: charm's [actions](https://charmhub.io/kafka-k8s/actions?channel=4/edge), [configuration parameters](https://charmhub.io/kafka-k8s/configurations?channel=4/edge), [libraries](https://charmhub.io/kafka-k8s/libraries/kafka?channel=4/edge), [statuses](reference-statuses), as well as [requirements](reference-requirements), and [file system paths](reference-file-system-paths). | [Explanation](explanation-index) </br> Explore and grow your understanding of key topics, such as: [security](explanation-security), [cryptography](explanation-cryptography), and [MirrorMaker usage](explanation-mirrormaker2-0). |
+| **Tutorial** | [Introduction](tutorial-introduction) • [Step 1: Environment setup](tutorial-environment) |
+| **Deployment** | [Main deployment guide](how-to-deploy-deploy-anywhere) • [AKS](how-to-deploy-on-aks) • [EKS](how-to-deploy-on-eks) • [Requirements](reference-requirements) |
+| **Operations** | [Connections management](how-to-client-connections) • [Unit management](how-to-manage-units) • [Monitoring](how-to-monitoring) • [File system paths](reference-file-system-paths) • [Broker listeners](reference-broker-listeners) • [Status reference](reference-statuses) • [External K8s connection](how-to-external-k8s-connection) |
+| **Maintenance** | [Version upgrade](how-to-upgrade) • [Migration](how-to-cluster-migration) • [Replication](how-to-cluster-replication) • [MirrorMaker](explanation-mirrormaker2-0)  • [Backups](explanation-backups) |
+| **Security** | [Overview](explanation-security) • [Enable encryption](how-to-tls-encryption) • [mTLS](how-to-create-mtls-client-credentials) • [Cryptography](explanation-cryptography) |
+| **Extensions** | [Kafka Connect](how-to-use-kafka-connect) • [Schema registry](how-to-schemas-serialisation) |
+
+## How the documentation is organised
+
+[Tutorial](tutorial-introduction): For new users needing to learn how to use Charmed Apache Kafka <br>
+[How-to guides](how-to-index): For users needing step-by-step instructions to achieve a practical goal <br>
+[Reference](reference-index): For precise, theoretical, factual information to be used while working with the charm <br>
+[Explanation](explanation-index): For deeper understanding of key Charmed Apache Kafka concepts <br>
 
 ## Project and community
 

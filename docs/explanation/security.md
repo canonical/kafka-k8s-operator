@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Security overview and hardening guide for Charmed Apache Kafka K8s deployments on Kubernetes with Juju orchestration."
+---
+
 (explanation-security)=
 # Security
 

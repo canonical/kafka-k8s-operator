@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Manage and rotate passwords for Charmed Apache Kafka K8s admin users and external clients using Juju secrets and Data Integrator charm."
+---
+
 (tutorial-manage-passwords)=
 # 4. Manage passwords
 

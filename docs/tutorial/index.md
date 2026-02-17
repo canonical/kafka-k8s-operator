@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Step-by-step tutorial for deploying and managing Charmed Apache Kafka K8s on Kubernetes with the operator."
+---
+
 (tutorial-introduction)=
 ```{include} introduction.md
 

@@ -1,4 +1,10 @@
-(how-to-set-up-monitoring)=
+---
+myst:
+  html_meta:
+    description: "Set up monitoring for Charmed Apache Kafka K8s with JMX exporter and Canonical Observability Stack for Grafana dashboards and Prometheus metrics."
+---
+
+(how-to-monitoring)=
 # How to set up monitoring
 
 Charmed Apache Kafka K8s comes with the [JMX exporter](https://github.com/prometheus/jmx_exporter/).

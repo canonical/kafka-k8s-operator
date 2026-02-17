@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Set up Charmed Apache Kafka K8s cluster replication and migration using MirrorMaker 2 for data synchronization between clusters."
+---
+
 (how-to-cluster-replication-index)=
 # Cluster replication
 

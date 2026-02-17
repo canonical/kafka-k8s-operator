@@ -9,6 +9,7 @@ import os
 import pytest
 from pytest_operator.plugin import OpsTest
 
+from integration.helpers import TLS_CHANNEL, TLS_NAME
 from integration.helpers.pytest_operator import (
     APP_NAME,
     KAFKA_CONTAINER,
@@ -35,7 +36,6 @@ pytestmark = pytest.mark.kraft
 CONTROLLER_APP = "controller"
 CONTROLLER_PORT = SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].controller
 PRODUCER_APP = "producer"
-TLS_NAME = "self-signed-certificates"
 
 
 class TestKRaft:
@@ -258,7 +258,7 @@ class TestKRaft:
     @pytest.mark.skipif(not tls_enabled, reason="only required when TLS is on.")
     @pytest.mark.abort_on_fail
     async def test_relate_peer_tls(self, ops_test: OpsTest):
-        await ops_test.model.deploy(TLS_NAME, application_name=TLS_NAME, channel="1/stable")
+        await ops_test.model.deploy(TLS_NAME, application_name=TLS_NAME, channel=TLS_CHANNEL)
         await ops_test.model.wait_for_idle(
             apps=[TLS_NAME], idle_period=30, timeout=600, status="active"
         )
