@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Deploy Charmed Apache Kafka K8s on Amazon Elastic Kubernetes Service (EKS) with eksctl, AWS CLI, and Juju configuration instructions."
+---
+
 (how-to-deploy-on-eks)=
 # How to deploy on EKS
 

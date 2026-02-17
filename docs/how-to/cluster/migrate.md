@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Migrate from non-charmed Kafka clusters to Charmed Apache Kafka K8s using MirrorMaker 2.0 for one-way data synchronization."
+---
+
 (how-to-cluster-migration)=
 # Migrate from a non-charmed Kafka clusters
 

@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Revision 82 release notes for Charmed Apache Kafka K8s 3.9.0 with KRaft support, Cruise Control rebalancing, and Karapace integration."
+---
+
 (reference-release-notes-release-82)=
 # Release 82
 

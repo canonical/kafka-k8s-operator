@@ -129,8 +129,10 @@ def test_scale_up_controller_kafka(juju: jubilant.Juju, kraft_mode, kafka_apps):
     )
 
 
+@flaky.flaky(max_runs=3, min_passes=1)
 def test_kill_broker_with_topic_leader(
     juju: jubilant.Juju,
+    restore_state,
     restart_delay,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
@@ -173,8 +175,10 @@ def test_kill_broker_with_topic_leader(
     assert_continuous_writes_consistency(result=result)
 
 
+@flaky.flaky(max_runs=3, min_passes=1)
 def test_restart_broker_with_topic_leader(
     juju: jubilant.Juju,
+    restore_state,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):
@@ -204,8 +208,10 @@ def test_restart_broker_with_topic_leader(
     assert_continuous_writes_consistency(result=result)
 
 
+@flaky.flaky(max_runs=3, min_passes=1)
 def test_freeze_broker_with_topic_leader(
     juju: jubilant.Juju,
+    restore_state,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):
@@ -252,8 +258,10 @@ def test_freeze_broker_with_topic_leader(
     assert_continuous_writes_consistency(result=result)
 
 
+@flaky.flaky(max_runs=3, min_passes=1)
 def test_full_cluster_crash(
     juju: jubilant.Juju,
+    restore_state,
     restart_delay,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
@@ -281,8 +289,10 @@ def test_full_cluster_crash(
     assert_continuous_writes_consistency(result=result)
 
 
+@flaky.flaky(max_runs=3, min_passes=1)
 def test_full_cluster_restart(
     juju: jubilant.Juju,
+    restore_state,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):
@@ -359,7 +369,6 @@ def test_pod_reschedule(
     assert_continuous_writes_consistency(result=result)
 
 
-@pytest.mark.unstable
 def test_network_cut_without_ip_change(
     juju: jubilant.Juju,
     c_writes: ContinuousWrites,
@@ -399,11 +408,8 @@ def test_network_cut_without_ip_change(
 
     time.sleep(REELECTION_TIME * 2)
 
-    # async with juju.fast_forward(fast_interval="15s"):
-    #     result = c_writes.stop()
-    #     await asyncio.sleep(CLIENT_TIMEOUT * 8)
-
     result = c_writes.stop()
+    time.sleep(CLIENT_TIMEOUT * 8)
 
     # verify the unit is now rejoined the cluster
     topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)

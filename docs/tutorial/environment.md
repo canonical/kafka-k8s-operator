@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Set up your local environment with Multipass, MicroK8s, and Juju for deploying Charmed Apache Kafka K8s on Kubernetes."
+---
+
 (tutorial-environment)=
 # 1. Set up the environment
 

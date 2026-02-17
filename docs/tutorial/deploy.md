@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Deploy Charmed Apache Kafka K8s with brokers and KRaft controllers on Kubernetes using Juju."
+---
+
 (tutorial-deploy)=
 # 2. Deploy Apache Kafka
 

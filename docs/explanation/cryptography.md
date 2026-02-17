@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Learn about cryptographic practices in Charmed Apache Kafka K8s including resource checksums and source verification."
+---
+
 (explanation-cryptography)=
 # Cryptography
 

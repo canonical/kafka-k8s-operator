@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: "Apache Kafka trademark information and usage guidelines for Charmed Apache Kafka K8s documentation."
+---
+
 (explanation-trademarks)=
 # Trademarks
 
