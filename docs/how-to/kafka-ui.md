@@ -144,7 +144,7 @@ proxied-endpoints: '{"traefik": {"url": "http://10.160.219.1"}, "prometheus/0": 
 
 Based on the output example above, the UI is available at the `"http://10.160.219.1/ui-kafka-ui-k8s` address, which can be accessed using a web browser.
 
-Once opened in the web browser, you should see an authentication page prompting for username and password, in which you can use the `admin` username and the password configured before to log in.
+Once opened in the web browser, you should see an authentication page prompting for username and password, in which you can use the `admin` username and the password configured using Juju secrets before, to log in.
 
 Once logged in, you can use the left menu to access the brokers, KRaft controllers, topics, schemas, and connectors configuration along with various monitoring metrics.
 To familiarise yourself with Kafbat's Kafka UI features, it is advised to consult the product's [official documentation](https://ui.docs.kafbat.io/).
