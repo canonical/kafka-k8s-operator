@@ -16,7 +16,6 @@ from charm import KafkaCharm
 from literals import (
     CHARM_KEY,
     CONTAINER,
-    JMX_EXPORTER_PORT,
     PEER,
     REL_NAME,
     SUBSTRATE,
@@ -271,9 +270,6 @@ def test_start_sets_pebble_layer(
         ctx(ctx.on.start(), state_in) as manager,
     ):
         charm = cast(KafkaCharm, manager.charm)
-        extra_opts = [
-            f"-javaagent:{charm.workload.paths.jmx_prometheus_javaagent}={JMX_EXPORTER_PORT}:{charm.workload.paths.jmx_prometheus_config}",
-        ]
         command = f"{charm.workload.paths.binaries_path}/bin/kafka-server-start.sh {charm.workload.paths.server_properties}"
         expected_plan = {
             "description": "Pebble config layer for kafka",
@@ -286,7 +282,6 @@ def test_start_sets_pebble_layer(
                     "user": "kafka",
                     "group": "kafka",
                     "environment": {
-                        "KAFKA_OPTS": " ".join(extra_opts),
                         "JAVA_HOME": "/usr/lib/jvm/java-21-openjdk-amd64",
                         "LOG_DIR": charm.workload.paths.logs_path,
                     },
