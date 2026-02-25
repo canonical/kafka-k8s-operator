@@ -51,7 +51,8 @@ class ControllerManager:
         # NOTE data dirs have changed permissions by storage_attached hook. For some reason
         # storage command bin needs these locations to be root owned. Momentarily raise permissions
         # during the format phase.
-        self.workload.exec(["chown", "-R", "root:root", f"{self.workload.paths.data_path}"])
+        if self.state.substrate == "vm":
+            self.workload.exec(["chown", "-R", "root:root", f"{self.workload.paths.data_path}"])
 
         command = [
             "format",
@@ -78,10 +79,11 @@ class ControllerManager:
         self.workload.run_bin_command(bin_keyword="storage", bin_args=command)
 
         # Drop permissions again for the main process
-        self.workload.exec(["chmod", "-R", "750", f"{self.workload.paths.data_path}"])
-        self.workload.exec(
-            ["chown", "-R", f"{USER_ID}:{GROUP}", f"{self.workload.paths.data_path}"]
-        )
+        if self.state.substrate == "vm":
+            self.workload.exec(["chmod", "-R", "750", f"{self.workload.paths.data_path}"])
+            self.workload.exec(
+                ["chown", "-R", f"{USER_ID}:{GROUP}", f"{self.workload.paths.data_path}"]
+            )
 
     def generate_uuid(self) -> str:
         """Generate UUID using `kafka-storage.sh` utility."""

@@ -712,7 +712,7 @@ def get_bootstrap_servers(ops_test: OpsTest, app_name: str = APP_NAME, port: int
 
 def balancer_is_running(model_full_name: str | None, app_name: str) -> bool:
     check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:9090/kafkacruisecontrol/state'",
+        f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader curl http://localhost:9090/kafkacruisecontrol/state",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -724,7 +724,7 @@ def balancer_is_secure(ops_test: OpsTest, app_name: str) -> bool:
     model_full_name = ops_test.model_full_name
     err_401 = "Error 401 Unauthorized"
     unauthorized_ok = err_401 in check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:9090/kafkacruisecontrol/state'",
+        f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader curl http://localhost:9090/kafkacruisecontrol/state",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -734,7 +734,7 @@ def balancer_is_secure(ops_test: OpsTest, app_name: str) -> bool:
         "balancer-password"
     ]
     authorized_ok = err_401 not in check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:9090/kafkacruisecontrol/state'"
+        f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader curl http://localhost:9090/kafkacruisecontrol/state"
         f" -u {BALANCER_WEBSERVER_USER}:{pwd}",
         stderr=PIPE,
         shell=True,
@@ -774,7 +774,7 @@ def balancer_is_ready(ops_test: OpsTest, app_name: str) -> bool:
 
     try:
         monitor_state = check_output(
-            f"JUJU_MODEL={ops_test.model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:9090/kafkacruisecontrol/state?json=True'"
+            f"JUJU_MODEL={ops_test.model_full_name} juju ssh {app_name}/leader curl http://localhost:9090/kafkacruisecontrol/state?json=True"
             f" -u {BALANCER_WEBSERVER_USER}:{pwd}",
             stderr=PIPE,
             shell=True,
@@ -808,7 +808,7 @@ def get_kafka_broker_state(ops_test: OpsTest, app_name: str) -> JSON:
         "balancer-password"
     ]
     broker_state = check_output(
-        f"JUJU_MODEL={ops_test.model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:9090/kafkacruisecontrol/kafka_cluster_state?json=True'"
+        f"JUJU_MODEL={ops_test.model_full_name} juju ssh {app_name}/leader curl http://localhost:9090/kafkacruisecontrol/kafka_cluster_state?json=True"
         f" -u {BALANCER_WEBSERVER_USER}:{pwd}",
         stderr=PIPE,
         shell=True,
@@ -891,7 +891,7 @@ def get_replica_count_by_broker_id(ops_test: OpsTest, app_name: str) -> dict[str
 
 def balancer_exporter_is_up(model_full_name: str | None, app_name: str) -> bool:
     check_output(
-        f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader sudo -i 'curl http://localhost:{JMX_CC_PORT}/metrics'",
+        f"JUJU_MODEL={model_full_name} juju ssh {app_name}/leader curl http://localhost:{JMX_CC_PORT}/metrics",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
