@@ -81,17 +81,19 @@ jobs:
       - lint
       - unit-test
       - build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted-linux-amd64-noble-large
     timeout-minutes: 240
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup operator environment
-        uses: charmed-kubernetes/actions-operator@main
-        with:
-          provider: microk8s
-          channel: "1.28-strict/stable"
-          juju-channel: 3.6/stable
+        run: |
+          sudo snap install concierge --classic
+          sudo concierge prepare --trace --extra-debs pipx
+      - name: Install dependencies
+        run: |
+          pipx install tox
+          pipx ensurepath
       - name: Download packed charm(s)
         uses: actions/download-artifact@v4
         with:
@@ -125,17 +127,19 @@ jobs:
       - unit-test
       - build
       - integration-test
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted-linux-amd64-noble-large
     timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup operator environment
-        uses: charmed-kubernetes/actions-operator@main
-        with:
-          provider: microk8s
-          channel: "1.28-strict/stable"
-          juju-channel: 3.6/stable
+        run: |
+          sudo snap install concierge --classic
+          sudo concierge prepare --trace --extra-debs pipx
+      - name: Install dependencies
+        run: |
+          pipx install tox
+          pipx ensurepath
       - name: Download packed charm(s)
         uses: actions/download-artifact@v4
         with:
