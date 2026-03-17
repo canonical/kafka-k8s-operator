@@ -127,8 +127,16 @@ juju config kafka-ui-k8s system-users=secret:d5f0a07mp25c7654dhi0
 
 ## Access the Kafka UI
 
-To retrieve the Kafka UI URL, use the [`show-proxied-endpoints`](https://charmhub.io/traefik-k8s/actions#show-proxied-endpoints) action of the Traefik K8s operator,
-sample output is provided below:
+To retrieve the Kafka UI URL, use the [`show-proxied-endpoints`](https://charmhub.io/traefik-k8s/actions#show-proxied-endpoints) action of the Traefik K8s operator:
+
+```bash
+TRAEFIK_MODEL="<juju-model-name-containing-traefik>"
+TRAEFIK_APP="<traefik-app-name>"
+
+juju run -m $TRAEFIK_MODEL $TRAEFIK_APP/0 show-proxied-endpoints
+```
+
+Sample output is provided below:
 
 ```text
 Running operation 26 with 1 task
