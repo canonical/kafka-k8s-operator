@@ -69,8 +69,6 @@ jobs:
     uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v32.2.2
     with:
       path-to-charm-directory: ${{ matrix.path }}
-      # FIXME: re-enable after re-added to ccc
-      cache: false
 
   integration-test-github:
     strategy:
@@ -130,7 +128,7 @@ jobs:
             --microk8s-channel ${MICROK8S_CHANNEL//"-strict"/} \
             --juju-channel $JUJU_CHANNEL \
             --extra-debs pipx
-          
+
           pipx ensurepath
           pipx install tox poetry
       - name: Download packed charm(s)
