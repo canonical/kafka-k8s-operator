@@ -2,10 +2,15 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import glob
 import logging
+import shutil
+import subprocess
+from typing import Literal
 
 import jubilant
 import pytest
+import yaml
 
 from integration.helpers import (
     APP_NAME,
@@ -24,15 +29,55 @@ logger = logging.getLogger(__name__)
 CHANNEL = "3/stable"
 
 
+def _build_pinned_refresh_charm(tmp_path_factory, version: Literal["pre", "post"] = "post"):
+    """Build charms used for refresh tests."""
+
+    def ignore_hidden(path, names):
+        return [name for name in names if name.startswith(".")]
+
+    # create a charmcraft.yaml without the write-charm-version override
+    with open("charmcraft.yaml") as f:
+        cc = yaml.safe_load(f)
+        cc["parts"]["files"].pop("override-build")
+
+    tmp_dir = tmp_path_factory.mktemp("refresh-charm")
+    shutil.copytree(".", tmp_dir, dirs_exist_ok=True, ignore=ignore_hidden)
+    shutil.copyfile(
+        f"tests/integration/refresh-charm/refresh_versions.{version}.toml",
+        f"{tmp_dir}/refresh_versions.toml",
+    )
+    with open(f"{tmp_dir}/charmcraft.yaml", "w") as f:
+        f.write(yaml.safe_dump(cc))
+
+    logger.info(f"Building {version} refresh charm, using {tmp_dir}. might take a while...")
+    subprocess.check_output("charmcraft pack", shell=True, stderr=subprocess.PIPE, cwd=tmp_dir)
+    if not (paths := glob.glob(f"{tmp_dir}/*.charm")):
+        raise RuntimeError("Can not find built charm path!")
+
+    return paths[0]
+
+
+@pytest.fixture(scope="module")
+def pre_refresh_charm(tmp_path_factory):
+    return _build_pinned_refresh_charm(tmp_path_factory, version="pre")
+
+
+@pytest.fixture(scope="module")
+def post_refresh_charm(tmp_path_factory):
+    return _build_pinned_refresh_charm(tmp_path_factory, version="post")
+
+
 @pytest.mark.abort_on_fail
-def test_in_place_refresh(juju: jubilant.Juju, kafka_charm, kraft_mode: KRaftMode):
+def test_in_place_refresh(
+    juju: jubilant.Juju, kraft_mode: KRaftMode, pre_refresh_charm, post_refresh_charm
+):
     """Tests happy path refresh with TLS in KRaft mode."""
     kafka_apps = [APP_NAME] if kraft_mode == "single" else [APP_NAME, CONTROLLER_NAME]
     tls_config = {"ca-common-name": "kafka"}
 
     deploy_cluster(
         juju=juju,
-        charm=kafka_charm,
+        charm=pre_refresh_charm,
         kraft_mode=kraft_mode,
         num_broker=1,
         num_controller=1,
@@ -85,7 +130,7 @@ def test_in_place_refresh(juju: jubilant.Juju, kafka_charm, kraft_mode: KRaftMod
     logger.info("Upgrading Kafka...")
     juju.refresh(
         APP_NAME,
-        path=kafka_charm,
+        path=post_refresh_charm,
         resources={"kafka-image": KAFKA_CONTAINER},
     )
 
