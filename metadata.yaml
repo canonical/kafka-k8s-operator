@@ -22,9 +22,12 @@ maintainers:
   - Canonical Data Platform <data-platform@lists.launchpad.net>
 assumes:
   - k8s-api
+charm-user: non-root
 
 containers:
   kafka:
+    gid: 584792
+    uid: 584792
     resource: kafka-image
     mounts:
       - storage: data

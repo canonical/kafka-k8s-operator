@@ -23,7 +23,7 @@ from tenacity import (
 )
 from typing_extensions import cast, override
 
-from core.workload import CharmedKafkaPaths, WorkloadBase
+from core.workload import CharmedKafkaPaths, WorkloadBase, map_env
 from literals import (
     BALANCER,
     BROKER,
@@ -219,12 +219,11 @@ class KafkaWorkload(Workload):
     @override
     def layer(self) -> pebble.Layer:
         """Returns a Pebble configuration layer for Kafka."""
-        extra_opts = [
-            f"-javaagent:{self.paths.jmx_prometheus_javaagent}={JMX_EXPORTER_PORT}:{self.paths.jmx_prometheus_config}",
-        ]
         command = (
             f"{self.paths.binaries_path}/bin/kafka-server-start.sh {self.paths.server_properties}"
         )
+        _env = {k: v.replace("'", "") for k, v in map_env(self.read(self.paths.env_path)).items()}
+        logger.debug(f"pebble environment: {_env}")
 
         layer_config: pebble.LayerDict = {
             "summary": "kafka layer",
@@ -237,8 +236,8 @@ class KafkaWorkload(Workload):
                     "startup": "enabled",
                     "user": str(USER_NAME),
                     "group": GROUP,
-                    "environment": {
-                        "KAFKA_OPTS": " ".join(extra_opts),
+                    "environment": _env
+                    | {
                         # FIXME https://github.com/canonical/kafka-k8s-operator/issues/80
                         "JAVA_HOME": "/usr/lib/jvm/java-21-openjdk-amd64",
                         "LOG_DIR": self.paths.logs_path,
