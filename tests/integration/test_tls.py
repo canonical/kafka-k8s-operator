@@ -27,7 +27,9 @@ from .helpers import (
     TLS_NAME,
     TLS_REQUIRER,
     ZK_NAME,
+    check_hostname_verification,
     check_tls,
+    copy_file_to_unit,
     create_test_topic,
     delete_pod,
     extract_ca,
@@ -36,6 +38,8 @@ from .helpers import (
     get_address,
     get_kafka_zk_relation_data,
     get_mtls_nodeport,
+    get_secret_by_label,
+    get_unit_hostname,
     list_truststore_aliases,
     search_secrets,
     set_mtls_client_acls,
@@ -81,7 +85,7 @@ async def test_deploy_tls(ops_test: OpsTest, kafka_charm, app_charm):
     assert ops_test.model.applications[ZK_NAME].status == "active"
     assert ops_test.model.applications[TLS_NAME].status == "active"
 
-    await ops_test.model.add_relation(TLS_NAME, ZK_NAME)
+    await ops_test.model.integrate(TLS_NAME, ZK_NAME)
 
     # Relate Zookeeper to TLS
     async with ops_test.fast_forward(fast_interval="60s"):
@@ -103,7 +107,7 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm):
     """
     # Relate Zookeeper[TLS] to Kafka[Non-TLS]
     async with ops_test.fast_forward(fast_interval="60s"):
-        await ops_test.model.add_relation(ZK_NAME, APP_NAME)
+        await ops_test.model.integrate(ZK_NAME, APP_NAME)
         await ops_test.model.wait_for_idle(
             apps=[ZK_NAME], idle_period=15, timeout=1000, status="active"
         )
@@ -123,7 +127,7 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm):
     )
 
     # ensuring at least a few update-status
-    await ops_test.model.add_relation(f"{APP_NAME}:{TLS_RELATION}", TLS_NAME)
+    await ops_test.model.integrate(f"{APP_NAME}:{TLS_RELATION}", TLS_NAME)
     async with ops_test.fast_forward(fast_interval="20s"):
         await asyncio.sleep(60)
 
@@ -148,7 +152,7 @@ async def test_kafka_tls(ops_test: OpsTest, app_charm):
     )
 
     # ensuring at least a few update-status
-    await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
+    await ops_test.model.integrate(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
     async with ops_test.fast_forward(fast_interval="20s"):
         await asyncio.sleep(60)
 
@@ -202,7 +206,7 @@ async def test_mtls(ops_test: OpsTest):
         CERTS_NAME, channel="stable", config=tls_config, series="jammy", application_name=MTLS_NAME
     )
     await ops_test.model.wait_for_idle(apps=[MTLS_NAME], timeout=1000, idle_period=15)
-    await ops_test.model.add_relation(
+    await ops_test.model.integrate(
         f"{APP_NAME}:{TRUSTED_CERTIFICATE_RELATION}", f"{MTLS_NAME}:{TLS_RELATION}"
     )
 
@@ -270,7 +274,7 @@ async def test_truststore_live_reload(ops_test: OpsTest):
         TLS_REQUIRER, channel="stable", application_name="other-req", revision=102
     )
 
-    await ops_test.model.add_relation("other-ca", "other-req")
+    await ops_test.model.integrate("other-ca", "other-req")
 
     await ops_test.model.wait_for_idle(
         apps=["other-ca", "other-req"], idle_period=60, timeout=2000, status="active"
@@ -305,7 +309,7 @@ async def test_truststore_live_reload(ops_test: OpsTest):
     )
 
     # We don't expect a broker restart here because of truststore live reload
-    await ops_test.model.add_relation(f"{APP_NAME}:{TRUSTED_CERTIFICATE_RELATION}", "other-op")
+    await ops_test.model.integrate(f"{APP_NAME}:{TRUSTED_CERTIFICATE_RELATION}", "other-op")
 
     await ops_test.model.wait_for_idle(
         apps=["other-op", APP_NAME], idle_period=60, timeout=2000, status="active"
@@ -423,14 +427,7 @@ async def test_kafka_tls_scaling(ops_test: OpsTest):
 
 @pytest.mark.abort_on_fail
 async def test_tls_removed(ops_test: OpsTest):
-    await asyncio.gather(
-        ops_test.model.applications[APP_NAME].remove_relation(
-            f"{APP_NAME}:certificates", f"{TLS_NAME}:certificates"
-        ),
-        ops_test.model.applications[APP_NAME].remove_relation(
-            f"{ZK_NAME}:certificates", f"{TLS_NAME}:certificates"
-        ),
-    )
+    await ops_test.model.remove_application(TLS_NAME, block_until_done=True)
 
     # ensuring enough update-status to unblock ZK
     async with ops_test.fast_forward(fast_interval="60s"):
@@ -447,6 +444,74 @@ async def test_tls_removed(ops_test: OpsTest):
     kafka_address = await get_address(ops_test=ops_test, app_name=APP_NAME)
     assert not check_tls(
         ip=kafka_address, port=SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].client
+    )
+
+
+@pytest.mark.abort_on_fail
+async def test_dns_certificate(ops_test: OpsTest):
+    tls_config = {"ca-common-name": "kafka"}
+    # re-set up TLS with DNS-only certs
+    await ops_test.model.applications[APP_NAME].set_config(
+        {"certificate_include_ip_sans": "false"}
+    )
+
+    await ops_test.model.deploy(
+        TLS_NAME, channel="edge", config=tls_config, series="jammy", revision=163
+    )
+
+    async with ops_test.fast_forward(fast_interval="60s"):
+        await ops_test.model.integrate(ZK_NAME, TLS_NAME)
+        await ops_test.model.integrate(f"{APP_NAME}:{TLS_RELATION}", TLS_NAME)
+        await ops_test.model.wait_for_idle(
+            apps=[ZK_NAME], idle_period=15, timeout=1000, status="active"
+        )
+
+    # ensuring at least a few update-status
+    async with ops_test.fast_forward(fast_interval="20s"):
+        await asyncio.sleep(60)
+
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME, TLS_NAME], idle_period=30, timeout=1200, status="active"
+    )
+
+    root_ca = get_secret_by_label(ops_test, label="ca-certificates", owner=TLS_NAME)[
+        "ca-certificate"
+    ]
+
+    test_unit_name = ops_test.model.applications[APP_NAME].units[0].name
+    test_unit_hostname = get_unit_hostname(ops_test=ops_test, unit_name=test_unit_name).strip()
+
+    # copying file to container
+    copy_file_to_unit(
+        ops_test=ops_test,
+        unit_name=test_unit_name,
+        filename="rootca.pem",
+        content=root_ca,
+    )
+
+    output = check_hostname_verification(
+        ops_test=ops_test,
+        hostname=test_unit_hostname,
+        port=SECURITY_PROTOCOL_PORTS["SASL_SSL", "SCRAM-SHA-512"].internal,
+        cafile_name="rootca.pem",
+        unit_name=test_unit_name,
+    )
+
+    assert f"Verified peername: {test_unit_hostname}" in output
+
+    # Cleanup, remove TLS relation and app
+    await ops_test.model.remove_application(TLS_NAME, block_until_done=True)
+    await ops_test.model.applications[APP_NAME].set_config({"certificate_include_ip_sans": "true"})
+
+    async with ops_test.fast_forward(fast_interval="60s"):
+        await asyncio.sleep(180)
+
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, ZK_NAME],
+        timeout=3600,
+        idle_period=30,
+        status="active",
+        raise_on_error=False,
     )
 
 
@@ -471,8 +536,8 @@ async def test_manual_tls_chain(ops_test: OpsTest):
     await ops_test.model.deploy(MANUAL_TLS_NAME)
 
     await asyncio.gather(
-        ops_test.model.add_relation(f"{APP_NAME}:{TLS_RELATION}", MANUAL_TLS_NAME),
-        ops_test.model.add_relation(ZK_NAME, MANUAL_TLS_NAME),
+        ops_test.model.integrate(f"{APP_NAME}:{TLS_RELATION}", MANUAL_TLS_NAME),
+        ops_test.model.integrate(ZK_NAME, MANUAL_TLS_NAME),
     )
 
     # ensuring enough time for multiple rolling-restart with update-status
