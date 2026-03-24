@@ -841,7 +841,7 @@ def balancer_exporter_is_up(model_full_name: str | None, app_name: str) -> bool:
 
 def get_mtls_nodeport(juju: JujuFixture):
     ports = check_output(
-        f"kubectl get svc -n {juju.ext.model.info.name} -o wide | grep bootstrap | awk '{{print $5}}'",
+        f"kubectl get svc -n {juju.model} -o wide | grep bootstrap | awk '{{print $5}}'",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,

@@ -74,7 +74,7 @@ class ContinuousWrites:
 
     def update(self):
         """Update cluster related conf. Useful in cases such as scaling, pwd change etc."""
-        self._queue.put(SimpleNamespace(model_full_name=self._juju.ext.model.info.name))
+        self._queue.put(SimpleNamespace(model_full_name=self._juju.model))
 
     @retry(
         wait=wait_fixed(wait=5) + wait_random(0, 5),
