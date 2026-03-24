@@ -12,7 +12,7 @@ from datetime import datetime
 from subprocess import PIPE, check_output
 from typing import Literal, Optional
 
-from pytest_operator.plugin import OpsTest
+from jubilant_adapters import JujuFixture
 
 from integration.ha.continuous_writes import ContinuousWritesResult
 from integration.helpers import (
@@ -45,20 +45,20 @@ class ProcessRunningError(Exception):
 
 
 def get_topic_description(
-    ops_test: OpsTest, topic: str, unit_name: Optional[str] = None
+    juju: JujuFixture, topic: str, unit_name: Optional[str] = None
 ) -> TopicDescription:
     """Get the broker with the topic leader.
 
     Args:
-        ops_test: OpsTest utility class
+        juju: JujuFixture utility class
         topic: the desired topic to check
         unit_name: unit to run the command on
     """
-    bootstrap_servers = get_bootstrap_servers(ops_test)
-    unit_name = unit_name or ops_test.model.applications[APP_NAME].units[0].name
+    bootstrap_servers = get_bootstrap_servers(juju)
+    unit_name = unit_name or juju.ext.model.applications[APP_NAME].units[0].name
 
     output = check_output(
-        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {BROKER.paths['BIN']}/bin/kafka-topics.sh --describe --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {BROKER.paths['CONF']}/client.properties",
+        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {juju.model} -- {BROKER.paths['BIN']}/bin/kafka-topics.sh --describe --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {BROKER.paths['CONF']}/client.properties",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -70,20 +70,20 @@ def get_topic_description(
     return TopicDescription(leader, in_sync_replicas)
 
 
-def get_topic_offsets(ops_test: OpsTest, topic: str, unit_name: Optional[str] = None) -> list[str]:
+def get_topic_offsets(juju: JujuFixture, topic: str, unit_name: Optional[str] = None) -> list[str]:
     """Get the offsets of a topic on a unit.
 
     Args:
-        ops_test: OpsTest utility class
+        juju: JujuFixture utility class
         topic: the desired topic to check
         unit_name: unit to run the command on
     """
-    bootstrap_servers = get_bootstrap_servers(ops_test)
-    unit_name = unit_name or ops_test.model.applications[APP_NAME].units[0].name
+    bootstrap_servers = get_bootstrap_servers(juju)
+    unit_name = unit_name or juju.ext.model.applications[APP_NAME].units[0].name
 
     # example of topic offset output: 'test-topic:0:10'
     result = check_output(
-        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {ops_test.model.info.name} -- {BROKER.paths['BIN']}/bin/kafka-get-offsets.sh --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {BROKER.paths['CONF']}/client.properties",
+        f"kubectl exec {unit_name.replace('/', '-')} -c {CONTAINER} -n {juju.model} -- {BROKER.paths['BIN']}/bin/kafka-get-offsets.sh --topic {topic} --bootstrap-server {bootstrap_servers} --command-config {BROKER.paths['CONF']}/client.properties",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,
@@ -92,8 +92,8 @@ def get_topic_offsets(ops_test: OpsTest, topic: str, unit_name: Optional[str] = 
     return re.search(rf"{topic}:(\d+:\d+)", result)[1].split(":")
 
 
-async def send_control_signal(
-    ops_test: OpsTest,
+def send_control_signal(
+    juju: JujuFixture,
     unit_name: str,
     signal: str,
     container_name: str = CONTAINER,
@@ -101,14 +101,14 @@ async def send_control_signal(
     f"""Issues given job control signals to a Kafka process on a given Juju unit.
 
     Args:
-        ops_test: OpsTest
+        juju: JujuFixture
         unit_name: the Juju unit name
         signal: the signal to issue
             e.g `SIGKILL`, `SIGSTOP`, `SIGCONT` etc
         container_name: the container to run command on
             Defaults to '{container_name}'
     """
-    cmd = f"kubectl exec {unit_name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- pkill --signal {signal} -f {PROCESS}"
+    cmd = f"kubectl exec {unit_name.replace('/', '-')} -c {container_name} -n {juju.model} -- pkill --signal {signal} -f {PROCESS}"
     check_output(
         cmd,
         stderr=PIPE,
@@ -118,7 +118,7 @@ async def send_control_signal(
 
 
 def modify_pebble_restart_delay(
-    ops_test: OpsTest,
+    juju: JujuFixture,
     policy: Literal["extend", "restore"],
     app_name: str = APP_NAME,
     container_name: str = CONTAINER,
@@ -127,7 +127,7 @@ def modify_pebble_restart_delay(
     f"""Modify the pebble restart delay of the underlying process.
 
     Args:
-        ops_test: OpsTest
+        juju: JujuFixture
         policy: the pebble restart delay policy to apply
             Either 'extend' or 'restore'
         app_name: the Kafka Juju application
@@ -139,12 +139,12 @@ def modify_pebble_restart_delay(
     now = datetime.now().isoformat()
     pebble_patch_path = f"/tmp/pebble_plan_{now}.yaml"
 
-    for unit in ops_test.model.applications[app_name].units:
+    for unit in juju.ext.model.applications[app_name].units:
         logger.info(
             f"Copying extend_pebble_restart_delay manifest to {unit.name} {container_name} container..."
         )
         check_output(
-            f"kubectl cp ./tests/integration/ha/manifests/{policy}_pebble_restart_delay.yaml {unit.name.replace('/', '-')}:{pebble_patch_path} -c {container_name} -n {ops_test.model.info.name}",
+            f"kubectl cp ./tests/integration/ha/manifests/{policy}_pebble_restart_delay.yaml {unit.name.replace('/', '-')}:{pebble_patch_path} -c {container_name} -n {juju.model}",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,
@@ -152,7 +152,7 @@ def modify_pebble_restart_delay(
 
         logger.info(f"Adding {policy} policy to {container_name} pebble plan...")
         check_output(
-            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble add --combine {service_name}-{uuid.uuid4().hex} {pebble_patch_path}",
+            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {juju.model} -- /charm/bin/pebble add --combine {service_name}-{uuid.uuid4().hex} {pebble_patch_path}",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,
@@ -160,7 +160,7 @@ def modify_pebble_restart_delay(
 
         logger.info(f"Replanning {service_name} service...")
         check_output(
-            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {ops_test.model.info.name} -- /charm/bin/pebble restart kafka",
+            f"kubectl exec {unit.name.replace('/', '-')} -c {container_name} -n {juju.model} -- /charm/bin/pebble restart kafka",
             stderr=PIPE,
             shell=True,
             universal_newlines=True,
@@ -204,11 +204,11 @@ def destroy_chaos_mesh(namespace: str) -> None:
     )
 
 
-def isolate_instance_from_cluster(ops_test: OpsTest, unit_name: str) -> None:
+def isolate_instance_from_cluster(juju: JujuFixture, unit_name: str) -> None:
     """Apply a NetworkChaos file to use chaos-mesh to simulate a network cut.
 
     Args:
-        ops_test: OpsTest
+        juju: JujuFixture
         unit_name: the Juju unit running the ZooKeeper process
     """
     with tempfile.NamedTemporaryFile() as temp_file:
@@ -217,7 +217,7 @@ def isolate_instance_from_cluster(ops_test: OpsTest, unit_name: str) -> None:
         ) as chaos_network_loss_file:
             template = string.Template(chaos_network_loss_file.read())
             chaos_network_loss = template.substitute(
-                namespace=ops_test.model.info.name,
+                namespace=juju.model,
                 pod=unit_name.replace("/", "-"),
             )
 
@@ -230,25 +230,25 @@ def isolate_instance_from_cluster(ops_test: OpsTest, unit_name: str) -> None:
         check_output(" ".join(["kubectl", "apply", "-f", temp_file.name]), shell=True, env=env)
 
 
-def remove_instance_isolation(ops_test: OpsTest) -> None:
+def remove_instance_isolation(juju: JujuFixture) -> None:
     """Delete the NetworkChaos that is isolating the primary unit of the cluster.
 
     Args:
-        ops_test: OpsTest
+        juju: JujuFixture
     """
     env = os.environ
     env["KUBECONFIG"] = os.path.expanduser("~/.kube/config")
 
     check_output(
-        f"kubectl -n {ops_test.model.info.name} delete --ignore-not-found=true networkchaos network-loss-primary",
+        f"kubectl -n {juju.model} delete --ignore-not-found=true networkchaos network-loss-primary",
         shell=True,
         env=env,
     )
 
 
-def add_k8s_hosts(ops_test: OpsTest):
+def add_k8s_hosts(juju: JujuFixture):
     """Adds a the pod dns hostnames to the local /etc/hosts file."""
-    address_map = get_unit_address_map(ops_test=ops_test)
+    address_map = get_unit_address_map(juju=juju)
     dns_pod_map = [
         f"{pod_ip} {get_k8s_host_from_unit(unit_name)}"
         for unit_name, pod_ip in address_map.items()
@@ -260,9 +260,9 @@ def add_k8s_hosts(ops_test: OpsTest):
         logger.info(f"Added {item} to /etc/hosts")
 
 
-def remove_k8s_hosts(ops_test: OpsTest):
+def remove_k8s_hosts(juju: JujuFixture):
     """Removes the dns hostnames from /etc/hosts file."""
-    address_map = get_unit_address_map(ops_test=ops_test)
+    address_map = get_unit_address_map(juju=juju)
 
     for unit_name in address_map.keys():
         cmd = f"sudo sed -i -e '/.*{get_k8s_host_from_unit(unit_name)}$/d' /etc/hosts"
@@ -270,9 +270,9 @@ def remove_k8s_hosts(ops_test: OpsTest):
         logger.info(f"Removed {unit_name} from /etc/hosts")
 
 
-def delete_pod(ops_test: OpsTest, unit_name: str):
+def delete_pod(juju: JujuFixture, unit_name: str):
     check_output(
-        f"kubectl delete pod {unit_name.replace('/', '-')} -n {ops_test.model.info.name}",
+        f"kubectl delete pod {unit_name.replace('/', '-')} -n {juju.model}",
         stderr=PIPE,
         shell=True,
         universal_newlines=True,

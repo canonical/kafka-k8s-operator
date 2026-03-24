@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
-
-import asyncio
 import logging
 import os
+from time import sleep
 
 import pytest
-from pytest_operator.plugin import OpsTest
+from jubilant_adapters import JujuFixture, gather
 
 from literals import (
     CONTROLLER_PORT,
@@ -40,9 +39,9 @@ class TestKRaft:
     deployment_strat: str = os.environ.get("DEPLOYMENT", "multi")
     controller_app: str = {"single": APP_NAME, "multi": CONTROLLER_APP}[deployment_strat]
 
-    async def _assert_broker_listeners_accessible(self, ops_test: OpsTest, broker_unit_num=0):
+    def _assert_broker_listeners_accessible(self, juju: JujuFixture, broker_unit_num=0):
         logger.info(f"Asserting broker listeners are up: {APP_NAME}/{broker_unit_num}")
-        address = await get_address(ops_test=ops_test, app_name=APP_NAME, unit_num=broker_unit_num)
+        address = get_address(juju=juju, app_name=APP_NAME, unit_num=broker_unit_num)
         assert netcat(
             address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].internal
         )  # Internal listener
@@ -52,23 +51,20 @@ class TestKRaft:
             address, SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].client
         )
 
-    async def _assert_controller_listeners_accessible(
-        self, ops_test: OpsTest, controller_unit_num=0
-    ):
+    def _assert_controller_listeners_accessible(self, juju: JujuFixture, controller_unit_num=0):
         # Check controller socket
         logger.info(
             f"Asserting controller listeners are up: {self.controller_app}/{controller_unit_num}"
         )
-        address = await get_address(
-            ops_test=ops_test, app_name=self.controller_app, unit_num=controller_unit_num
+        address = get_address(
+            juju=juju, app_name=self.controller_app, unit_num=controller_unit_num
         )
 
         assert netcat(address, CONTROLLER_PORT)
 
-    @pytest.mark.abort_on_fail
-    async def test_build_and_deploy(self, ops_test: OpsTest, kafka_charm):
-        await asyncio.gather(
-            ops_test.model.deploy(
+    def test_build_and_deploy(self, juju: JujuFixture, kafka_charm):
+        gather(
+            juju.ext.model.deploy(
                 kafka_charm,
                 application_name=APP_NAME,
                 num_units=1,
@@ -80,7 +76,7 @@ class TestKRaft:
                 resources={"kafka-image": KAFKA_CONTAINER},
                 trust=True,
             ),
-            ops_test.model.deploy(
+            juju.ext.model.deploy(
                 "kafka-test-app",
                 application_name=PRODUCER_APP,
                 channel="edge",
@@ -98,7 +94,7 @@ class TestKRaft:
         )
 
         if self.controller_app != APP_NAME:
-            await ops_test.model.deploy(
+            juju.ext.model.deploy(
                 kafka_charm,
                 application_name=self.controller_app,
                 num_units=1,
@@ -112,8 +108,8 @@ class TestKRaft:
             )
 
         status = "active" if self.controller_app == APP_NAME else "blocked"
-        async with ops_test.fast_forward(fast_interval="60s"):
-            await ops_test.model.wait_for_idle(
+        with juju.ext.fast_forward(fast_interval="60s"):
+            juju.ext.model.wait_for_idle(
                 apps=list({APP_NAME, self.controller_app}),
                 idle_period=30,
                 timeout=1800,
@@ -122,63 +118,55 @@ class TestKRaft:
             )
 
         # ensuring update-status fires
-        async with ops_test.fast_forward(fast_interval="10s"):
-            await asyncio.sleep(30)
+        with juju.ext.fast_forward(fast_interval="10s"):
+            sleep(30)
 
-    @pytest.mark.abort_on_fail
-    async def test_integrate(self, ops_test: OpsTest):
+    def test_integrate(self, juju: JujuFixture):
         if self.controller_app != APP_NAME:
-            await ops_test.model.add_relation(
+            juju.ext.model.add_relation(
                 f"{APP_NAME}:{PEER_CLUSTER_ORCHESTRATOR_RELATION}",
                 f"{CONTROLLER_APP}:{PEER_CLUSTER_RELATION}",
             )
 
-        await ops_test.model.wait_for_idle(
-            apps=list({APP_NAME, self.controller_app}), idle_period=30
-        )
+        juju.ext.model.wait_for_idle(apps=list({APP_NAME, self.controller_app}), idle_period=30)
 
-        async with ops_test.fast_forward(fast_interval="40s"):
-            await asyncio.sleep(120)
+        with juju.ext.fast_forward(fast_interval="40s"):
+            sleep(120)
 
-        assert ops_test.model.applications[APP_NAME].status == "active"
-        assert ops_test.model.applications[self.controller_app].status == "active"
+        assert juju.ext.model.applications[APP_NAME].status == "active"
+        assert juju.ext.model.applications[self.controller_app].status == "active"
 
-    @pytest.mark.abort_on_fail
-    async def test_listeners(self, ops_test: OpsTest):
+    def test_listeners(self, juju: JujuFixture):
         print("SLEEPING")
         logger.info("SLEEPING")
-        await asyncio.sleep(300)
-        await self._assert_broker_listeners_accessible(ops_test)
-        await self._assert_controller_listeners_accessible(ops_test)
+        sleep(300)
+        self._assert_broker_listeners_accessible(juju)
+        self._assert_controller_listeners_accessible(juju)
 
-    @pytest.mark.abort_on_fail
-    async def test_authorizer(self, ops_test: OpsTest):
+    def test_authorizer(self, juju: JujuFixture):
 
-        address = await get_address(ops_test=ops_test)
+        address = get_address(juju=juju)
         port = SECURITY_PROTOCOL_PORTS["SASL_PLAINTEXT", "SCRAM-SHA-512"].internal
 
-        await create_test_topic(ops_test, f"{address}:{port}")
+        create_test_topic(juju, f"{address}:{port}")
 
-    @pytest.mark.abort_on_fail
-    async def test_scale_out(self, ops_test: OpsTest):
-        await ops_test.model.applications[self.controller_app].add_units(count=4)
+    def test_scale_out(self, juju: JujuFixture):
+        juju.ext.model.applications[self.controller_app].add_units(count=4)
 
         if self.deployment_strat == "multi":
-            await ops_test.model.applications[APP_NAME].add_units(count=2)
+            juju.ext.model.applications[APP_NAME].add_units(count=2)
 
-        await ops_test.model.wait_for_idle(
+        juju.ext.model.wait_for_idle(
             apps=list({APP_NAME, self.controller_app}),
             status="active",
             timeout=1200,
             idle_period=20,
         )
 
-        address = await get_address(ops_test=ops_test, app_name=self.controller_app)
+        address = get_address(juju=juju, app_name=self.controller_app)
         bootstrap_controller = f"{address}:{CONTROLLER_PORT}"
 
-        unit_status = kraft_quorum_status(
-            ops_test, f"{self.controller_app}/0", bootstrap_controller
-        )
+        unit_status = kraft_quorum_status(juju, f"{self.controller_app}/0", bootstrap_controller)
 
         offset = KRAFT_NODE_ID_OFFSET if self.controller_app == APP_NAME else 0
 
@@ -191,17 +179,14 @@ class TestKRaft:
                 assert status == KRaftUnitStatus.OBSERVER
 
         for unit_num in range(3):
-            await self._assert_broker_listeners_accessible(ops_test, broker_unit_num=unit_num)
+            self._assert_broker_listeners_accessible(juju, broker_unit_num=unit_num)
 
         for unit_num in range(5):
-            await self._assert_controller_listeners_accessible(
-                ops_test, controller_unit_num=unit_num
-            )
+            self._assert_controller_listeners_accessible(juju, controller_unit_num=unit_num)
 
-    @pytest.mark.abort_on_fail
-    async def test_scale_in(self, ops_test: OpsTest):
-        await ops_test.model.applications[self.controller_app].scale(scale=3)
-        await ops_test.model.wait_for_idle(
+    def test_scale_in(self, juju: JujuFixture):
+        juju.ext.model.applications[self.controller_app].scale(scale=3)
+        juju.ext.model.wait_for_idle(
             apps=[self.controller_app],
             status="active",
             timeout=600,
@@ -209,20 +194,16 @@ class TestKRaft:
             wait_for_exact_units=3,
         )
 
-        async with ops_test.fast_forward(fast_interval="30s"):
-            await asyncio.sleep(120)
+        with juju.ext.fast_forward(fast_interval="30s"):
+            sleep(120)
 
-        address = await get_address(ops_test=ops_test, app_name=self.controller_app, unit_num=0)
+        address = get_address(juju=juju, app_name=self.controller_app, unit_num=0)
         bootstrap_controller = f"{address}:{CONTROLLER_PORT}"
 
-        unit_status = kraft_quorum_status(
-            ops_test, f"{self.controller_app}/0", bootstrap_controller
-        )
+        unit_status = kraft_quorum_status(juju, f"{self.controller_app}/0", bootstrap_controller)
 
         assert KRaftUnitStatus.LEADER in unit_status.values()
 
         for unit_num in range(3):
-            await self._assert_broker_listeners_accessible(ops_test, broker_unit_num=unit_num)
-            await self._assert_controller_listeners_accessible(
-                ops_test, controller_unit_num=unit_num
-            )
+            self._assert_broker_listeners_accessible(juju, broker_unit_num=unit_num)
+            self._assert_controller_listeners_accessible(juju, controller_unit_num=unit_num)

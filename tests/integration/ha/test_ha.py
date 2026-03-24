@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
-import asyncio
 import logging
-from collections.abc import AsyncGenerator
+from time import sleep
 
 import pytest
-from pytest_operator.plugin import OpsTest
+from jubilant_adapters import JujuFixture, gather
 
 from integration.ha.continuous_writes import ContinuousWrites
 from integration.ha.ha_helpers import (
@@ -40,46 +39,44 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture()
-async def c_writes(ops_test: OpsTest):
+def c_writes(juju: JujuFixture):
     """Creates instance of the ContinuousWrites."""
     app = APP_NAME
-    return ContinuousWrites(ops_test, app)
+    return ContinuousWrites(juju, app)
 
 
 @pytest.fixture()
-async def c_writes_runner(ops_test: OpsTest, c_writes: ContinuousWrites):
+def c_writes_runner(juju: JujuFixture, c_writes: ContinuousWrites):
     """Starts continuous write operations and clears writes at the end of the test."""
-    add_k8s_hosts(ops_test=ops_test)
+    add_k8s_hosts(juju=juju)
     c_writes.start()
     yield
     c_writes.clear()
-    remove_k8s_hosts(ops_test=ops_test)
+    remove_k8s_hosts(juju=juju)
     logger.info("\n\n\n\nThe writes have been cleared.\n\n\n\n")
 
 
 @pytest.fixture()
-async def restart_delay(ops_test: OpsTest):
-    modify_pebble_restart_delay(ops_test=ops_test, policy="extend")
+def restart_delay(juju: JujuFixture):
+    modify_pebble_restart_delay(juju=juju, policy="extend")
     yield
-    modify_pebble_restart_delay(ops_test=ops_test, policy="restore")
+    modify_pebble_restart_delay(juju=juju, policy="restore")
 
 
 @pytest.fixture()
-async def chaos_mesh(ops_test: OpsTest) -> AsyncGenerator:
+def chaos_mesh(juju: JujuFixture):
     """Deploys chaos mesh to the namespace and uninstalls it at the end."""
-    deploy_chaos_mesh(ops_test.model.info.name)
+    deploy_chaos_mesh(juju.model)
 
     yield
 
-    remove_instance_isolation(ops_test)
-    destroy_chaos_mesh(ops_test.model.info.name)
+    remove_instance_isolation(juju)
+    destroy_chaos_mesh(juju.model)
 
 
-@pytest.mark.skip_if_deployed
-@pytest.mark.abort_on_fail
-async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
-    await asyncio.gather(
-        ops_test.model.deploy(
+def test_build_and_deploy(juju: JujuFixture, kafka_charm, app_charm):
+    gather(
+        juju.ext.model.deploy(
             kafka_charm,
             application_name=APP_NAME,
             num_units=1,
@@ -87,16 +84,16 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
             trust=True,
             config={"expose_external": "nodeport"},
         ),
-        ops_test.model.deploy(ZK_NAME, channel="3/edge", num_units=1, trust=True),
-        ops_test.model.deploy(app_charm, application_name=DUMMY_NAME, trust=True),
+        juju.ext.model.deploy(ZK_NAME, channel="3/edge", num_units=1, trust=True),
+        juju.ext.model.deploy(app_charm, application_name=DUMMY_NAME, trust=True),
     )
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=2000)
+    juju.ext.model.wait_for_idle(apps=[APP_NAME, ZK_NAME], timeout=2000)
 
-    await ops_test.model.add_relation(APP_NAME, ZK_NAME)
-    async with ops_test.fast_forward(fast_interval="20s"):
-        await asyncio.sleep(90)
+    juju.ext.model.add_relation(APP_NAME, ZK_NAME)
+    with juju.ext.fast_forward(fast_interval="20s"):
+        sleep(90)
 
-    await ops_test.model.wait_for_idle(
+    juju.ext.model.wait_for_idle(
         apps=[APP_NAME, ZK_NAME],
         idle_period=30,
         status="active",
@@ -104,21 +101,21 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, app_charm):
         raise_on_error=False,
     )
 
-    await ops_test.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
+    juju.ext.model.add_relation(APP_NAME, f"{DUMMY_NAME}:{REL_NAME_ADMIN}")
 
-    async with ops_test.fast_forward(fast_interval="60s"):
-        await ops_test.model.wait_for_idle(
+    with juju.ext.fast_forward(fast_interval="60s"):
+        juju.ext.model.wait_for_idle(
             apps=[APP_NAME, DUMMY_NAME, ZK_NAME], idle_period=30, status="active", timeout=2000
         )
 
 
 # run this test early, in case of resource limits on runners with too many units
-async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
+def test_multi_cluster_isolation(juju: JujuFixture, kafka_charm):
     second_kafka_name = f"{APP_NAME}-two"
     second_zk_name = f"{ZK_NAME}-two"
 
-    await asyncio.gather(
-        ops_test.model.deploy(
+    gather(
+        juju.ext.model.deploy(
             kafka_charm,
             application_name=second_kafka_name,
             num_units=1,
@@ -126,14 +123,14 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
             trust=True,
             config={"expose_external": "nodeport"},
         ),
-        ops_test.model.deploy(
+        juju.ext.model.deploy(
             ZK_NAME, application_name=second_zk_name, channel="3/edge", trust=True
         ),
     )
-    await ops_test.model.add_relation(second_kafka_name, second_zk_name)
+    juju.ext.model.add_relation(second_kafka_name, second_zk_name)
 
-    async with ops_test.fast_forward(fast_interval="60s"):
-        await ops_test.model.wait_for_idle(
+    with juju.ext.fast_forward(fast_interval="60s"):
+        juju.ext.model.wait_for_idle(
             apps=[second_kafka_name, second_zk_name],
             idle_period=30,
             status="active",
@@ -141,20 +138,20 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
             raise_on_error=False,
         )
 
-    assert ops_test.model.applications[second_kafka_name].status == "active"
-    assert ops_test.model.applications[second_zk_name].status == "active"
+    assert juju.ext.model.applications[second_kafka_name].status == "active"
+    assert juju.ext.model.applications[second_zk_name].status == "active"
 
     # produce to first cluster
-    action = await ops_test.model.units.get(f"{DUMMY_NAME}/0").run_action("produce")
-    await action.wait()
-    await asyncio.sleep(10)
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30)
-    assert ops_test.model.applications[APP_NAME].status == "active"
-    assert ops_test.model.applications[DUMMY_NAME].status == "active"
+    action = juju.ext.model.units.get(f"{DUMMY_NAME}/0").run_action("produce")
+    action.wait()
+    sleep(10)
+    juju.ext.model.wait_for_idle(apps=[APP_NAME, DUMMY_NAME], timeout=1000, idle_period=30)
+    assert juju.ext.model.applications[APP_NAME].status == "active"
+    assert juju.ext.model.applications[DUMMY_NAME].status == "active"
 
     # logs exist on first cluster
     check_logs(
-        ops_test=ops_test,
+        juju=juju,
         kafka_unit_name=f"{APP_NAME}/0",
         topic="test-topic",
     )
@@ -162,60 +159,58 @@ async def test_multi_cluster_isolation(ops_test: OpsTest, kafka_charm):
     # Check that logs are not found on the second cluster
     with pytest.raises(AssertionError):
         check_logs(
-            ops_test=ops_test,
+            juju=juju,
             kafka_unit_name=f"{second_kafka_name}/0",
             topic="test-topic",
         )
 
     # fast removal of second cluster
     remove_apps = f"remove-application --force --destroy-storage --no-wait --no-prompt {second_kafka_name} {second_zk_name}"
-    await ops_test.juju(*remove_apps.split(), check=True)
+    juju.juju(*remove_apps.split(), check=True)
 
 
-async def test_scale_up_zk_kafka(ops_test: OpsTest):
-    await ops_test.model.applications[APP_NAME].add_units(count=2)
-    await ops_test.model.applications[ZK_NAME].add_units(count=2)
-    await ops_test.model.block_until(lambda: len(ops_test.model.applications[APP_NAME].units) == 3)
-    await ops_test.model.block_until(lambda: len(ops_test.model.applications[ZK_NAME].units) == 3)
-    await ops_test.model.wait_for_idle(
+def test_scale_up_zk_kafka(juju: JujuFixture):
+    juju.ext.model.applications[APP_NAME].add_units(count=2)
+    juju.ext.model.applications[ZK_NAME].add_units(count=2)
+    juju.ext.model.block_until(lambda: len(juju.ext.model.applications[APP_NAME].units) == 3)
+    juju.ext.model.block_until(lambda: len(juju.ext.model.applications[ZK_NAME].units) == 3)
+    juju.ext.model.wait_for_idle(
         apps=[APP_NAME, ZK_NAME], status="active", timeout=1000, idle_period=30
     )
 
 
-async def test_kill_broker_with_topic_leader(
-    ops_test: OpsTest,
+def test_kill_broker_with_topic_leader(
+    juju: JujuFixture,
     restart_delay,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):
     # Let some time pass to create messages
-    await asyncio.sleep(5)
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    sleep(5)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     initial_leader_num = topic_description.leader
 
     logger.info(
         f"Killing broker of leader for topic '{ContinuousWrites.TOPIC_NAME}': {initial_leader_num}"
     )
-    await send_control_signal(
-        ops_test=ops_test, unit_name=f"{APP_NAME}/{initial_leader_num}", signal="SIGKILL"
-    )
+    send_control_signal(juju=juju, unit_name=f"{APP_NAME}/{initial_leader_num}", signal="SIGKILL")
 
     # Give time for the remaining units to notice leader going down
-    await asyncio.sleep(REELECTION_TIME)
+    sleep(REELECTION_TIME)
 
     # Check offsets after killing leader
-    initial_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    initial_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
 
     # verify replica is not in sync and check that leader changed
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     assert initial_leader_num != topic_description.leader
     assert topic_description.in_sync_replicas == {0, 1, 2} - {initial_leader_num}
 
     # Give time for the service to restart
-    await asyncio.sleep(RESTART_DELAY * 2)
+    sleep(RESTART_DELAY * 2)
 
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
-    next_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
+    next_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
 
     assert topic_description.in_sync_replicas == {0, 1, 2}
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
@@ -224,28 +219,26 @@ async def test_kill_broker_with_topic_leader(
     assert_continuous_writes_consistency(result=result)
 
 
-async def test_restart_broker_with_topic_leader(
-    ops_test: OpsTest,
+def test_restart_broker_with_topic_leader(
+    juju: JujuFixture,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     leader_num = topic_description.leader
 
     logger.info(
         f"Restarting broker of leader for topic '{ContinuousWrites.TOPIC_NAME}': {leader_num}"
     )
-    await send_control_signal(
-        ops_test=ops_test, unit_name=f"{APP_NAME}/{leader_num}", signal="SIGTERM"
-    )
+    send_control_signal(juju=juju, unit_name=f"{APP_NAME}/{leader_num}", signal="SIGTERM")
     # Give time for the service to restart
-    await asyncio.sleep(REELECTION_TIME * 2)
+    sleep(REELECTION_TIME * 2)
 
-    initial_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
-    await asyncio.sleep(CLIENT_TIMEOUT)
-    next_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    initial_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
+    sleep(CLIENT_TIMEOUT)
+    next_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
 
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     assert topic_description.in_sync_replicas == {0, 1, 2}
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
 
@@ -253,42 +246,38 @@ async def test_restart_broker_with_topic_leader(
     assert_continuous_writes_consistency(result=result)
 
 
-async def test_freeze_broker_with_topic_leader(
-    ops_test: OpsTest,
+def test_freeze_broker_with_topic_leader(
+    juju: JujuFixture,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     initial_leader_num = topic_description.leader
 
     logger.info(
         f"Freezing broker of leader for topic '{ContinuousWrites.TOPIC_NAME}': {initial_leader_num}"
     )
-    await send_control_signal(
-        ops_test=ops_test, unit_name=f"{APP_NAME}/{initial_leader_num}", signal="SIGSTOP"
-    )
-    await asyncio.sleep(REELECTION_TIME * 2)
+    send_control_signal(juju=juju, unit_name=f"{APP_NAME}/{initial_leader_num}", signal="SIGSTOP")
+    sleep(REELECTION_TIME * 2)
 
     # verify replica is not in sync
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     assert topic_description.in_sync_replicas == {0, 1, 2} - {initial_leader_num}
     assert initial_leader_num != topic_description.leader
 
     # verify new writes are continuing. Also, check that leader changed
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
-    initial_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
-    await asyncio.sleep(CLIENT_TIMEOUT * 2)
-    next_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
+    initial_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
+    sleep(CLIENT_TIMEOUT * 2)
+    next_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
 
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
 
     # Un-freeze the process
     logger.info(f"Un-freezing broker: {initial_leader_num}")
-    await send_control_signal(
-        ops_test=ops_test, unit_name=f"{APP_NAME}/{initial_leader_num}", signal="SIGCONT"
-    )
-    await asyncio.sleep(REELECTION_TIME)
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    send_control_signal(juju=juju, unit_name=f"{APP_NAME}/{initial_leader_num}", signal="SIGCONT")
+    sleep(REELECTION_TIME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
 
     # verify the unit is now rejoined the cluster
     assert topic_description.in_sync_replicas == {0, 1, 2}
@@ -297,30 +286,30 @@ async def test_freeze_broker_with_topic_leader(
     assert_continuous_writes_consistency(result=result)
 
 
-async def test_full_cluster_crash(
-    ops_test: OpsTest,
+def test_full_cluster_crash(
+    juju: JujuFixture,
     restart_delay,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):
     # Let some time pass for messages to be produced
-    await asyncio.sleep(10)
+    sleep(10)
 
     logger.info("Killing all brokers...")
     # kill all units "simultaneously"
-    await asyncio.gather(
+    gather(
         *[
-            send_control_signal(ops_test, unit.name, signal="SIGKILL")
-            for unit in ops_test.model.applications[APP_NAME].units
+            send_control_signal(juju, unit.name, signal="SIGKILL")
+            for unit in juju.ext.model.applications[APP_NAME].units
         ]
     )
     # Give time for the service to restart
-    await asyncio.sleep(RESTART_DELAY * 2)
+    sleep(RESTART_DELAY * 2)
 
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
-    initial_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
-    await asyncio.sleep(CLIENT_TIMEOUT * 2)
-    next_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
+    initial_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
+    sleep(CLIENT_TIMEOUT * 2)
+    next_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
 
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
     assert topic_description.in_sync_replicas == {0, 1, 2}
@@ -329,29 +318,29 @@ async def test_full_cluster_crash(
     assert_continuous_writes_consistency(result=result)
 
 
-async def test_full_cluster_restart(
-    ops_test: OpsTest,
+def test_full_cluster_restart(
+    juju: JujuFixture,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):
     # Let some time pass for messages to be produced
-    await asyncio.sleep(10)
+    sleep(10)
 
     logger.info("Restarting all brokers...")
     # Restart all units "simultaneously"
-    await asyncio.gather(
+    gather(
         *[
-            send_control_signal(ops_test, unit.name, signal="SIGTERM")
-            for unit in ops_test.model.applications[APP_NAME].units
+            send_control_signal(juju, unit.name, signal="SIGTERM")
+            for unit in juju.ext.model.applications[APP_NAME].units
         ]
     )
     # Give time for the service to restart
-    await asyncio.sleep(REELECTION_TIME * 2)
+    sleep(REELECTION_TIME * 2)
 
-    initial_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
-    await asyncio.sleep(CLIENT_TIMEOUT * 2)
-    next_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    initial_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
+    sleep(CLIENT_TIMEOUT * 2)
+    next_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
 
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
     assert topic_description.in_sync_replicas == {0, 1, 2}
@@ -360,38 +349,38 @@ async def test_full_cluster_restart(
     assert_continuous_writes_consistency(result=result)
 
 
-async def test_pod_reschedule(
-    ops_test: OpsTest,
+def test_pod_reschedule(
+    juju: JujuFixture,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
 ):
     # Let some time pass to create messages
-    await asyncio.sleep(5)
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    sleep(5)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     initial_leader_num = topic_description.leader
 
     logger.info(
         f"Killing pod of leader for topic '{ContinuousWrites.TOPIC_NAME}': {initial_leader_num}"
     )
-    delete_pod(ops_test, unit_name=f"{APP_NAME}/{initial_leader_num}")
+    delete_pod(juju, unit_name=f"{APP_NAME}/{initial_leader_num}")
 
     # let pod reschedule process be noticed up by juju
-    async with ops_test.fast_forward("60s"):
-        await ops_test.model.wait_for_idle(
+    with juju.ext.fast_forward("60s"):
+        juju.ext.model.wait_for_idle(
             apps=[APP_NAME], idle_period=30, status="active", timeout=1000
         )
 
     # refresh hosts with the new ip
-    remove_k8s_hosts(ops_test=ops_test)
-    add_k8s_hosts(ops_test=ops_test)
+    remove_k8s_hosts(juju=juju)
+    add_k8s_hosts(juju=juju)
 
     # Check offsets after killing leader
-    initial_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
-    await asyncio.sleep(CLIENT_TIMEOUT * 2)
-    next_offsets = get_topic_offsets(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    initial_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
+    sleep(CLIENT_TIMEOUT * 2)
+    next_offsets = get_topic_offsets(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
 
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     assert initial_leader_num != topic_description.leader
     assert topic_description.in_sync_replicas == {0, 1, 2}
 
@@ -400,58 +389,58 @@ async def test_pod_reschedule(
 
 
 @pytest.mark.unstable
-async def test_network_cut_without_ip_change(
-    ops_test: OpsTest,
+def test_network_cut_without_ip_change(
+    juju: JujuFixture,
     c_writes: ContinuousWrites,
     c_writes_runner: ContinuousWrites,
     chaos_mesh,
 ):
     # Let some time pass for messages to be produced
-    await asyncio.sleep(5)
+    sleep(5)
 
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     initial_leader_num = topic_description.leader
 
     logger.info(
         f"Cutting network for leader of topic '{ContinuousWrites.TOPIC_NAME}': {initial_leader_num}"
     )
-    isolate_instance_from_cluster(ops_test=ops_test, unit_name=f"{APP_NAME}/{initial_leader_num}")
-    await asyncio.sleep(REELECTION_TIME * 2)
+    isolate_instance_from_cluster(juju=juju, unit_name=f"{APP_NAME}/{initial_leader_num}")
+    sleep(REELECTION_TIME * 2)
 
     available_unit = f"{APP_NAME}/{next(iter({0, 1, 2} - {initial_leader_num}))}"
     # verify replica is not in sync
     topic_description = get_topic_description(
-        ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
+        juju=juju, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
     )
     assert topic_description.in_sync_replicas == {0, 1, 2} - {initial_leader_num}
     assert initial_leader_num != topic_description.leader
 
     # verify new writes are continuing. Also, check that leader changed
     topic_description = get_topic_description(
-        ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
+        juju=juju, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
     )
     initial_offsets = get_topic_offsets(
-        ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
+        juju=juju, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
     )
-    await asyncio.sleep(CLIENT_TIMEOUT * 2)
+    sleep(CLIENT_TIMEOUT * 2)
     next_offsets = get_topic_offsets(
-        ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
+        juju=juju, topic=ContinuousWrites.TOPIC_NAME, unit_name=available_unit
     )
 
     assert int(next_offsets[-1]) > int(initial_offsets[-1])
 
     # Release the network
     logger.info(f"Releasing network of broker: {initial_leader_num}")
-    remove_instance_isolation(ops_test)
+    remove_instance_isolation(juju)
 
-    await asyncio.sleep(REELECTION_TIME * 2)
+    sleep(REELECTION_TIME * 2)
 
-    async with ops_test.fast_forward(fast_interval="15s"):
+    with juju.ext.fast_forward(fast_interval="15s"):
         result = c_writes.stop()
-        await asyncio.sleep(CLIENT_TIMEOUT * 8)
+        sleep(CLIENT_TIMEOUT * 8)
 
     # verify the unit is now rejoined the cluster
-    topic_description = get_topic_description(ops_test=ops_test, topic=ContinuousWrites.TOPIC_NAME)
+    topic_description = get_topic_description(juju=juju, topic=ContinuousWrites.TOPIC_NAME)
     assert topic_description.in_sync_replicas == {0, 1, 2}
 
     assert_continuous_writes_consistency(result=result)
