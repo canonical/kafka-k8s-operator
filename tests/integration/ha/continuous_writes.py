@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
-import asyncio
 import logging
 import os
 import time
 from dataclasses import dataclass
 from multiprocessing import Event, Process, Queue
+from time import sleep
 from types import SimpleNamespace
 from typing import List, Optional
 
 from charms.kafka.client import KafkaClient
+from jubilant_adapters import JujuFixture
 from kafka.admin import NewTopic
 from kafka.consumer.fetcher import ConsumerRecord
 from kafka.errors import KafkaError
-from pytest_operator.plugin import OpsTest
 from tenacity import (
     RetryError,
     Retrying,
@@ -43,8 +43,8 @@ class ContinuousWrites:
     TOPIC_NAME = "ha-test-topic"
     LAST_WRITTEN_VAL_PATH = "/tmp/last_written_value"
 
-    def __init__(self, ops_test: OpsTest, app: str):
-        self._ops_test = ops_test
+    def __init__(self, juju: JujuFixture, app: str):
+        self._juju = juju
         self._app = app
         self._is_stopped = True
         self._event = None
@@ -74,7 +74,7 @@ class ContinuousWrites:
 
     def update(self):
         """Update cluster related conf. Useful in cases such as scaling, pwd change etc."""
-        self._queue.put(SimpleNamespace(model_full_name=self._ops_test.model.info.name))
+        self._queue.put(SimpleNamespace(model_full_name=self._juju.ext.model.info.name))
 
     @retry(
         wait=wait_fixed(wait=5) + wait_random(0, 5),
@@ -145,9 +145,9 @@ class ContinuousWrites:
         self._event = Event()
         self._queue = Queue()
         self._process = Process(
-            target=ContinuousWrites._run_async,
+            target=ContinuousWrites._run,
             name="continuous_writes",
-            args=(self._event, self._queue, 0, self._ops_test),
+            args=(self._event, self._queue, 0, self._juju),
         )
 
     def _stop_process(self):
@@ -159,7 +159,7 @@ class ContinuousWrites:
     def _client(self):
         """Build a Kafka client."""
         relation_data = get_provider_data(
-            ops_test=self._ops_test,
+            juju=self._juju,
             unit_name=f"{DUMMY_NAME}/0",
             owner=APP_NAME,
         )
@@ -171,15 +171,15 @@ class ContinuousWrites:
         )
 
     @staticmethod
-    async def _run(
-        event: Event, data_queue: Queue, starting_number: int, ops_test: OpsTest
+    def _run(
+        event: Event, data_queue: Queue, starting_number: int, juju: JujuFixture
     ) -> None:  # noqa: C901
         """Continuous writing."""
 
         def _client():
             """Build a Kafka client."""
             relation_data = get_provider_data(
-                ops_test=ops_test,
+                juju=juju,
                 unit_name=f"{DUMMY_NAME}/0",
                 owner=APP_NAME,
             )
@@ -200,7 +200,7 @@ class ContinuousWrites:
                 client = _client()
 
             ContinuousWrites._produce_message(client=client, write_value=write_value)
-            await asyncio.sleep(0.1)
+            sleep(0.1)
 
             # process termination requested
             if event.is_set():
@@ -232,8 +232,3 @@ class ContinuousWrites:
             except KafkaError as e:
                 logger.error(f"Error on 'Message #{write_value}' Kafka Producer: {e}")
                 time.sleep(0.1)
-
-    @staticmethod
-    def _run_async(event: Event, data_queue: Queue, starting_number: int, ops_test: OpsTest):
-        """Run async code."""
-        asyncio.run(ContinuousWrites._run(event, data_queue, starting_number, ops_test))
