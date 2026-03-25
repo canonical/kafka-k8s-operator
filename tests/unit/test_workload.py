@@ -30,24 +30,21 @@ def fake_workload(tmp_path_factory, monkeypatch) -> WorkloadBase:
 
 def test_last_restart_parses_correctly(patched_exec, monkeypatch):
     monkeypatch.undo()
-    patched_exec.return_value = inspect.cleandoc(
-        """
+    patched_exec.return_value = inspect.cleandoc("""
         Service  Startup  Current  Since
         kafka    enabled  active   2025-08-08T08:22:37Z
-    """
-    )
+    """)
 
     assert (
         KafkaWorkload(MagicMock()).last_restart
         == datetime.datetime(2025, 8, 8, 8, 22, 37, tzinfo=datetime.timezone.utc).timestamp()
     )
 
-    patched_exec.return_value = inspect.cleandoc(
-        """
+    patched_exec.return_value = inspect.cleandoc("""
     Service   Startup   Current   Since
     kafka     enabled   active    2025-08-15T11:05:51Z
-    promtail  disabled  inactive  -"""
-    )
+    promtail  disabled  inactive  -
+    """)
 
     assert (
         KafkaWorkload(MagicMock()).last_restart

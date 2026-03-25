@@ -62,9 +62,9 @@ class TestBalancer:
                 application_name=CONTROLLER_NAME,
                 num_units=1,
                 config={
-                    "roles": "controller"
-                    if self.balancer_app == APP_NAME
-                    else "controller,balancer",
+                    "roles": (
+                        "controller" if self.balancer_app == APP_NAME else "controller,balancer",
+                    ),
                     "profile": "testing",
                     "expose-external": "nodeport",
                 },

@@ -18,6 +18,7 @@ markers = ["unstable", "broker", "balancer", "fails_in_kafka4"]
 [tool.black]
 line-length = 99
 target-version = ["py310"]
+extend-exclude = "tests/integration/app-charm/lib"
 
 [tool.isort]
 profile = "black"
@@ -60,14 +61,14 @@ jsonschema = "*"
 optional = true
 
 [tool.poetry.group.fmt.dependencies]
-black = "^22.3.0"
+black = "^26.3.0"
 ruff = ">=0.1.0"
 
 [tool.poetry.group.lint]
 optional = true
 
 [tool.poetry.group.lint.dependencies]
-black = "^22.3.0"
+black = "^26.3.0"
 ruff = ">=0.1.0"
 codespell = ">=2.2.2"
 pyright = "^1.1.301"
