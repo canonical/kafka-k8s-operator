@@ -227,22 +227,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             self.broker.config_manager.set_environment()
             self.broker.config_manager.set_server_properties()
             self.broker.config_manager.set_client_properties()
-
-            # during pod-reschedules (e.g upgrades or otherwise) we lose all files
-            # need to manually add-back key/truststores
-            if (
-                self.state.cluster.tls_enabled
-                and self.state.unit_broker.client_certs.certificate
-                and self.state.unit_broker.client_certs.ca
-                and self.state.unit_broker.client_certs.chain
-            ):  # TLS is probably completed
-                self.broker.tls_manager.set_server_key()
-                self.broker.tls_manager.set_ca()
-                self.broker.tls_manager.set_chain()
-                self.broker.tls_manager.set_certificate()
-                self.broker.tls_manager.set_bundle()
-                self.broker.tls_manager.set_truststore()
-                self.broker.tls_manager.set_keystore()
+            self.broker.tls_manager.configure()
 
             # start kafka service
             self.broker.workload.start()
