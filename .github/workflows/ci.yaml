@@ -120,10 +120,10 @@ jobs:
         run: |
           sudo snap install concierge --classic
           # calico has issues with strict confinements, so remove -strict
-          sudo snap install microk8s --channel ${MICROK8S_CHANNEL//"-strict"/} --classic
-          sudo snap install juju --channel $JUJU_CHANNEL
+          sudo snap install microk8s --channel "${MICROK8S_CHANNEL//'-strict'/}" --classic
+          sudo snap install juju --channel "$JUJU_CHANNEL"
 
-          sudo usermod -a -G microk8s $USER
+          sudo usermod -a -G microk8s "$USER"
           mkdir -p ~/.kube
           chmod 0700 ~/.kube
 
@@ -139,12 +139,12 @@ jobs:
           # make juju work with microk8s --classic
           sudo mkdir -p /var/snap/juju/current/microk8s/credentials
           sudo microk8s config | sudo tee /var/snap/juju/current/microk8s/credentials/client.config
-          sudo chown -R $USER:$USER /var/snap/juju/current/microk8s/credentials
+          sudo chown -R "$USER":"$USER" /var/snap/juju/current/microk8s/credentials
 
           sudo concierge prepare \
             -p microk8s \
-            --microk8s-channel ${MICROK8S_CHANNEL//"-strict"/} \
-            --juju-channel $JUJU_CHANNEL \
+            --microk8s-channel "${MICROK8S_CHANNEL//'-strict'/}" \
+            --juju-channel "$JUJU_CHANNEL" \
             --extra-debs pipx
 
           pipx ensurepath
@@ -160,10 +160,10 @@ jobs:
           if [ "${{ github.event_name }}" == "schedule" ]
           then
             echo Running unstable and stable tests
-            echo "mark_expression=" >> $GITHUB_OUTPUT
+            echo "mark_expression=" >> "$GITHUB_OUTPUT"
           else
             echo Skipping unstable tests
-            echo "mark_expression=not unstable" >> $GITHUB_OUTPUT
+            echo "mark_expression=not unstable" >> "$GITHUB_OUTPUT"
           fi
       - name: Run integration tests
         run: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}' --keep-models --kraft-mode ${{ matrix.kraft-mode }}
@@ -208,10 +208,10 @@ jobs:
         run: |
           sudo snap install concierge --classic
           # calico has issues with strict confinements, so remove -strict
-          sudo snap install microk8s --channel ${MICROK8S_CHANNEL//"-strict"/} --classic
-          sudo snap install juju --channel $JUJU_CHANNEL
+          sudo snap install microk8s --channel "${MICROK8S_CHANNEL//'-strict'/}" --classic
+          sudo snap install juju --channel "$JUJU_CHANNEL"
 
-          sudo usermod -a -G microk8s $USER
+          sudo usermod -a -G microk8s "$USER"
           mkdir -p ~/.kube
           chmod 0700 ~/.kube
 
@@ -227,12 +227,12 @@ jobs:
           # make juju work with microk8s --classic
           sudo mkdir -p /var/snap/juju/current/microk8s/credentials
           sudo microk8s config | sudo tee /var/snap/juju/current/microk8s/credentials/client.config
-          sudo chown -R $USER:$USER /var/snap/juju/current/microk8s/credentials
+          sudo chown -R "$USER":"$USER" /var/snap/juju/current/microk8s/credentials
 
           sudo concierge prepare \
             -p microk8s \
-            --microk8s-channel ${MICROK8S_CHANNEL//"-strict"/} \
-            --juju-channel $JUJU_CHANNEL \
+            --microk8s-channel "${MICROK8S_CHANNEL//'-strict'/}" \
+            --juju-channel "$JUJU_CHANNEL" \
             --extra-debs pipx
           
           pipx ensurepath
@@ -248,10 +248,10 @@ jobs:
           if [ "${{ github.event_name }}" == "schedule" ]
           then
             echo Running unstable and stable tests
-            echo "mark_expression=" >> $GITHUB_OUTPUT
+            echo "mark_expression=" >> "$GITHUB_OUTPUT"
           else
             echo Skipping unstable tests
-            echo "mark_expression=not unstable" >> $GITHUB_OUTPUT
+            echo "mark_expression=not unstable" >> "$GITHUB_OUTPUT"
           fi
       - name: Run integration tests
         run: tox run -e ${{ matrix.tox-environments }} -- -m '${{ steps.select-tests.outputs.mark_expression }}' --keep-models --kraft-mode ${{ matrix.kraft-mode }}
