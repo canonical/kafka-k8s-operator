@@ -28,19 +28,28 @@ env:
   JUJU_BOOTSTRAP_OPTIONS: "--agent-version 3.6.8"
 
 jobs:
+  lint-workflows:
+    name: Lint .github/workflows/
+    uses: canonical/data-platform-workflows/.github/workflows/lint_workflows.yaml@v48.1.2
+    permissions:
+      contents: read
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Install tox & poetry
         run: |
           pipx install tox
           pipx install poetry
       - name: Run linters
         run: tox run -e lint
+    permissions: {}
 
   unit-test:
     name: Unit tests
@@ -48,7 +57,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Install tox & poetry
         run: |
           sudo apt-get update
@@ -58,6 +69,7 @@ jobs:
           pipx install poetry
       - name: Run tests
         run: tox run -e unit
+    permissions: {}
 
   build:
     strategy:
@@ -66,11 +78,15 @@ jobs:
           - .
           - tests/integration/app-charm
     name: Build charm | ${{ matrix.path }}
-    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v32.2.2
+    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v48.1.2
     with:
       path-to-charm-directory: ${{ matrix.path }}
+    permissions:
+      actions: read  # Needed for GitHub API call to get workflow version
+      contents: read
 
-  integration-test-github:
+  integration-test-single:
+    permissions: {} 
     strategy:
       fail-fast: false
       matrix:
@@ -93,11 +109,13 @@ jobs:
       - lint
       - unit-test
       - build
-    runs-on: [self-hosted, linux, AMD64, X64, large, noble]
+    runs-on: self-hosted-linux-amd64-noble-large
     timeout-minutes: 120
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Setup operator environment
         run: |
           sudo snap install concierge --classic
@@ -132,7 +150,7 @@ jobs:
           pipx ensurepath
           pipx install tox poetry
       - name: Download packed charm(s)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           pattern: ${{ needs.build.outputs.artifact-prefix }}-*
           merge-multiple: true
@@ -152,7 +170,8 @@ jobs:
         env:
           CI_PACKED_CHARMS: ${{ needs.build.outputs.charms }}
 
-  integration-test-self-hosted:
+  integration-test-multi:
+    permissions: {}
     strategy:
       fail-fast: false
       matrix:
@@ -178,11 +197,13 @@ jobs:
       - lint
       - unit-test
       - build
-    runs-on: [self-hosted, linux, AMD64, X64, xlarge, noble]
+    runs-on: self-hosted-linux-amd64-noble-xlarge
     timeout-minutes: 120
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Setup operator environment
         run: |
           sudo snap install concierge --classic
@@ -217,7 +238,7 @@ jobs:
           pipx ensurepath
           pipx install tox poetry
       - name: Download packed charm(s)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           pattern: ${{ needs.build.outputs.artifact-prefix }}-*
           merge-multiple: true
