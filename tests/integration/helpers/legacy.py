@@ -520,7 +520,7 @@ def get_provider_data(
 def get_address(juju: jubilant.Juju, app_name=APP_NAME, unit_num=0) -> str:
     """Get the address for a unit."""
     status = juju.status()
-    address = status.apps[APP_NAME].units[f"{app_name}/{unit_num}"].address
+    address = status.apps[app_name].units[f"{app_name}/{unit_num}"].address
     return address
 
 
@@ -855,22 +855,41 @@ def broker_id_to_unit_id(broker_id: int) -> int:
     return broker_id - KRAFT_NODE_ID_OFFSET
 
 
-def get_relation_endpoints(juju: jubilant.Juju) -> list[tuple[str, str]]:
+RelationTuple = tuple[str, str]
+
+
+def get_unit_relations(juju: jubilant.Juju, unit: str) -> dict[int, RelationTuple]:
+    """Parse the unit relations from show-unit command output."""
+    ret = {}
+    for item in show_unit(juju, unit).get("relation-info", []):
+        if not (_id := item.get("relation-id")):
+            continue
+
+        endpoint = item.get("endpoint", "")
+        related_endpoint = item.get("related-endpoint", "")
+        ret[int(_id)] = (endpoint, related_endpoint)
+
+    return ret
+
+
+def get_relations(juju: jubilant.Juju) -> list[RelationTuple]:
     """Get current active relations in the model."""
+    units = []
+    status = juju.status()
+    for app_status in status.apps.values():
+        units.extend(app_status.units.keys())
+
     relations = []
-    for app, app_status in juju.status().apps.items():
-        for _, rel in app_status.relations.items():
-            relations.append((app, rel[0].interface))
+    for unit in units:
+        unit_relations = get_unit_relations(juju, unit)
+        relations.extend(unit_relations.values())
+
     return relations
 
 
 def relation_exited(juju: jubilant.Juju, endpoint_one: str, endpoint_two: str) -> bool:
     """Returns true if the relation between endpoint_one and endpoint_two has been removed."""
-    for rel in get_relation_endpoints(juju):
-        endpoints = [rel[1] for rel in rel.endpoints]
-        if endpoint_one not in endpoints and endpoint_two not in endpoints:
-            return True
-    return False
+    return (endpoint_one, endpoint_two) not in get_relations(juju)
 
 
 def wait_for_relation_removed_between(

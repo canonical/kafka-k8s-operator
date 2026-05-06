@@ -190,7 +190,7 @@ def test_set_tls_private_key(juju: jubilant.Juju):
 
 def test_mtls(juju: jubilant.Juju, kafka_apps):
     # creating the signed external cert on the unit
-    response = juju.run(f"{DUMMY_NAME}/0", "create-certificate")
+    response = juju.run(f"{DUMMY_NAME}/0", "create-certificate", wait=900)
 
     with fast_forward(juju, fast_interval="120s"):
         juju.wait(
