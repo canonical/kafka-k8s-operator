@@ -5,6 +5,7 @@
 import json
 import logging
 import re
+from contextlib import contextmanager
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, check_output
 from typing import Any
@@ -40,6 +41,17 @@ BASE = "ubuntu@24.04"
 def all_active_idle(status: jubilant.Status, *apps: str):
     """Helper function for jubilant all units active|idle checks."""
     return jubilant.all_agents_idle(status, *apps) and jubilant.all_active(status, *apps)
+
+
+@contextmanager
+def fast_forward(
+    juju: jubilant.Juju, fast_interval: str = "10s", slow_interval: str | None = None
+):
+    """Temporarily speed up update-status firing rate for the current model."""
+    juju.model_config({"update-status-hook-interval": fast_interval})
+    yield
+    interval = slow_interval or "5m"
+    juju.model_config({"update-status-hook-interval": interval})
 
 
 def deploy_cluster(
