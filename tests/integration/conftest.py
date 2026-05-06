@@ -73,7 +73,7 @@ def kafka_charm():
 def app_charm():
     """Build the application charm."""
     charm_path = "tests/integration/app-charm"
-    charms = glob.glob(f"{charm_path}/*.charm")
+    charms = glob.glob(f"./{charm_path}/*.charm")
     if not charms:
         raise RuntimeError("Can not find Kafka charm, did you run charmcraft pack?")
     return charms[0]
