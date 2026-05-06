@@ -520,7 +520,7 @@ def get_provider_data(
 def get_address(juju: jubilant.Juju, app_name=APP_NAME, unit_num=0) -> str:
     """Get the address for a unit."""
     status = juju.status()
-    address = status.apps[APP_NAME].units[f"{app_name}/{unit_num}"].public_address
+    address = status.apps[APP_NAME].units[f"{app_name}/{unit_num}"].address
     return address
 
 
