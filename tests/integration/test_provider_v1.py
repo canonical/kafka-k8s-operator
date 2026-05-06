@@ -15,7 +15,7 @@ from integration.helpers.jubilant import (
     get_provider_data,
     get_secret_by_label,
 )
-from integration.helpers.pytest_operator import check_user, load_acls
+from integration.helpers.legacy import check_user, load_acls
 from literals import REL_NAME, TLS_RELATION
 from managers.auth import Acl
 
