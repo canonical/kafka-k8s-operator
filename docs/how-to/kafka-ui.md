@@ -33,14 +33,14 @@ As described above, the ingress relation is available via the `traefik` offer.
 
 ```text
 Model  Controller  Cloud/Region        Version  SLA          Timestamp
-ui     k8s         microk8s/localhost  3.6.11   unsupported  07:52:33+01:00
+ui     k8s         microk8s/localhost  3.6.21   unsupported  07:52:33+01:00
 
 SAAS           Status  Store  URL
 traefik        active  k8s    admin/cos.traefik
 
 App           Version  Status   Scale  Charm         Channel      Rev  Address         Exposed  Message
-kafka-k8s     4.0.0    active       3  kafka-k8s     4/edge        96  10.152.183.212  no       
-kraft         4.0.0    active       3  kafka-k8s     4/edge        96  10.152.183.38   no       
+kafka-k8s     4.1.1    active       3  kafka-k8s     4/stable     111  10.152.183.212  no       
+kraft         4.1.1    active       3  kafka-k8s     4/stable     111  10.152.183.38   no       
 
 Unit             Workload  Agent  Address     Ports  Message
 kafka-k8s/0*     active    idle   10.1.81.14         
@@ -58,7 +58,7 @@ kraft/2*         active    idle   10.1.81.61
 To deploy the Charmed Kafka UI K8s operator:
 
 ```bash
-juju deploy kafka-ui-k8s --channel latest/edge --trust
+juju deploy kafka-ui-k8s --channel stable --trust
 ```
 
 Once the Charmed Kafka UI K8s operator is deployed, it will end up in `blocked` state, since it needs to be integrated with a charmed Apache Kafka cluster. The output of `juju status` command will be like below:

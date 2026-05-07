@@ -9,7 +9,6 @@ myst:
 
 ```{note}
 This feature is available in charm revisions 69+.
-You can use the `edge` track to get the latest revision of the charm.
 ```
 
 To make the Charmed Apache Kafka K8s brokers reachable from outside the Kubernetes cluster,

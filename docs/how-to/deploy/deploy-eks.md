@@ -235,14 +235,14 @@ juju model-config logging-config='<root>=INFO;unit=DEBUG'
 Then, Charmed Apache Kafka can be deployed as usual:
 
 ```shell
-juju deploy kafka-k8s -n 3 --channel 4/edge --trust --config roles=broker,controller
+juju deploy kafka-k8s -n 3 --channel 4/stable --trust --config roles=broker,controller
 ```
 
 We also recommend to deploy a [Data Integrator](https://charmhub.io/data-integrator)
 for creating an admin user to manage the content of the Kafka cluster:
 
 ```shell
-juju deploy data-integrator admin --channel edge \
+juju deploy data-integrator admin --channel stable \
   --config extra-user-roles=admin \
   --config topic-name=admin-topic
 ```

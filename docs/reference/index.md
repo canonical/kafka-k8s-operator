@@ -13,15 +13,16 @@ This section contains the following reference materials.
 
 Charmhub generated content:
 
-* [Actions](https://charmhub.io/kafka-k8s/actions?channel=4/edge)
-* [Configurations](https://charmhub.io/kafka-k8s/configure?channel=4/edge)
-* [Libraries](https://charmhub.io/kafka-k8s/libraries/kafka?channel=4/edge)
+* [Actions](https://charmhub.io/kafka-k8s/actions?channel=4/stable)
+* [Configurations](https://charmhub.io/kafka-k8s/configure?channel=4/stable)
+* [Libraries](https://charmhub.io/kafka-k8s/libraries/kafka?channel=4/stable)
 
 Charm-specific reference materials:
 
 * {ref}`reference-file-system-paths`
 * {ref}`reference-statuses`
 * {ref}`reference-requirements`
+* {ref}`reference-terraform`
 
 General useful references:
 
@@ -33,11 +34,12 @@ General useful references:
 :hidden:
 
 release-notes/index.md
-Actions<https://charmhub.io/kafka-k8s/actions?channel=4/edge>
-Configurations<https://charmhub.io/kafka-k8s/configure?channel=4/edge>
-Libraries<https://charmhub.io/kafka-k8s/libraries/kafka?channel=4/edge>
+Actions<https://charmhub.io/kafka-k8s/actions?channel=4/stable>
+Configurations<https://charmhub.io/kafka-k8s/configure?channel=4/stable>
+Libraries<https://charmhub.io/kafka-k8s/libraries/kafka?channel=4/stable>
 file-system-paths.md
 listeners.md
+Terraform module<terraform.md>
 Statuses<statuses.md>
 requirements.md
 Contact<contact.md>

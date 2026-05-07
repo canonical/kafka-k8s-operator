@@ -89,7 +89,7 @@ Note that the upgrade can be performed against:
 * selected channel/track, therefore upgrading to the latest revision published on that track:
 
   ```shell
-  juju refresh kafka-k8s --channel 4/edge
+  juju refresh kafka-k8s --channel 4/stable
   ```
 * selected revision:
 
@@ -120,7 +120,7 @@ The upgrade process can be monitored using `juju status` command, where the mess
 
 ```shell
 App        Version  Status  Scale  Charm      Channel   Rev  Exposed  Message
-kafka-k8s               active      4  kafka-k8s      4/stable  147  no
+kafka-k8s               active      4  kafka-k8s      4/stable  111  no
 
 Unit          Workload  Agent  Machine  Public address  Ports  Message
 kafka-k8s/0       active    idle   3        10.193.41.131          Other units upgrading first...
