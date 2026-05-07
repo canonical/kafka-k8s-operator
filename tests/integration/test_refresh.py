@@ -4,6 +4,7 @@
 
 import glob
 import logging
+import os
 import shutil
 import subprocess
 from typing import Literal
@@ -29,7 +30,7 @@ logger = logging.getLogger(__name__)
 CHANNEL = "3/stable"
 
 
-def _build_pinned_refresh_charm(tmp_path_factory, version: Literal["pre", "post"] = "post"):
+def _build_pinned_refresh_charm(juju: jubilant.Juju, version: Literal["pre", "post"] = "post"):
     """Build charms used for refresh tests."""
 
     def ignore_hidden(path, names):
@@ -40,7 +41,8 @@ def _build_pinned_refresh_charm(tmp_path_factory, version: Literal["pre", "post"
         cc = yaml.safe_load(f)
         cc["parts"]["files"].pop("override-build")
 
-    tmp_dir = tmp_path_factory.mktemp("refresh-charm")
+    tmp_dir = f"{juju._temp_dir}/refresh-charm-{version}"
+    os.makedirs(tmp_dir, exist_ok=True)
     shutil.copytree(".", tmp_dir, dirs_exist_ok=True, ignore=ignore_hidden)
     shutil.copyfile(
         f"tests/integration/refresh-charm/refresh_versions.{version}.toml",
@@ -58,13 +60,13 @@ def _build_pinned_refresh_charm(tmp_path_factory, version: Literal["pre", "post"
 
 
 @pytest.fixture(scope="module")
-def pre_refresh_charm(tmp_path_factory):
-    return _build_pinned_refresh_charm(tmp_path_factory, version="pre")
+def pre_refresh_charm(juju: jubilant.Juju):
+    return _build_pinned_refresh_charm(juju, version="pre")
 
 
 @pytest.fixture(scope="module")
-def post_refresh_charm(tmp_path_factory):
-    return _build_pinned_refresh_charm(tmp_path_factory, version="post")
+def post_refresh_charm(juju: jubilant.Juju):
+    return _build_pinned_refresh_charm(juju, version="post")
 
 
 @pytest.mark.abort_on_fail
