@@ -124,7 +124,7 @@ class TestBalancer:
     def test_minimum_brokers_balancer_starts(self, juju: jubilant.Juju):
         juju.add_unit(APP_NAME, num_units=2)
         juju.wait(
-            lambda status: status.apps[APP_NAME].units == 3 and all_active_idle(status),
+            lambda status: len(status.apps[APP_NAME].units) == 3 and all_active_idle(status),
             delay=3,
             successes=20,
             timeout=3600,
@@ -145,7 +145,7 @@ class TestBalancer:
     def test_add_unit_full_rebalance(self, juju: jubilant.Juju):
         juju.add_unit(APP_NAME, num_units=1)  # up to 4, new unit won't have any partitions
         juju.wait(
-            lambda status: status.apps[APP_NAME].units == 4 and all_active_idle(status),
+            lambda status: len(status.apps[APP_NAME].units) == 4 and all_active_idle(status),
             delay=3,
             successes=10,
             timeout=1800,
@@ -178,7 +178,7 @@ class TestBalancer:
         assert balancer_is_ready(juju=juju, app_name=self.balancer_app)
         juju.add_unit(APP_NAME, num_units=1)  # up to 4, new unit won't have any partitions
         juju.wait(
-            lambda status: status.apps[APP_NAME].units == 4 and all_active_idle(status),
+            lambda status: len(status.apps[APP_NAME].units) == 4 and all_active_idle(status),
             delay=3,
             successes=10,
             timeout=1800,
