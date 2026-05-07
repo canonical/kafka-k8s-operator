@@ -164,7 +164,9 @@ class TestBalancer:
             if unit_status.leader:
                 leader_unit = unit
 
-        response = juju.run(leader_unit, "rebalance", params={"mode": "full", "dryrun": False})
+        response = juju.run(
+            leader_unit, "rebalance", params={"mode": "full", "dryrun": False}, wait=1200
+        )
         assert not response.results.get("error", "")
 
         assert int(
@@ -202,6 +204,7 @@ class TestBalancer:
             leader_unit,
             "rebalance",
             params={"mode": "add", "brokerid": new_broker_id, "dryrun": False},
+            wait=1200,
         )
         assert not response.results.get("error", "")
 
@@ -233,10 +236,12 @@ class TestBalancer:
 
         for attempt in Retrying(stop=stop_after_attempt(5), wait=wait_fixed(60), reraise=True):
             with attempt:
+                wait = attempt.retry_state.attempt_number * 60
                 response = juju.run(
                     leader_unit,
                     "rebalance",
                     {"mode": "remove", "brokerid": new_broker_id, "dryrun": False},
+                    wait=wait,
                 )
                 assert not response.results.get("error", "")
 
