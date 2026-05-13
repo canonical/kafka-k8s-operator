@@ -329,3 +329,31 @@ class AuthManager:
         acls_to_remove = current_user_acls - self.new_user_acls
         for acl in acls_to_remove:
             self.remove_acl(**asdict(acl))
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `AuthManager._parse_describe_users` from kafka-operator.
+    @staticmethod
+    def _parse_describe_users(raw: str) -> list[str]:
+        """Parses the configs --describe command for entity-type=users and returns a list of users."""
+        return re.findall(r"user-principal '([^']+)'", raw)
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `AuthManager.get_users` from kafka-operator.
+    def get_users(self):
+        """Returns all users defined on the Apache Kafka cluster.
+
+        Raises:
+            `(subprocess.CalledProcessError | ops.pebble.ExecError)`: if the error returned a non-zero exit code
+        """
+        command = [
+            f"--bootstrap-server={self.state.bootstrap_server_internal}",
+            f"--command-config={self.workload.paths.client_properties}",
+            "--describe",
+            "--entity-type=users",
+        ]
+
+        output = self.workload.run_bin_command(bin_keyword="configs", bin_args=command)
+
+        return self._parse_describe_users(output)

@@ -971,3 +971,74 @@ def map_env(env: Iterable[str]) -> dict[str, str]:
             # only check for keys, as we can have an empty value for a variable
             map_env[key] = value
     return map_env
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `CommonConfigManager.auxiliary_paths` from kafka-operator.
+    @property
+    def auxiliary_paths(self) -> list[str]:
+        """Auxiliary environment variables for logs, config and other useful base paths."""
+        if self.state.runs_broker or self.state.runs_controller:
+            return [f"{key}={path}" for key, path in PATHS["kafka"].items()]
+
+        return [f"{key}={path}" for key, path in PATHS["cruise-control"].items()]
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `CommonConfigManager.peer_cluster_state` from kafka-operator.
+    @cached_property
+    def peer_cluster_state(self) -> PeerCluster:
+        """Cached peer_cluster state."""
+        return self.state.peer_cluster
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `ConfigManager.active_controller_listener` from kafka-operator.
+    @property
+    def active_controller_listener(self) -> Listener:
+        """Returns the active (current) controller listener."""
+        return Listener(
+            host=self.state.unit_broker.internal_address,
+            auth_map=self.state.internal_auth,
+            scope="CONTROLLER",
+        )
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `ConfigManager.client_tls_properties` from kafka-operator.
+    @property
+    def client_tls_properties(self) -> list[str]:
+        """Builds the properties necessary for TLS authentication of clients, either internal or KRaft.
+
+        Returns:
+            List of properties to be set
+        """
+        return [
+            f"ssl.truststore.location={self.workload.paths.peer_truststore}",
+            f"ssl.truststore.password={self.state.unit_broker.truststore_password}",
+            f"ssl.keystore.location={self.workload.paths.peer_keystore}",
+            f"ssl.keystore.password={self.state.unit_broker.keystore_password}",
+        ]
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `ConfigManager.controller_listeners` from kafka-operator.
+    @property
+    def controller_listeners(self) -> list[Listener]:
+        """Return all controller listeners including those used in controller listener upgrades."""
+        return [self.active_controller_listener]
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `ConfigManager.mtls_properties` from kafka-operator.
+    @property
+    def mtls_properties(self) -> list[str]:
+        """Builds the properties necessary for MTLS authentication.
+
+        Returns:
+            List of properties to be set
+        """
+        if not self.state.cluster.mtls_enabled:
+            return []
+
+        return ["ssl.client.auth=required"]

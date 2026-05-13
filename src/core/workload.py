@@ -229,3 +229,19 @@ class WorkloadBase(ABC):
             String of 32 randomized letter+digit characters
         """
         return "".join([secrets.choice(string.ascii_letters + string.digits) for _ in range(32)])
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `CharmedKafkaPaths.peer_keystore` from kafka-operator.
+    @property
+    def peer_keystore(self):
+        """The Java Keystore containing service private-key and signed certificates for internal peer communications."""
+        return f"{self.conf_path}/{TLSScope.PEER.value}-keystore.p12"
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `CharmedKafkaPaths.peer_truststore` from kafka-operator.
+    @property
+    def peer_truststore(self):
+        """The Java Truststore containing trusted CAs + certificates for internal peer communications."""
+        return f"{self.conf_path}/{TLSScope.PEER.value}-truststore.jks"

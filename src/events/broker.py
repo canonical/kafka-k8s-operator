@@ -465,3 +465,23 @@ class BrokerOperator(Object):
                 continue
 
             self.auth_manager.add_user(client.username, client.password)
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `BrokerOperator.setup_internal_tls` from kafka-operator.
+    def setup_internal_tls(self) -> None:
+        """Generates a self-signed certificate if required and writes all necessary TLS configuration for internal TLS."""
+        if self.charm.state.unit_broker.peer_certs.ready:
+            self.tls_manager.configure()
+            return
+
+        self_signed_cert = self.tls_manager.generate_self_signed_certificate()
+        if not self_signed_cert:
+            return
+
+        self.charm.state.unit_broker.peer_certs.set_self_signed(self_signed_cert)
+        self.tls_manager.configure()
+
+        if self.charm.unit.is_leader():
+            # If leader, also set the peer cluster chain. Leads to no-op in KRaft single mode.
+            self.charm.state.peer_cluster_ca = self.charm.state.unit_broker.peer_certs.bundle

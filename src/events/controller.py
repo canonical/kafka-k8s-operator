@@ -233,3 +233,26 @@ class KRaftHandler(Object):
             return False
 
         return True
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `KRaftHandler.format_storages` from kafka-operator.
+    def format_storages(self) -> None:
+        """Format storages provided relevant keys exist."""
+        self.config_manager.set_server_properties()
+        if self.controller_manager.get_metadata_directory_id(self.charm.state.log_dirs):
+            # Already formatted!
+            return
+
+        if self.charm.state.runs_broker:
+            credentials = self.charm.state.cluster.internal_user_credentials
+        elif self.charm.state.runs_controller:
+            credentials = {
+                self.charm.state.peer_cluster.broker_username: self.charm.state.peer_cluster.broker_password
+            }
+
+        self.controller_manager.format_storages(
+            uuid=self.charm.state.peer_cluster.cluster_uuid,
+            internal_user_credentials=credentials,
+            initial_controllers=f"{self.charm.state.peer_cluster.bootstrap_unit_id}@{self.charm.state.peer_cluster.bootstrap_controller}:{self.charm.state.peer_cluster.bootstrap_replica_id}",
+        )

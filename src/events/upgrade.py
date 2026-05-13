@@ -215,3 +215,73 @@ class KafkaUpgrade(DataUpgrade):
                     "rack": self.charm.broker.config_manager.rack,
                 }
             )
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `KafkaUpgrade._on_upgrade_granted` from kafka-operator.
+    @override
+    def _on_upgrade_granted(self, event: UpgradeGrantedEvent) -> None:
+        # dependency_model: DependencyModel = getattr(self.dependency_model, "kafka_service")
+        # if not verify_requirements(
+        #     version=self.zookeeper_current_version,
+        #     requirement=dependency_model.dependencies["zookeeper"],
+        # ):
+        #     logger.error(
+        #         "Current ZooKeeper version %s does not meet requirement %s",
+        #         self.zookeeper_current_version,
+        #         dependency_model.dependencies["zookeeper"],
+        #     )
+        #     self.set_unit_failed()
+        #     return
+
+        self.charm.broker.workload.stop()
+        try:
+            self.charm.balancer.workload.stop()
+        except CalledProcessError:
+            # cruise control added in charmed-kafka Rev.37
+            pass
+
+        if not self.dependent.workload.install():
+            logger.error("Unable to install Snap")
+            self.set_unit_failed()
+            return
+
+        self.dependent.config_manager.set_environment()
+        self.apply_backwards_compatibility_fixes(event)
+
+        logger.info(f"{self.charm.unit.name} upgrading service...")
+        self.dependent.workload.restart()
+
+        # Allow for some time to settle down
+        # FIXME: This logic should be improved as part of ticket DPE-3155
+        # For more information, please refer to https://warthogs.atlassian.net/browse/DPE-3155
+        time.sleep(20)
+
+        try:
+            logger.debug("Running post-upgrade check...")
+            self.post_upgrade_check()
+
+            logger.debug("Marking unit completed...")
+            self.set_unit_completed()
+
+            # ensures leader gets it's own relation-changed when it upgrades
+            if self.charm.unit.is_leader():
+                logger.debug("Re-emitting upgrade-changed on leader...")
+                self.on_upgrade_changed(event)
+                # If idle run peer config_changed
+
+        except ClusterNotReadyError as e:
+            logger.error(e.cause)
+            self.set_unit_failed()
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `KafkaUpgrade.build_upgrade_stack` from kafka-operator.
+    @override
+    def build_upgrade_stack(self) -> list[int]:
+        upgrade_stack = []
+        units = set([self.charm.unit] + list(self.charm.state.peer_relation.units))  # type: ignore[reportOptionalMemberAccess]
+        for unit in units:
+            upgrade_stack.append(int(unit.name.split("/")[-1]))
+
+        return upgrade_stack

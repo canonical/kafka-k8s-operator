@@ -144,3 +144,25 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
 
 if __name__ == "__main__":
     main(KafkaCharm)
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `KafkaCharm._disable_enable_restart_broker` from kafka-operator.
+    def _disable_enable_restart_broker(self, event: RunWithLock) -> None:
+        """Handler for `rolling_ops` disable_enable restart events.
+
+        The RollingOpsManager expecting a charm instance, we cannot move this method to the broker logic.
+        """
+        if not self.broker.healthy:
+            logger.warning(f"Broker {self.unit.name.split('/')[1]} is not ready restart")
+            event.defer()
+            return
+
+        self.broker.workload.disable_enable()
+        self.broker.workload.start()
+
+        if self.broker.workload.active():
+            logger.info(f'Broker {self.unit.name.split("/")[1]} restarted')
+        else:
+            logger.error(f"Broker {self.unit.name.split('/')[1]} failed to restart")
+            return

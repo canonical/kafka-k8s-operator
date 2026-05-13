@@ -312,3 +312,12 @@ DEPENDENCIES = {
         "version": "4.0.0",
     },
 }
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported class `TLSScope` from kafka-operator.
+class TLSScope(str, Enum):
+    """Enum for TLS scopes."""
+
+    PEER = "peer"  # for internal communications
+    CLIENT = "client"  # for external/client communications

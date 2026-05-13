@@ -283,3 +283,19 @@ class BalancerOperator(Object):
             return False
 
         return True
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `BalancerOperator.setup_internal_tls` from kafka-operator.
+    def setup_internal_tls(self) -> None:
+        """Generates a self-signed certificate if required and writes all necessary TLS configuration for internal TLS."""
+        if self.charm.state.unit_broker.peer_certs.ready:
+            self.tls_manager.configure()
+            return
+
+        self_signed_cert = self.tls_manager.generate_self_signed_certificate()
+        if not self_signed_cert:
+            return
+
+        self.charm.state.unit_broker.peer_certs.set_self_signed(self_signed_cert)
+        self.tls_manager.configure()

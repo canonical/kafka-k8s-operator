@@ -800,3 +800,258 @@ class OAuth:
             return False
         except requests.exceptions.RequestException:
             return True
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported class `GeneratedCa` from kafka-operator.
+@dataclass
+class GeneratedCa:
+    """Data class to model generated CA artifacts."""
+
+    ca: str
+    ca_key: str
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported class `SelfSignedCertificate` from kafka-operator.
+@dataclass
+class SelfSignedCertificate:
+    """Data class to model self signed certificate artifacts."""
+
+    ca: str
+    csr: str
+    certificate: str
+    private_key: str
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported class `TLSState` from kafka-operator.
+class TLSState:
+    """State collection metadata for TLS credentials."""
+
+    def __init__(self, relation_state: RelationState, scope: TLSScope):
+        self.scope = scope
+        self.relation_state = relation_state
+        self.relation_data = relation_state.relation_data
+
+    @property
+    def private_key(self) -> str:
+        """The unit private-key set during `certificates_joined`.
+
+        Returns:
+            String of key contents
+            Empty if key not yet generated
+        """
+        return self.relation_data.get(f"{self.scope.value}-private-key", "")
+
+    @private_key.setter
+    def private_key(self, value: str) -> None:
+        self.relation_state.update({f"{self.scope.value}-private-key": value})
+
+    @property
+    def csr(self) -> str:
+        """The unit cert signing request.
+
+        Returns:
+            String of csr contents
+            Empty if csr not yet generated
+        """
+        return self.relation_data.get(f"{self.scope.value}-csr", "")
+
+    @csr.setter
+    def csr(self, value: str) -> None:
+        self.relation_state.update({f"{self.scope.value}-csr": value})
+
+    @property
+    def certificate(self) -> str:
+        """The signed unit certificate from the provider relation.
+
+        Returns:
+            String of cert contents in PEM format
+            Empty if cert not yet generated/signed
+        """
+        return self.relation_data.get(f"{self.scope.value}-certificate", "")
+
+    @certificate.setter
+    def certificate(self, value: str) -> None:
+        self.relation_state.update({f"{self.scope.value}-certificate": value})
+
+    @property
+    def ca(self) -> str:
+        """The ca used to sign unit cert.
+
+        Returns:
+            String of ca contents in PEM format
+            Empty if cert not yet generated/signed
+        """
+        return self.relation_data.get(f"{self.scope.value}-ca-cert", "")
+
+    @ca.setter
+    def ca(self, value: str) -> None:
+        self.relation_state.update({f"{self.scope.value}-ca-cert": value})
+
+    @property
+    def chain(self) -> list[str]:
+        """The chain used to sign unit cert."""
+        return json.loads(self.relation_data.get(f"{self.scope.value}-chain", "null")) or []
+
+    @chain.setter
+    def chain(self, value: str) -> None:
+        self.relation_state.update({f"{self.scope.value}-chain": value})
+
+    @property
+    def bundle(self) -> list[str]:
+        """The cert bundle used for TLS identity."""
+        if not all([self.certificate, self.ca]):
+            return []
+
+        # manual-tls-certificates is loaded with the signed cert, the intermediate CA that signed it
+        # and then the missing chain for that CA
+        bundle = [self.certificate, self.ca] + self.chain
+        return sorted(set(bundle), key=bundle.index)  # ordering might matter
+
+    @property
+    def rotate(self) -> bool:
+        """Whether or not CA/chain rotation is in progress."""
+        return bool(self.relation_data.get(f"{self.scope.value}-rotation", ""))
+
+    @rotate.setter
+    def rotate(self, value: bool) -> None:
+        _value = "" if not value else "true"
+        self.relation_state.update({f"{self.scope.value}-rotation": _value})
+
+    @property
+    def ready(self) -> bool:
+        """Returns True if all the necessary TLS relation data has been set, False otherwise."""
+        return all([self.certificate, self.ca, self.private_key])
+
+    def set_self_signed(self, value: SelfSignedCertificate) -> None:
+        """Sets CA, private_key, CSR, and cert state vars based on the provided `SelfSignedCertificate` bundle."""
+        self.private_key = value.private_key
+        self.certificate = value.certificate
+        self.ca = value.ca
+        self.csr = value.csr
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `KafkaBroker.client_certs` from kafka-operator.
+    @property
+    def client_certs(self) -> TLSState:
+        """TLS state for external (client) communications."""
+        return TLSState(self, TLSScope.CLIENT)
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `KafkaBroker.peer_certs` from kafka-operator.
+    @property
+    def peer_certs(self) -> TLSState:
+        """TLS state for internal (peer) communications."""
+        return TLSState(self, TLSScope.PEER)
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSState.__init__` from kafka-operator.
+    def __init__(self, relation_state: RelationState, scope: TLSScope):
+        self.scope = scope
+        self.relation_state = relation_state
+        self.relation_data = relation_state.relation_data
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSState.bundle` from kafka-operator.
+    @property
+    def bundle(self) -> list[str]:
+        """The cert bundle used for TLS identity."""
+        if not all([self.certificate, self.ca]):
+            return []
+
+        # manual-tls-certificates is loaded with the signed cert, the intermediate CA that signed it
+        # and then the missing chain for that CA
+        bundle = [self.certificate, self.ca] + self.chain
+        return sorted(set(bundle), key=bundle.index)  # ordering might matter
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSState.ca` from kafka-operator.
+    @property
+    def ca(self) -> str:
+        """The ca used to sign unit cert.
+
+        Returns:
+            String of ca contents in PEM format
+            Empty if cert not yet generated/signed
+        """
+        return self.relation_data.get(f"{self.scope.value}-ca-cert", "")
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSState.certificate` from kafka-operator.
+    @property
+    def certificate(self) -> str:
+        """The signed unit certificate from the provider relation.
+
+        Returns:
+            String of cert contents in PEM format
+            Empty if cert not yet generated/signed
+        """
+        return self.relation_data.get(f"{self.scope.value}-certificate", "")
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSState.chain` from kafka-operator.
+    @property
+    def chain(self) -> list[str]:
+        """The chain used to sign unit cert."""
+        return json.loads(self.relation_data.get(f"{self.scope.value}-chain", "null")) or []
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSState.csr` from kafka-operator.
+    @property
+    def csr(self) -> str:
+        """The unit cert signing request.
+
+        Returns:
+            String of csr contents
+            Empty if csr not yet generated
+        """
+        return self.relation_data.get(f"{self.scope.value}-csr", "")
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSState.private_key` from kafka-operator.
+    @property
+    def private_key(self) -> str:
+        """The unit private-key set during `certificates_joined`.
+
+        Returns:
+            String of key contents
+            Empty if key not yet generated
+        """
+        return self.relation_data.get(f"{self.scope.value}-private-key", "")
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSState.ready` from kafka-operator.
+    @property
+    def ready(self) -> bool:
+        """Returns True if all the necessary TLS relation data has been set, False otherwise."""
+        return all([self.certificate, self.ca, self.private_key])
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSState.rotate` from kafka-operator.
+    @property
+    def rotate(self) -> bool:
+        """Whether or not CA/chain rotation is in progress."""
+        return bool(self.relation_data.get(f"{self.scope.value}-rotation", ""))
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSState.set_self_signed` from kafka-operator.
+    def set_self_signed(self, value: SelfSignedCertificate) -> None:
+        """Sets CA, private_key, CSR, and cert state vars based on the provided `SelfSignedCertificate` bundle."""
+        self.private_key = value.private_key
+        self.certificate = value.certificate
+        self.ca = value.ca
+        self.csr = value.csr

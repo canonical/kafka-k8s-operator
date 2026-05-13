@@ -367,3 +367,185 @@ class TLSManager:
             match[0]: self.keytool_hash_to_bytes(match[1])
             for match in re.findall("(.+?),.+?trustedCertEntry.*?\n.+?([0-9a-fA-F:]{95})\n", raw)
         }
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported class `UnknownScopeError` from kafka-operator.
+class UnknownScopeError(Exception):
+    """Exception raised when TLS scope is undefined or not implemented."""
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSManager.certificate_distinguished_name` from kafka-operator.
+    @staticmethod
+    def certificate_distinguished_name(cert: str) -> str:
+        """Returns the certificate distinguished name."""
+        cert_obj = x509.load_pem_x509_certificate(cert.encode("utf-8"), default_backend())
+        return cert_obj.subject.rfc4514_string()
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSManager.configure` from kafka-operator.
+    def configure(self) -> None:
+        """Write all TLS artifacts including certs, keys, and keystores/truststores to the disk."""
+        self.set_server_key()
+        self.set_ca()
+        self.set_chain()
+        self.set_certificate()
+        self.set_bundle()
+        self.set_truststore()
+        self.set_keystore()
+        self.update_peer_cluster_trust()
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSManager.generate_internal_ca` from kafka-operator.
+    def generate_internal_ca(self) -> GeneratedCa:
+        """Set up internal CA to issue self-signed certificates for internal communications."""
+        ca_key = generate_private_key()
+        ca = generate_ca(
+            private_key=ca_key,
+            validity=timedelta(days=3650),
+            common_name=f"{self.state.unit_broker.unit.app.name}",
+            organization=TLSScope.PEER.value,
+        )
+
+        return GeneratedCa(ca=ca.raw, ca_key=ca_key.raw)
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSManager.generate_self_signed_certificate` from kafka-operator.
+    def generate_self_signed_certificate(self) -> SelfSignedCertificate | None:
+        """Generate self-signed certificate for the unit to be used for internal communications."""
+        state = self.get_state(TLSScope.PEER)
+
+        if not self.state.internal_ca:
+            logger.error("Internal CA is not set up yet.")
+            return
+
+        if state.ready:
+            logger.debug("No need to set up internal credentials...")
+            return
+
+        ca_key, ca = self.state.internal_ca_key, self.state.internal_ca
+        if ca is None or ca_key is None:
+            logger.error("Internal CA is not setup yet.")
+            return
+
+        private_key = (
+            PrivateKey(state.private_key) if state.private_key else generate_private_key()
+        )
+
+        # Generate CSR & cert
+        sans = self.build_sans()
+        csr = generate_csr(
+            private_key=private_key,
+            common_name=f"{self.state.unit_broker.unit.name}",
+            sans_ip=frozenset(sans["sans_ip"]),
+            sans_dns=frozenset(sans["sans_dns"]),
+        )
+        certificate = generate_certificate(
+            csr=csr, ca=ca, ca_private_key=ca_key, validity=timedelta(days=3650)
+        )
+
+        return SelfSignedCertificate(
+            ca=ca.raw, csr=csr.raw, certificate=certificate.raw, private_key=private_key.raw
+        )
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSManager.get_keystore_path` from kafka-operator.
+    def get_keystore_path(self, scope: TLSScope) -> str:
+        """Returns the keystore path for the given scope."""
+        if scope == TLSScope.PEER:
+            return self.workload.paths.peer_keystore
+        elif scope == TLSScope.CLIENT:
+            return self.workload.paths.keystore
+
+        raise UnknownScopeError(f"Unknown scope: {scope}")
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSManager.get_state` from kafka-operator.
+    def get_state(self, scope: TLSScope) -> TLSState:
+        """Returns the TLSState object for the given scope."""
+        if scope == TLSScope.PEER:
+            return self.state.unit_broker.peer_certs
+        elif scope == TLSScope.CLIENT:
+            return self.state.unit_broker.client_certs
+
+        raise UnknownScopeError(f"Unknown scope: {scope}")
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSManager.get_trusted_certificates` from kafka-operator.
+    def get_trusted_certificates(self, truststore_path: str) -> dict[str, bytes]:
+        """Returns a mapping of alias to certificate fingerprint (hash) for all the certificates loaded in the given truststore."""
+        if not (self.workload.root / truststore_path).exists():
+            return {}
+
+        command = [
+            self.keytool,
+            "-list",
+            "-keystore",
+            truststore_path,
+            "-storepass",
+            self.state.unit_broker.truststore_password,
+            "-noprompt",
+        ]
+        raw = self.workload.exec(command=command, working_dir=self.workload.paths.conf_path)
+
+        # each record in the truststore has the following format:
+        #
+        # May DD, YYYY, trustedCertEntry,
+        # Certificate fingerprint (SHA-256): E5:2E:...:EB:F3
+        #
+        # SHA-256 is 32 bytes, so the hash would be 64 hex chars + 31 colons = 95 chars
+        return {
+            match[0]: self.keytool_hash_to_bytes(match[1])
+            for match in re.findall("(.+?),.+?trustedCertEntry.*?\n.+?([0-9a-fA-F:]{95})\n", raw)
+        }
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSManager.get_truststore_path` from kafka-operator.
+    def get_truststore_path(self, scope: TLSScope) -> str:
+        """Returns the truststore path for the given scope."""
+        if scope == TLSScope.PEER:
+            return self.workload.paths.peer_truststore
+        elif scope == TLSScope.CLIENT:
+            return self.workload.paths.truststore
+
+        raise UnknownScopeError(f"Unknown scope: {scope}")
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSManager.peer_trusted_certificates` from kafka-operator.
+    @property
+    def peer_trusted_certificates(self) -> dict[str, bytes]:
+        """Returns a mapping of alias to certificate fingerprint (hash) for all the certificates loaded in the PEER truststore."""
+        return self.get_trusted_certificates(self.workload.paths.peer_truststore)
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSManager.update_peer_cluster_trust` from kafka-operator.
+    def update_peer_cluster_trust(self) -> None:
+        """Updates peer truststore with current state of peer-cluster certificate chain.
+
+        This method will toggle the TLS rotation state variable if certificate change is detected in the peer-cluster relationship.
+        """
+        bundle = self.state.peer_cluster_ca
+        state = self.get_state(TLSScope.PEER)
+
+        if not bundle:
+            return
+
+        trusted_certs = self.peer_trusted_certificates
+        for i, cert in enumerate(bundle):
+            if self.certificate_fingerprint(cert) in trusted_certs.values():
+                continue
+
+            alias = f"{self.PEER_CLUSTER_ALIAS}{i}"
+            state.rotate = True
+
+            self.update_cert(alias=alias, cert=cert, scope=TLSScope.PEER)

@@ -303,3 +303,160 @@ class TLSHandler(Object):
         logger.debug(f"Following aliases should be in the truststore: {live_aliases}")
         if should_reload:
             self.charm.broker.tls_manager.reload_truststore()
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported class `RefreshTLSCertificatesEvent` from kafka-operator.
+class RefreshTLSCertificatesEvent(EventBase):
+    """Event for refreshing TLS certificates."""
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSHandler._handle_certificate_available_event` from kafka-operator.
+    def _handle_certificate_available_event(
+        self, event: CertificateAvailableEvent, requirer: TLSCertificatesRequiresV4
+    ) -> None:
+        """Handle TLS `certificate_available` event for the given TLS requirer."""
+        ca_changed = False
+        certificate_changed = False
+
+        state = self.requirer_state(requirer)
+
+        if state.certificate and event.certificate.raw != state.certificate:
+            certificate_changed = True
+
+        if state.ca and event.ca.raw != state.ca:
+            ca_changed = True
+
+        state.certificate = event.certificate.raw
+        state.ca = event.ca.raw
+        state.chain = json.dumps([certificate.raw for certificate in event.chain])
+
+        for dependent in ["broker", "balancer"]:
+            getattr(self.charm, dependent).tls_manager.remove_stores(scope=state.scope)
+            getattr(self.charm, dependent).tls_manager.configure()
+
+        if certificate_changed or ca_changed:
+            # this will trigger a restart.
+            state.rotate = True
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSHandler._init_credentials` from kafka-operator.
+    def _init_credentials(self) -> None:
+        """Sets private key, keystore password and truststore passwords if not already set."""
+        for requirer in (self.certificates, self.peer_certificates):
+            _, private_key = requirer.get_assigned_certificate(requirer.certificate_requests[0])
+
+            if private_key and self.requirer_state(requirer).private_key != private_key:
+                self.requirer_state(requirer).private_key = private_key.raw
+
+        # generate unit private key if not already created by action
+        if not self.charm.state.unit_broker.keystore_password:
+            self.charm.state.unit_broker.update(
+                {"keystore-password": self.charm.workload.generate_password()}
+            )
+        if not self.charm.state.unit_broker.truststore_password:
+            self.charm.state.unit_broker.update(
+                {"truststore-password": self.charm.workload.generate_password()}
+            )
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSHandler._on_client_certificate_available` from kafka-operator.
+    def _on_client_certificate_available(self, event: CertificateAvailableEvent) -> None:
+        """Handler for `certificate_available` event after provider updates signed certs for client TLS relation."""
+        if not self.ready:
+            event.defer()
+            return
+
+        self._handle_certificate_available_event(event, self.certificates)
+        self.update_truststore()
+        self.charm.on.config_changed.emit()
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSHandler._on_mtls_client_certificates_available` from kafka-operator.
+    def _on_mtls_client_certificates_available(self, event: CertificatesAvailableEvent) -> None:
+        """Handle the certificates available event on the `certifcate_transfer` interface."""
+        relation = self.charm.model.get_relation(CERTIFICATE_TRANSFER_RELATION, event.relation_id)
+        if not relation or not relation.active:
+            return
+
+        if not all(
+            [
+                self.charm.state.cluster.tls_enabled,
+                self.charm.state.unit_broker.client_certs.certificate,
+            ]
+        ):
+            logger.debug("Missing TLS relation, deferring")
+            self.charm._set_status(Status.NO_CERT)
+            event.defer()
+            return
+
+        transferred_certs = self.certificate_transfer.get_all_certificates()
+
+        if (
+            self.charm.unit.is_leader()
+            and transferred_certs
+            and not self.charm.state.cluster.mtls_enabled
+        ):
+            # Create a "mtls" flag so a new listener (CLIENT_SSL) is created
+            self.charm.state.cluster.update({"mtls": "enabled"})
+            self.charm.on.config_changed.emit()
+
+        self.update_truststore()
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSHandler._on_mtls_client_certificates_removed` from kafka-operator.
+    def _on_mtls_client_certificates_removed(self, event: CertificatesRemovedEvent) -> None:
+        """Handle the certificates removed event."""
+        self.update_truststore()
+        # Turn off MTLS if no clients are remaining.
+        if self.charm.unit.is_leader() and not self.charm.state.has_mtls_clients:
+            self.charm.state.cluster.update({"mtls": ""})
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSHandler._on_peer_certificate_available` from kafka-operator.
+    def _on_peer_certificate_available(self, event: CertificateAvailableEvent) -> None:
+        """Handler for `certificate_available` event after provider updates signed certs for peer TLS relation."""
+        if not self.ready:
+            event.defer()
+            return
+
+        self._handle_certificate_available_event(event, self.peer_certificates)
+        if self.charm.unit.is_leader():
+            # Update peer-cluster CA/chain.
+            self.charm.state.peer_cluster_ca = self.charm.state.unit_broker.peer_certs.bundle
+
+        self.charm.on.config_changed.emit()
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSHandler.ready` from kafka-operator.
+    @property
+    def ready(self) -> bool:
+        """Returns True if workload and peer relation is ready, False otherwise."""
+        if not all([self.charm.workload.container_can_connect, self.charm.workload.installed]):
+            logger.debug("Workload not ready yet.")
+            return False
+
+        if not self.charm.state.peer_relation:
+            logger.warning("No peer relation on certificate available.")
+            return False
+
+        return True
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `TLSHandler.requirer_state` from kafka-operator.
+    def requirer_state(self, requirer: TLSCertificatesRequiresV4) -> TLSState:
+        """Returns the appropriate TLSState based on the scope of the TLS Certificates Requirer instance."""
+        if requirer.relationship_name == TLS_RELATION:
+            return self.charm.state.unit_broker.client_certs
+        elif requirer.relationship_name == INTERNAL_TLS_RELATION:
+            return self.charm.state.unit_broker.peer_certs
+
+        raise NotImplementedError(f"{requirer.relationship_name} not supported!")

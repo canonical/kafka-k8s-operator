@@ -596,3 +596,91 @@ class ClusterState(Object):
     def runs_controller_only(self) -> bool:
         """Is the charm ONLY running controller in KRaft mode?"""
         return self.runs_controller and not self.runs_broker
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `ClusterState.balancer_tls_rotate` from kafka-operator.
+    @property
+    def balancer_tls_rotate(self) -> bool:
+        """Returns True if TLS rotation is in progress, False otherwise."""
+        return bool(self.cluster.relation_data.get("balancer-rotation", ""))
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `ClusterState.internal_auth` from kafka-operator.
+    @property
+    def internal_auth(self) -> AuthMap:
+        """The current enabled auth.protocol for internal peer communications."""
+        return AuthMap("SASL_SSL", "SCRAM-SHA-512")
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `ClusterState.internal_ca` from kafka-operator.
+    @property
+    def internal_ca(self) -> Certificate | None:
+        """The internal CA certificate used for the peer relations."""
+        ca = self.cluster.relation_data.get("internal-ca", "")
+        ca_key = self.internal_ca_key
+
+        if not all([ca_key, ca]):
+            return None
+
+        return Certificate.from_string(ca)
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `ClusterState.internal_ca_key` from kafka-operator.
+    @property
+    def internal_ca_key(self) -> PrivateKey | None:
+        """The private key of internal CA certificate used for the peer relations."""
+        if not (ca_key := self.cluster.relation_data.get("internal-ca-key", "")):
+            return None
+
+        return PrivateKey.from_string(ca_key)
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `ClusterState.kraft_cluster` from kafka-operator.
+    @property
+    def kraft_cluster(self) -> PeerCluster | KafkaCluster:
+        """The appropriate cluster object for read/write actions in KRaft mode."""
+        if self.runs_broker and self.runs_controller:
+            return self.cluster
+
+        return self.peer_cluster
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `ClusterState.peer_cluster_ca` from kafka-operator.
+    @property
+    def peer_cluster_ca(self) -> list[str]:
+        """CA certificate chain of the peer-cluster app."""
+        if self.runs_broker_only:
+            return json.loads(self.kraft_cluster.relation_data.get("controller-ca", "null")) or []
+
+        if self.runs_controller_only:
+            return json.loads(self.kraft_cluster.relation_data.get("broker-ca", "null")) or []
+
+        # KRaft single mode
+        return self.unit_broker.peer_certs.bundle
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `ClusterState.tls_rotate` from kafka-operator.
+    @property
+    def tls_rotate(self) -> bool:
+        """Returns True if TLS rotation is in progress, False otherwise."""
+        return any(
+            [
+                self.unit_broker.client_certs.rotate,
+                self.unit_broker.peer_certs.rotate,
+            ]
+        )
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `ClusterState.use_internal_tls` from kafka-operator.
+    @property
+    def use_internal_tls(self) -> bool:
+        """Whether internal TLS is being used or not."""
+        return not bool(self.model.get_relation(INTERNAL_TLS_RELATION))

@@ -261,3 +261,17 @@ class BalancerWorkload(Workload):
             },
         }
         return pebble.Layer(layer_config)
+
+
+# TODO(port): drafted by charm_sync.porter — review and integrate.
+# Ported method `Workload.disable_enable` from kafka-operator.
+    def disable_enable(self) -> None:
+        """Disables then enables snap service.
+
+        Necessary for snap services to recognise new storage mounts
+
+        Raises:
+            subprocess.CalledProcessError if error occurs
+        """
+        self.container.exec(  # TODO(port): was subprocess.run(f"snap disable {self.SNAP_NAME}", shell=True)
+        self.container.exec(  # TODO(port): was subprocess.run(f"snap enable {self.SNAP_NAME}", shell=True)
