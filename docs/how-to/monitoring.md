@@ -61,19 +61,22 @@ juju consume <k8s_controller>:admin/<cos_model_name>.loki-logging
 juju consume <k8s_controller>:admin/<cos_model_name>.grafana-dashboards
 ```
 
-Now, deploy `grafana-agent` (subordinate charm) and integrate it with Charmed Apache Kafka K8s:
+Now, deploy `opentelemetry-collector-k8s` and integrate it with Charmed Apache Kafka K8s:
 
 ```shell
-juju deploy grafana-agent
-juju integrate kafka-k8s:cos-agent grafana-agent
+juju deploy opentelemetry-collector-k8s --trust
+
+juju integrate kafka-k8s:metrics-endpoint opentelemetry-collector-k8s
+juju integrate kafka-k8s:grafana-dashboard opentelemetry-collector-k8s
+juju integrate kafka-k8s:logging opentelemetry-collector-k8s
 ```
 
-Finally, integrate `grafana-agent` with consumed COS offers:
+Finally, integrate `opentelemetry-collector` with consumed COS offers:
 
 ```shell
-juju integrate grafana-agent grafana-dashboards
-juju integrate grafana-agent loki-logging
-juju integrate grafana-agent prometheus-receive-remote-write
+juju integrate opentelemetry-collector-k8s grafana-dashboards
+juju integrate opentelemetry-collector-k8s loki-logging
+juju integrate opentelemetry-collector-k8s prometheus-receive-remote-write
 ```
 
 Wait for all components to settle down on a `active/idle` state on both models, e.g. `<kafka_model_name>` and `<cos_model_name>`.
