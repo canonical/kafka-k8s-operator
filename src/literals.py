@@ -125,12 +125,14 @@ PATHS = {
         "LOGS": "/var/log/kafka",
         "DATA": "/var/lib/kafka",
         "BIN": "/opt/kafka",
+        "ENV": "/home/kafka/.env",
     },
     "cruise-control": {
         "CONF": "/etc/cruise-control",
         "LOGS": "/var/log/cruise-control",
         "DATA": "/var/lib/cruise-control",
         "BIN": "/opt/cruise-control",
+        "ENV": "/home/kafka/.env",
     },
 }
 
