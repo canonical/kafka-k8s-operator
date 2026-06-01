@@ -17,7 +17,7 @@ jobs:
     with:
       track: '4'
     permissions:
-      actions: read  # Needed for GitHub API call to get workflow version
+      actions: read  # Needed by reusable workflow
       contents: write  # Needed to create git tag
 
   ci-tests:
@@ -40,7 +40,7 @@ jobs:
     secrets:
       charmhub-token: ${{ secrets.CHARMHUB_TOKEN }}
     permissions:
-      actions: read  # Needed for GitHub API call to get workflow version
+      actions: read  # Needed by reusable workflow
       contents: write  # Needed to create git tags
 
   trigger-release-ci:
