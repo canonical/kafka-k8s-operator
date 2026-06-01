@@ -7,6 +7,7 @@
 import logging
 
 import charm_refresh
+import ops
 from charms.data_platform_libs.v0.data_models import TypedCharmBase
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v1.loki_push_api import LogForwarder
@@ -117,6 +118,8 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             alert_rules_path=LOGS_RULES_DIR,
             relation_name="logging",
         )
+        if self.config.profile == "testing":
+            self.tracing = ops.tracing.Tracing(self, "charm-tracing")
 
     def _on_roles_changed(self, _):
         """Handler for `config_changed` events.
