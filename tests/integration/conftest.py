@@ -2,14 +2,11 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import os
-import pathlib
-import subprocess
+import glob
 import typing
 
 import jubilant
 import pytest
-from pytest_operator.plugin import OpsTest
 
 from .helpers import APP_NAME, CONTROLLER_NAME, KRaftMode
 
@@ -17,20 +14,19 @@ from .helpers import APP_NAME, CONTROLLER_NAME, KRaftMode
 def pytest_addoption(parser):
     """Defines pytest parsers."""
     parser.addoption(
+        "--model",
+        action="store",
+        help="Juju model to use; if not provided, a new model "
+        "will be created for each test which requires one",
+    )
+    parser.addoption(
+        "--keep-models",
+        action="store_true",
+        help="Keep models handled by opstest, can be overridden in track_model",
+    )
+    parser.addoption(
         "--kraft-mode", action="store", help="KRaft mode to run the tests", default="single"
     )
-
-
-# TODO: this a temp solution until we migrate to DP workflows for int. testing
-def pytest_configure(config):
-    if os.environ.get("CI") == "true":
-        # Running in GitHub Actions; skip build step
-        plugin = config.pluginmanager.get_plugin("pytest-operator")
-        plugin.OpsTest.build_charm = _build_charm
-
-        # Remove charmcraft dependency from `ops_test` fixture
-        check_deps = plugin.check_deps
-        plugin.check_deps = lambda *deps: check_deps(*(dep for dep in deps if dep != "charmcraft"))
 
 
 @pytest.fixture(scope="module")
@@ -65,54 +61,25 @@ def usernames():
 
 
 @pytest.fixture(scope="module")
-async def kafka_charm(ops_test: OpsTest):
+def kafka_charm():
     """Kafka charm used for integration testing."""
-    charm = await ops_test.build_charm(".")
-    return charm
+    charms = glob.glob("./*.charm")
+    if not charms:
+        raise RuntimeError("Can not find Kafka charm, did you run charmcraft pack?")
+    return charms[0]
 
 
 @pytest.fixture(scope="module")
-async def app_charm(ops_test: OpsTest):
+def app_charm():
     """Build the application charm."""
     charm_path = "tests/integration/app-charm"
-    charm = await ops_test.build_charm(charm_path)
-    return charm
-
-
-async def _build_charm(self, charm_path: typing.Union[str, os.PathLike]) -> pathlib.Path:
-    charm_path = pathlib.Path(charm_path)
-    architecture = subprocess.run(
-        ["dpkg", "--print-architecture"],
-        capture_output=True,
-        check=True,
-        encoding="utf-8",
-    ).stdout.strip()
-    assert architecture in ("amd64", "arm64")
-    packed_charms = list(charm_path.glob(f"*{architecture}.charm"))
-    if len(packed_charms) == 1:
-        # python-libjuju's model.deploy(), juju deploy, and juju bundle files expect local charms
-        # to begin with `./` or `/` to distinguish them from Charmhub charms.
-        # Therefore, we need to return an absolute path—a relative `pathlib.Path` does not start
-        # with `./` when cast to a str.
-        # (python-libjuju model.deploy() expects a str but will cast any input to a str as a
-        # workaround for pytest-operator's non-compliant `build_charm` return type of
-        # `pathlib.Path`.)
-        return packed_charms[0].resolve(strict=True)
-    elif len(packed_charms) > 1:
-        raise ValueError(
-            f"More than one matching .charm file found at {charm_path=} for {architecture=} and "
-            f"Ubuntu 22.04: {packed_charms}."
-        )
-    else:
-        raise ValueError(
-            f"Unable to find .charm file for {architecture=} and Ubuntu 22.04 at {charm_path=}"
-        )
+    charms = glob.glob(f"./{charm_path}/*.charm")
+    if not charms:
+        raise RuntimeError("Can not find Kafka charm, did you run charmcraft pack?")
+    return charms[0]
 
 
 # -- Jubilant --
-
-
-# logging.getLogger("jubilant.wait").setLevel(logging.WARNING)
 
 
 @pytest.fixture(scope="module")

@@ -4,8 +4,7 @@
 
 import logging
 
-import pytest
-from pytest_operator.plugin import OpsTest
+import jubilant
 from tenacity import (
     RetryError,
     Retrying,
@@ -13,9 +12,9 @@ from tenacity import (
     wait_fixed,
 )
 
-from integration.helpers.pytest_operator import (
+from integration.helpers.jubilant import all_active_idle, deploy_cluster
+from integration.helpers.legacy import (
     AUTH_SECRET_NAME,
-    deploy_cluster,
     get_user,
     set_password,
 )
@@ -39,11 +38,9 @@ def _assert_password_updated(model_full_name: str, old_user: str, expected_passw
         assert False, "Password update assertion failed after 5 attempts."
 
 
-@pytest.mark.abort_on_fail
-@pytest.mark.skip_if_deployed
-async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, kraft_mode):
-    await deploy_cluster(
-        ops_test=ops_test,
+def test_build_and_deploy(juju: jubilant.Juju, kafka_charm, kraft_mode):
+    deploy_cluster(
+        juju=juju,
         charm=kafka_charm,
         kraft_mode=kraft_mode,
         config_broker={"expose-external": "nodeport"},
@@ -52,33 +49,35 @@ async def test_build_and_deploy(ops_test: OpsTest, kafka_charm, kraft_mode):
     )
 
 
-async def test_password_rotation(ops_test: OpsTest, kafka_apps):
+def test_password_rotation(juju: jubilant.Juju, kafka_apps):
     """Check that password stored on cluster has changed after a password rotation."""
+    assert juju.model
     initial_replication_user = get_user(
         username=INTER_BROKER_USER,
-        model_full_name=ops_test.model_full_name,
+        model_full_name=juju.model,
     )
 
-    await set_password(ops_test, username=INTER_BROKER_USER, password="newpass123")
+    set_password(juju, username=INTER_BROKER_USER, password="newpass123")
 
-    await ops_test.model.wait_for_idle(apps=kafka_apps, status="active", idle_period=30)
+    juju.wait(lambda status: all_active_idle(status, *kafka_apps), delay=3, successes=10)
 
     _assert_password_updated(
-        ops_test.model_full_name, old_user=initial_replication_user, expected_password="newpass123"
+        juju.model, old_user=initial_replication_user, expected_password="newpass123"
     )
 
     new_replication_user = get_user(
         username=INTER_BROKER_USER,
-        model_full_name=ops_test.model_full_name,
+        model_full_name=juju.model,
     )
 
     # Update secret
-    await ops_test.model.update_secret(
-        name=AUTH_SECRET_NAME, data_args=[f"{INTER_BROKER_USER}=updatedpass"]
+    juju.update_secret(
+        AUTH_SECRET_NAME,
+        content={INTER_BROKER_USER: "updatedpass"},
     )
 
-    await ops_test.model.wait_for_idle(apps=kafka_apps, status="active", idle_period=30)
+    juju.wait(lambda status: all_active_idle(status, *kafka_apps), delay=3, successes=10)
 
     _assert_password_updated(
-        ops_test.model_full_name, old_user=new_replication_user, expected_password="updatedpass"
+        juju.model, old_user=new_replication_user, expected_password="updatedpass"
     )

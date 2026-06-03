@@ -20,7 +20,7 @@ from integration.helpers.ha import (
     remove_k8s_hosts,
     reset_kafka_service,
 )
-from integration.helpers.pytest_operator import (
+from integration.helpers.legacy import (
     APP_NAME,
 )
 
