@@ -13,7 +13,9 @@ The following guides cover key processes and common tasks for Charmed Apache Kaf
 
 Deployment follows a broadly similar pattern on all platforms, but due to differences in the platforms, configuration and deployment must be approached differently in each case.
 
-* Common [deployment guide](how-to-deploy-deploy-anywhere)
+* Deployment methods:
+  * [via Juju CLI](how-to-deploy-deploy-anywhere)
+  * [via Terraform](how-to-deploy-terraform)
 * Specific deployment guides:
   * [AKS](how-to-deploy-on-aks)
   * [EKS](how-to-deploy-on-eks)

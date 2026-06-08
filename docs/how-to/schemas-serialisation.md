@@ -26,7 +26,7 @@ For this guide, we will need an active Charmed Apache Kafka K8s application.
 To deploy Karapace on K8s and integrate it with Apache Kafka, use the following commands:
 
 ```bash
-juju deploy karapace-k8s --channel latest/edge
+juju deploy karapace-k8s --channel stable
 juju integrate karapace-k8s kafka-k8s
 ```
 

@@ -24,7 +24,7 @@ For this guide, we will need an active Charmed Apache Kafka K8s application. Fol
 To deploy [Kafka Connect charm](https://charmhub.io/kafka-connect) and integrate it with Charmed Apache Kafka K8s, use the following commands:
 
 ```bash
-juju deploy kafka-connect --channel edge
+juju deploy kafka-connect --channel stable
 juju integrate kafka-connect kafka-k8s
 ```
 

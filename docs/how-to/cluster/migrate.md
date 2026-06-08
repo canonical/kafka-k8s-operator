@@ -37,7 +37,7 @@ by a client. In this guide, we will deploy a `data-integrator` application and i
 to a `kafka-k8s` application, requesting `admin` level privileges:
 
 ```bash
-juju deploy data-integrator --channel=edge -n 1 --config extra-user-roles="admin" --config topic-name="__data-integrator-user"
+juju deploy data-integrator --channel=stable -n 1 --config extra-user-roles="admin" --config topic-name="__data-integrator-user"
 juju integrate kafka-k8s data-integrator
 ```
 

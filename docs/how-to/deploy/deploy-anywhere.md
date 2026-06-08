@@ -6,8 +6,8 @@ myst:
 
 # How to deploy Charmed Apache Kafka K8s
 
-This guide provides platform-independent deployment instructions.
-For specific guides, see: [AKS](how-to-deploy-on-aks) and [EKS](how-to-deploy-on-eks).
+This guide provides platform-independent deployment instructions using the Juju CLI.
+For specific guides, see: [AKS](how-to-deploy-on-aks) and [EKS](how-to-deploy-on-eks). Alternatively, you can [deploy via Terraform](how-to-deploy-terraform).
 
 (how-to-deploy-deploy-anywhere)=
 
@@ -80,8 +80,8 @@ juju show-model | yq '.[].type'
 Charmed Apache Kafka K8s for production use-cases is deployed as follows:
 
 ```shell
-juju deploy kafka-k8s -n <broker-units> --config roles=broker --channel 4/edge --trust
-juju deploy kafka-k8s -n <controller-units> --config roles=controller --channel 4/edge controller --trust
+juju deploy kafka-k8s -n <broker-units> --config roles=broker --channel 4/stable --trust
+juju deploy kafka-k8s -n <controller-units> --config roles=controller --channel 4/stable controller --trust
 ```
 
 - `<broker-units>` -- the number of units to deploy for Charmed Apache Kafka K8s brokers
@@ -114,7 +114,7 @@ This is not recommended for any production deployments. Apache Kafka brokers rel
 Charmed Apache Kafka K8s for testing use-cases is deployed as follows:
 
 ```shell
-juju deploy kafka-k8s -n <kafka-units> --config roles=broker,controller --channel 4/edge --trust
+juju deploy kafka-k8s -n <kafka-units> --config roles=broker,controller --channel 4/stable --trust
 ```
 
 - `<kafka-units>` -- the number of units to deploy for Charmed Apache Kafka K8s
