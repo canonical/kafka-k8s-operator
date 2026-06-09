@@ -6,14 +6,11 @@ myst:
 
 # How to deploy Charmed Apache Kafka K8s
 
-This guide provides platform-independent deployment instructions.
-For specific guides, see: [AKS](how-to-deploy-on-aks) and [EKS](how-to-deploy-on-eks).
+This guide provides platform-independent deployment instructions for the **Kubernetes** operator using the Juju CLI.
+IAAS/VM deployments are covered in the [Charmed Apache Kafka documentation](https://documentation.ubuntu.com/charmed-kafka/4/).
+Platform-specific steps are available for [AKS](how-to-deploy-on-aks) and [EKS](how-to-deploy-on-eks).
 
 (how-to-deploy-deploy-anywhere)=
-
-```{caution}
-For Charmed Apache Kafka on machine cloud (VM), see the [Charmed Apache Kafka documentation](https://documentation.ubuntu.com/charmed-kafka/4/) instead.
-```
 
 To deploy a Charmed Apache Kafka K8s cluster on a bare environment, it is necessary to:
 
