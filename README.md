@@ -230,10 +230,10 @@ It is needed to offer the endpoints of the COS relations.
 The [offers-overlay](https://github.com/canonical/cos-lite-bundle/blob/main/overlays/offers-overlay.yaml)
 can be used, and this step is shown on the COS tutorial.
 
-Now, integrate Apache Kafka with the Grafana Agent:
+Now, integrate Apache Kafka with the Opentelemetry collector:
 
 ```bash
-juju integrate kafka-k8s grafana-agent
+juju integrate kafka-k8s opentelemetry-collector
 ```
 
 After this is complete, Grafana will show two new dashboards: `Kafka Metrics` and `Node Exporter Kafka`.
