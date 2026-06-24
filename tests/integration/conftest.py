@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 
 import glob
+import os
 import typing
 
 import jubilant
@@ -73,6 +74,12 @@ def kafka_charm():
 def app_charm():
     """Build the application charm."""
     charm_path = "tests/integration/app-charm"
+    cwd = os.getcwd()
+    os.chdir(charm_path)
+    if os.system("charmcraft pack --platform ubuntu@22.04:amd64") != 0:
+        raise RuntimeError("app_charm charmcraft pack failed!")
+
+    os.chdir(cwd)
     charms = glob.glob(f"./{charm_path}/*.charm")
     if not charms:
         raise RuntimeError("Can not find Kafka charm, did you run charmcraft pack?")
