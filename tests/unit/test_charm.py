@@ -525,9 +525,7 @@ def test_config_changed_updates_server_properties(
         patch("workload.KafkaWorkload.read", return_value=["gandalf=grey"]),
         patch("managers.config.ConfigManager.set_server_properties") as set_server_properties,
         patch("managers.config.ConfigManager.set_client_properties"),
-        patch(
-            "charms.rolling_ops.v0.rollingops.RollingOpsManager._on_run_with_lock", autospec=True
-        ),
+        patch("charmlibs.rollingops.RollingOpsManager.request_async_lock", autospec=True),
     ):
         ctx.run(ctx.on.config_changed(), state_in)
 
@@ -566,9 +564,7 @@ def test_config_changed_requests_new_certificate(
             "managers.tls.TLSManager.build_sans",
             return_value={"sans_ip": ["10.10.10.11"], "sans_dns": ["aragorn"]},
         ),
-        patch(
-            "charms.rolling_ops.v0.rollingops.RollingOpsManager._on_run_with_lock", autospec=True
-        ),
+        patch("charmlibs.rollingops.RollingOpsManager.request_async_lock", autospec=True),
     ):
         state_out = ctx.run(ctx.on.config_changed(), state_in)
 
@@ -610,9 +606,7 @@ def test_config_changed_does_not_request_new_certificate_for_slashes(
             "managers.tls.TLSManager.build_sans",
             return_value={"sans_ip": ["10.10.10.11"], "sans_dns": [f"{CHARM_KEY}/0"]},
         ),
-        patch(
-            "charms.rolling_ops.v0.rollingops.RollingOpsManager._on_run_with_lock", autospec=True
-        ),
+        patch("charmlibs.rollingops.RollingOpsManager.request_async_lock", autospec=True),
     ):
         state_out = ctx.run(ctx.on.config_changed(), state_in)
 
@@ -646,9 +640,7 @@ def test_config_changed_updates_client_properties(ctx: Context, base_state: Stat
         patch("workload.KafkaWorkload.read", return_value=["gandalf=grey"]),
         patch("managers.config.ConfigManager.set_server_properties"),
         patch("managers.config.ConfigManager.set_client_properties") as set_client_properties,
-        patch(
-            "charms.rolling_ops.v0.rollingops.RollingOpsManager._on_run_with_lock", autospec=True
-        ),
+        patch("charmlibs.rollingops.RollingOpsManager.request_async_lock", autospec=True),
     ):
         ctx.run(ctx.on.config_changed(), state_in)
 
@@ -677,9 +669,7 @@ def test_config_changed_updates_client_data(ctx: Context, base_state: State) -> 
         patch(
             "managers.config.ConfigManager.set_client_properties"
         ) as patched_set_client_properties,
-        patch(
-            "charms.rolling_ops.v0.rollingops.RollingOpsManager._on_run_with_lock", autospec=True
-        ),
+        patch("charmlibs.rollingops.RollingOpsManager.request_async_lock", autospec=True),
     ):
         ctx.run(ctx.on.config_changed(), state_in)
 
@@ -706,7 +696,7 @@ def test_config_changed_restarts(ctx: Context, base_state: State) -> None:
         patch("managers.auth.AuthManager.add_user"),
         patch("managers.config.ConfigManager.set_server_properties"),
         patch(
-            "charms.rolling_ops.v0.rollingops.RollingOpsManager._on_run_with_lock", autospec=True
+            "charmlibs.rollingops.RollingOpsManager.request_async_lock", autospec=True
         ) as patched_restart_lib,
     ):
 

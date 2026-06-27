@@ -30,7 +30,7 @@ package-mode = false
 requires-poetry = ">=2.0.0"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.12,<4.0"
 ops = ">=2.17.0"
 kazoo = ">=2.8.0"
 tenacity = ">=8.0.1"
@@ -45,6 +45,7 @@ trustme = "^1.2.0"
 charmlibs-pathops = "^1.0.0"
 charm-refresh = "^3.1.0.0"
 cosl = ">= 0.0.5"
+charmlibs-rollingops = "^1.1.1"
 
 [tool.poetry.group.charm-libs.dependencies]
 # data_platform_libs/v0/data_interfaces.py
@@ -138,7 +139,7 @@ max-complexity = 10
 [tool.pyright]
 include = ["src"]
 extraPaths = ["./lib", "src"]
-pythonVersion = "3.10"
+pythonVersion = "3.12"
 pythonPlatform = "All"
 typeCheckingMode = "basic"
 reportIncompatibleMethodOverride = false

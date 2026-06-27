@@ -7,15 +7,14 @@
 import logging
 
 import charm_refresh
+from charmlibs.rollingops import OperationResult, RollingOpsManager
 from charms.data_platform_libs.v0.data_models import TypedCharmBase
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v1.loki_push_api import LogForwarder
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
-from charms.rolling_ops.v0.rollingops import RollingOpsManager
 from ops import (
     ActiveStatus,
     CollectStatusEvent,
-    EventBase,
     StatusBase,
 )
 from ops.log import JujuLogHandler
@@ -73,7 +72,11 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             container=self.unit.get_container(CONTAINER)
         )  # Will be re-instantiated for each role.
 
-        self.restart = RollingOpsManager(self, relation="restart", callback=self._restart_broker)
+        self.restart = RollingOpsManager(
+            self,
+            peer_relation_name="restart",
+            callback_targets={"restart": self._restart_broker},
+        )
 
         self.framework.observe(getattr(self.on, "config_changed"), self._on_roles_changed)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_status)
@@ -137,12 +140,11 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         ):
             self.balancer.workload.stop()
 
-    def _restart_broker(self, event: EventBase) -> None:
-        """Handler for `rolling_ops` restart events."""
+    def _restart_broker(self, **kwargs) -> OperationResult:
+        """Callback for `rolling_ops` restart operations."""
         # only attempt restart if service is already active
         if not self.broker.healthy:
-            event.defer()
-            return
+            return OperationResult.RETRY_RELEASE
 
         self.broker.workload.restart()
 
@@ -151,13 +153,14 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
             runs_broker=self.state.runs_broker,
             runs_controller=self.state.runs_controller,
         ):
-            event.defer()
-            return
+            return OperationResult.RETRY_RELEASE
 
         self.broker.update_credentials_cache()
 
         # Force update our trusted certs relation data.
         self.broker.update_peer_truststore_state(force=True)
+
+        return OperationResult.RELEASE
 
     def _set_status(self, key: Status) -> None:
         """Sets charm status."""
