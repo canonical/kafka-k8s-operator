@@ -75,7 +75,10 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         self.restart = RollingOpsManager(
             self,
             peer_relation_name="restart",
-            callback_targets={"restart": self._restart_broker},
+            callback_targets={
+                "restart": self._restart_broker,
+                "disable_enable": self._disable_enable_restart_broker,
+            },
         )
 
         self.framework.observe(getattr(self.on, "config_changed"), self._on_roles_changed)
@@ -140,7 +143,7 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         ):
             self.balancer.workload.stop()
 
-    def _restart_broker(self, **kwargs) -> OperationResult:
+    def _restart_broker(self, **_kwargs) -> OperationResult:
         """Callback for `rolling_ops` restart operations."""
         # only attempt restart if service is already active
         if not self.broker.healthy:
@@ -160,6 +163,14 @@ class KafkaCharm(TypedCharmBase[CharmConfig]):
         # Force update our trusted certs relation data.
         self.broker.update_peer_truststore_state(force=True)
 
+        return OperationResult.RELEASE
+
+    def _disable_enable_restart_broker(self, **_kwargs) -> OperationResult:
+        """Callback for `rolling_ops` disable_enable restart operations.
+
+        No-op on K8s. The disable/enable cycle only exists on the machine charm to
+        work around a Snap storage-volume mount bug, which does not apply to containers.
+        """
         return OperationResult.RELEASE
 
     def _set_status(self, key: Status) -> None:

@@ -10,7 +10,7 @@ import time
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
-from charms.operator_libs_linux.v1.snap import SnapError
+from charms.operator_libs_linux.v2.snap import SnapError
 from ops import (
     EventBase,
     InstallEvent,
@@ -234,8 +234,9 @@ class BrokerOperator(Object):
                     internal_user_credentials=self.charm.state.cluster.internal_user_credentials,
                     initial_controllers=f"{self.charm.state.peer_cluster.bootstrap_unit_id}@{self.charm.state.peer_cluster.bootstrap_controller}:{self.charm.state.peer_cluster.bootstrap_replica_id}",
                 )
-
-            self.charm.restart.request_async_lock(callback_id="restart")
+                self.charm.restart.request_async_lock(callback_id="disable_enable")
+            else:
+                self.charm.restart.request_async_lock(callback_id="restart")
 
     def _handle_broker_service_updates(self) -> None:
         """Handle updates to broker services, client data, and other post-configuration tasks."""
