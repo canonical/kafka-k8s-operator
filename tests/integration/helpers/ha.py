@@ -278,12 +278,24 @@ def remove_instance_isolation(juju: jubilant.Juju) -> None:
     )
 
 
+def get_k8s_hosts_from_unit(juju: jubilant.Juju, unit_name: str) -> list[str]:
+    """Builds every hostname a given unit may be reached by.
+
+    Inter-broker traffic uses the namespace-relative name, whereas clients are
+    handed the fully-qualified one, so both need resolving from the test runner.
+    """
+    host = get_k8s_host_from_unit(unit_name)
+
+    return [host, f"{host}.{juju.model}.svc.cluster.local"]
+
+
 def add_k8s_hosts(juju: jubilant.Juju):
     """Adds a the pod dns hostnames to the local /etc/hosts file."""
     address_map = get_unit_address_map(model=f"{juju.model}")
     dns_pod_map = [
-        f"{pod_ip} {get_k8s_host_from_unit(unit_name)}"
+        f"{pod_ip} {host}"
         for unit_name, pod_ip in address_map.items()
+        for host in get_k8s_hosts_from_unit(juju, unit_name)
     ]
 
     for item in dns_pod_map:
@@ -297,8 +309,9 @@ def remove_k8s_hosts(juju: jubilant.Juju):
     address_map = get_unit_address_map(model=f"{juju.model}")
 
     for unit_name in address_map.keys():
-        cmd = f"sudo sed -i -e '/.*{get_k8s_host_from_unit(unit_name)}$/d' /etc/hosts"
-        check_output(cmd, stderr=PIPE, shell=True, universal_newlines=True)
+        for host in get_k8s_hosts_from_unit(juju, unit_name):
+            cmd = f"sudo sed -i -e '/.*{host}$/d' /etc/hosts"
+            check_output(cmd, stderr=PIPE, shell=True, universal_newlines=True)
         logger.info(f"Removed {unit_name} from /etc/hosts")
 
 
