@@ -1,3 +1,14 @@
+> [!IMPORTANT]
+> ## 📦 This repository has been archived
+>
+> Active development of the Charmed Apache Kafka charms has moved to
+> **[canonical/kafka-operator](https://github.com/canonical/kafka-operator)**.
+>
+> This repository is now **read-only**. Please file all new issues and
+> pull requests in [canonical/kafka-operator](https://github.com/canonical/kafka-operator).
+
+---
+
 # Charmed Apache Kafka K8s Operator
 
 [![CharmHub Badge](https://charmhub.io/kafka-k8s/badge.svg)](https://charmhub.io/kafka-k8s)
